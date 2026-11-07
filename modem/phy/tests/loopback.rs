@@ -49,6 +49,18 @@ fn every_rung_and_width_ideal_channel() {
 }
 
 #[test]
+fn header_only_frames() {
+    // No data blocks: preamble, header (and probe) only, clipped at 7 dB (SPEC 7.1).
+    let mut rng = Rng::new(9);
+    for (width, mcs) in [(24, 0), (56, 6)] {
+        let cfg = FrameConfig::new(width, mcs, 0).unwrap();
+        assert_eq!(cfg.clip_db, params::CLIP_DB_REFERENCE);
+        assert_eq!(cfg.data_symbols(), 0);
+        run(&cfg, &mut rng, None);
+    }
+}
+
+#[test]
 fn awgn_above_threshold() {
     let mut rng = Rng::new(8);
     for mcs in 0..7u8 {

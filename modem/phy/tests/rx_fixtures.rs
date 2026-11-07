@@ -21,6 +21,31 @@ fn fixtures(dir: &str, ext: &str) -> Vec<std::path::PathBuf> {
 }
 
 #[test]
+fn streaming_detector_matches_one_shot() {
+    // Real-time sized chunks (100 ms) give the same detections as one pass.
+    for name in ["sco_p100_w24_mcs3_snr20", "repeater_w24_mcs2_long_snr16", "awgn_w24_mcs2_snr7"] {
+        let samples = wav::read(&modem_dir().join(format!("fixtures/rx/{name}.wav"))).unwrap();
+        let mut x = vec![0.0; 30_000];
+        x.extend_from_slice(&samples);
+        x.extend(vec![0.0; 30_000]);
+        x.extend_from_slice(&samples);
+        let whole = detector::detect(&x, &DetectorConfig::default());
+        let mut det = detector::Detector::new(DetectorConfig::default());
+        let mut streamed = Vec::new();
+        for chunk in x.chunks(4800) {
+            streamed.extend(det.process(chunk));
+        }
+        streamed.extend(det.flush());
+        assert_eq!(whole.len(), 2, "{name}");
+        assert_eq!(streamed.len(), whole.len(), "{name}");
+        for (a, b) in streamed.iter().zip(&whole) {
+            assert_eq!((a.start, a.cp), (b.start, b.cp), "{name}");
+            assert!((a.quality - b.quality).abs() < 1e-6, "{name}");
+        }
+    }
+}
+
+#[test]
 fn clip_and_filter_matches_simulator() {
     let paths = fixtures("tx", "json");
     assert_eq!(paths.len(), 3);

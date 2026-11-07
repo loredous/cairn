@@ -27,7 +27,7 @@ pub enum ConfigError {
     MaskedBasePilot,
     /// The mask leaves no data tone.
     NoDataTones,
-    /// Data block count outside 1-128.
+    /// Data block count above 128.
     Blocks(usize),
 }
 
@@ -41,7 +41,7 @@ impl fmt::Display for ConfigError {
             ConfigError::MaskTone(k) => write!(f, "mask tone {k} outside 0-{}", MAX_TONES - 1),
             ConfigError::MaskedBasePilot => write!(f, "pilot tones 3 and 20 cannot be masked (SPEC 5.4)"),
             ConfigError::NoDataTones => write!(f, "the mask leaves no data tones"),
-            ConfigError::Blocks(n) => write!(f, "data block count {n} outside 1-{}", params::MAX_DATA_BLOCKS),
+            ConfigError::Blocks(n) => write!(f, "data block count {n} above {}", params::MAX_DATA_BLOCKS),
         }
     }
 }
@@ -91,7 +91,8 @@ impl FrameConfig {
             n_blocks,
             cp: CP_SHORT,
             clip: true,
-            clip_db: rung.clip_db,
+            // SPEC 7.1: a frame with no data blocks uses 7 dB.
+            clip_db: if n_blocks == 0 { params::CLIP_DB_REFERENCE } else { rung.clip_db },
             has_probe: width > BASE_TONES,
             usable: None,
             masked: Vec::new(),
@@ -147,7 +148,7 @@ impl FrameConfig {
         if self.width > BASE_TONES && !self.has_probe {
             return Err(ConfigError::NeedsProbe);
         }
-        if !(1..=params::MAX_DATA_BLOCKS).contains(&self.n_blocks) {
+        if self.n_blocks > params::MAX_DATA_BLOCKS {
             return Err(ConfigError::Blocks(self.n_blocks));
         }
         let w = self.width;
