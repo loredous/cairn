@@ -1,0 +1,135 @@
+# yaml-language-server: $schema=../../tools/adrsite/schemas/decisions.schema.json
+#
+# Once merged into main this file is frozen. Change decisions via a new ADR.
+
+- slug: clip-level-by-rung
+  title: Clip-and-filter level rises with the rung
+  category: physical-layer
+  strength: MUST
+  statement: |
+    Each symbol is clipped at the level below for the frame's rung, re-filtered
+    to the occupied band (the active, unmasked tones), and clipped once more,
+    giving PAPR at or below that level at the output. The radio's limiter
+    MUST NOT be relied on as the peak-limiting mechanism.
+
+    | Rung | Clip level above symbol RMS |
+    | --- | --- |
+    | MCS 0–3 | 7 dB |
+    | MCS 4 | 8 dB |
+    | MCS 5 | 9 dB |
+    | MCS 6 | 10 dB |
+
+    Every symbol of a frame (preamble, header, probe, control and data blocks)
+    uses the level of the rung its data blocks are sent at. A frame with no
+    data blocks uses 7 dB. (SPEC §7.1)
+  rationale: >-
+    Clipping at 7 dB leaves in-band distortion about 22 dB below the signal,
+    which caps 64-QAM 5/6 at about 1% block error and 256-QAM 3/4 at about 27%
+    however strong the signal. Counting the average power each extra dB of
+    clip level costs under a fixed peak, these levels give each rung its
+    lowest peak-referenced threshold in Stage 1 simulation. One level per
+    frame keeps the per-tone scale constant, so the channel estimate from the
+    preamble stays valid for the data.
+  supersedes:
+    adr: 0002-adopt-the-cairn-v0-1-protocol-specification
+    decision: papr-clip-and-filter
+  tags: [phy, levels, v0.2]
+
+- slug: transmit-peak-level-by-rung
+  title: Waveform peaks sit at −3 dBFS; average level falls at the top rungs
+  category: physical-layer
+  strength: MUST
+  statement: >-
+    The digital output is scaled so that waveform peaks sit at −3 dBFS at
+    every rung and width. The average level is then about −10 dBFS at a 7 dB
+    clip and 1 dB lower for each dB of clip level above 7 dB
+    (`clip-level-by-rung`): about −13 dBFS at MCS 6. It does not change with
+    width. (SPEC §5.1, §7.1)
+  rationale: >-
+    The radio's deviation limit is a peak limit, so peaks stay fixed and the
+    level-setting tone (same peak amplitude as the data) stays valid at every
+    rung.
+  supersedes:
+    adr: 0002-adopt-the-cairn-v0-1-protocol-specification
+    decision: transmit-peak-level
+  tags: [phy, levels, audio-level, v0.2]
+
+- slug: snr-reference
+  title: Reported and threshold SNRs are referenced to a 7 dB clip
+  category: link-adaptation
+  strength: MUST
+  statement: >-
+    Every SNR the protocol reports or compares with a rung threshold (the
+    measured SNR in the ACK, the link-test and PROBE results, and the
+    thresholds of `mcs-ladder-thresholds`) is the 7 dB-equivalent SNR: the
+    effective SNR measured over the active tones of the received frame, plus
+    the clip level of that frame's rung minus 7 dB. The receiver knows the
+    rung from the header. (SPEC §6.2, §10.1, B.2)
+  rationale: >-
+    Average power differs by up to 3 dB between rungs. Referencing every
+    figure to one clip level lets an SNR measured at one rung be compared
+    directly with the threshold of another.
+  tags: [adaptation, phy, v0.2]
+
+- slug: mcs-ladder-thresholds
+  title: Seven-rung MCS ladder with thresholds from Stage 1 simulation
+  category: physical-layer
+  strength: MUST
+  statement: |
+    Data blocks are sent at one of seven rungs (SPEC §6.2). Rates scale with
+    width; raw coded-information rates (payload plus each block's CRC-16)
+    before overhead are shown at the two extremes.
+
+    | MCS | Modulation | Code rate | Payload bits per data tone-symbol | bps at 24 tones | bps at 56 tones | Threshold |
+    | --- | --- | --- | --- | --- | --- | --- |
+    | 0 (base) | QPSK | 1/2 | 1.0 | 1,956 | 4,622 | THR0 |
+    | 1 | QPSK | 3/4 | 1.5 | 2,933 | 6,933 | THR1 |
+    | 2 | 16-QAM | 1/2 | 2.0 | 3,911 | 9,244 | THR2 |
+    | 3 | 16-QAM | 3/4 | 3.0 | 5,867 | 13,867 | THR3 |
+    | 4 | 64-QAM | 2/3 | 4.0 | 7,822 | 18,489 | THR4 |
+    | 5 | 64-QAM | 5/6 | 5.0 | 9,778 | 23,111 | THR5 |
+    | 6 | 256-QAM | 3/4 | 6.0 | 11,733 | 27,733 | THR6 |
+
+    Thresholds are 7 dB-equivalent audio SNRs (`snr-reference`) for 1% block
+    error in white noise at 24 tones, measured in Stage 1 simulation with
+    the clip levels of `clip-level-by-rung` and rounded up to the next
+    0.5 dB.
+  rationale: >-
+    The draft column was textbook figures expected to be 1–3 dB optimistic;
+    simulation of the complete chain (channel estimation, pilots, clipping and
+    the real detector) came in 2–3 dB below it at MCS 0–4 instead. Link
+    adaptation starts from this column (`rung-threshold-defaults`), so a
+    pessimistic column would hold every link about one rung too low.
+  supersedes:
+    adr: 0002-adopt-the-cairn-v0-1-protocol-specification
+    decision: mcs-ladder
+  tags: [phy, fec, adaptation, v0.2]
+
+- slug: rung-threshold-defaults
+  title: Default rung thresholds are the ladder's thresholds plus a Stage 2 margin
+  category: link-adaptation
+  strength: MUST
+  statement: >-
+    Rung thresholds default to the thresholds of `mcs-ladder-thresholds` plus
+    a margin measured in Stage 2 testing, all on the 7 dB-equivalent scale of
+    `snr-reference`. (SPEC §10.1)
+  supersedes:
+    adr: 0002-adopt-the-cairn-v0-1-protocol-specification
+    decision: default-rung-thresholds
+  tags: [adaptation, v0.2]
+
+- slug: distortion-index-reference
+  title: The distortion index excludes the rung's own clipping
+  category: audio-level
+  strength: MUST
+  statement: >-
+    The distortion index in the ACK measures transmit-side distortion beyond
+    what clip-and-filter at the frame's rung produces by design
+    (`clip-level-by-rung`). A sender driving its radio correctly reports index
+    0 at every rung. (SPEC §7.1, B.2)
+  rationale: >-
+    The modem's own clipping is about 15 dB stronger at 7 dB than at 10 dB.
+    Without this reference, a correctly driven radio would look distorted at
+    the low rungs and clean at the high ones, and the drive trim would chase
+    it.
+  tags: [levels, adaptation, audio-level, v1.0]
