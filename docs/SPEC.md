@@ -55,7 +55,7 @@ The draft takes the defaults below where no decision has been made yet. These de
 | Host level control | Modem sets receive gain and calibrates transmit drive where the OS allows (13.5) | Operator sets levels by meter | Calibration frames and the automatic response to the distortion report drop out |
 | Compression | Session-layer option: zstd with published dictionaries, fetchable over the air | None in v1 | Section 12 content-encoding negotiation drops out |
 | Authentication | Optional Ed25519 signatures on PDUs | None | Section 12 signature PDU and key handling drop out |
-| Licensing | Spec CC BY 4.0; reference code MIT or Apache-2.0 | Copyleft | Changes who can embed it; no technical effect |
+| Licensing | Spec CC BY 4.0; reference code Apache-2.0 | Copyleft | Changes who can embed it; no technical effect |
 
 ## 3. Operating environment
 
@@ -684,7 +684,7 @@ The protocol is versioned on the air, capabilities are negotiated per session, a
 
 - **On-air version.** The 3-bit header version is bumped only for incompatible waveform or header changes. Everything else is negotiated through capability bits in CONNECT (16 bits in v1, 8 reserved) and through reserved rung and type IDs. Reserved fields are sent as zero and ignored on receipt.
 - **Spec versioning.** Major.minor. Minor versions add rungs, PDU types, dictionaries or capabilities without breaking v1 decoders. v1.0 is declared when two independent implementations pass Section 14.5.
-- **Licensing.** Specification and test vectors: CC BY 4.0. Reference implementation: MIT or Apache-2.0 (Section 2). Dictionaries: CC0 only, with their training corpus described and every source public domain, CC0 or under a rights-holder CC0 waiver (12.2).
+- **Licensing.** Specification and test vectors: CC BY 4.0. Reference implementation: Apache-2.0 (Section 2), chosen over MIT for its explicit patent grant from contributors. Dictionaries: CC0 only, with their training corpus described and every source public domain, CC0 or under a rights-holder CC0 waiver (12.2).
 - **Publication.** A single public repository holds the spec, matrices, preamble sequences, dictionaries with hashes, test vectors and the conformance runner. Releases are tagged and archived outside the repository host (for example on Software Heritage and in an archive maintained by a club or group), so a lost account or an abandoned project does not take the decoder with it.
 - **Records.** Because dictionaries are never withdrawn and the decoder is public, any logged transmission remains convertible to its original content, which is what §97.309(b) can require.
 - **Change process.** Proposed changes are issues against the spec with a test-vector update. A change that alters on-air behavior needs an implementation in two code bases before merge.
