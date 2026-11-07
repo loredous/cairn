@@ -45,13 +45,17 @@ class Point:
 
 def bler_point(mcs: int, snr_db: float, *, width: int = 24, chan: Channel = awgn_channel,
                blocks_per_frame: int = 16, min_blocks: int = 2000, min_errors: int = 100,
-               max_blocks: int = 20000, clip_db: float = params.CLIP_DB_ABOVE_RMS,
+               max_blocks: int = 20000, clip_db: float | None = None,
                clip: bool = True, rng: np.random.Generator | None = None,
                guard: int = 400, quick_bler: float = 0.3, quick_blocks: int = 480,
                detector: bool = True, cp: int = params.CP_SHORT) -> Point:
     """Run frames until ``min_blocks`` and ``min_errors`` (or ``max_blocks``) are reached.
 
     Points with BLER above ``quick_bler`` after ``quick_blocks`` stop early.
+
+    ``clip_db`` defaults to the rung's clip level (``params.clip_db``). The
+    SNR axis stays average-referenced: add ``params.clip_offset_db(mcs)``
+    to put a result on the 7 dB-clip (peak-limited) scale.
 
     The frame is found by the SPEC 6.1 detector (``detector=True``) or, for
     comparison, by cross-correlation with the known preamble waveform. A

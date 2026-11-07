@@ -116,5 +116,28 @@ DATA_CODE = CodeSpec("data", 1, 48, DATA_INFO_BITS, (2048, 1536, 1368, 1232))
 
 # --- 7.1 levels ---------------------------------------------------------------
 
-CLIP_DB_ABOVE_RMS = 7.0       # clip-and-filter threshold
+CLIP_DB_ABOVE_RMS = 7.0       # clip-and-filter threshold at MCS 0-3 (the reference level)
+
+# Clip level by rung: 7 dB above RMS at MCS 0-3, 8 dB at MCS 4, 9 dB at MCS 5,
+# 10 dB at MCS 6 (Stage 1 finding: a fixed 7 dB clip leaves 64-QAM 5/6 and
+# 256-QAM 3/4 at an error floor set by the clipper's own distortion). A frame
+# is clipped as a whole at its data rung's level.
+CLIP_DB_BY_MCS: tuple[float, ...] = (7.0, 7.0, 7.0, 7.0, 8.0, 9.0, 10.0)
+
+
+def clip_db(mcs: int) -> float:
+    """Clip-and-filter level (dB above RMS) for frames at rung ``mcs``."""
+    return CLIP_DB_BY_MCS[mcs]
+
+
+def clip_offset_db(mcs: int) -> float:
+    """dB to add to an average-referenced SNR to put it on the 7 dB-clip scale.
+
+    The output peak is fixed (-3 dBFS), so each dB of clip level above 7 dB
+    costs a dB of average power on a peak-limited radio. A threshold measured
+    at average power ``snr`` is reported as ``snr + clip_offset_db(mcs)``,
+    the SNR a 7 dB-clipped signal at the same peak would need.
+    """
+    return clip_db(mcs) - CLIP_DB_ABOVE_RMS
+
 PEAK_DBFS = -3.0              # output peak level

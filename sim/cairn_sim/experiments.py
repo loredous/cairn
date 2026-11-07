@@ -43,7 +43,7 @@ def _channel(profile: str | None):
 def run_job(job: dict) -> dict:
     t0 = time.time()
     rng = np.random.default_rng(job["seed"])
-    kw = dict(width=job["width"], clip_db=job.get("clip_db", params.CLIP_DB_ABOVE_RMS),
+    kw = dict(width=job["width"], clip_db=job.get("clip_db", params.clip_db(job["mcs"])),
               clip=job.get("clip", True), chan=_channel(job.get("profile")), rng=rng,
               blocks_per_frame=job.get("blocks_per_frame", 16),
               cp=params.CP_LONG if job.get("profile") == "repeater" else params.CP_SHORT)
@@ -80,7 +80,7 @@ def jobs_for(name: str) -> list[dict]:
 
 
 def _key(job: dict) -> tuple:
-    return (job["mcs"], job["width"], job.get("profile"), job.get("clip_db", params.CLIP_DB_ABOVE_RMS))
+    return (job["mcs"], job["width"], job.get("profile"), job.get("clip_db", params.clip_db(job["mcs"])))
 
 
 def _complete(row: dict, target: float = 0.01) -> bool:
@@ -112,7 +112,7 @@ def main(argv: list[str] | None = None) -> int:
         for res in pool.map(run_job, jobs):
             results.append(res)
             print(f"{res['experiment']} mcs{res['mcs']} w{res['width']} {res.get('profile')} "
-                  f"clip{res.get('clip_db', 7.0)}: threshold {res['threshold_db']} dB "
+                  f"clip{res.get('clip_db', params.clip_db(res['mcs']))}: threshold {res['threshold_db']} dB "
                   f"({res['seconds']} s)", flush=True)
             out.write_text(json.dumps(results, indent=1))
     return 0

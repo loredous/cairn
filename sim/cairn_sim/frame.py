@@ -36,10 +36,17 @@ class FrameConfig:
     n_blocks: int = 1
     cp: int = params.CP_SHORT
     clip: bool = True
-    clip_db: float = params.CLIP_DB_ABOVE_RMS
+    clip_db: float | None = None  # clip level, dB above RMS; default: the rung's (params.clip_db)
     probe: bool | None = None   # width probe after the header; default: when width > 24
 
     def __post_init__(self) -> None:
+        if not 0 <= self.mcs < len(params.RUNGS):
+            raise ValueError(f"no rung MCS {self.mcs}")
+        if self.clip_db is None:
+            # The whole frame (preamble, header, probe, data) is clipped at the
+            # data rung's level, so every symbol shares one per-tone scale and
+            # the S2 channel estimate stays valid for the data.
+            object.__setattr__(self, "clip_db", params.clip_db(self.mcs))
         if not params.BASE_TONES <= self.width <= params.MAX_TONES:
             raise ValueError(f"width must be {params.BASE_TONES}-{params.MAX_TONES} tones")
         if self.width > params.BASE_TONES and self.probe is False:

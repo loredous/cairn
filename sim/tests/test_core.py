@@ -186,3 +186,25 @@ def test_clip_and_filter_bounds_papr_on_10000_symbols():
                                           4).reshape(n, len(tones))
         x = ofdm.clip_and_filter(ofdm.modulate(grid, active=width), width, tones, scale_tones=width)
         assert ofdm.papr_db(x).max() <= 7.0 + 1e-3
+
+
+def test_clip_level_by_rung():
+    assert [params.clip_db(m) for m in range(7)] == [7, 7, 7, 7, 8, 9, 10]
+    assert [params.clip_offset_db(m) for m in range(7)] == [0, 0, 0, 0, 1, 2, 3]
+    assert frame.FrameConfig(mcs=5).clip_db == 9.0
+    assert frame.FrameConfig(mcs=5, clip_db=7.0).clip_db == 7.0
+
+
+def test_whole_frame_clipped_at_the_rung_level():
+    """Header and data share the data rung's clip level: at MCS 6 (10 dB)
+    neither is held to 7 dB, and nothing exceeds 10 dB."""
+    cfg = frame.FrameConfig(mcs=6, n_blocks=6)
+    tx = frame.build(cfg, np.random.default_rng(12))
+    papr = ofdm.papr_db(tx.samples, cfg.cp)
+    first_data = params.PREAMBLE_SYMBOLS + cfg.header_symbols
+    assert papr.max() <= 10.0 + 1e-3
+    assert papr[params.PREAMBLE_SYMBOLS:first_data].max() > 7.5
+    assert papr[first_data:].max() > 7.5
+    low = ofdm.papr_db(frame.build(frame.FrameConfig(mcs=3, n_blocks=6),
+                                   np.random.default_rng(12)).samples)
+    assert low.max() <= 7.0 + 1e-3
