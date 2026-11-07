@@ -27,7 +27,13 @@ def _awgn_snr(mcs, width, true_db, seed, mask=None, blocks=None):
 @pytest.mark.parametrize("mcs,true_db", [(0, 15), (0, 25), (0, 35), (4, 15), (4, 25), (4, 35), (6, 45)])
 def test_channel_snr_recovered_in_awgn(mcs, true_db):
     r, cfg = _awgn_snr(mcs, 24, true_db, seed=100 + mcs * 7 + true_db, blocks=6)
-    assert r.header_ok and not r.detail["snr_fallback"]
+    assert r.header_ok
+    if r.detail["snr_fallback"]:
+        # Below the rung's threshold every data block may fail; the fallback
+        # then errs low but never reads more than 1 dB high (ADR 0006).
+        assert not r.block_ok.any() and true_db < 17.5
+        assert r.detail["snr_db"] <= true_db + 1.0
+        return
     if r.block_ok.all():
         assert r.detail["snr_known_symbols"] == r.detail["snr_total_symbols"]
     assert r.detail["snr_db"] == pytest.approx(true_db, abs=1.0)
