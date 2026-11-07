@@ -8,7 +8,7 @@ of the §6.2 table and the test vectors are published.
 
 ```sh
 uv sync --all-packages
-uv run --package cairn-sim pytest sim/tests -m "not slow"
+uv run --package cairn-sim pytest sim/tests          # add -m slow for the long statistical runs
 ```
 
 ## Modules
@@ -18,12 +18,23 @@ uv run --package cairn-sim pytest sim/tests -m "not slow"
 | `params` | Every protocol number, mirrored from the specification |
 | `crc` | CRC-16/CCITT-FALSE, bit-serial and batched |
 | `ldpc` | NR BG1/BG2 lifted codes from `codes/`, encoder, rate matching, layered normalized min-sum decoder |
+| `vectors` | Generates the published matrices, rate-matching tables and known-answer vectors (`codes/`, `vectors/`) |
+| `ldpc_eval` | Code performance against the normal-approximation bound and a sum-product reference |
 | `mapping` | Scrambler, interleaver, Gray QAM mapper and max-log demapper (**provisional**, see below) |
 | `ofdm` | Half-bin OFDM modulator/demodulator, clip-and-filter PAPR control |
-| `preamble` | S1/S2 sequences (Stage 1 search results, with the search code) and the SPEC 6.1 dual-lag detector |
-| `preamble_eval` | Detection, false-alarm and prefix-identification measurements (`python -m cairn_sim.preamble_eval`) |
-| `frame` | Frame assembly and the thin-slice receiver |
-| `channel` | AWGN and the FM audio-chain model |
+| `preamble` | S1/S2 (chosen by the Stage 1 search) and the SPEC 6.1 dual-lag detector |
+| `preamble_eval` | Detection, false-alarm and prefix-identification measurements |
+| `frame` | Frame assembly (preamble, header, width probe, data blocks) and the receiver |
+| `channel` | AWGN and the SPEC 14.2 FM audio chain (`mic`, `flat12`, `flat25`, `repeater`) |
+| `link_sim` | Block error rate against SNR, rung thresholds, and the SPEC 7.4 time budget |
+| `experiments` | Runs the threshold sweeps in parallel, writes `results/*.json` |
+| `report` | Builds `report.md` from the results |
+
+```sh
+uv run --package cairn-sim python -m cairn_sim.experiments awgn      # also: channels, clip
+uv run --package cairn-sim python -m cairn_sim.report
+uv run --package cairn-sim python -m cairn_sim.vectors               # regenerate codes/ and vectors/
+```
 
 ## Provisional choices
 

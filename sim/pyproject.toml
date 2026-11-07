@@ -21,4 +21,5 @@ packages = ["cairn_sim"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-markers = ["slow: long Monte Carlo runs (deselect with -m 'not slow')"]
+addopts = "-m 'not slow'"
+markers = ["slow: long Monte Carlo runs (run with -m slow)"]
