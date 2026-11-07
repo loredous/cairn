@@ -7,6 +7,11 @@ row and column index and its shift coefficient V for lifting-size set
 indices 0-7. They were extracted from the specification document and checked
 entry by entry against an independent transcription.
 
+The base-graph tables are reproduced from a 3GPP specification (© 3GPP, the
+organizational partners) so that implementations interoperate. They are not
+covered by this repository's licenses; everything Cairn derives from them
+(lifted matrices, rate-matching tables, vectors) is CC BY 4.0.
+
 Cairn lifts them at Z = 48 (BG1, set index 1, data blocks), Z = 26 (BG2, set
 index 6, control blocks) and Z = 15 (BG2, set index 7, headers); the shift is
 V mod Z (SPEC 6.3, 20.2). The lifted matrices, rate-matching tables and

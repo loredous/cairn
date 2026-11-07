@@ -3,6 +3,7 @@ name = "cairn-sim"
 version = "0.1.0"
 description = "Stage 1 simulation of the Cairn waveform, codes and FM channel (SPEC section 21.2)"
 requires-python = ">=3.11"
+license = "Apache-2.0"
 dependencies = [
     "numpy>=2.0",
     "scipy>=1.13",
