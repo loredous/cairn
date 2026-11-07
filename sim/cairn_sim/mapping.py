@@ -1,16 +1,16 @@
 """Scrambler, interleaver and constellation mapping (SPEC 6.2, 6.4).
 
-PROVISIONAL. SPEC 6.4 leaves the exact scrambler PRBS, the interleaver and
-the Gray labeling to an ADR due before v0.2. These placeholder designs meet
-the normative properties (Gray-mapped unit-power constellations; bits spread
-across tones and symbols; a published PRBS seeded from the block's position)
-and are simple to specify, but they are the simulation's choice, not the
-protocol's yet:
+Specified by ADR 0005 (adrs/0005-specify-the-scrambler-interleaver-and-
+bit-to-tone-mapping), which made these Stage 1 choices normative; the
+published vectors in vectors/bitmap/ are generated from this code
+(``bitmap_vectors``):
 
 - Scrambler: the 3GPP length-31 Gold sequence (TS 38.211 5.2.1, Nc = 1600)
   with c_init = 1 + the block's position in the frame (header = 0).
 - Interleaver: a linear permutation pi(i) = (a*i) mod E of each block's E
-  coded bits, with a the integer nearest 0.618 E that is coprime to E. It
+  coded bits, with a = 0.618 E rounded (half up in ADR 0005's integer form,
+  floor((618 E + 500) / 1000); the float rounding here agrees for every E
+  below 6000), then raised to the next integer coprime to E. It
   needs no knowledge of the tone mask, so it is defined for every mask; the
   bit-to-tone order below spreads the result across tones and symbols.
   ``interleaver_eval`` finds it as good as a uniformly random permutation
@@ -73,7 +73,7 @@ INTERLEAVERS = ("linear", "random")
 def interleaver(e: int, kind: str = "linear", key: int = 0) -> np.ndarray:
     """Permutation p with interleaved[p[i]] = coded[i].
 
-    ``linear`` is the provisional design above. ``random`` is a reference
+    ``linear`` is the ADR 0005 design above. ``random`` is a reference
     for evaluation only: a uniformly random permutation drawn from a seed of
     (e, key), with ``key`` the block's position so every block differs.
     """

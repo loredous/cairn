@@ -30,9 +30,9 @@ from scipy import signal
 from . import ldpc, mapping, ofdm, params, preamble
 from .crc import append_crc
 
-PILOT_C_INIT = 0x0B1D   # provisional pilot BPSK sequence seed
-PROBE_C_INIT = 0x0D0E   # provisional width-probe BPSK sequence seed
-PAD_POSITION = 255      # provisional scrambler position for padding bits
+PILOT_C_INIT = 0x0B1D   # pilot BPSK sequence seed (ADR 0005 pilot-sequence)
+PROBE_C_INIT = 0x0D0E   # width-probe BPSK sequence seed (ADR 0005 probe-sequence)
+PAD_POSITION = 255      # scrambler position for padding bits (ADR 0005 scrambler-sequence)
 HEADER_POSITION = 0     # scrambler position of the header; block i uses 1 + i
 QPSK = 2
 
