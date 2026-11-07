@@ -664,8 +664,9 @@ def channel_snr(rx: np.ndarray, cfg: FrameConfig, res: RxResult) -> ChannelSnr:
     unboosted tones (a mask's ``data_gain`` is divided out of the signal; the
     additive noise is not scaled).
 
-    With fewer than ``MIN_KNOWN_SYMBOLS`` known symbols (a weak frame) the
-    result is the fallback estimate, which counts the designed clipping.
+    With fewer than ``MIN_KNOWN_SYMBOLS`` known symbols, or a frame with data
+    of which no data symbol decoded (a weak frame), the result is the
+    fallback estimate, which counts the designed clipping.
     """
     det = res.detail
     n_sym, w = cfg.total_symbols, cfg.width
@@ -673,7 +674,13 @@ def channel_snr(rx: np.ndarray, cfg: FrameConfig, res: RxResult) -> ChannelSnr:
     off = cfg.clip_db - 7.0
     n_known = int(known.sum())
     fb_snr, fb_tone = _clip_included_snr(res, cfg)
-    if n_known < MIN_KNOWN_SYMBOLS:
+    d0 = params.PREAMBLE_SYMBOLS + cfg.header_symbols + cfg.probe_symbols
+    # A frame with data whose data symbols all failed is weak, and its header
+    # decoding at all selects for a lucky, low-noise header: measured over the
+    # preamble and header alone, the figure reads high (up to +1.6 dB at 1 dB
+    # in Stage 1). Header-only frames are measured over everything they carry.
+    no_data_known = cfg.data_symbols > 0 and not known[d0:].any()
+    if n_known < MIN_KNOWN_SYMBOLS or no_data_known:
         return ChannelSnr(min(fb_snr, SNR_MAX_DB), np.minimum(fb_tone, SNR_MAX_DB), n_known, True)
 
     shifts = det["shifts"]
