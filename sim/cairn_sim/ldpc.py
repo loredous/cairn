@@ -27,7 +27,7 @@ import numpy as np
 from . import params
 from .crc import CrcChecker
 
-FILLER_LLR = 1.0e4  # known zeros
+FILLER_LLR = 1.0e20  # known zeros: far above any channel LLR, still finite in float32
 
 
 @dataclass(frozen=True)

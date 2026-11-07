@@ -1,14 +1,14 @@
 """Frame assembly and reception (SPEC 6, 8.1).
 
-A frame is ``preamble (4) | header (7) | data blocks``. The thin-slice
-receiver here finds the frame by cross-correlating with the known preamble
-waveform, estimates the per-tone channel and noise from the two S2 symbols,
-tracks common phase and timing drift with the continuous pilots, and decodes
-the header and every data block.
+A frame is ``preamble (4) | header (7) | [probe (2)] | data blocks``. The
+receiver finds the frame by cross-correlating with the known preamble
+waveform (or takes a start from the SPEC 6.1 detector), estimates the
+per-tone channel and noise from the two S2 symbols on the base tones and
+from the width probe above them, tracks common phase and timing drift with
+the continuous pilots, and decodes the header and every data block.
 
-Not yet modelled (later Stage 1 work): control blocks, the width probe (so
-widths above 24 tones), the blind dual-lag detector of SPEC 6.1, and
-decision-directed re-estimation.
+Not yet modelled: control blocks, tone masks, and decision-directed
+re-estimation.
 """
 
 from __future__ import annotations
@@ -23,6 +23,7 @@ from . import ldpc, mapping, ofdm, params, preamble
 from .crc import append_crc
 
 PILOT_C_INIT = 0x0B1D   # provisional pilot BPSK sequence seed
+PROBE_C_INIT = 0x0D0E   # provisional width-probe BPSK sequence seed
 PAD_POSITION = 255      # provisional scrambler position for padding bits
 HEADER_POSITION = 0     # scrambler position of the header; block i uses 1 + i
 QPSK = 2
@@ -35,10 +36,21 @@ class FrameConfig:
     n_blocks: int = 1
     cp: int = params.CP_SHORT
     clip: bool = True
+    probe: bool | None = None   # width probe after the header; default: when width > 24
 
     def __post_init__(self) -> None:
-        if self.width != params.BASE_TONES:
-            raise NotImplementedError("widths above 24 tones need the width probe (not yet modelled)")
+        if not params.BASE_TONES <= self.width <= params.MAX_TONES:
+            raise ValueError(f"width must be {params.BASE_TONES}-{params.MAX_TONES} tones")
+        if self.width > params.BASE_TONES and self.probe is False:
+            raise ValueError("tones above the base set need the width probe")
+
+    @property
+    def has_probe(self) -> bool:
+        return self.width > params.BASE_TONES if self.probe is None else self.probe
+
+    @property
+    def probe_symbols(self) -> int:
+        return params.PROBE_SYMBOLS if self.has_probe else 0
 
     @property
     def rung(self) -> params.Rung:
@@ -72,7 +84,7 @@ class FrameConfig:
 
     @property
     def total_symbols(self) -> int:
-        return params.PREAMBLE_SYMBOLS + self.header_symbols + self.data_symbols
+        return params.PREAMBLE_SYMBOLS + self.header_symbols + self.probe_symbols + self.data_symbols
 
     @property
     def n_samples(self) -> int:
@@ -80,8 +92,14 @@ class FrameConfig:
 
 
 def pilot_values(n_symbols: int, n_pilots: int) -> np.ndarray:
-    c = mapping.gold_sequence(PILOT_C_INIT, n_symbols * n_pilots)
-    return (1.0 - 2.0 * c.astype(float)).reshape(n_symbols, n_pilots)
+    """Pilot BPSK values (n_symbols, n_pilots) for the first n_pilots pilot tones.
+
+    Pilot j of symbol s is 1 - 2 c(4 s + j), so a pilot's value depends only
+    on the symbol and which pilot tone it is, not on how many are active.
+    """
+    slots = len(params.PILOT_TONES)
+    c = mapping.gold_sequence(PILOT_C_INIT, n_symbols * slots)
+    return (1.0 - 2.0 * c.astype(float)).reshape(n_symbols, slots)[:, :n_pilots]
 
 
 def _fill_symbols(points: np.ndarray, n_sym: int, width: int, data_tones: tuple[int, ...],
@@ -90,6 +108,15 @@ def _fill_symbols(points: np.ndarray, n_sym: int, width: int, data_tones: tuple[
     g[:, list(data_tones)] = points.reshape(n_sym, len(data_tones))
     pv = pilot_values(first_symbol + n_sym, len(pilots))[first_symbol:]
     g[:, list(pilots)] = pv
+    return g
+
+
+def probe_grid(width: int, first_symbol: int) -> np.ndarray:
+    """Width-probe symbols (SPEC 5.4): known BPSK on every tone, pilots on the pilot tones."""
+    c = mapping.gold_sequence(PROBE_C_INIT, params.PROBE_SYMBOLS * width)
+    g = (1.0 - 2.0 * c.astype(float)).reshape(params.PROBE_SYMBOLS, width).astype(complex)
+    pilots = params.pilots_for(width)
+    g[:, list(pilots)] = pilot_values(first_symbol + params.PROBE_SYMBOLS, len(pilots))[first_symbol:]
     return g
 
 
@@ -140,14 +167,16 @@ def build(cfg: FrameConfig, rng: np.random.Generator, header_msg: np.ndarray | N
     p_base = params.pilots_for(params.BASE_TONES)
     first_h = params.PREAMBLE_SYMBOLS
     hgrid = _fill_symbols(hpoints, cfg.header_symbols, cfg.width, cfg.base_data_tones, p_base, first_h)
+    first_p = first_h + cfg.header_symbols
+    pgrid = probe_grid(cfg.width, first_p) if cfg.has_probe else np.zeros((0, cfg.width), complex)
     dgrid = _fill_symbols(dpoints, cfg.data_symbols, cfg.width, cfg.data_tones,
-                          params.pilots_for(cfg.width), first_h + cfg.header_symbols)
-    grid = np.concatenate([preamble.grid(cfg.width), hgrid, dgrid])
+                          params.pilots_for(cfg.width), first_p + cfg.probe_symbols)
+    grid = np.concatenate([preamble.grid(cfg.width), hgrid, pgrid, dgrid])
 
     # Every symbol uses the same per-tone scale (SPEC 6.2), set by the link width.
     scale = cfg.width
-    segments = [(grid[: first_h + cfg.header_symbols], range(params.BASE_TONES)),
-                (dgrid, range(cfg.width))]
+    segments = [(grid[:first_p], range(params.BASE_TONES)),
+                (grid[first_p:], range(cfg.width))]
     out = []
     for g, tones in segments:
         x = ofdm.modulate(g, cfg.cp, active=scale)
@@ -167,11 +196,12 @@ class RxResult:
     block_ok: np.ndarray            # (n_blocks,) bool
     block_bits: np.ndarray          # (n_blocks, 1024)
     start: int                      # detected frame start (sample index)
-    snr_db: np.ndarray              # per base tone, from S2
+    snr_db: np.ndarray              # per tone, from S2 (base tones) and the probe
     iterations: np.ndarray
 
 
-def estimate_channel(y2: np.ndarray, y3: np.ndarray, s2: np.ndarray, window: int = 7) -> np.ndarray:
+def estimate_channel(y2: np.ndarray, y3: np.ndarray, s2: np.ndarray, window: int = 7,
+                     second: np.ndarray | None = None) -> np.ndarray:
     """Per-tone channel from the two S2 symbols, smoothed across tones.
 
     The audio chain's response is smooth in frequency apart from a linear
@@ -179,7 +209,7 @@ def estimate_channel(y2: np.ndarray, y3: np.ndarray, s2: np.ndarray, window: int
     smoothed with a local quadratic fit over ``window`` tones, and rotated
     back. ``window`` < 3 returns the raw estimate.
     """
-    raw = (y2 + y3) / 2 / s2
+    raw = (y2 / s2 + y3 / (s2 if second is None else second)) / 2
     if window < 3:
         return raw
     k = np.arange(raw.size)
@@ -212,11 +242,16 @@ def track_drift(pilot_obs: np.ndarray, pilots: tuple[int, ...], width: int, *,
     """
     n_sym = pilot_obs.shape[0]
     kernel = np.ones(window) / window
-    sm = np.stack([np.convolve(pilot_obs[:, j], kernel, mode="same") for j in range(len(pilots))], 1)
-    theta = np.unwrap(np.angle(sm), axis=0)
     s = np.arange(n_sym, dtype=float)
-    sc = s - s.mean()
-    slopes = (sc @ (theta - theta.mean(axis=0))) / max(sc @ sc, 1e-12)  # per pilot
+    slopes = np.zeros(len(pilots))
+    for j in range(len(pilots)):
+        valid = ~np.isnan(pilot_obs[:, j])        # a contiguous run of rows
+        rows = s[valid]
+        k = kernel if rows.size >= kernel.size else np.ones(rows.size) / rows.size
+        sm = np.convolve(pilot_obs[valid, j], k, mode="same")
+        theta = np.unwrap(np.angle(sm))
+        sc = rows - rows.mean()
+        slopes[j] = (sc @ (theta - theta.mean())) / max(sc @ sc, 1e-12)
     f = params.BIN_OFFSET + np.array(pilots, dtype=float)
     beta, alpha = np.polyfit(f, slopes, 1) if len(pilots) > 1 else (0.0, slopes[0])
     all_f = params.BIN_OFFSET + np.arange(width)
@@ -250,24 +285,43 @@ def receive(rx: np.ndarray, cfg: FrameConfig, *, reference: np.ndarray | None = 
     y2, y3 = tones[2, :b], tones[3, :b]
     h = np.zeros(cfg.width, dtype=complex)
     h[:b] = estimate_channel(y2, y3, preamble.s2(), smooth_window)
-    n0 = estimate_noise(y2, y3)
-    n0 = np.maximum(n0, 1e-6 * np.mean(np.abs(h[:b]) ** 2))
-    noise = np.full(cfg.width, np.mean(n0))
-    noise[:b] = n0
-    snr_db = 10 * np.log10(np.abs(h[:b]) ** 2 / n0)
-
+    noise = np.zeros(cfg.width)
+    noise[:b] = estimate_noise(y2, y3)
     first = params.PREAMBLE_SYMBOLS
+    hs = cfg.header_symbols
+    if cfg.has_probe:
+        p0 = first + hs
+        known = probe_grid(cfg.width, p0)
+        hp = estimate_channel(tones[p0], tones[p0 + 1], known[0], smooth_window, second=known[1])
+        np_ = estimate_noise(tones[p0] / known[0], tones[p0 + 1] / known[1]) * np.abs(known[0]) ** 2
+        h[b:] = hp[b:]
+        noise[b:] = np_[b:]
+    noise = np.maximum(noise, 1e-6 * np.mean(np.abs(h) ** 2))
+    snr_db = 10 * np.log10(np.abs(h) ** 2 / noise)
+
     body = tones[first:]
     pilots = params.pilots_for(cfg.width)
     pv = pilot_values(n_sym, len(pilots))[first:]
-    corr = track_drift(body[:, list(pilots)] / pv, pilots, cfg.width,
-                       s_ref=2.5 - first, window=phase_window)
+    obs = body[:, list(pilots)] / pv
+    obs[:hs, [j for j, p in enumerate(pilots) if p >= b]] = np.nan   # header: base pilots only
+    corr = track_drift(obs, pilots, cfg.width, s_ref=2.5 - first, window=phase_window)
+
+    # The S2 pair sees only noise: both symbols carry the same clipping
+    # distortion, so it cancels in their difference. Data symbols also carry
+    # distortion (clipping, a radio limiter), which the pilots in the data
+    # symbols measure; add it, as a fraction of signal power, to every tone.
+    d0 = hs + cfg.probe_symbols
+    if body.shape[0] > d0:
+        hp = h[list(pilots)]
+        resid = obs[d0:] / (hp[None, :] * corr[d0:, list(pilots)]) - 1
+        excess = np.mean(np.abs(resid) ** 2, axis=0) - noise[list(pilots)] / np.abs(hp) ** 2
+        noise = noise + max(float(np.mean(excess)), 0.0) * np.abs(h) ** 2
+        snr_db = 10 * np.log10(np.abs(h) ** 2 / noise)
     eq = body / (h[None, :] * corr)
     nv = noise[None, :] / np.abs(h[None, :]) ** 2 * np.ones_like(body.real)
 
     # Header.
     hcode = ldpc.code_for(params.HEADER_CODE)
-    hs = cfg.header_symbols
     btones = list(cfg.base_data_tones)
     hl = mapping.demodulate_llr(eq[:hs, btones], nv[:hs, btones], QPSK)
     e_h = params.HEADER_CODE.coded_bits[0]
@@ -278,7 +332,7 @@ def receive(rx: np.ndarray, cfg: FrameConfig, *, reference: np.ndarray | None = 
     dcode = ldpc.code_for(params.DATA_CODE)
     rung = cfg.rung
     dt = list(cfg.data_tones)
-    dl = mapping.demodulate_llr(eq[hs:, dt], nv[hs:, dt], rung.bits_per_symbol)
+    dl = mapping.demodulate_llr(eq[d0:, dt], nv[d0:, dt], rung.bits_per_symbol)
     e = rung.coded_bits
     llrs = np.stack([mapping.descramble_llr(mapping.deinterleave(dl[i * e:(i + 1) * e]), 1 + i)
                      for i in range(cfg.n_blocks)])

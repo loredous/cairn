@@ -89,9 +89,14 @@ def clip_and_filter(samples: np.ndarray, n_tones: int, active_tones: np.ndarray,
     keep[np.asarray(active_tones)] = True
     tones[:, ~keep] = 0
     rebuilt = modulate(tones, cp, active=scale).reshape(n_sym, stride)
-    rms2 = np.sqrt(np.mean(rebuilt ** 2, axis=1, keepdims=True))
-    limit2 = rms2 * 10 ** (clip_db / 20)
-    return np.clip(rebuilt, -limit2, limit2).reshape(-1)
+    # Final clip. Clipping lowers the RMS a little, so repeat until every
+    # symbol's peak is within clip_db of its own (clipped) RMS.
+    out = rebuilt
+    for _ in range(12):
+        rms2 = np.sqrt(np.mean(out ** 2, axis=1, keepdims=True))
+        limit2 = rms2 * 10 ** (clip_db / 20)
+        out = np.clip(rebuilt, -limit2, limit2)
+    return out.reshape(-1)
 
 
 def papr_db(samples: np.ndarray, cp: int = params.CP_SHORT) -> np.ndarray:

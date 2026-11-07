@@ -146,3 +146,41 @@ def test_awgn_sets_in_band_snr():
     band = (f >= 300) & (f <= 2700)
     in_band = 2 * spec[band].sum() / noisy.size ** 2
     assert abs(10 * np.log10(1.0 / in_band) - 10.0) < 0.2
+
+
+@pytest.mark.parametrize("width", [24, 25, 30, 37, 38, 41, 52, 53, 56])
+def test_every_width_loops_back(width):
+    rng = np.random.default_rng(width)
+    for mcs in (0, 2, 4, 5):
+        cfg = frame.FrameConfig(width=width, mcs=mcs, n_blocks=2)
+        tx = frame.build(cfg, rng)
+        r = frame.receive(tx.samples, cfg, start=0)
+        assert r.header_ok and r.block_ok.all(), (width, mcs)
+    cfg = frame.FrameConfig(width=width, mcs=6, n_blocks=2, clip=False)
+    tx = frame.build(cfg, rng)
+    assert frame.receive(tx.samples, cfg, start=0).block_ok.all()
+
+
+def test_width_probe_follows_the_header():
+    cfg = frame.FrameConfig(width=30, mcs=3, n_blocks=2)
+    assert cfg.has_probe and cfg.probe_symbols == 2
+    assert not frame.FrameConfig().has_probe
+    with pytest.raises(ValueError):
+        frame.FrameConfig(width=30, probe=False)
+
+
+def test_pilot_value_depends_only_on_symbol_and_slot():
+    assert np.array_equal(frame.pilot_values(10, 2), frame.pilot_values(10, 4)[:, :2])
+
+
+def test_clip_and_filter_bounds_papr_on_10000_symbols():
+    """SPEC 21.2 ofdm acceptance: PAPR <= 7 dB on 10,000 random symbols."""
+    rng = np.random.default_rng(11)
+    for width in (24, 56):
+        n = 5000
+        tones = np.array(params.data_tones_for(width))
+        grid = np.zeros((n, width), dtype=complex)
+        grid[:, tones] = mapping.modulate(rng.integers(0, 2, n * len(tones) * 4, dtype=np.uint8),
+                                          4).reshape(n, len(tones))
+        x = ofdm.clip_and_filter(ofdm.modulate(grid, active=width), width, tones, scale_tones=width)
+        assert ofdm.papr_db(x).max() <= 7.0 + 1e-3
