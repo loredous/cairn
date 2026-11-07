@@ -42,3 +42,15 @@ uv run pytest                                   # test the tooling
 - **Publish site** (`.github/workflows/publish-site.yml`) builds the site from
   `docs/` and `adrs/` and deploys it to GitHub Pages on every push to `main`.
   Enable it under *Settings → Pages → Source: GitHub Actions*.
+
+## License
+
+| What | License |
+|------|---------|
+| Code: `scripts/`, `tools/`, `tests/`, and the reference implementation and simulation as they land | [Apache-2.0](LICENSE) |
+| Specification and documentation: `docs/`, `adrs/`, and published test vectors | [CC BY 4.0](LICENSE-CC-BY-4.0) |
+| Compression dictionaries, when published | CC0 (SPEC §12.2, §15) |
+
+Copyright 2026 the Cairn contributors. Contributions are accepted under the
+license of the files they change (Apache-2.0 §5 for code).
+
