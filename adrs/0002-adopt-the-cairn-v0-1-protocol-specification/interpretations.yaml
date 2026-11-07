@@ -1,0 +1,152 @@
+# yaml-language-server: $schema=../../tools/adrsite/schemas/interpretations.schema.json
+#
+# Each entry restates a clarification that docs/SPEC.md itself makes.
+
+- slug: probe-not-needed-to-decode-its-frame
+  decision: width-probe
+  question: >-
+    Does a receiver need the width probe to decode the frame that carries it?
+  interpretation: >-
+    No. Headers and control blocks use the base tones, so the frame carrying
+    a probe can always be decoded without it (SPEC §5.4).
+  date: 2026-11-05
+
+- slug: repeater-txtail-unchanged
+  decision: timing-parameters
+  question: >-
+    Does repeater mode require a longer TXTail to protect against the
+    repeater's squelch-tail noise burst?
+  interpretation: >-
+    No. The burst arrives after the frame's last symbol, so it cannot damage
+    the frame; TXTail is unchanged (SPEC §11.5).
+  date: 2026-11-05
+
+- slug: repeater-no-direct-path
+  decision: one-frame-in-flight
+  question: >-
+    Does the session ping-pong change when the two stations hear only the
+    repeater output and never each other directly?
+  interpretation: >-
+    No. Hearing each other only through the repeater changes nothing in the
+    ping-pong (SPEC §11.5).
+  date: 2026-11-05
+
+- slug: resume-keeps-signature-counter
+  decision: pdu-signatures
+  question: >-
+    Does session resume reset the 32-bit signature replay counter?
+  interpretation: >-
+    No. Signing counters are carried intact across resume, so signed PDUs are
+    unaffected because the replay counter continues (SPEC §9.2, §18).
+  date: 2026-11-05
+
+- slug: legacy-deference-out-of-scope
+  decision: legacy-active-policy
+  question: >-
+    Does Cairn guarantee that legacy packet stations defer to it?
+  interpretation: >-
+    No. Whether a packet station defers depends on its carrier detect:
+    stations using squelch (COS) see a carrier and wait, while software
+    modems using demodulator-based detect may not. That half is outside the
+    specification (SPEC §11.3).
+  date: 2026-11-05
+
+# --- How the reference implementation meets outcome rules (2026-11-06) ---
+# These describe one way to comply. They add no requirement: other
+# implementations may meet the decision by any method.
+
+- slug: reference-ldpc-decoder
+  decision: decoder-performance
+  question: >-
+    How does the reference implementation meet this?
+  interpretation: >-
+    Its decoder is soft-decision: log-likelihood ratios from the demapper,
+    scaled by the per-tone SNR estimate, decoded by layered normalized
+    min-sum with 30 iterations (within a 20–50 range) and early termination
+    when the CRC passes (SPEC §6.3, §21.2). Other implementations may use
+    any decoder that meets the decision.
+  date: 2026-11-06
+
+- slug: reference-dual-lag-detection
+  decision: blind-prefix-detection
+  question: >-
+    How does the reference implementation meet this?
+  interpretation: >-
+    It runs the preamble autocorrelation at both repeat lags (11.25 ms for
+    the short prefix, 12.5 ms for the long one) and over a small grid of
+    sample-clock offsets in parallel; the lag that peaks identifies the
+    prefix, and the extra correlators also let weak preambles lock more
+    often (SPEC §6.1, §21.2; decision §20.3). Other implementations may use
+    any method that meets the decision.
+  date: 2026-11-06
+
+- slug: reference-parallel-legacy-demodulators
+  decision: multi-mode-receiver
+  question: >-
+    How does the reference implementation do this?
+  interpretation: >-
+    The reference modem runs 1200 AFSK (Bell 202), G3RUH 9600 and IL2P
+    demodulators in parallel with this mode on the same audio input, each
+    costing a few percent of one core (SPEC §13.7).
+  date: 2026-11-06
+
+- slug: reference-heard-list
+  decision: native-api
+  question: >-
+    What does the reference implementation's `heard` command draw on?
+  interpretation: >-
+    The reference implementation keeps a heard list: every decoded header,
+    in every mode it receives, with time, SNR, width and frame type, served
+    by the `heard` command and available for export (SPEC §13.6). The list
+    itself is a reference-implementation feature; the decision requires only
+    the command and event in the published schema.
+  date: 2026-11-06
+
+- slug: reference-diagnostic-capture
+  decision: conformance-suite
+  question: >-
+    Where do the suite's recorded off-air captures come from?
+  interpretation: >-
+    From the reference implementation's rolling raw-audio buffer and
+    diagnostic capture: the last hours of received audio and decoder state,
+    saved opt-in on a failed frame or on request. Frames that failed in real
+    time get a second decode with heavier settings, and captures become
+    conformance test vectors (SPEC §13.6, §14.5). A second implementation
+    need not provide the capture feature to be conformant.
+  date: 2026-11-06
+
+- slug: reference-unattended-operation
+  decision: station-identification
+  question: >-
+    How does the reference implementation keep identifying when it runs
+    unattended?
+  interpretation: >-
+    Its unattended operation mode combines auto-accept, per-callsign allow
+    and deny lists and scripting hooks with automatic periodic ID, so the
+    identification cadence holds with no operator present (SPEC §13.4,
+    §13.6). Control-operator rules for automatically controlled stations
+    (§97.221) remain outside the modem (SPEC §3.3).
+  date: 2026-11-06
+
+- slug: reference-guided-setup
+  decision: calibrate-command
+  question: >-
+    How does the reference implementation lead an operator to `calibrate`?
+  interpretation: >-
+    Through guided setup and self-test: device and PTT selection, a PTT
+    test, the level-setting tone, `calibrate` with a peer, and a saved
+    per-radio profile (SPEC §13.6).
+  date: 2026-11-06
+
+- slug: reference-rig-profiles
+  decision: timing-parameters
+  question: >-
+    Where does the reference implementation get starting values for
+    TXDelay and the repeater access delay?
+  interpretation: >-
+    From its rig profile library: TXDelay, access delay, port type and
+    quirks by radio model, shipped and community-maintained, with measured
+    values offered back opt-in (SPEC §13.4, §13.6). Profile values are
+    starting points; the parameters stay within the decision's ranges, and
+    TXDelay is still measured per radio.
+  date: 2026-11-06
