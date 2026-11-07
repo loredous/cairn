@@ -1,0 +1,21 @@
+[package]
+name = "cairn-modem"
+version = "0.1.0"
+description = "Cairn Stage 2 modem: transmit sequencing, the continuous listener and the cairn-modem command line (SPEC 21.3)"
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+publish = false
+
+[[bin]]
+name = "cairn-modem"
+path = "src/main.rs"
+
+[dependencies]
+cairn-phy = { path = "../phy" }
+cairn-audio = { path = "../audio" }
+cairn-ptt = { path = "../ptt" }
+clap = { version = "4.5", features = ["derive", "env"] }
+
+[target.'cfg(unix)'.dependencies]
+signal-hook = "0.4"
