@@ -49,17 +49,22 @@ def modulate(grid: np.ndarray, cp: int = params.CP_SHORT, active: int | None = N
 
 
 def demodulate(samples: np.ndarray, start: float, n_sym: int, n_tones: int,
-               cp: int = params.CP_SHORT, active: int | None = None) -> np.ndarray:
+               cp: int = params.CP_SHORT, active: int | None = None,
+               shifts: np.ndarray | None = None) -> np.ndarray:
     """Real samples -> tone values (n_sym, n_tones).
 
     ``start`` is the sample index of the first symbol's useful part (after
     its prefix). ``active`` is the number of non-silent tones the
-    transmitter scaled by (default ``n_tones``).
+    transmitter scaled by (default ``n_tones``). ``shifts`` (integer samples
+    per symbol) moves individual symbols' windows, to follow timing drift.
     """
     active = active or n_tones
     stride = N + cp
     first = int(round(start))
-    idx = first + stride * np.arange(n_sym)[:, None] + np.arange(N)[None, :]
+    offsets = stride * np.arange(n_sym)
+    if shifts is not None:
+        offsets = offsets + np.asarray(shifts, dtype=int)
+    idx = first + offsets[:, None] + np.arange(N)[None, :]
     seg = samples[idx] * np.conj(_half_bin(np.arange(N)))[None, :]
     spec = np.fft.fft(seg, axis=1)
     scale = 2.0 / (N * np.sqrt(2.0 / active))

@@ -36,6 +36,7 @@ class FrameConfig:
     n_blocks: int = 1
     cp: int = params.CP_SHORT
     clip: bool = True
+    clip_db: float = params.CLIP_DB_ABOVE_RMS
     probe: bool | None = None   # width probe after the header; default: when width > 24
 
     def __post_init__(self) -> None:
@@ -181,7 +182,8 @@ def build(cfg: FrameConfig, rng: np.random.Generator, header_msg: np.ndarray | N
     for g, tones in segments:
         x = ofdm.modulate(g, cfg.cp, active=scale)
         if cfg.clip:
-            x = ofdm.clip_and_filter(x, cfg.width, np.array(list(tones)), cfg.cp, scale_tones=scale)
+            x = ofdm.clip_and_filter(x, cfg.width, np.array(list(tones)), cfg.cp,
+                                     clip_db=cfg.clip_db, scale_tones=scale)
         out.append(x)
     return TxFrame(cfg, np.concatenate(out), header_bits, block_bits, grid)
 
@@ -228,7 +230,7 @@ def estimate_noise(y2: np.ndarray, y3: np.ndarray, window: int = 7) -> np.ndarra
 
 
 def track_drift(pilot_obs: np.ndarray, pilots: tuple[int, ...], width: int, *,
-                s_ref: float, window: int = 15) -> np.ndarray:
+                s_ref: float, window: int = 15) -> tuple[np.ndarray, float]:
     """Phase correction per symbol and tone from the continuous pilots.
 
     ``pilot_obs`` is (n_sym, n_pilots): received pilot values divided by the
@@ -239,6 +241,10 @@ def track_drift(pilot_obs: np.ndarray, pilots: tuple[int, ...], width: int, *,
     sample-clock offset causes. The correction is zero at ``s_ref``, the
     symbol position (relative to ``pilot_obs`` row 0) where the channel was
     estimated.
+
+    Returns the correction (n_sym, width) and the timing drift in samples per
+    symbol implied by beta (a delay of d samples turns tone bin f by
+    -2 pi f d / N).
     """
     n_sym = pilot_obs.shape[0]
     kernel = np.ones(window) / window
@@ -255,7 +261,50 @@ def track_drift(pilot_obs: np.ndarray, pilots: tuple[int, ...], width: int, *,
     f = params.BIN_OFFSET + np.array(pilots, dtype=float)
     beta, alpha = np.polyfit(f, slopes, 1) if len(pilots) > 1 else (0.0, slopes[0])
     all_f = params.BIN_OFFSET + np.arange(width)
-    return np.exp(1j * (alpha + beta * all_f)[None, :] * (s - s_ref)[:, None])
+    corr = np.exp(1j * (alpha + beta * all_f)[None, :] * (s - s_ref)[:, None])
+    return corr, float(-beta * params.N_USEFUL / (2 * np.pi))
+
+
+def _estimate(tones: np.ndarray, cfg: FrameConfig, smooth_window: int, phase_window: int):
+    """Channel, noise and drift estimates from demodulated tones."""
+
+    b = params.BASE_TONES
+    y2, y3 = tones[2, :b], tones[3, :b]
+    h = np.zeros(cfg.width, dtype=complex)
+    h[:b] = estimate_channel(y2, y3, preamble.s2(), smooth_window)
+    noise = np.zeros(cfg.width)
+    noise[:b] = estimate_noise(y2, y3)
+    first = params.PREAMBLE_SYMBOLS
+    hs = cfg.header_symbols
+    if cfg.has_probe:
+        p0 = first + hs
+        known = probe_grid(cfg.width, p0)
+        hp = estimate_channel(tones[p0], tones[p0 + 1], known[0], smooth_window, second=known[1])
+        np_ = estimate_noise(tones[p0] / known[0], tones[p0 + 1] / known[1]) * np.abs(known[0]) ** 2
+        h[b:] = hp[b:]
+        noise[b:] = np_[b:]
+    noise = np.maximum(noise, 1e-6 * np.mean(np.abs(h) ** 2))
+    snr_db = 10 * np.log10(np.abs(h) ** 2 / noise)
+
+    body = tones[first:]
+    pilots = params.pilots_for(cfg.width)
+    pv = pilot_values(tones.shape[0], len(pilots))[first:]
+    obs = body[:, list(pilots)] / pv
+    obs[:hs, [j for j, p in enumerate(pilots) if p >= b]] = np.nan   # header: base pilots only
+    corr, drift = track_drift(obs, pilots, cfg.width, s_ref=2.5 - first, window=phase_window)
+
+    # The S2 pair sees only noise: both symbols carry the same clipping
+    # distortion, so it cancels in their difference. Data symbols also carry
+    # distortion (clipping, a radio limiter), which the pilots in the data
+    # symbols measure; add it, as a fraction of signal power, to every tone.
+    d0 = hs + cfg.probe_symbols
+    if body.shape[0] > d0:
+        hp = h[list(pilots)]
+        resid = obs[d0:] / (hp[None, :] * corr[d0:, list(pilots)]) - 1
+        excess = np.mean(np.abs(resid) ** 2, axis=0) - noise[list(pilots)] / np.abs(hp) ** 2
+        noise = noise + max(float(np.mean(excess)), 0.0) * np.abs(h) ** 2
+        snr_db = 10 * np.log10(np.abs(h) ** 2 / noise)
+    return h, noise, snr_db, corr, body, drift
 
 
 def find_start(rx: np.ndarray, reference: np.ndarray) -> int:
@@ -279,44 +328,26 @@ def receive(rx: np.ndarray, cfg: FrameConfig, *, reference: np.ndarray | None = 
         start = find_start(rx, reference)
     advance = cfg.cp // 4 if advance is None else advance
     n_sym = cfg.total_symbols
-    tones = ofdm.demodulate(rx, start + cfg.cp - advance, n_sym, cfg.width, cfg.cp, active=cfg.width)
-
-    b = params.BASE_TONES
-    y2, y3 = tones[2, :b], tones[3, :b]
-    h = np.zeros(cfg.width, dtype=complex)
-    h[:b] = estimate_channel(y2, y3, preamble.s2(), smooth_window)
-    noise = np.zeros(cfg.width)
-    noise[:b] = estimate_noise(y2, y3)
     first = params.PREAMBLE_SYMBOLS
+    window_start = start + cfg.cp - advance
+    tones = ofdm.demodulate(rx, window_start, n_sym, cfg.width, cfg.cp, active=cfg.width)
+    h, noise, snr_db, corr, body, drift = _estimate(tones, cfg, smooth_window, phase_window)
+    # Follow sample-clock drift: if the windows would wander by a sample or
+    # more over the frame, move each symbol's window and estimate again.
+    pos = np.arange(n_sym) - 2.5                      # symbols from the channel estimate
+    shifts = np.round(drift * pos).astype(int)
+    if np.any(shifts != 0):
+        rx = np.concatenate([rx, np.zeros(max(int(shifts.max()), 0) + 1)])
+        tones = ofdm.demodulate(rx, window_start, n_sym, cfg.width, cfg.cp, active=cfg.width,
+                                shifts=shifts)
+        # Undo each shift's known phase (moving the window d samples later
+        # turns tone bin f by 2 pi f d / N), so the tracker still sees a
+        # smooth drift; the window move itself keeps the prefix centred.
+        f = params.BIN_OFFSET + np.arange(cfg.width)
+        tones = tones * np.exp(-2j * np.pi * f[None, :] * shifts[:, None] / params.N_USEFUL)
+        h, noise, snr_db, corr, body, drift = _estimate(tones, cfg, smooth_window, phase_window)
     hs = cfg.header_symbols
-    if cfg.has_probe:
-        p0 = first + hs
-        known = probe_grid(cfg.width, p0)
-        hp = estimate_channel(tones[p0], tones[p0 + 1], known[0], smooth_window, second=known[1])
-        np_ = estimate_noise(tones[p0] / known[0], tones[p0 + 1] / known[1]) * np.abs(known[0]) ** 2
-        h[b:] = hp[b:]
-        noise[b:] = np_[b:]
-    noise = np.maximum(noise, 1e-6 * np.mean(np.abs(h) ** 2))
-    snr_db = 10 * np.log10(np.abs(h) ** 2 / noise)
-
-    body = tones[first:]
-    pilots = params.pilots_for(cfg.width)
-    pv = pilot_values(n_sym, len(pilots))[first:]
-    obs = body[:, list(pilots)] / pv
-    obs[:hs, [j for j, p in enumerate(pilots) if p >= b]] = np.nan   # header: base pilots only
-    corr = track_drift(obs, pilots, cfg.width, s_ref=2.5 - first, window=phase_window)
-
-    # The S2 pair sees only noise: both symbols carry the same clipping
-    # distortion, so it cancels in their difference. Data symbols also carry
-    # distortion (clipping, a radio limiter), which the pilots in the data
-    # symbols measure; add it, as a fraction of signal power, to every tone.
     d0 = hs + cfg.probe_symbols
-    if body.shape[0] > d0:
-        hp = h[list(pilots)]
-        resid = obs[d0:] / (hp[None, :] * corr[d0:, list(pilots)]) - 1
-        excess = np.mean(np.abs(resid) ** 2, axis=0) - noise[list(pilots)] / np.abs(hp) ** 2
-        noise = noise + max(float(np.mean(excess)), 0.0) * np.abs(h) ** 2
-        snr_db = 10 * np.log10(np.abs(h) ** 2 / noise)
     eq = body / (h[None, :] * corr)
     nv = noise[None, :] / np.abs(h[None, :]) ** 2 * np.ones_like(body.real)
 
