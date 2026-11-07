@@ -34,12 +34,28 @@ def _fmt(x: float | None, nd: int = 1) -> str:
     return "—" if x is None else f"{x:.{nd}f}"
 
 
+def _floor(row: dict) -> bool:
+    """True when 1% is reached only far beyond where the waterfall ended
+    (BLER first under 5%), or never: an error floor rather than a threshold."""
+    pts = sorted(row["points"], key=lambda p: p["snr_db"])
+    knee = next((p["snr_db"] for p in pts if p["bler"] < 0.05), None)
+    if row["threshold_db"] is None:          # never bracketed: a floor only if 1% was never reached
+        return min(p["bler"] for p in pts) >= 0.01
+    return knee is not None and row["threshold_db"] - knee > 4.0
+
+
 def _thresholds(rows: list[dict], **match) -> dict[int, float | None]:
     out = {}
     for r in rows:
-        if all(r.get(k) == v for k, v in match.items()):
-            out[r["mcs"]] = r["threshold_db"]
+        if all(r.get(k, 7.0 if k == "clip_db" else None) == v for k, v in match.items()):
+            out[r["mcs"]] = None if _floor(r) else r["threshold_db"]
     return out
+
+
+def _floors(rows: list[dict], **match) -> dict[int, float]:
+    """Lowest BLER reached by floor-limited rows, keyed by MCS."""
+    return {r["mcs"]: min(p["bler"] for p in r["points"]) for r in rows
+            if all(r.get(k) == v for k, v in match.items()) and _floor(r)}
 
 
 def bler_plot(rows: list[dict], title: str, fname: str, **match) -> str:
@@ -142,28 +158,57 @@ def thresholds_section() -> list[str]:
     chans = _load("channels")
     if awgn is None:
         return lines + ["AWGN sweep not yet run.", ""]
-    t24, t56 = _thresholds(awgn, width=24), _thresholds(awgn, width=56)
-    cols = [("AWGN 24", t24), ("AWGN 56", t56)]
+    cols = [("AWGN 24", awgn, {"width": 24}), ("AWGN 56", awgn, {"width": 56})]
     if chans:
         for prof, w in (("mic", 24), ("flat12", 30), ("flat25", 56), ("repeater", 24)):
-            t = _thresholds(chans, profile=prof)
-            if t:
-                cols.append((f"{prof} ({w})", t))
-    head = "| MCS | Rung | SPEC 6.2 nominal | " + " | ".join(c for c, _ in cols) + " | Worst Δ vs nominal |"
+            if any(r["profile"] == prof for r in chans):
+                cols.append((f"{prof} ({w})", chans, {"profile": prof}))
+    head = "| MCS | Rung | SPEC 6.2 nominal | " + " | ".join(c for c, _, _ in cols) + " | Worst Δ vs nominal |"
     lines += [head, "|" + " --- |" * (4 + len(cols))]
     for r in params.RUNGS:
-        vals = [t.get(r.mcs) for _, t in cols]
-        deltas = [v - r.nominal_snr_db for v in vals if v is not None]
+        cells, deltas = [], []
+        for _, rows, match in cols:
+            v = _thresholds(rows, **match).get(r.mcs)
+            fl = _floors(rows, **match).get(r.mcs)
+            if v is not None:
+                cells.append(f"{v:.1f}")
+                deltas.append(v - r.nominal_snr_db)
+            elif fl is not None:
+                cells.append(f"floor {100 * fl:.1f}%" if fl < 0.5 else "fails")
+            else:
+                cells.append("—")
         worst = max(deltas, key=abs) if deltas else None
         lines.append(f"| {r.mcs} | {r.modulation} {r.code_rate} | {r.nominal_snr_db:.0f} | "
-                     + " | ".join(_fmt(v) for v in vals) + f" | {_fmt(worst, 1) if worst is not None else '—'} |")
-    lines += ["", "— means 1% was not reached by 40 dB.", "",
+                     + " | ".join(cells) + f" | {_fmt(worst, 1) if worst is not None else '—'} |")
+    lines += ["", "All at the SPEC 7.1 clip level of 7 dB. \"floor x%\" means BLER stopped "
+              "falling well above 1%; x is the lowest BLER seen up to 40 dB. \"fails\" means "
+              "BLER stayed above 50%. The clip section "
+              "shows what removes it. Worst Δ is over the measured thresholds only.", "",
               f"![AWGN, 24 tones]({bler_plot(awgn, 'AWGN, 24 tones', 'bler_awgn_24.png', width=24)})", ""]
     if chans:
         for prof in ("mic", "flat12", "flat25", "repeater"):
             if any(r["profile"] == prof for r in chans):
                 lines += [f"![{prof}]({bler_plot(chans, prof, f'bler_{prof}.png', profile=prof)})", ""]
     return lines
+
+
+def clip_plot(rows: list[dict]) -> str:
+    PLOTS.mkdir(parents=True, exist_ok=True)
+    fig, ax = plt.subplots(figsize=(6, 3.6))
+    for mcs in sorted({r["mcs"] for r in rows}):
+        pts = sorted((r["clip_db"], r["threshold_db"] + r["clip_db"] - 7.0) for r in rows
+                     if r["mcs"] == mcs and r["threshold_db"] is not None and not _floor(r))
+        if pts:
+            ax.plot(*zip(*pts), "o-", label=f"MCS {mcs}")
+    ax.set_xlabel("clip level (dB above RMS)")
+    ax.set_ylabel("peak-referenced threshold (dB)")
+    ax.set_title("Threshold + (clip - 7 dB); lower is better")
+    ax.grid(True, alpha=0.3)
+    ax.legend(fontsize=7)
+    fig.tight_layout()
+    fig.savefig(PLOTS / "clip.png", dpi=110)
+    plt.close(fig)
+    return "results/plots/clip.png"
 
 
 def clip_section() -> list[str]:
@@ -178,12 +223,21 @@ def clip_section() -> list[str]:
               "| MCS | " + " | ".join(f"clip {c:.0f} dB" for c in clips) + " | Best peak-referenced |",
               "|" + " --- |" * (len(clips) + 2)]
     for mcs in sorted({r["mcs"] for r in rows}):
-        vals = {r["clip_db"]: r["threshold_db"] for r in rows if r["mcs"] == mcs}
+        mine = {r["clip_db"]: r for r in rows if r["mcs"] == mcs}
+        vals = {c: (None if _floor(r) else r["threshold_db"]) for c, r in mine.items()}
         peak_ref = {c: v + (c - 7.0) for c, v in vals.items() if v is not None}
         best = min(peak_ref.items(), key=lambda kv: kv[1]) if peak_ref else None
-        lines.append(f"| {mcs} | " + " | ".join(_fmt(vals.get(c)) for c in clips)
+
+        def cell(c):
+            if c not in mine:
+                return ""
+            if vals[c] is not None:
+                return f"{vals[c]:.1f}"
+            return f"floor {100 * min(p['bler'] for p in mine[c]['points']):.1f}%"
+        lines.append(f"| {mcs} | " + " | ".join(cell(c) for c in clips)
                      + f" | {f'{best[1]:.1f} dB at clip {best[0]:.0f}' if best else '—'} |")
     lines.append("")
+    lines += [f"![Clip sweep]({clip_plot(rows)})", ""]
     return lines
 
 

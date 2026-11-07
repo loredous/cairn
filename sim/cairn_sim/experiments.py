@@ -62,8 +62,10 @@ def jobs_for(name: str) -> list[dict]:
                 jobs.append({"experiment": name, "mcs": r.mcs, "width": width, "profile": "awgn",
                              "start_db": expected[r.mcs], "seed": 1000 + 10 * r.mcs + width})
     elif name == "clip":
-        for clip_db in (7.0, 8.0, 9.0, 10.0):
+        for clip_db in (7.0, 8.0, 9.0, 10.0, 11.0, 12.0):
             for mcs in (3, 4, 5, 6):
+                if clip_db > 10 and mcs < 5:
+                    continue             # MCS 3-4 are best at 7-8 dB already
                 jobs.append({"experiment": name, "mcs": mcs, "width": 24, "profile": "awgn",
                              "clip_db": clip_db, "start_db": expected[mcs] - 1,
                              "seed": 2000 + 10 * mcs + int(clip_db)})
@@ -77,15 +79,35 @@ def jobs_for(name: str) -> list[dict]:
     return jobs
 
 
+def _key(job: dict) -> tuple:
+    return (job["mcs"], job["width"], job.get("profile"), job.get("clip_db", params.CLIP_DB_ABOVE_RMS))
+
+
+def _complete(row: dict, target: float = 0.01) -> bool:
+    """A stored result is final if it has a threshold or a genuine error floor
+    (BLER above target at every SNR tried), not a search that never bracketed."""
+    if row["threshold_db"] is not None:
+        return True
+    pts = sorted(row["points"], key=lambda p: p["snr_db"])
+    return bool(pts) and pts[0]["bler"] >= target
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("experiment", choices=["awgn", "clip", "channels"])
     ap.add_argument("--workers", type=int, default=4)
+    ap.add_argument("--resume", action="store_true",
+                    help="keep finished rows of the existing results file; run only the rest")
     args = ap.parse_args(argv)
     RESULTS.mkdir(exist_ok=True)
     jobs = jobs_for(args.experiment)
     out = RESULTS / f"{args.experiment}.json"
     results = []
+    if args.resume and out.exists():
+        done = {_key(r): r for r in json.loads(out.read_text()) if _complete(r)}
+        results = [done[_key(j)] for j in jobs if _key(j) in done]
+        jobs = [j for j in jobs if _key(j) not in done]
+        print(f"resuming: {len(results)} rows kept, {len(jobs)} to run", flush=True)
     with ProcessPoolExecutor(args.workers) as pool:
         for res in pool.map(run_job, jobs):
             results.append(res)

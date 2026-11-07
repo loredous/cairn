@@ -41,3 +41,15 @@ def test_bler_point_runs_frames():
     pt = link_sim.bler_point(0, 30.0, blocks_per_frame=4, min_blocks=8, min_errors=0,
                              rng=np.random.default_rng(0))
     assert pt.blocks == 8 and pt.block_errors == 0 and pt.frames == 2
+
+
+def test_threshold_steps_down_until_bracketed(monkeypatch):
+    # A fake waterfall: BLER 1 below 3 dB, 0 above. Starting at 8 dB must
+    # step down repeatedly rather than give up after one step.
+    def fake_point(mcs, snr, **kw):
+        errs = 1000 if snr < 3.0 else 0
+        return Point(snr, 1000, errs, 1, 0)
+    monkeypatch.setattr(link_sim, "bler_point", fake_point)
+    thr, pts = link_sim.threshold(0, start_db=8.0)
+    assert thr is not None and 2.0 <= thr <= 3.0
+    assert min(p.snr_db for p in pts) == 2.0

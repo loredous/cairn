@@ -114,8 +114,14 @@ def interpolate_threshold(points: list[Point], target: float = 0.01) -> float | 
 
 
 def threshold(mcs: int, *, start_db: float, step_db: float = 1.0, target: float = 0.01,
-              max_db: float = 45.0, **kw) -> tuple[float | None, list[Point]]:
-    """Step up from ``start_db`` until BLER falls below target, then refine at half steps."""
+              max_db: float = 45.0, max_down_steps: int = 8,
+              **kw) -> tuple[float | None, list[Point]]:
+    """Step up from ``start_db`` until BLER falls below target, then refine at half steps.
+
+    If the first point is already below target, step down (at most
+    ``max_down_steps`` times) until one is above it, so the result is
+    always bracketed.
+    """
     points: list[Point] = []
     snr = start_db
     while snr <= max_db:
@@ -126,8 +132,15 @@ def threshold(mcs: int, *, start_db: float, step_db: float = 1.0, target: float 
         snr += step_db
     else:
         return None, points
-    if len(points) == 1:                 # started below threshold: step down once
-        points.insert(0, bler_point(mcs, start_db - step_db, **kw))
+    if len(points) == 1:                 # started below threshold: step down until above it
+        lo = start_db
+        for _ in range(max_down_steps):
+            lo -= step_db
+            points.insert(0, bler_point(mcs, lo, **kw))
+            if points[0].bler >= target:
+                break
+        else:
+            return None, points
     mid = points[-1].snr_db - step_db / 2
     points.append(bler_point(mcs, mid, **kw))
     return interpolate_threshold(points, target), sorted(points, key=lambda p: p.snr_db)
