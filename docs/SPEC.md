@@ -55,7 +55,7 @@ The draft takes the defaults below where no decision has been made yet. These de
 | Host level control | Modem sets receive gain and calibrates transmit drive where the OS allows (13.5) | Operator sets levels by meter | Calibration frames and the automatic response to the distortion report drop out |
 | Compression | Session-layer option: zstd with published dictionaries, fetchable over the air | None in v1 | Section 12 content-encoding negotiation drops out |
 | Authentication | Optional Ed25519 signatures on PDUs | None | Section 12 signature PDU and key handling drop out |
-| Licensing | Spec CC BY 4.0; reference code MIT or Apache-2.0 | Copyleft | Changes who can embed it; no technical effect |
+| Licensing | Spec CC BY 4.0; reference code Apache-2.0 | Copyleft | Changes who can embed it; no technical effect |
 
 ## 3. Operating environment
 
@@ -183,6 +183,8 @@ The waveform is OFDM on 100 Hz-spaced tones in the FM audio band, with 10 ms sym
 
 The receiver measures dispersion from the width probe's per-tone phase; if it exceeds about 1.25 ms it sets the "use long prefix" flag (ACK flag bit 3, B.2) and the sender switches to the long prefix in that direction only. Repeater mode forces the long prefix regardless. Receivers detect either prefix without configuration (6.1).
 
+The prefix is the last 60 (or 120) samples of the useful symbol, negated. Every tone completes 3.5 + k cycles in the 10 ms useful symbol, so the waveform is anti-periodic over the useful symbol rather than periodic. The negated tail is the prefix that joins the useful symbol without a step, and it keeps the channel's effect a per-tone complex gain at the receiver, as a cyclic prefix does for whole-cycle tones. A plain copy of the tail would put a phase jump into every tone at the start of the useful symbol.
+
 Tone index k = 0…N−1 sits at 350 + 100·k Hz. Tones are numbered from the low end so that a receiver masking upper tones degrades toward the 24-tone base set rather than toward nothing.
 
 ### 5.3 Why these values
@@ -220,7 +222,7 @@ Receivers run the autocorrelation at both repeat lags and over a small grid of s
 
 ### 6.2 Modulation and coding scheme (MCS) ladder
 
-Rates scale with the negotiated width; the two extremes are shown. Rates are raw payload rates before preamble, header and ACK overhead. SNR values are textbook AWGN figures for about 1% block error; a real audio chain adds roughly 1–3 dB.
+Rates scale with the negotiated width; the two extremes are shown. Rates are raw coded-information rates before preamble, header and ACK overhead: they count each block's 16 CRC bits, so payload alone is 1,008/1,024 of each figure (1,925 bps at MCS 0 and 24 tones). SNR values are textbook AWGN figures for about 1% block error; a real audio chain adds roughly 1–3 dB.
 
 | MCS | Modulation | Code rate | Payload bits per data tone-symbol | bps at 24 tones | bps at 56 tones | Nominal SNR |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -684,7 +686,7 @@ The protocol is versioned on the air, capabilities are negotiated per session, a
 
 - **On-air version.** The 3-bit header version is bumped only for incompatible waveform or header changes. Everything else is negotiated through capability bits in CONNECT (16 bits in v1, 8 reserved) and through reserved rung and type IDs. Reserved fields are sent as zero and ignored on receipt.
 - **Spec versioning.** Major.minor. Minor versions add rungs, PDU types, dictionaries or capabilities without breaking v1 decoders. v1.0 is declared when two independent implementations pass Section 14.5.
-- **Licensing.** Specification and test vectors: CC BY 4.0. Reference implementation: MIT or Apache-2.0 (Section 2). Dictionaries: CC0 only, with their training corpus described and every source public domain, CC0 or under a rights-holder CC0 waiver (12.2).
+- **Licensing.** Specification and test vectors: CC BY 4.0. Reference implementation: Apache-2.0 (Section 2), chosen over MIT for its explicit patent grant from contributors. Dictionaries: CC0 only, with their training corpus described and every source public domain, CC0 or under a rights-holder CC0 waiver (12.2).
 - **Publication.** A single public repository holds the spec, matrices, preamble sequences, dictionaries with hashes, test vectors and the conformance runner. Releases are tagged and archived outside the repository host (for example on Software Heritage and in an archive maintained by a club or group), so a lost account or an abandoned project does not take the decoder with it.
 - **Records.** Because dictionaries are never withdrawn and the decoder is public, any logged transmission remains convertible to its original content, which is what §97.309(b) can require.
 - **Change process.** Proposed changes are issues against the spec with a test-vector update. A change that alters on-air behavior needs an implementation in two code bases before merge.
@@ -1040,7 +1042,7 @@ Derived values at the two width extremes, 24 and 56 tones (shown as 24 / 56), as
 | 2 | 88 / 208 | 23.3 / 9.8 | 14 / 33 | 3.2 / 7.5 |
 | 3 | 88 / 208 | 15.5 / 6.6 | 21 / 50 | 4.8 / 11.3 |
 | 4 | 132 / 312 | 11.6 / 4.9 | 28 / 67 | 6.3 / 15.1 |
-| 5 | 132 / 312 | 9.3 / 3.9 | 35 / 84 | 7.9 / 19.0 |
+| 5 | 132 / 312 | 9.3 / 3.9 | 35 / 83 | 7.9 / 18.8 |
 | 6 | 176 / 416 | 7.8 / 3.3 | 42 / 100 | 9.5 / 22.6 |
 
 Each data block carries 126 payload bytes (1,008 bits). Net kbps = blocks × 1,008 ÷ cycle time: 4.46 s for 4 s frames and 2.46 s for the 2 s frames of rungs 0–1, at either width, since the header and control block use the base tones. Shorter frames reduce every net figure; Section 7.4 shows the 2 s case.

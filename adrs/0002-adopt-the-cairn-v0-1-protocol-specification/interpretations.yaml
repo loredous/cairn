@@ -150,3 +150,42 @@
     starting points; the parameters stay within the decision's ranges, and
     TXDelay is still measured per radio.
   date: 2026-11-06
+
+- slug: prefix-is-negated-tail
+  decision: ofdm-parameters
+  question: >-
+    Is the cyclic prefix a plain copy of the last 60 (or 120) samples of the
+    useful symbol?
+  interpretation: >-
+    No. It is that tail negated. Tones at 350 + 100·k Hz complete 3.5 + k
+    cycles in the 10 ms useful symbol, so the waveform is anti-periodic over
+    it; only the negated tail joins the useful symbol without a step and
+    keeps the channel's effect a per-tone complex gain. A plain copy would
+    put a phase jump into every tone (SPEC §5.2). Found by Stage 1
+    simulation.
+  date: 2026-11-07
+
+- slug: ladder-rates-include-crc
+  decision: mcs-ladder
+  errata: true
+  question: >-
+    The bps columns are described as raw payload rates, but they are code
+    rate × bits per tone × data tone-symbols per second, which counts each
+    block's 16 CRC bits as payload.
+  interpretation: >-
+    They are raw coded-information rates. Payload alone is 1,008/1,024 of
+    each figure, for example 1,925 bps at MCS 0 and 24 tones (SPEC §6.2).
+  date: 2026-11-07
+
+- slug: reference-code-apache-2-0
+  decision: licensing
+  question: >-
+    Which of the two permitted licenses does the reference implementation
+    use?
+  interpretation: >-
+    Apache-2.0, for all code in the specification repository, including the
+    tooling and the Stage 1 simulation. It was chosen over MIT for its
+    explicit patent grant from contributors and its termination of that
+    grant for anyone who sues over the code. The specification, ADRs and
+    test vectors remain CC BY 4.0 (SPEC §2, §15).
+  date: 2026-11-07
