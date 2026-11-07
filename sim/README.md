@@ -20,17 +20,20 @@ uv run --package cairn-sim pytest sim/tests -m "not slow"
 | `ldpc` | NR BG1/BG2 lifted codes from `codes/`, encoder, rate matching, layered normalized min-sum decoder |
 | `mapping` | Scrambler, interleaver, Gray QAM mapper and max-log demapper (**provisional**, see below) |
 | `ofdm` | Half-bin OFDM modulator/demodulator, clip-and-filter PAPR control |
-| `preamble` | S1/S2 sequences (**provisional** until the Stage 1 search) |
+| `preamble` | S1/S2 sequences (Stage 1 search results, with the search code) and the SPEC 6.1 dual-lag detector |
+| `preamble_eval` | Detection, false-alarm and prefix-identification measurements (`python -m cairn_sim.preamble_eval`) |
 | `frame` | Frame assembly and the thin-slice receiver |
 | `channel` | AWGN and the FM audio-chain model |
 
 ## Provisional choices
 
 SPEC §6.4 defers the scrambler, interleaver and constellation labeling to an
-ADR due before v0.2, and §20.3 has S1 chosen by a Stage 1 search. Until then
-the simulation uses the placeholder designs documented at the top of
-`mapping.py` and `preamble.py`. They meet the normative properties and are
-meant to be replaced by whatever the ADR specifies.
+ADR due before v0.2. Until then the simulation uses the placeholder designs
+documented at the top of `mapping.py`. They meet the normative properties and
+are meant to be replaced by whatever the ADR specifies.
+
+S1 and S2 (§20.3) are the Stage 1 search results; the top of `preamble.py`
+says exactly how they were chosen, for publication as test vectors.
 
 ## Audio SNR
 
