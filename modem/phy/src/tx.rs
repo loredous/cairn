@@ -1,13 +1,20 @@
 //! Frame builder (SPEC 6.4, 7.1, 8.1), mirroring `frame.build` of the Stage 1
-//! simulator: header and data blocks through CRC, LDPC, rate matching,
-//! scrambling, interleaving and mapping; the tone grid; the time-domain
-//! frame with clip-and-filter at the rung's level.
+//! simulator: header, control and data blocks through CRC, LDPC, rate
+//! matching, scrambling, interleaving and mapping; the tone grid; the
+//! time-domain frame with clip-and-filter at the rung's level (7 dB without
+//! data blocks). [`Transmitter::build_frame`] builds the frame a SPEC 8.2
+//! header describes, with its Appendix B control blocks.
+
+use std::fmt;
 
 use num_complex::Complex64;
 
-use crate::frame::FrameConfig;
+use crate::fields::{ControlBlock, FieldError, Header};
+use crate::frame::{ConfigError, FrameConfig, LinkState};
 use crate::ofdm::{Grid, Ofdm};
-use crate::params::{self, BASE_TONES, HEADER_CODED_BITS, HEADER_POSITION, PREAMBLE_SYMBOLS, PROBE_SYMBOLS};
+use crate::params::{
+    self, BASE_TONES, CONTROL_CODED_BITS, CP_SHORT, HEADER_CODED_BITS, HEADER_POSITION, PREAMBLE_SYMBOLS, PROBE_SYMBOLS,
+};
 use crate::{crc, gold, interleave, ldpc, mapping, preamble};
 
 const QPSK: usize = 2;
@@ -52,6 +59,65 @@ pub fn header_stream(cfg: &FrameConfig, header_info: &[u8]) -> Vec<u8> {
 /// The header's QPSK points (padding included) for header information bits (CRC included).
 pub fn header_points(cfg: &FrameConfig, header_info: &[u8]) -> Vec<Complex64> {
     mapping::modulate(&header_stream(cfg, header_info), QPSK)
+}
+
+/// The control segment's interleaved bits and padding: blocks (information
+/// bits, CRC included) at scrambler positions 1 .. n_control, QPSK on the
+/// control tones.
+pub fn control_stream(cfg: &FrameConfig, control_infos: &[Vec<u8>]) -> Vec<u8> {
+    let code = ldpc::control_code();
+    let mut bits = Vec::with_capacity(cfg.control_symbols() * cfg.control_tones.len() * QPSK);
+    for (i, info) in control_infos.iter().enumerate() {
+        let tx = code.encode_rate_matched(info, CONTROL_CODED_BITS);
+        let scrambled: Vec<u8> =
+            tx.iter().zip(gold::scramble_sequence(1 + i as u32, tx.len())).map(|(a, b)| a ^ b).collect();
+        bits.extend(interleave::interleave(&scrambled));
+    }
+    let res = cfg.control_symbols() * cfg.control_tones.len() * QPSK;
+    bits.extend(gold::pad_bits(res - bits.len()));
+    bits
+}
+
+/// Why a frame could not be built from a header.
+#[derive(Clone, Debug, PartialEq)]
+pub enum BuildError {
+    /// A header or control block field is out of range.
+    Field(FieldError),
+    /// The header describes no frame at this link state.
+    Config(ConfigError),
+    /// Control blocks or payloads disagree with the header's counts.
+    Count {
+        /// What disagrees.
+        what: &'static str,
+        /// Count in the header.
+        header: usize,
+        /// Count given.
+        given: usize,
+    },
+}
+
+impl fmt::Display for BuildError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            BuildError::Field(e) => write!(f, "{e}"),
+            BuildError::Config(e) => write!(f, "{e}"),
+            BuildError::Count { what, header, given } => write!(f, "{given} {what} for a header of {header}"),
+        }
+    }
+}
+
+impl std::error::Error for BuildError {}
+
+impl From<FieldError> for BuildError {
+    fn from(e: FieldError) -> Self {
+        BuildError::Field(e)
+    }
+}
+
+impl From<ConfigError> for BuildError {
+    fn from(e: ConfigError) -> Self {
+        BuildError::Config(e)
+    }
 }
 
 /// Pilot and data tones of one run of symbols.
@@ -103,6 +169,19 @@ pub fn probe_grid(width: usize, first_symbol: usize) -> Grid {
     g.slice_rows(first_symbol, first_symbol + PROBE_SYMBOLS)
 }
 
+/// A frame's tone grid and the CRC-appended bits of its blocks.
+#[derive(Clone, Debug)]
+pub struct FrameGrid {
+    /// Tone values of every symbol.
+    pub grid: Grid,
+    /// Header information bits, CRC included (144).
+    pub header_bits: Vec<u8>,
+    /// Control block information bits, CRC included (n_control x 256).
+    pub control_bits: Vec<Vec<u8>>,
+    /// Data block information bits, CRC included (n_blocks x 1024).
+    pub block_bits: Vec<Vec<u8>>,
+}
+
 /// A built frame.
 #[derive(Clone, Debug)]
 pub struct TxFrame {
@@ -113,6 +192,8 @@ pub struct TxFrame {
     pub samples: Vec<f64>,
     /// Header information bits, CRC included (144).
     pub header_bits: Vec<u8>,
+    /// Control block information bits, CRC included (n_control x 256).
+    pub control_bits: Vec<Vec<u8>>,
     /// Data block information bits, CRC included (n_blocks x 1024).
     pub block_bits: Vec<Vec<u8>>,
     /// Tone values of every symbol before clip-and-filter.
@@ -145,13 +226,36 @@ impl Transmitter {
         Transmitter { ofdm: Ofdm::new() }
     }
 
-    /// The tone grid of a frame (header message 128 bits; payloads 1008 bits each),
-    /// with the CRC-appended header and block bits.
+    /// The tone grid of a frame without control blocks (header message 128
+    /// bits; payloads 1008 bits each), with the CRC-appended header and block bits.
     pub fn grid(&self, cfg: &FrameConfig, header_msg: &[u8], payloads: &[Vec<u8>]) -> (Grid, Vec<u8>, Vec<Vec<u8>>) {
+        let g = self.grid_with_controls(cfg, header_msg, &[], payloads);
+        (g.grid, g.header_bits, g.block_bits)
+    }
+
+    /// The tone grid of a frame (header message 128 bits, control messages
+    /// 240 bits each, payloads 1008 bits each), with the CRC-appended header,
+    /// control and block bits.
+    pub fn grid_with_controls(
+        &self,
+        cfg: &FrameConfig,
+        header_msg: &[u8],
+        control_msgs: &[Vec<u8>],
+        payloads: &[Vec<u8>],
+    ) -> FrameGrid {
         assert_eq!(header_msg.len(), params::HEADER_INFO_BITS - params::CRC_BITS);
+        assert_eq!(control_msgs.len(), cfg.n_control, "control block count");
         assert_eq!(payloads.len(), cfg.n_blocks);
         let header_bits = crc::append_crc(header_msg);
         let hpoints = header_points(cfg, &header_bits);
+        let control_bits: Vec<Vec<u8>> = control_msgs
+            .iter()
+            .map(|m| {
+                assert_eq!(m.len(), params::CONTROL_INFO_BITS - params::CRC_BITS);
+                crc::append_crc(m)
+            })
+            .collect();
+        let cpoints = mapping::modulate(&control_stream(cfg, &control_bits), QPSK);
 
         let rung = cfg.rung();
         let dcode = ldpc::data_code();
@@ -159,7 +263,7 @@ impl Transmitter {
         let mut stream = Vec::with_capacity(cfg.data_symbols() * cfg.data_tones.len() * rung.bits_per_point);
         for (i, p) in payloads.iter().enumerate() {
             assert_eq!(p.len(), params::DATA_PAYLOAD_BITS);
-            let st = block_stages(dcode, p, rung.coded_bits, 1 + i as u32);
+            let st = block_stages(dcode, p, rung.coded_bits, (1 + cfg.n_control + i) as u32);
             stream.extend_from_slice(&st.interleaved);
             block_bits.push(st.info);
         }
@@ -177,21 +281,70 @@ impl Transmitter {
         if cfg.has_probe {
             fill_probe(&mut grid, cfg.first_probe(), &table);
         }
+        let cpilots = cfg.control_pilots();
+        fill_symbols(
+            &mut grid,
+            cfg.first_control(),
+            &cpoints,
+            &cfg.control_tones,
+            &cpilots,
+            &table,
+            cfg.control_gain(),
+        );
         fill_symbols(&mut grid, cfg.first_data(), &dpoints, &cfg.data_tones, &cfg.data_pilots, &table, cfg.data_gain());
-        (grid, header_bits, block_bits)
+        FrameGrid { grid, header_bits, control_bits, block_bits }
+    }
+
+    /// Build a frame without control blocks: grid, then samples with
+    /// clip-and-filter per segment (see [`Transmitter::build_with_controls`]).
+    pub fn build(&mut self, cfg: &FrameConfig, header_msg: &[u8], payloads: &[Vec<u8>]) -> TxFrame {
+        self.build_with_controls(cfg, header_msg, &[], payloads)
+    }
+
+    /// Build the frame a SPEC 8.2 header describes at the link's width, mask
+    /// and prefix (short unless `link.cp` says otherwise), with its control
+    /// blocks and payloads (1008 bits each).
+    pub fn build_frame(
+        &mut self,
+        header: &Header,
+        controls: &[ControlBlock],
+        payloads: &[Vec<u8>],
+        link: &LinkState,
+    ) -> Result<TxFrame, BuildError> {
+        let cfg = FrameConfig::from_header(header, link, link.cp.unwrap_or(CP_SHORT))?;
+        if controls.len() != header.n_control {
+            return Err(BuildError::Count { what: "control blocks", header: header.n_control, given: controls.len() });
+        }
+        if payloads.len() != header.n_data {
+            return Err(BuildError::Count { what: "data blocks", header: header.n_data, given: payloads.len() });
+        }
+        let msgs = controls.iter().map(ControlBlock::message_bits).collect::<Result<Vec<_>, _>>()?;
+        Ok(self.build_with_controls(&cfg, &header.message_bits()?, &msgs, payloads))
     }
 
     /// Build a frame: grid, then samples with clip-and-filter per segment
     /// (preamble and header on the base tones, the probe on every tone up to
-    /// the width, data on the active tones), all at the width's scale.
-    pub fn build(&mut self, cfg: &FrameConfig, header_msg: &[u8], payloads: &[Vec<u8>]) -> TxFrame {
-        let (grid, header_bits, block_bits) = self.grid(cfg, header_msg, payloads);
+    /// the width, control blocks on the active base tones, data on the active
+    /// tones), all at the width's scale.
+    pub fn build_with_controls(
+        &mut self,
+        cfg: &FrameConfig,
+        header_msg: &[u8],
+        control_msgs: &[Vec<u8>],
+        payloads: &[Vec<u8>],
+    ) -> TxFrame {
+        let FrameGrid { grid, header_bits, control_bits, block_bits } =
+            self.grid_with_controls(cfg, header_msg, control_msgs, payloads);
         let scale = cfg.width;
-        let (fp, fd) = (cfg.first_probe(), cfg.first_data());
+        let (fp, fc, fd) = (cfg.first_probe(), cfg.first_control(), cfg.first_data());
         let base: Vec<usize> = (0..BASE_TONES).collect();
         let all: Vec<usize> = (0..cfg.width).collect();
-        let segments: [(usize, usize, &[usize]); 3] =
-            [(0, fp, &base), (fp, fd, &all), (fd, grid.rows, &cfg.data_active_tones)];
+        let segments: [(usize, usize, &[usize]); 4] = [
+            (0, fp, &base),
+            (fp, fc, &all),
+            (fc, fd, &cfg.control_active_tones),
+            (fd, grid.rows, &cfg.data_active_tones),
+        ];
         let mut samples = Vec::with_capacity(cfg.n_samples());
         for (a, b, tones) in segments {
             if a == b {
@@ -204,6 +357,6 @@ impl Transmitter {
                 samples.extend(x);
             }
         }
-        TxFrame { config: cfg.clone(), samples, header_bits, block_bits, grid }
+        TxFrame { config: cfg.clone(), samples, header_bits, control_bits, block_bits, grid }
     }
 }

@@ -2,13 +2,19 @@
 //! `frame-symbol-content`): which symbols carry what, on which tones, at
 //! which scale. Mirrors `FrameConfig` of `sim/cairn_sim/frame.py`.
 //!
-//! A frame is `preamble (4) | header (7) | [probe (2)] | data blocks`. The
-//! Stage 1 simulator builds no control blocks, and neither does this port
-//! yet (ADR 0005: control blocks have no vectors).
+//! A frame is `preamble (4) | header (7) | [probe (2)] | control blocks |
+//! data blocks`. Control blocks (0-3) are MCS 0 blocks in their own run of
+//! symbols on the base data tones less masked ones, with pilots 3 and 20,
+//! every active tone scaled by sqrt(24 / active tones) (ADR 0005).
+//! [`FrameConfig::from_header`] gives the frame a header describes at the
+//! link's width and mask ([`LinkState`]), for header-first reception.
 
 use std::fmt;
 
-use crate::params::{self, BASE_TONES, CP_LONG, CP_SHORT, MAX_TONES, N_USEFUL, PREAMBLE_SYMBOLS, PROBE_SYMBOLS, Rung};
+use crate::fields::Header;
+use crate::params::{
+    self, BASE_TONES, CONTROL_CODED_BITS, CP_LONG, CP_SHORT, MAX_TONES, N_USEFUL, PREAMBLE_SYMBOLS, PROBE_SYMBOLS, Rung,
+};
 
 /// Why a frame configuration is invalid.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -29,6 +35,10 @@ pub enum ConfigError {
     NoDataTones,
     /// Data block count above 128.
     Blocks(usize),
+    /// Control block count above 3.
+    Controls(usize),
+    /// The mask leaves no control tone.
+    NoControlTones,
 }
 
 impl fmt::Display for ConfigError {
@@ -42,11 +52,31 @@ impl fmt::Display for ConfigError {
             ConfigError::MaskedBasePilot => write!(f, "pilot tones 3 and 20 cannot be masked (SPEC 5.4)"),
             ConfigError::NoDataTones => write!(f, "the mask leaves no data tones"),
             ConfigError::Blocks(n) => write!(f, "data block count {n} above {}", params::MAX_DATA_BLOCKS),
+            ConfigError::Controls(n) => write!(f, "control block count {n} above {}", params::MAX_CONTROL_BLOCKS),
+            ConfigError::NoControlTones => write!(f, "the mask leaves no control tones"),
         }
     }
 }
 
 impl std::error::Error for ConfigError {}
+
+/// What a receiver must know that the header does not say (SPEC 5.4, 8.2):
+/// the link width and tone mask, and optionally the prefix (None: detect it).
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct LinkState {
+    /// Link width, 24-56 tones.
+    pub width: usize,
+    /// Usable-tone mask report, or None for every tone usable.
+    pub usable: Option<Vec<usize>>,
+    /// Prefix, 60 or 120 samples, if known.
+    pub cp: Option<usize>,
+}
+
+impl Default for LinkState {
+    fn default() -> Self {
+        LinkState { width: BASE_TONES, usable: None, cp: None }
+    }
+}
 
 /// What a frame carries and how. Build with [`FrameConfig::new`] and the
 /// `with_*` methods; every derived quantity is computed once.
@@ -58,6 +88,8 @@ pub struct FrameConfig {
     pub mcs: u8,
     /// Data blocks.
     pub n_blocks: usize,
+    /// Control blocks (0-3).
+    pub n_control: usize,
     /// Prefix length, 60 or 120 samples.
     pub cp: usize,
     /// Apply clip-and-filter.
@@ -78,6 +110,10 @@ pub struct FrameConfig {
     pub data_active_tones: Vec<usize>,
     /// Header data tones: base tones less pilots 3 and 20.
     pub base_data_tones: Vec<usize>,
+    /// Tones carrying coded bits in control symbols: base data tones less masked ones.
+    pub control_tones: Vec<usize>,
+    /// Control tones and pilots 3 and 20, sorted.
+    pub control_active_tones: Vec<usize>,
 }
 
 impl FrameConfig {
@@ -89,6 +125,7 @@ impl FrameConfig {
             width,
             mcs,
             n_blocks,
+            n_control: 0,
             cp: CP_SHORT,
             clip: true,
             // SPEC 7.1: a frame with no data blocks uses 7 dB.
@@ -100,9 +137,30 @@ impl FrameConfig {
             data_pilots: Vec::new(),
             data_active_tones: Vec::new(),
             base_data_tones: Vec::new(),
+            control_tones: Vec::new(),
+            control_active_tones: Vec::new(),
         };
         cfg.derive()?;
         Ok(cfg)
+    }
+
+    /// The frame `header` describes at the link's width and mask (SPEC 8.2):
+    /// the header's rung when it has data blocks (MCS 0 otherwise; the field
+    /// is then ignored), its block counts and probe flag, prefix `cp`.
+    pub fn from_header(header: &Header, link: &LinkState, cp: usize) -> Result<Self, ConfigError> {
+        let mcs = if header.n_data > 0 { header.mcs } else { 0 };
+        FrameConfig::new(link.width, mcs, header.n_data)?
+            .with_controls(header.n_control)?
+            .with_cp(cp)?
+            .with_probe(header.probe)?
+            .with_mask(link.usable.clone())
+    }
+
+    /// Use `n` control blocks (0-3).
+    pub fn with_controls(mut self, n: usize) -> Result<Self, ConfigError> {
+        self.n_control = n;
+        self.derive()?;
+        Ok(self)
     }
 
     /// Use prefix `cp` (60 or 120).
@@ -151,6 +209,9 @@ impl FrameConfig {
         if self.n_blocks > params::MAX_DATA_BLOCKS {
             return Err(ConfigError::Blocks(self.n_blocks));
         }
+        if self.n_control > params::MAX_CONTROL_BLOCKS {
+            return Err(ConfigError::Controls(self.n_control));
+        }
         let w = self.width;
         self.masked = match &self.usable {
             None => Vec::new(),
@@ -175,6 +236,13 @@ impl FrameConfig {
         self.data_active_tones = act;
         let base_pilots = params::pilots_for(BASE_TONES);
         self.base_data_tones = (0..BASE_TONES).filter(|k| !base_pilots.contains(k)).collect();
+        self.control_tones = self.base_data_tones.iter().copied().filter(|k| !self.masked.contains(k)).collect();
+        if self.n_control > 0 && self.control_tones.is_empty() {
+            return Err(ConfigError::NoControlTones);
+        }
+        let mut act: Vec<usize> = self.control_tones.iter().chain(&base_pilots).copied().collect();
+        act.sort_unstable();
+        self.control_active_tones = act;
         Ok(())
     }
 
@@ -204,6 +272,26 @@ impl FrameConfig {
         params::HEADER_CODED_BITS.div_ceil(2 * self.base_data_tones.len())
     }
 
+    /// Pilot tones of control symbols (3 and 20, which cannot be masked).
+    pub fn control_pilots(&self) -> Vec<usize> {
+        params::pilots_for(BASE_TONES)
+    }
+
+    /// Amplitude factor on every active tone of a control symbol (ADR 0005):
+    /// a masked control symbol keeps the power of 24 unit-power tones.
+    pub fn control_gain(&self) -> f64 {
+        (BASE_TONES as f64 / self.control_active_tones.len() as f64).sqrt()
+    }
+
+    /// Control symbols, the last one padded.
+    pub fn control_symbols(&self) -> usize {
+        if self.n_control == 0 {
+            0
+        } else {
+            (self.n_control * CONTROL_CODED_BITS).div_ceil(2 * self.control_tones.len())
+        }
+    }
+
     /// Coded data bits in the frame.
     pub fn data_bits(&self) -> usize {
         self.n_blocks * self.rung().coded_bits
@@ -224,9 +312,14 @@ impl FrameConfig {
         PREAMBLE_SYMBOLS + self.header_symbols()
     }
 
+    /// Index of the first control symbol (or of the first data symbol without control blocks).
+    pub fn first_control(&self) -> usize {
+        self.first_probe() + self.probe_symbols()
+    }
+
     /// Index of the first data symbol.
     pub fn first_data(&self) -> usize {
-        self.first_probe() + self.probe_symbols()
+        self.first_control() + self.control_symbols()
     }
 
     /// Symbols in the frame.

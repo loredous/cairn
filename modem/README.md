@@ -27,9 +27,10 @@ One library crate, `phy/` (`cairn-phy`):
 | `ofdm` | Half-bin OFDM synthesis (negated-tail prefix) and demodulation, clip-and-filter, PAPR, peak scaling |
 | `preamble` | S1, S2 and the preamble grid |
 | `detector` | SPEC 6.1 dual-lag detector with S1 cross-correlation and the ±100 ppm grid, one-shot and streaming |
-| `frame` | Frame geometry: segments, tones, masks, gains (ADR 0004, 0005) |
-| `tx` | Frame builder, mirroring `frame.build` |
-| `rx` | Receiver, mirroring `frame.receive` with its defaults (header-noise method "measured", decision-directed noise, burst-aware LLRs), plus the ADR 0006 channel SNR from rebuilt symbols |
+| `fields` | SPEC 8.2 header, B.1 addresses (with the long-callsign SHA-256 hash) and every Appendix B control block: pack, unpack, CRC and field checks |
+| `frame` | Frame geometry: segments (header, probe, control, data), tones, masks, gains (ADR 0004, 0005); `LinkState` and `FrameConfig::from_header` |
+| `tx` | Frame builder, mirroring `frame.build`; `build_frame` from a header and control blocks |
+| `rx` | Receiver, mirroring `frame.receive` with its defaults (header-noise method "measured", decision-directed noise, burst-aware LLRs), plus the ADR 0006 channel SNR from rebuilt symbols; `receive_header_first` and `detect_and_receive` decode a frame knowing only the link width and mask |
 | `dsp` | Savitzky-Golay, convolution, interpolation, unwrap, median, Kaiser FIR with NumPy/SciPy semantics |
 | `channel`, `wav` | AWGN test channel; 16-bit WAV reading and writing |
 
@@ -42,25 +43,49 @@ data symbols whose blocks all decoded), with a residual phase ramp where
 the pilot track leaves one. `tests/loopback.rs` checks it within 1 dB from
 12 to 45 dB at MCS 0, 4 and 6 (measured within 0.2 dB).
 
-Like the simulator, the receiver takes the frame configuration (width,
-rung, block count, prefix, mask) from the caller; decoding the header
-fields to get it is link-layer work still to do.
+The receiver decodes header first (`Receiver::receive_header_first`, or
+`detect_and_receive` with the detector in front): it decodes the preamble
+and header on the base tones, unpacks the SPEC 8.2 fields, and takes the
+rung, the control and data block counts and the probe flag from them. The
+caller supplies only what the header does not carry, the link width and
+tone mask (`LinkState`); the prefix comes from the detector. Control
+blocks are decoded before the data and parsed (`RxResult::controls`); a
+header that fails its CRC or has malformed fields stops the decode, with
+the reason in `RxResult::header_error`. `Receiver::receive` with a
+`FrameConfig` still decodes a frame of known geometry.
 
 ## Verification
 
 - `tests/ldpc_vectors.rs`: every `vectors/ldpc_*.json` vector (CRC, full
   codeword, every rate-matched length), the rate-matching tables, the
   lifted files against `codes/bg*.csv`, and the alists.
+- `tests/field_vectors.rs`: every `vectors/header/` and `vectors/control/`
+  case: fields pack to the published bits and unpack back; the headers and
+  blocks a receiver must refuse are refused, a reserved control type is
+  skipped; SHA-256 known answers.
+- `tests/header_first.rs`: every header and control field over its range,
+  addresses, single-bit CRC errors, flag and version checks; header-first
+  decode through AWGN; a header-only frame (clipped at 7 dB); control
+  blocks with a probe, a mask and the long prefix at 30 tones; a failed
+  header, a malformed one, a reserved rung and one failed control block.
 - `tests/bitmap_vectors.rs`: every stage of all 13 `vectors/bitmap/`
   frames: info, rate-matched, scrambler, scrambled and interleaved bits,
   padding, I/Q levels, segment geometry and gains, the tone grid (within
   its 9 printed decimals) and the three sample streams (within 6).
+- `tests/bitmap_vectors.rs` also checks the 7 `vectors/frame/` frames
+  (real headers and control blocks: control segment geometry, positions,
+  stages, grid, samples), builds them from their fields, and decodes the
+  published samples header first.
 - `tests/rx_fixtures.rs`: fixtures from `tools/gen_rx_fixtures.py` (clean,
   AWGN, mic, repeater with long prefix, masked, ±100 ppm, noise burst) as
   16-bit WAV. The Rust detector finds the simulator's starts, prefixes and
   clock-grid points; the receiver's per-tone SNR agrees to 1e-12 dB and it
-  decodes the same blocks in the same number of LDPC iterations. Rust
-  clip-and-filter matches the simulator to 3e-15.
+  decodes the same blocks in the same number of LDPC iterations. Four
+  `hdr_*` fixtures (mic and repeater profiles, AWGN at 30 tones with a
+  probe, mask and two control blocks, a header-only PROBE) carry real
+  headers and control blocks and are decoded header first by both
+  receivers: same configuration from the header, same control blocks, SNR
+  within 1e-13 dB. Rust clip-and-filter matches the simulator to 3e-15.
 - `tests/loopback.rs`: Rust TX to Rust RX, every rung at widths 24-56,
   both prefixes, with and without masks; header-only frames; the channel SNR.
 - Block-by-block agreement near the MCS 2 threshold (3,200 blocks at 7.0,

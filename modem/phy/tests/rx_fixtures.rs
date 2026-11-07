@@ -1,12 +1,14 @@
 //! The Rust detector and receiver against the Stage 1 simulator on the
 //! fixtures written by `modem/tools/gen_rx_fixtures.py`: the same 16-bit
-//! audio, the same detections, the same blocks decoded. Also the Rust
+//! audio, the same detections, the same blocks decoded. The `hdr_*` fixtures
+//! carry real headers and control blocks and are decoded header first by
+//! both receivers, which know only the width and mask. Also the Rust
 //! clip-and-filter against the simulator's on `fixtures/tx/`.
 
 mod common;
 
 use cairn_phy::detector::{self, DetectorConfig};
-use cairn_phy::{Receiver, RxOptions, Transmitter, wav};
+use cairn_phy::{LinkState, Receiver, RxOptions, Transmitter, wav};
 use common::*;
 
 fn fixtures(dir: &str, ext: &str) -> Vec<std::path::PathBuf> {
@@ -100,7 +102,32 @@ fn receiver_matches_simulator() {
         // Receiver, from the simulator's start.
         let prx = &py["rx"];
         let start = prx["start"].as_u64().unwrap() as usize;
-        let r = rx.receive(&samples, &cfg, start, &RxOptions::default());
+        let header_first = doc.get("header_first").is_some();
+        let r = if header_first {
+            let link = LinkState { width: cfg.width, usable: cfg.usable.clone(), cp: Some(cfg.cp) };
+            let r = rx.receive_header_first(&samples, &link, start, cfg.cp, &RxOptions::default());
+            // The header told the receiver what the fixture's configuration is.
+            assert_eq!(r.config.as_ref(), Some(&cfg), "{name}: configuration from the header");
+            assert_eq!(r.header.is_some(), prx["header_fields_ok"].as_bool().unwrap(), "{name}");
+            let want = hex_to_bits(doc["header_message_hex"].as_str().unwrap(), 128);
+            assert_eq!(r.header.as_ref().unwrap().message_bits().unwrap(), want, "{name}: header fields");
+            let controls = fixture_controls(&doc);
+            let correct: Vec<bool> = r
+                .control_ok
+                .iter()
+                .zip(&r.control_bits)
+                .zip(&controls)
+                .map(|((&ok, b), m)| ok && b[..240] == m[..])
+                .collect();
+            let py_correct: Vec<bool> =
+                prx["control_correct"].as_array().unwrap().iter().map(|v| v.as_bool().unwrap()).collect();
+            assert_eq!(correct, py_correct, "{name}: control blocks");
+            assert!(correct.iter().all(|&v| v), "{name}: a control block failed");
+            assert!(r.controls.iter().all(Option::is_some), "{name}: control fields");
+            r
+        } else {
+            rx.receive(&samples, &cfg, start, &RxOptions::default())
+        };
         let correct: Vec<bool> = r
             .block_ok
             .iter()

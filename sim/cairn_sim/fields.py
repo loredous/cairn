@@ -542,8 +542,8 @@ class IdBlock:
         call = bytes(r.get(8) for _ in range(10))
         ssid = r.get(4)
         grid = bytes(r.get(8) for _ in range(6))
-        if any(not 0x20 <= b <= 0x7E for b in call):
-            raise FieldError("ID callsign is not printable 7-bit ASCII")
+        if any(not 0x20 <= b <= 0x7E for b in call) or call != call.upper():
+            raise FieldError("ID callsign is not upper-case printable 7-bit ASCII")
         g = None
         if _flag(flags, 0):
             if any(not 0x20 <= b <= 0x7E for b in grid):
