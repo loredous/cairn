@@ -1,11 +1,28 @@
 """Frame assembly and reception (SPEC 6, 8.1).
 
-A frame is ``preamble (4) | header (7) | [probe (2)] | data blocks``. The
-receiver finds the frame by cross-correlating with the known preamble
-waveform (or takes a start from the SPEC 6.1 detector), estimates the
-per-tone channel and noise from the two S2 symbols on the base tones and
-from the width probe above them, tracks common phase and timing drift with
-the continuous pilots, and decodes the header and every data block.
+A frame is ``preamble (4) | header (7) | [probe (2)] | control blocks |
+data blocks``. The receiver finds the frame by cross-correlating with the
+known preamble waveform (or takes a start from the SPEC 6.1 detector),
+estimates the per-tone channel and noise from the two S2 symbols on the base
+tones and from the width probe above them, tracks common phase and timing
+drift with the continuous pilots, and decodes the header, every control
+block and every data block.
+
+Header-first reception (SPEC 8.2). ``receive(rx)`` without a
+``FrameConfig`` decodes the preamble and header alone, unpacks the header
+fields (``fields.Header``) and takes the frame's geometry from them: the
+data rung, the control and data block counts and whether a width probe
+follows. Width and tone mask are link state, not header fields, so they come
+from ``link`` (default: 24 tones, no mask); the prefix comes from the
+detector (SPEC 6.1). ``build`` takes header fields and control blocks
+(``fields``) the same way; without them it sends pseudo-random header bits,
+as the Stage 1 simulator always has (``vectors/bitmap/``).
+
+Control blocks (SPEC 8.1, ADR 0005). Up to three 256-bit blocks, each coded
+at MCS 0 (512 bits), fill their own run of symbols between the probe and the
+data, on the base data tones less masked ones, with pilots 3 and 20 and
+every active tone scaled by sqrt(24 / active tones). Scrambler positions:
+header 0, control block i 1 + i, data block j 1 + n_control + j.
 
 Tone mask (SPEC 5.4). ``FrameConfig.mask`` is the set of usable tones. It
 applies to data symbols only: preamble, header and width probe never change,
@@ -15,8 +32,6 @@ or 52 is simply absent), coded bits fill the remaining data tones in order,
 and every active tone is scaled by ``FrameConfig.data_gain`` =
 sqrt(width / active tones) so the symbol's total power is the same as an
 unmasked one. The receiver divides that known factor back out.
-
-Not yet modelled: control blocks.
 """
 
 from __future__ import annotations
@@ -27,14 +42,26 @@ from functools import cached_property
 import numpy as np
 from scipy import signal
 
-from . import ldpc, mapping, ofdm, params, preamble
+from . import fields, ldpc, mapping, ofdm, params, preamble
 from .crc import append_crc
 
 PILOT_C_INIT = 0x0B1D   # pilot BPSK sequence seed (ADR 0005 pilot-sequence)
 PROBE_C_INIT = 0x0D0E   # width-probe BPSK sequence seed (ADR 0005 probe-sequence)
 PAD_POSITION = 255      # scrambler position for padding bits (ADR 0005 scrambler-sequence)
-HEADER_POSITION = 0     # scrambler position of the header; block i uses 1 + i
+HEADER_POSITION = 0     # scrambler position of the header; control block i uses 1 + i,
+                        # data block j 1 + n_control + j
 QPSK = 2
+
+
+@dataclass(frozen=True)
+class LinkState:
+    """What a receiver must know that the header does not say (SPEC 5.4, 8.2):
+    the link width and the tone mask, and optionally the prefix (``None``:
+    detect it, SPEC 6.1)."""
+
+    width: int = params.BASE_TONES
+    mask: frozenset[int] | None = None
+    cp: int | None = None
 
 
 @dataclass(frozen=True)
@@ -48,15 +75,22 @@ class FrameConfig:
     probe: bool | None = None   # width probe after the header; default: when width > 24
     mask: frozenset[int] | None = None  # usable tones (SPEC 5.4); None: every tone usable
     interleaver: str = "linear"         # mapping.INTERLEAVERS; "random" is an evaluation reference
+    n_control: int = 0                  # control blocks (0-3), MCS 0 on the base tones
 
     def __post_init__(self) -> None:
         if not 0 <= self.mcs < len(params.RUNGS):
             raise ValueError(f"no rung MCS {self.mcs}")
+        if not 0 <= self.n_blocks <= fields.MAX_DATA_BLOCKS:
+            raise ValueError(f"data block count {self.n_blocks} outside 0-{fields.MAX_DATA_BLOCKS}")
+        if not 0 <= self.n_control <= fields.MAX_CONTROL_BLOCKS:
+            raise ValueError(f"control block count {self.n_control} outside 0-{fields.MAX_CONTROL_BLOCKS}")
         if self.clip_db is None:
-            # The whole frame (preamble, header, probe, data) is clipped at the
-            # data rung's level, so every symbol shares one per-tone scale and
-            # the S2 channel estimate stays valid for the data.
-            object.__setattr__(self, "clip_db", params.clip_db(self.mcs))
+            # The whole frame (preamble, header, probe, control, data) is
+            # clipped at the data rung's level, so every symbol shares one
+            # per-tone scale and the S2 channel estimate stays valid for the
+            # data. A frame with no data blocks uses 7 dB (SPEC 7.1).
+            object.__setattr__(self, "clip_db", params.clip_db(self.mcs) if self.n_blocks
+                               else params.CLIP_DB_ABOVE_RMS)
         if not params.BASE_TONES <= self.width <= params.MAX_TONES:
             raise ValueError(f"width must be {params.BASE_TONES}-{params.MAX_TONES} tones")
         if self.width > params.BASE_TONES and self.probe is False:
@@ -66,6 +100,24 @@ class FrameConfig:
         if self.interleaver not in mapping.INTERLEAVERS:
             raise ValueError(f"unknown interleaver {self.interleaver!r}")
         params.masked_tones(self.width, self.mask)          # validates the mask
+        if self.n_control and not self.control_tones:
+            raise ValueError("the mask leaves no control tones")
+
+    @classmethod
+    def from_header(cls, header: fields.Header, link: LinkState | None = None, *,
+                    cp: int | None = None, **kw) -> FrameConfig:
+        """The frame a header describes, at the link's width and mask (SPEC 8.2).
+
+        The rung is the header's when it has data blocks (MCS 0 otherwise:
+        control blocks are always MCS 0 and the field is then ignored). The
+        prefix is ``cp``, else the link's, else the short one.
+        """
+        link = link or LinkState()
+        cp = cp if cp is not None else (link.cp if link.cp is not None else params.CP_SHORT)
+        if header.n_data and not 0 <= header.mcs < len(params.RUNGS):
+            raise ValueError(f"header MCS {header.mcs} is a reserved rung")
+        return cls(width=link.width, mcs=header.mcs if header.n_data else 0, n_blocks=header.n_data,
+                   n_control=header.n_control, cp=cp, probe=header.probe, mask=link.mask, **kw)
 
     @property
     def has_probe(self) -> bool:
@@ -117,6 +169,39 @@ class FrameConfig:
         e = params.HEADER_CODE.coded_bits[0]
         return -(-e // (QPSK * len(self.base_data_tones)))
 
+    @cached_property
+    def control_tones(self) -> tuple[int, ...]:
+        """Tones carrying coded bits in control symbols: base data tones less masked ones."""
+        return tuple(k for k in self.base_data_tones if k not in self.masked)
+
+    @property
+    def control_pilots(self) -> tuple[int, ...]:
+        return params.pilots_for(params.BASE_TONES)        # 3 and 20 cannot be masked
+
+    @cached_property
+    def control_active_tones(self) -> tuple[int, ...]:
+        return tuple(sorted(self.control_tones + self.control_pilots))
+
+    @property
+    def control_gain(self) -> float:
+        """Amplitude factor on every active tone of a control symbol (ADR 0005):
+        a masked control symbol keeps the power of 24 unit-power tones."""
+        return float(np.sqrt(params.BASE_TONES / len(self.control_active_tones)))
+
+    @property
+    def control_symbols(self) -> int:
+        e = params.CONTROL_CODE.coded_bits[0]
+        return -(-self.n_control * e // (QPSK * len(self.control_tones))) if self.n_control else 0
+
+    @property
+    def first_control(self) -> int:
+        """Index of the first control symbol (of the first data symbol without control blocks)."""
+        return params.PREAMBLE_SYMBOLS + self.header_symbols + self.probe_symbols
+
+    @property
+    def first_data(self) -> int:
+        return self.first_control + self.control_symbols
+
     @property
     def data_bits(self) -> int:
         return self.n_blocks * self.rung.coded_bits
@@ -128,7 +213,7 @@ class FrameConfig:
 
     @property
     def total_symbols(self) -> int:
-        return params.PREAMBLE_SYMBOLS + self.header_symbols + self.probe_symbols + self.data_symbols
+        return self.first_data + self.data_symbols
 
     @property
     def n_samples(self) -> int:
@@ -189,6 +274,25 @@ def _pad_bits(n: int) -> np.ndarray:
     return mapping.scramble_sequence(PAD_POSITION, n) if n else np.zeros(0, dtype=np.uint8)
 
 
+def _coded_stream(code: ldpc.LiftedCode, info: np.ndarray, e: int, first_position: int,
+                  interleaver: str) -> np.ndarray:
+    """Blocks (n, k) with CRC -> their interleaved bits back to back (SPEC 6.4)."""
+    if not len(info):
+        return np.zeros(0, dtype=np.uint8)
+    coded = code.rate_match(code.encode(info), e)
+    return np.concatenate([mapping.interleave(mapping.scramble(coded[i], first_position + i), interleaver,
+                                              first_position + i) for i in range(len(info))])
+
+
+def control_points(cfg: FrameConfig, control_bits: np.ndarray) -> np.ndarray:
+    """The control segment's QPSK points (blocks at positions 1 .. n_control, then padding)."""
+    ccode = ldpc.code_for(params.CONTROL_CODE)
+    e_c = params.CONTROL_CODE.coded_bits[0]
+    stream = _coded_stream(ccode, control_bits, e_c, 1, cfg.interleaver)
+    c_res = cfg.control_symbols * len(cfg.control_tones) * QPSK
+    return mapping.modulate(np.concatenate([stream, _pad_bits(c_res - stream.size)]), QPSK)
+
+
 @dataclass
 class TxFrame:
     config: FrameConfig
@@ -196,18 +300,42 @@ class TxFrame:
     header_bits: np.ndarray        # (144,) incl. CRC
     block_bits: np.ndarray         # (n_blocks, 1024) incl. CRC
     grid: np.ndarray = field(repr=False)  # (total_symbols, width) tone values before clipping
+    control_bits: np.ndarray = field(default_factory=lambda: np.zeros((0, params.CONTROL_INFO_BITS), np.uint8))
+    header: fields.Header | None = None   # the header's fields, when built from them
 
     @property
     def preamble_samples(self) -> np.ndarray:
         return self.samples[: params.PREAMBLE_SYMBOLS * self.config.stride]
 
 
+def _check_header(cfg: FrameConfig, header: fields.Header) -> None:
+    want = FrameConfig.from_header(header, LinkState(cfg.width, cfg.mask), cp=cfg.cp)
+    got = (cfg.n_blocks, cfg.n_control, cfg.has_probe, cfg.mcs if cfg.n_blocks else 0)
+    if got != (want.n_blocks, want.n_control, want.has_probe, want.mcs):
+        raise ValueError("header fields (data and control block counts, probe flag, MCS) "
+                         "disagree with the frame configuration")
+
+
 def build(cfg: FrameConfig, rng: np.random.Generator, header_msg: np.ndarray | None = None,
-          payloads: np.ndarray | None = None) -> TxFrame:
-    """Assemble a frame; random header and payloads unless given."""
+          payloads: np.ndarray | None = None, *, header: fields.Header | None = None,
+          controls: list | None = None) -> TxFrame:
+    """Assemble a frame.
+
+    ``header`` gives the header's fields (SPEC 8.2), which must agree with
+    ``cfg``; otherwise ``header_msg`` gives its 128 bits before the CRC, and
+    without either they are pseudo-random (the Stage 1 frames and
+    ``vectors/bitmap/``). ``controls`` lists ``cfg.n_control`` control blocks,
+    as ``fields`` objects or 240-bit messages; random bits if omitted.
+    Payloads are random unless given.
+    """
     dcode = ldpc.code_for(params.DATA_CODE)
     rung = cfg.rung
 
+    if header is not None:
+        if header_msg is not None:
+            raise ValueError("give header fields or header bits, not both")
+        _check_header(cfg, header)
+        header_msg = header.message_bits()
     if header_msg is None:
         header_msg = rng.integers(0, 2, params.HEADER_INFO_BITS - 16, dtype=np.uint8)
     header_bits = append_crc(header_msg[None])[0]
@@ -215,31 +343,45 @@ def build(cfg: FrameConfig, rng: np.random.Generator, header_msg: np.ndarray | N
 
     if payloads is None:
         payloads = rng.integers(0, 2, (cfg.n_blocks, params.DATA_PAYLOAD_BITS), dtype=np.uint8)
+    payloads = np.asarray(payloads, dtype=np.uint8).reshape(cfg.n_blocks, params.DATA_PAYLOAD_BITS)
     block_bits = append_crc(payloads)
-    coded = dcode.rate_match(dcode.encode(block_bits), rung.coded_bits)
-    stream = np.concatenate([mapping.interleave(mapping.scramble(coded[i], 1 + i), cfg.interleaver, 1 + i)
-                             for i in range(cfg.n_blocks)])
+    stream = _coded_stream(dcode, block_bits, rung.coded_bits, 1 + cfg.n_control, cfg.interleaver)
     d_res = cfg.data_symbols * len(cfg.data_tones) * rung.bits_per_symbol
     stream = np.concatenate([stream, _pad_bits(d_res - stream.size)])
     dpoints = mapping.modulate(stream, rung.bits_per_symbol)
+
+    if controls is None:
+        cmsgs = (rng.integers(0, 2, (cfg.n_control, params.CONTROL_INFO_BITS - 16), dtype=np.uint8)
+                 if cfg.n_control else np.zeros((0, params.CONTROL_INFO_BITS - 16), np.uint8))
+    else:
+        if len(controls) != cfg.n_control:
+            raise ValueError(f"{len(controls)} control blocks for a frame of {cfg.n_control}")
+        cmsgs = np.array([c if isinstance(c, np.ndarray) else fields.control_message_bits(c)
+                          for c in controls], dtype=np.uint8).reshape(cfg.n_control, params.CONTROL_INFO_BITS - 16)
+    control_bits = append_crc(cmsgs) if cfg.n_control else np.zeros((0, params.CONTROL_INFO_BITS), np.uint8)
+    cpoints = control_points(cfg, control_bits)
 
     p_base = params.pilots_for(params.BASE_TONES)
     first_h = params.PREAMBLE_SYMBOLS
     hgrid = _fill_symbols(hpoints, cfg.header_symbols, cfg.width, cfg.base_data_tones, p_base, first_h)
     first_p = first_h + cfg.header_symbols
     pgrid = probe_grid(cfg.width, first_p) if cfg.has_probe else np.zeros((0, cfg.width), complex)
-    first_d = first_p + cfg.probe_symbols
+    first_c, first_d = cfg.first_control, cfg.first_data
+    cgrid = _fill_symbols(cpoints, cfg.control_symbols, cfg.width, cfg.control_tones,
+                          cfg.control_pilots, first_c) * cfg.control_gain
     dgrid = _fill_symbols(dpoints, cfg.data_symbols, cfg.width, cfg.data_tones,
                           cfg.data_pilots, first_d) * cfg.data_gain
-    grid = np.concatenate([preamble.grid(cfg.width), hgrid, pgrid, dgrid])
+    grid = np.concatenate([preamble.grid(cfg.width), hgrid, pgrid, cgrid, dgrid])
 
     # Every symbol uses the same per-tone scale (SPEC 6.2), set by the link
-    # width; a tone mask raises data symbols by the known cfg.data_gain.
-    # Clip-and-filter projects each symbol back onto the tones it uses, so
-    # clipping noise does not refill masked tones.
+    # width; a tone mask raises control and data symbols by the known
+    # cfg.control_gain and cfg.data_gain. Clip-and-filter projects each
+    # symbol back onto the tones it uses, so clipping noise does not refill
+    # masked tones.
     scale = cfg.width
     segments = [(grid[:first_p], range(params.BASE_TONES)),
-                (grid[first_p:first_d], range(cfg.width)),
+                (grid[first_p:first_c], range(cfg.width)),
+                (grid[first_c:first_d], cfg.control_active_tones),
                 (grid[first_d:], cfg.data_active_tones)]
     out = []
     for g, tones in segments:
@@ -250,7 +392,17 @@ def build(cfg: FrameConfig, rng: np.random.Generator, header_msg: np.ndarray | N
             x = ofdm.clip_and_filter(x, cfg.width, np.array(list(tones)), cfg.cp,
                                      clip_db=cfg.clip_db, scale_tones=scale)
         out.append(x)
-    return TxFrame(cfg, np.concatenate(out), header_bits, block_bits, grid)
+    return TxFrame(cfg, np.concatenate(out), header_bits, block_bits, grid, control_bits, header)
+
+
+def build_frame(header: fields.Header, controls: list | tuple = (), payloads: np.ndarray | None = None, *,
+                link: LinkState | None = None, rng: np.random.Generator | None = None,
+                **kw) -> TxFrame:
+    """Build the frame a header describes (SPEC 8.2), at the link's width,
+    mask and prefix; ``kw`` goes to ``FrameConfig`` (for example ``clip``)."""
+    cfg = FrameConfig.from_header(header, link, **kw)
+    return build(cfg, rng if rng is not None else np.random.default_rng(0), payloads=payloads,
+                 header=header, controls=list(controls))
 
 
 # --- receiver ---------------------------------------------------------------
@@ -269,6 +421,15 @@ class RxResult:
     # ``noise`` per tone, equalized symbols ``eq`` (rows after the preamble),
     # ``d0`` (first data row of ``eq``), ``window_start``, ``shifts``, ``drift``.
     detail: dict = field(default_factory=dict, repr=False)
+    control_ok: np.ndarray = field(default_factory=lambda: np.zeros(0, dtype=bool))
+    control_bits: np.ndarray = field(default_factory=lambda: np.zeros((0, params.CONTROL_INFO_BITS), np.uint8))
+    # Parsed fields (``fields``): the header when its CRC passed and its
+    # fields are valid (else ``header_error`` says why), and each control
+    # block (None where its CRC failed or its fields are malformed).
+    header: fields.Header | None = None
+    header_error: str | None = None
+    controls: tuple = ()
+    config: FrameConfig | None = None       # the configuration the frame was decoded with
 
 
 def header_noise_floor(pre: np.ndarray, h: np.ndarray, thermal: np.ndarray,
@@ -370,6 +531,10 @@ def track_drift(pilot_obs: np.ndarray, pilots: tuple[int, ...], width: int, *,
     n_sym = pilot_obs.shape[0]
     kernel = np.ones(window) / window
     s = np.arange(n_sym, dtype=float)
+    # A pilot absent from all but one row (an upper pilot in a frame with no
+    # data symbols) tells nothing about drift.
+    use = [j for j in range(len(pilots)) if np.count_nonzero(~np.isnan(pilot_obs[:, j])) >= 2]
+    pilot_obs, pilots = pilot_obs[:, use], tuple(pilots[j] for j in use)
     slopes = np.zeros(len(pilots))
     for j in range(len(pilots)):
         valid = ~np.isnan(pilot_obs[:, j])        # a contiguous run of rows
@@ -390,7 +555,8 @@ def _estimate(tones: np.ndarray, cfg: FrameConfig, smooth_window: int, phase_win
               robust: bool = False):
     """Channel, noise and drift estimates from demodulated tones.
 
-    ``tones`` has the data symbols already divided by ``cfg.data_gain``.
+    ``tones`` has the control and data symbols already divided by
+    ``cfg.control_gain`` and ``cfg.data_gain``.
     Returns ``noise`` (noise plus distortion per tone, at the preamble's
     scale) and ``thermal``, its additive-noise part, which a data symbol
     raised by the mask gain sees reduced by ``data_gain ** 2``. With
@@ -421,8 +587,13 @@ def _estimate(tones: np.ndarray, cfg: FrameConfig, smooth_window: int, phase_win
     pilots = cfg.data_pilots          # masked pilots are absent from data symbols
     pv = pilots_on(tones.shape[0], pilots)[first:]
     obs = body[:, list(pilots)] / pv
-    obs[:hs, [j for j, p in enumerate(pilots) if p >= b]] = np.nan   # header: base pilots only
-    d0 = hs + cfg.probe_symbols
+    upper = [j for j, p in enumerate(pilots) if p >= b]
+    obs[:hs, upper] = np.nan                                   # header: base pilots only
+    d0 = cfg.first_data - first
+    if cfg.n_control:
+        # Control symbols carry base pilots only; the upper pilots' rows are
+        # then the data symbols alone, a contiguous run (probe rows dropped).
+        obs[hs:d0, upper] = np.nan
     if robust and body.shape[0] > d0:
         # A burst hitting one symbol's pilots would turn the smoothed phase
         # track for the symbols around it: leave such symbols out.
@@ -485,7 +656,8 @@ def find_start(rx: np.ndarray, reference: np.ndarray) -> int:
     return int(np.argmax(np.abs(corr)))
 
 
-def receive(rx: np.ndarray, cfg: FrameConfig, *, reference: np.ndarray | None = None,
+def receive(rx: np.ndarray, cfg: FrameConfig | None = None, *, link: LinkState | None = None,
+            reference: np.ndarray | None = None,
             start: int | None = None, advance: int | None = None,
             phase_window: int = 15, smooth_window: int = 7,
             decision_directed: bool = True, burst_aware: bool = True,
@@ -504,9 +676,18 @@ def receive(rx: np.ndarray, cfg: FrameConfig, *, reference: np.ndarray | None = 
     per-tone noise: "measured" (``header_noise_floor`` raised by
     ``estimate_header_noise``) or "s2" (the S2 difference plus the pilots'
     excess interpolated across the band, as used for the data).
+
+    Without ``cfg`` the header is decoded first and the frame's geometry
+    taken from its fields (``receive_header_first``), with width and mask
+    from ``link``.
     """
     if header_noise not in ("s2", "measured"):
         raise ValueError(f"unknown header_noise {header_noise!r}")
+    if cfg is None:
+        return receive_header_first(rx, link, reference=reference, start=start, advance=advance,
+                                    phase_window=phase_window, smooth_window=smooth_window,
+                                    decision_directed=decision_directed, burst_aware=burst_aware,
+                                    header_noise=header_noise)
     if start is None:
         if reference is None:
             reference = ofdm.modulate(preamble.grid(cfg.width), cfg.cp, active=cfg.width)
@@ -515,9 +696,12 @@ def receive(rx: np.ndarray, cfg: FrameConfig, *, reference: np.ndarray | None = 
     n_sym = cfg.total_symbols
     first = params.PREAMBLE_SYMBOLS
     window_start = start + cfg.cp - advance
-    d_first = first + cfg.header_symbols + cfg.probe_symbols   # first data symbol
+    c_first, d_first = cfg.first_control, cfg.first_data       # first control and data symbols
+    if window_start + n_sym * cfg.stride > rx.size:            # a frame cut short: decode what is there
+        rx = np.concatenate([rx, np.zeros(window_start + n_sym * cfg.stride - rx.size)])
     tones = ofdm.demodulate(rx, window_start, n_sym, cfg.width, cfg.cp, active=cfg.width)
-    tones[d_first:] /= cfg.data_gain                           # the mask's known power boost
+    tones[c_first:d_first] /= cfg.control_gain                 # the mask's known power boost
+    tones[d_first:] /= cfg.data_gain
     h, noise, thermal, excess, snr_db, corr, body, drift = _estimate(
         tones, cfg, smooth_window, phase_window, burst_aware)
     # Follow sample-clock drift: if the windows would wander by a sample or
@@ -533,13 +717,15 @@ def receive(rx: np.ndarray, cfg: FrameConfig, *, reference: np.ndarray | None = 
         # smooth drift; the window move itself keeps the prefix centred.
         f = params.BIN_OFFSET + np.arange(cfg.width)
         tones = tones * np.exp(-2j * np.pi * f[None, :] * shifts[:, None] / params.N_USEFUL)
+        tones[c_first:d_first] /= cfg.control_gain
         tones[d_first:] /= cfg.data_gain
         h, noise, thermal, excess, snr_db, corr, body, drift = _estimate(
             tones, cfg, smooth_window, phase_window, burst_aware)
     hs = cfg.header_symbols
-    d0 = hs + cfg.probe_symbols
+    c0, d0 = c_first - first, d_first - first                  # rows of ``body`` and ``eq``
     eq = body / (h[None, :] * corr)
     nv = noise[None, :] / np.abs(h[None, :]) ** 2 * np.ones_like(body.real)
+    nv[c0:d0] = (_data_noise(noise, thermal, cfg.control_gain) / np.abs(h) ** 2)[None, :]
     nv[d0:] = (_data_noise(noise, thermal, cfg.data_gain) / np.abs(h) ** 2)[None, :]
 
     # Header.
@@ -568,21 +754,117 @@ def receive(rx: np.ndarray, cfg: FrameConfig, *, reference: np.ndarray | None = 
         noise[:params.BASE_TONES] = np.maximum(rel * np.abs(h[:params.BASE_TONES]) ** 2,
                                                1e-6 * np.mean(np.abs(h) ** 2))
         snr_db = 10 * np.log10(np.abs(h) ** 2 / noise)
+        nv[c0:d0] = (_data_noise(noise, thermal, cfg.control_gain) / np.abs(h) ** 2)[None, :]
         nv[d0:] = (_data_noise(noise, thermal, cfg.data_gain) / np.abs(h) ** 2)[None, :]
 
+    # Control blocks: MCS 0 on the base tones, scrambler positions 1 .. n_control.
+    ct = list(cfg.control_tones)
+    cres = _decode_blocks(eq[c0:d0, ct], nv[c0:d0, ct], QPSK, params.CONTROL_CODE,
+                          params.CONTROL_CODE.coded_bits[0], cfg.n_control, 1, cfg.interleaver)
+
     # Data blocks.
-    dcode = ldpc.code_for(params.DATA_CODE)
     rung = cfg.rung
     dt = list(cfg.data_tones)
     if burst_aware and body.shape[0] > d0:
         act = list(cfg.data_active_tones)
         nv[d0:, act] += burst_noise(eq[d0:, act], nv[d0:, act], h[act])
-    dl = mapping.demodulate_llr(eq[d0:, dt], nv[d0:, dt], rung.bits_per_symbol)
-    e = rung.coded_bits
-    llrs = np.stack([mapping.descramble_llr(mapping.deinterleave(dl[i * e:(i + 1) * e], cfg.interleaver, 1 + i),
-                                            1 + i)
-                     for i in range(cfg.n_blocks)])
-    dres = ldpc.decode(dcode, dcode.rate_recover(llrs, e), rows=dcode.rows_needed(dcode.tx_positions(e)))
-    detail = {"h": h, "noise": noise, "thermal": thermal, "eq": eq, "d0": d0, "window_start": window_start,
-              "shifts": shifts, "drift": drift}
-    return RxResult(bool(hres.ok[0]), hres.bits[0], dres.ok, dres.bits, start, snr_db, dres.iterations, detail)
+    dres = _decode_blocks(eq[d0:, dt], nv[d0:, dt], rung.bits_per_symbol, params.DATA_CODE, rung.coded_bits,
+                          cfg.n_blocks, 1 + cfg.n_control, cfg.interleaver)
+    detail = {"h": h, "noise": noise, "thermal": thermal, "eq": eq, "d0": d0, "c0": c0,
+              "window_start": window_start, "shifts": shifts, "drift": drift}
+    header, header_error = parse_header(bool(hres.ok[0]), hres.bits[0])
+    return RxResult(bool(hres.ok[0]), hres.bits[0], dres.ok, dres.bits, start, snr_db, dres.iterations, detail,
+                    control_ok=cres.ok, control_bits=cres.bits, header=header, header_error=header_error,
+                    controls=parse_controls(cres.ok, cres.bits), config=cfg)
+
+
+def _decode_blocks(eq: np.ndarray, nv: np.ndarray, bits_per_symbol: int, spec: params.CodeSpec, e: int,
+                   n: int, first_position: int, interleaver: str) -> ldpc.DecodeResult:
+    """Demap a segment's equalized points and decode its first ``n`` blocks of
+    ``e`` coded bits, the first at scrambler position ``first_position``."""
+    if n == 0:
+        return ldpc.DecodeResult(np.zeros((0, spec.info_bits), np.uint8), np.zeros(0, bool),
+                                 np.zeros(0, np.int32))
+    code = ldpc.code_for(spec)
+    ll = mapping.demodulate_llr(eq, nv, bits_per_symbol)
+    llrs = np.stack([mapping.descramble_llr(mapping.deinterleave(ll[i * e:(i + 1) * e], interleaver,
+                                                                 first_position + i), first_position + i)
+                     for i in range(n)])
+    return ldpc.decode(code, code.rate_recover(llrs, e), rows=code.rows_needed(code.tx_positions(e)))
+
+
+def parse_header(ok: bool, bits: np.ndarray) -> tuple[fields.Header | None, str | None]:
+    """The header's fields, or why there are none (failed decode, CRC or malformed fields)."""
+    if not ok:
+        return None, "header did not decode"
+    try:
+        return fields.Header.unpack(bits), None
+    except fields.FieldError as e:
+        return None, str(e)
+
+
+def parse_controls(ok: np.ndarray, bits: np.ndarray) -> tuple:
+    """Each decoded control block's fields (None where it failed or is malformed)."""
+    out = []
+    for good, b in zip(ok, bits):
+        try:
+            out.append(fields.unpack_control(b) if good else None)
+        except fields.FieldError:
+            out.append(None)
+    return tuple(out)
+
+
+def locate(rx: np.ndarray, cp: int | None = None,
+           reference: np.ndarray | None = None) -> tuple[int, int] | None:
+    """Frame start and prefix: the strongest SPEC 6.1 detection (the prefix is
+    the hypothesis that wins, unless ``cp`` is given), else cross-correlation
+    with ``reference`` or the preamble waveform at ``cp`` (short by default)."""
+    if reference is None:
+        dets = [d for d in preamble.detect(rx) if cp is None or d.cp == cp]
+        if dets:
+            best = max(dets, key=lambda d: d.quality)
+            return int(best.start), int(best.cp)
+    cp = params.CP_SHORT if cp is None else cp
+    if reference is None:
+        reference = ofdm.modulate(preamble.grid(params.BASE_TONES), cp, active=params.BASE_TONES)
+    if rx.size < reference.size:
+        return None
+    return find_start(rx, reference), cp
+
+
+def receive_header_first(rx: np.ndarray, link: LinkState | None = None, *,
+                         reference: np.ndarray | None = None, start: int | None = None,
+                         **kw) -> RxResult:
+    """Decode a frame without being told its configuration (SPEC 8.2).
+
+    Find the frame (``locate``; giving ``start`` skips the search and takes
+    the prefix from ``link.cp``, default short), decode the preamble and
+    header on the base tones, unpack the header, and take the data rung, the
+    control and data block counts and the probe flag from it; width and mask
+    come from ``link``. Then decode the whole frame with that configuration.
+    A frame whose header fails (decode, CRC or fields) comes back with no
+    blocks, ``header`` None and ``header_error`` saying why.
+    """
+    link = link or LinkState()
+    if start is None:
+        found = locate(rx, link.cp, reference)
+        if found is None:
+            raise ValueError("no frame found")
+        start, cp = found
+    else:
+        cp = link.cp if link.cp is not None else params.CP_SHORT
+    head_cfg = FrameConfig(width=params.BASE_TONES, n_blocks=0, cp=cp, probe=False)
+    head = receive(rx, head_cfg, start=start, **kw)
+    if head.header is None:
+        head.config = None
+        return head
+    try:
+        cfg = FrameConfig.from_header(head.header, link, cp=cp)
+    except ValueError as e:
+        head.header_error = f"header describes no decodable frame: {e}"
+        head.header, head.config = None, None
+        return head
+    r = receive(rx, cfg, start=start, **kw)
+    # The header pass decided the geometry; report its header.
+    r.header_ok, r.header_bits, r.header, r.header_error = True, head.header_bits, head.header, None
+    return r

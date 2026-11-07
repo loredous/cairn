@@ -1,0 +1,33 @@
+{
+ "format": "cairn-header-vectors",
+ "version": 1,
+ "license": "CC BY 4.0",
+ "name": "connect",
+ "description": "CONNECT with a width probe and two control blocks, no data",
+ "valid": true,
+ "fields": {
+  "version": 1,
+  "frame_type": 2,
+  "flags": 17,
+  "more_fragments": false,
+  "session": false,
+  "probe": true,
+  "repeat": false,
+  "source": {
+   "callsign": "N0CALL",
+   "ssid": 1,
+   "value_hex": "39b0c130c1"
+  },
+  "destination": {
+   "callsign": "N0CALL",
+   "ssid": 2,
+   "value_hex": "39b0c130c2"
+  },
+  "sequence": 0,
+  "mcs": 0,
+  "control_blocks": 2,
+  "data_blocks": 0
+ },
+ "message_hex": "221139b0c130c139b0c130c200000800",
+ "info_hex": "221139b0c130c139b0c130c200000800291e"
+}

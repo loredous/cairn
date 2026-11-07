@@ -1,0 +1,11 @@
+{
+ "format": "cairn-header-vectors",
+ "version": 1,
+ "license": "CC BY 4.0",
+ "name": "reject_version",
+ "description": "connect with version 2",
+ "valid": false,
+ "error": "fields",
+ "message_hex": "421139b0c130c139b0c130c200000800",
+ "info_hex": "421139b0c130c139b0c130c200000800e322"
+}

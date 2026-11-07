@@ -1,0 +1,11 @@
+{
+ "format": "cairn-header-vectors",
+ "version": 1,
+ "license": "CC BY 4.0",
+ "name": "reject_crc",
+ "description": "connect with its last CRC bit inverted: CRC failure",
+ "valid": false,
+ "error": "crc",
+ "message_hex": "221139b0c130c139b0c130c200000800",
+ "info_hex": "221139b0c130c139b0c130c200000800291f"
+}

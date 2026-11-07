@@ -1,0 +1,33 @@
+{
+ "format": "cairn-header-vectors",
+ "version": 1,
+ "license": "CC BY 4.0",
+ "name": "connect_ack",
+ "description": "CONNECT-ACK in session with a probe and one control block",
+ "valid": true,
+ "fields": {
+  "version": 1,
+  "frame_type": 3,
+  "flags": 25,
+  "more_fragments": false,
+  "session": true,
+  "probe": true,
+  "repeat": false,
+  "source": {
+   "callsign": "N0CALL",
+   "ssid": 2,
+   "value_hex": "39b0c130c2"
+  },
+  "destination": {
+   "callsign": "N0CALL",
+   "ssid": 1,
+   "value_hex": "39b0c130c1"
+  },
+  "sequence": 0,
+  "mcs": 0,
+  "control_blocks": 1,
+  "data_blocks": 0
+ },
+ "message_hex": "231939b0c130c239b0c130c100000400",
+ "info_hex": "231939b0c130c239b0c130c100000400bc0f"
+}

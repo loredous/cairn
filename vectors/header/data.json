@@ -1,0 +1,33 @@
+{
+ "format": "cairn-header-vectors",
+ "version": 1,
+ "license": "CC BY 4.0",
+ "name": "data",
+ "description": "DATA in session at MCS 6 with three control blocks and 42 data blocks",
+ "valid": true,
+ "fields": {
+  "version": 1,
+  "frame_type": 4,
+  "flags": 11,
+  "more_fragments": false,
+  "session": true,
+  "probe": false,
+  "repeat": false,
+  "source": {
+   "callsign": "N0CALL",
+   "ssid": 1,
+   "value_hex": "39b0c130c1"
+  },
+  "destination": {
+   "callsign": "N0CALL",
+   "ssid": 2,
+   "value_hex": "39b0c130c2"
+  },
+  "sequence": 40000,
+  "mcs": 6,
+  "control_blocks": 3,
+  "data_blocks": 42
+ },
+ "message_hex": "240b39b0c130c139b0c130c29c406d48",
+ "info_hex": "240b39b0c130c139b0c130c29c406d4864a0"
+}

@@ -1,0 +1,32 @@
+{
+ "format": "cairn-header-vectors",
+ "version": 1,
+ "license": "CC BY 4.0",
+ "name": "beacon",
+ "description": "BEACON to broadcast with an ID control block and one data block; sequence is the frame counter",
+ "valid": true,
+ "fields": {
+  "version": 1,
+  "frame_type": 0,
+  "flags": 3,
+  "more_fragments": false,
+  "session": false,
+  "probe": false,
+  "repeat": false,
+  "source": {
+   "callsign": "N0CALL",
+   "ssid": 1,
+   "value_hex": "39b0c130c1"
+  },
+  "destination": {
+   "broadcast": true,
+   "value_hex": "ffffffffff"
+  },
+  "sequence": 513,
+  "mcs": 0,
+  "control_blocks": 1,
+  "data_blocks": 1
+ },
+ "message_hex": "200339b0c130c1ffffffffff02010400",
+ "info_hex": "200339b0c130c1ffffffffff020104005d42"
+}

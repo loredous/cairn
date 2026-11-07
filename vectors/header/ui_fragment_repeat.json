@@ -1,0 +1,32 @@
+{
+ "format": "cairn-header-vectors",
+ "version": 1,
+ "license": "CC BY 4.0",
+ "name": "ui_fragment_repeat",
+ "description": "UI with more-fragments and repeat flags, MCS 3, the maximum 128 data blocks and sequence 65535",
+ "valid": true,
+ "fields": {
+  "version": 1,
+  "frame_type": 1,
+  "flags": 38,
+  "more_fragments": true,
+  "session": false,
+  "probe": false,
+  "repeat": true,
+  "source": {
+   "callsign": "N0CALL",
+   "ssid": 15,
+   "value_hex": "39b0c130cf"
+  },
+  "destination": {
+   "broadcast": true,
+   "value_hex": "ffffffffff"
+  },
+  "sequence": 65535,
+  "mcs": 3,
+  "control_blocks": 0,
+  "data_blocks": 128
+ },
+ "message_hex": "212639b0c130cfffffffffffffff33f8",
+ "info_hex": "212639b0c130cfffffffffffffff33f8c845"
+}

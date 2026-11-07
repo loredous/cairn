@@ -1,0 +1,11 @@
+{
+ "format": "cairn-header-vectors",
+ "version": 1,
+ "license": "CC BY 4.0",
+ "name": "reject_flag0_mismatch",
+ "description": "connect with flag bit 0 cleared while the control block count is 2 (SPEC 8.2: discard)",
+ "valid": false,
+ "error": "fields",
+ "message_hex": "221039b0c130c139b0c130c200000800",
+ "info_hex": "221039b0c130c139b0c130c20000080087e2"
+}

@@ -2,6 +2,11 @@
 
 use std::path::PathBuf;
 
+use cairn_phy::fields::{
+    AckBlock, Address, CalReportBlock, CalRequestBlock, ConnectBlock, ControlBlock, Header, IdBlock, PathBlock,
+};
+use serde_json::Value;
+
 /// Repository root (two levels above this crate).
 pub fn repo() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..")
@@ -68,6 +73,16 @@ pub fn fixture_config(doc: &serde_json::Value) -> cairn_phy::FrameConfig {
     .unwrap()
     .with_mask(usable)
     .unwrap()
+    .with_controls(doc.get("n_control").map_or(0, |v| v.as_u64().unwrap() as usize))
+    .unwrap()
+    .with_probe(doc.get("probe").map_or(doc["width"].as_u64().unwrap() > 24, |v| v.as_bool().unwrap()))
+    .unwrap()
+}
+
+/// A header-first fixture's control messages (240 bits each).
+pub fn fixture_controls(doc: &serde_json::Value) -> Vec<Vec<u8>> {
+    doc.get("control_message_hex")
+        .map_or(Vec::new(), |v| v.as_array().unwrap().iter().map(|x| hex_to_bits(x.as_str().unwrap(), 240)).collect())
 }
 
 /// A fixture's header message (128 bits) and payloads (1008 bits each).
@@ -81,4 +96,118 @@ pub fn fixture_inputs(doc: &serde_json::Value) -> (Vec<u8>, Vec<Vec<u8>>) {
 pub fn read_f64(path: &std::path::Path) -> Vec<f64> {
     let b = std::fs::read(path).unwrap_or_else(|e| panic!("{}: {e}", path.display()));
     b.chunks_exact(8).map(|c| f64::from_le_bytes(c.try_into().unwrap())).collect()
+}
+
+// --- published header and control block fields (vectors/header/, control/, frame/) ---
+
+pub fn u(v: &Value) -> u64 {
+    v.as_u64().unwrap_or_else(|| panic!("not a number: {v}"))
+}
+
+pub fn b(v: &Value) -> bool {
+    v.as_bool().unwrap()
+}
+
+/// An address as published; a hashed callsign is checked against the hash.
+pub fn address(v: &Value) -> Address {
+    let a = if v.get("broadcast").is_some() {
+        Address::Broadcast
+    } else {
+        let a = Address::new(v["callsign"].as_str().unwrap(), u(&v["ssid"]) as u8).unwrap();
+        if let Some(h) = v.get("hash30") {
+            assert_eq!(a, Address::Hashed { hash30: u(h) as u32, ssid: u(&v["ssid"]) as u8 });
+        }
+        a
+    };
+    assert_eq!(format!("{:010x}", a.encode()), v["value_hex"].as_str().unwrap());
+    a
+}
+
+pub fn tone_mask(v: &Value) -> Option<u64> {
+    v.as_array().map(|a| a.iter().fold(0u64, |m, k| m | 1 << u(k)))
+}
+
+pub fn header(f: &Value) -> Header {
+    let h = Header {
+        version: u(&f["version"]) as u8,
+        frame_type: u(&f["frame_type"]) as u8,
+        source: address(&f["source"]),
+        destination: address(&f["destination"]),
+        sequence: u(&f["sequence"]) as u16,
+        mcs: u(&f["mcs"]) as u8,
+        n_control: u(&f["control_blocks"]) as usize,
+        n_data: u(&f["data_blocks"]) as usize,
+        more_fragments: b(&f["more_fragments"]),
+        session: b(&f["session"]),
+        probe: b(&f["probe"]),
+        repeat: b(&f["repeat"]),
+    };
+    assert_eq!(h.flags() as u64, u(&f["flags"]));
+    h
+}
+
+fn arr8(v: &Value) -> [u8; 8] {
+    let a: Vec<u8> = v.as_array().unwrap().iter().map(|x| u(x) as u8).collect();
+    a.try_into().unwrap()
+}
+
+pub fn control(f: &Value) -> ControlBlock {
+    match u(&f["type"]) {
+        0 => ControlBlock::Ack(AckBlock {
+            base_sequence: u(&f["base_sequence"]) as u16,
+            bitmap: u128::from_str_radix(f["bitmap_hex"].as_str().unwrap(), 16).unwrap(),
+            requested_mcs: u(&f["requested_mcs"]) as u8,
+            snr_q: u(&f["snr_q"]) as u8,
+            block_errors: u(&f["block_errors"]) as u8,
+            tone_mask: tone_mask(&f["tone_mask"]),
+            reprobe: b(&f["reprobe"]),
+            long_prefix: b(&f["long_prefix"]),
+            distortion: u(&f["distortion"]) as u8,
+            adc_clipped: b(&f["adc_clipped"]),
+        }),
+        1 => ControlBlock::Connect(ConnectBlock {
+            session_id: u(&f["session_id"]) as u16,
+            capabilities: u(&f["capabilities"]) as u16,
+            width_cap: u(&f["width_cap"]) as u8,
+            requested_mcs: u(&f["requested_mcs"]) as u8,
+            max_frame_time: u(&f["max_frame_time"]) as u8,
+            tone_mask: tone_mask(&f["tone_mask"]).unwrap(),
+            dictionary_ids: f["dictionary_ids"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .map(|x| u(x) as u32)
+                .collect::<Vec<_>>()
+                .try_into()
+                .unwrap(),
+            more_dictionaries: b(&f["more_dictionaries"]),
+            resume: b(&f["resume"]),
+        }),
+        3 => ControlBlock::CalRequest(CalRequestBlock {
+            tone_freq: u(&f["tone_freq"]) as u8,
+            step_count: u(&f["step_count"]) as u8,
+            step_length: u(&f["step_length"]) as u8,
+            gap_length: u(&f["gap_length"]) as u8,
+            start_level: u(&f["start_level"]) as u8,
+            step_size: u(&f["step_size"]) as u8,
+        }),
+        4 => ControlBlock::CalReport(CalReportBlock {
+            amplitudes: arr8(&f["amplitudes"]),
+            distortion: arr8(&f["distortion"]),
+            clipped: f["clipped"].as_array().unwrap().iter().map(b).collect::<Vec<_>>().try_into().unwrap(),
+            sweep_valid: b(&f["sweep_valid"]),
+        }),
+        5 => ControlBlock::Id(IdBlock {
+            callsign: f["callsign"].as_str().unwrap().to_string(),
+            ssid: u(&f["ssid"]) as u8,
+            grid: f["grid"].as_str().map(str::to_string),
+        }),
+        6 => ControlBlock::Path(PathBlock {
+            entries: f["entries"].as_array().unwrap().iter().map(address).collect(),
+            hops: u(&f["hops"]) as u8,
+            used: [b(&f["used"][0]), b(&f["used"][1])],
+            via: b(&f["via"]),
+        }),
+        t => panic!("type {t}"),
+    }
 }

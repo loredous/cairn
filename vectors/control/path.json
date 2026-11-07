@@ -1,0 +1,28 @@
+{
+ "format": "cairn-control-vectors",
+ "version": 1,
+ "license": "CC BY 4.0",
+ "name": "path",
+ "description": "Path: hops 2, entry 1 a WIDE1-1 alias already used, entry 2 a station",
+ "valid": true,
+ "fields": {
+  "type": 6,
+  "entries": [
+   {
+    "callsign": "WIDE1",
+    "ssid": 1,
+    "value_hex": "5c91057001"
+   },
+   {
+    "callsign": "N0CALL",
+    "ssid": 3,
+    "value_hex": "39b0c130c3"
+   }
+  ],
+  "hops": 2,
+  "used": [true,false],
+  "via": false
+ },
+ "message_hex": "61a5c9105700139b0c130c30000000000000000000000000000000000000",
+ "info_hex": "61a5c9105700139b0c130c300000000000000000000000000000000000003dec"
+}
