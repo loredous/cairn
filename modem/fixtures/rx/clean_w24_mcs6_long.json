@@ -1,0 +1,84 @@
+{
+ "name": "clean_w24_mcs6_long",
+ "width": 24,
+ "mcs": 6,
+ "n_blocks": 4,
+ "cp": 120,
+ "usable_tones": null,
+ "channel": "none",
+ "snr_db": null,
+ "sco_ppm": 0.0,
+ "burst_db": null,
+ "seed": 13,
+ "guard": 400,
+ "header_message_hex": "99f3eb52ca7db93ad9295c613c5009d6",
+ "payload_hex": [
+  "bb1235d0aa27cf4fcfed5a953f44986f333b21842958a20103922bb03e379963758f79f3d8d6973fcc11fcc8b8446f6ed327a7322fe01887e27ab6fac8d7bbba3bd2c86f090bc3fb20fd9fb7aaa1098eb51407aea6af08f05bd8e9f5d72d028f5fc9bdbc8cf612bb18f035d85fca1356f98f0e6958e57ace6ae987e346a0",
+  "f4bcfc209aa777f860f3f01e2e9bb11469eb033e5d6c3f1943867cd5b57ae8c5971665a35e3c5337e644bccc4610dd85cb01ce255fbbdd035f8788fe16d112011fa5e0c5fe17df3e0090365c4ad69a6924240f495c28c46bc9e5520140d26cd2bd19418c33dbc371b6310e717c826b2836096094a2f7cbd7c4d07396db39",
+  "a33ac06cb996003f66ae981fcadec45378d89563dbd26396a74fd85549a28c391798dc2bf2fb03708e08d00da24fe2094decbd47ecc0050c037b26ed3a259d1e0ee7e74b3c13a06e9e02684a11aeef2fce1e26faeb7857299e9a459ea2caacce14346c7f518d2406c603549762ca11b3f184c84ade9c7f6acbc76fcec380",
+  "a46efc54d8f499502ba0ef891684bfd26a9acf6920df8c91f8c95fb6d1118bc6938d674e141bac3ae5fc3213f35b5e88e8d4d3d4e7c04aa2701efb244f2dc3acc99b69cb17043b4940032882f98d9e8c72f2ea601e66c9ba6c00cd2fc5e665375ffd45ef14f4913694bc932c3dcf62c036b87c1fa89c454733ba853bf50f"
+ ],
+ "total_symbols": 43,
+ "wav_scale": 0.15054260036507244,
+ "python": {
+  "detections": [
+   {
+    "start": 400,
+    "cp": 120,
+    "quality": 0.9699800962950303,
+    "autocorr": 0.9987695513013987,
+    "ppm": 100.0,
+    "coarse_start": 399.84213758146024
+   }
+  ],
+  "rx": {
+   "start": 400,
+   "header_ok": true,
+   "header_correct": true,
+   "block_ok": [
+    true,
+    true,
+    true,
+    true
+   ],
+   "block_correct": [
+    true,
+    true,
+    true,
+    true
+   ],
+   "iterations": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "snr_db": [
+    33.54157368788134,
+    33.482135954267186,
+    33.35060761307328,
+    33.20947295865751,
+    33.04042146633569,
+    32.881661369577515,
+    32.71537078448837,
+    32.58449773301897,
+    32.463733137681096,
+    32.35581797880422,
+    32.24297814762519,
+    32.150377171911884,
+    32.1017613558825,
+    32.083851483269974,
+    32.07103300391794,
+    32.08107594815986,
+    32.09504730027348,
+    32.12594100935234,
+    32.188522314619455,
+    32.31236476508754,
+    32.492373949487686,
+    32.673899476345774,
+    32.84822601520474,
+    32.93317231605097
+   ]
+  }
+ }
+}

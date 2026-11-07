@@ -1,0 +1,22 @@
+{
+ "name": "tx_w24_mcs6_long",
+ "width": 24,
+ "mcs": 6,
+ "n_blocks": 2,
+ "cp": 120,
+ "usable_tones": null,
+ "channel": "none",
+ "snr_db": null,
+ "sco_ppm": 0.0,
+ "burst_db": null,
+ "seed": 61,
+ "guard": 400,
+ "header_message_hex": "c6bfebdb8015f36f90adf9b3dba77c54",
+ "payload_hex": [
+  "c66794121f112befdc91810926f867e700f4ea6b468865ade319405883e773a1b91b067540373e190572014dd2060fb558f74946ba86bc6a2a9551bf6231ab2f12af156c9f82460a7efe0ebf0574bf867babde2319f94c99972131206fb32a1cd97dbd32cca3680ac252b967c46ad5fe34125e3b7fd2cb110a3c2b844eb0",
+  "5b81c955fc2c73b9da4d629c61796ca3dddd5481a6d59b3ec058c0acb240e5b0f076ba735e94d4ce731284eba91eed237674e309ca49e4d85f2af3eda2e8d8225a652107dd5e8ebd5101932b76d6c7a2a597d4554e7842d6b10a5b81c6d6e8fde7f3c2d1a27e725629405275d318cb7bbf2bf8303fccbaf3cc43c4c52a3d"
+ ],
+ "total_symbols": 27,
+ "clip_db": 10.0,
+ "n_samples": 16200
+}

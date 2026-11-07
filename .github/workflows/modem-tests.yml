@@ -1,0 +1,48 @@
+name: Modem tests
+
+# Format, lint and test the Stage 2 Rust modem (modem/), including the
+# bit-exact checks against codes/ and vectors/ and the receiver fixtures.
+on:
+  push:
+    paths:
+      - "modem/**"
+      - "codes/**"
+      - "vectors/**"
+      - "docs/SPEC.md"
+      - ".github/workflows/modem-tests.yml"
+  pull_request:
+    paths:
+      - "modem/**"
+      - "codes/**"
+      - "vectors/**"
+      - "docs/SPEC.md"
+      - ".github/workflows/modem-tests.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  rust:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: modem
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: modem
+
+      - name: Format
+        run: cargo fmt --check
+
+      - name: Lint
+        run: cargo clippy --all-targets --locked -- -D warnings
+
+      - name: Test
+        run: cargo test --locked

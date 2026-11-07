@@ -1,0 +1,17 @@
+[package]
+name = "cairn-phy"
+version = "0.1.0"
+description = "Cairn physical layer: waveform, LDPC codes, bit mapping, preamble detector and receiver (SPEC 5-7)"
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+publish = false
+
+[dependencies]
+num-complex = "0.4"
+rustfft = "6"
+realfft = "3"
+
+[dev-dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", features = ["float_roundtrip"] }
