@@ -479,7 +479,7 @@ def find_start(rx: np.ndarray, reference: np.ndarray) -> int:
 def receive(rx: np.ndarray, cfg: FrameConfig, *, reference: np.ndarray | None = None,
             start: int | None = None, advance: int | None = None,
             phase_window: int = 15, smooth_window: int = 7,
-            decision_directed: bool = True, burst_aware: bool = False,
+            decision_directed: bool = True, burst_aware: bool = True,
             header_noise: str = "measured") -> RxResult:
     """Decode one frame from real samples ``rx``.
 
@@ -490,7 +490,8 @@ def receive(rx: np.ndarray, cfg: FrameConfig, *, reference: np.ndarray | None = 
     noise plus distortion before the data blocks are demapped. With
     ``burst_aware``, data symbols whose power shows a noise burst get their
     noise variance raised by it (``burst_noise``), so their LLRs are
-    discounted instead of trusted. ``header_noise`` picks the header's
+    discounted instead of trusted (on by default; it never triggered on the
+    AWGN, mic or repeater profiles in Stage 1). ``header_noise`` picks the header's
     per-tone noise: "measured" (``header_noise_floor`` raised by
     ``estimate_header_noise``) or "s2" (the S2 difference plus the pilots'
     excess interpolated across the band, as used for the data).
