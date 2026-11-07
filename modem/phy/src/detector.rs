@@ -174,9 +174,39 @@ fn s2_reference(cp: usize) -> Vec<Complex64> {
     (0..2 * st).map(|t| tone_waveform(&vals, (t % st) as f64 - cp as f64)).collect()
 }
 
+/// FFT size, forward and inverse plans, and the scaled conjugate spectra of
+/// the S1 references at that size.
+type Spectra = (usize, Arc<dyn Fft<f64>>, Arc<dyn Fft<f64>>, Vec<Vec<Complex64>>);
+
 struct References {
     s1: Vec<((usize, u64), Vec<Complex64>, f64)>,
     s2: Vec<(usize, Vec<Complex64>)>,
+    /// FFT size, its plans, and the conjugate spectra of the S1 references.
+    spectra: Option<Spectra>,
+}
+
+impl References {
+    /// Plans and reference spectra for correlating `len` samples.
+    fn spectra(&mut self, len: usize) -> &Spectra {
+        let m = len.next_power_of_two();
+        if self.spectra.as_ref().is_none_or(|s| s.0 != m) {
+            let mut planner = FftPlanner::new();
+            let fwd = planner.plan_fft_forward(m);
+            let inv = planner.plan_fft_inverse(m);
+            let specs = self
+                .s1
+                .iter()
+                .map(|(_, r, _)| {
+                    let mut b = vec![Complex64::new(0.0, 0.0); m];
+                    b[..r.len()].copy_from_slice(r);
+                    fwd.process(&mut b);
+                    b.iter().map(|v| v.conj() / m as f64).collect()
+                })
+                .collect();
+            self.spectra = Some((m, fwd, inv, specs));
+        }
+        self.spectra.as_ref().unwrap()
+    }
 }
 
 fn references(cfg: &DetectorConfig) -> References {
@@ -189,7 +219,7 @@ fn references(cfg: &DetectorConfig) -> References {
         }
     }
     let s2v = cfg.prefixes.iter().map(|&cp| (cp, s2_reference(cp))).collect();
-    References { s1: s1v, s2: s2v }
+    References { s1: s1v, s2: s2v, spectra: None }
 }
 
 /// out[u] = sum(v[u .. u + len]) via a running cumulative sum (as the sim).
@@ -248,11 +278,11 @@ pub struct ScanStats {
 
 /// One-shot detector over a whole buffer ([`Detector`] streams it).
 pub fn scan(x: &[f64], cfg: &DetectorConfig, stats: Option<&mut ScanStats>) -> Vec<Detection> {
-    let refs = references(cfg);
-    scan_with(x, cfg, &refs, stats)
+    let mut refs = references(cfg);
+    scan_with(x, cfg, &mut refs, stats)
 }
 
-fn scan_with(x: &[f64], cfg: &DetectorConfig, refs: &References, stats: Option<&mut ScanStats>) -> Vec<Detection> {
+fn scan_with(x: &[f64], cfg: &DetectorConfig, refs: &mut References, stats: Option<&mut ScanStats>) -> Vec<Detection> {
     let z = analytic_decimate(x);
     let zz: Vec<f64> = z.iter().map(|v| v.norm_sqr()).collect();
     let floor = (1e-6 * dsp::mean(&zz)).max(1e-30);
@@ -268,6 +298,13 @@ fn scan_with(x: &[f64], cfg: &DetectorConfig, refs: &References, stats: Option<&
     let mut best_ppm = vec![0.0; n_u];
     let mut per_cp: Vec<(usize, Vec<f64>, Vec<f64>)> = Vec::new();
     let mut max_rho = 0.0f64;
+    // Cross-correlation with every S1 reference through one FFT of z:
+    // c[u] = sum_i z[u + i] conj(ref[i]), circular but unwrapped for u < n_u.
+    let (m, fwd, inv, specs) = refs.spectra(z.len()).clone();
+    let mut zf = vec![Complex64::new(0.0, 0.0); m];
+    zf[..z.len()].copy_from_slice(&z);
+    fwd.process(&mut zf);
+    let mut corr_buf = vec![Complex64::new(0.0, 0.0); m];
     for &cp in &cfg.prefixes {
         let lag = stride(cp) / DECIM;
         let plateau = cp / DECIM + 1;
@@ -284,15 +321,15 @@ fn scan_with(x: &[f64], cfg: &DetectorConfig, refs: &References, stats: Option<&
         let mut rho = vec![0.0; n_u];
         let mut rho_ppm = vec![0.0; n_u];
         for &ppm in &cfg.ppm_grid {
-            let (_, rf, ref_e) = refs.s1.iter().find(|(key, _, _)| *key == (cp, ppm.to_bits())).expect("reference");
-            let conj: Vec<Complex64> = rf.iter().map(|v| v.conj()).collect();
+            let idx = refs.s1.iter().position(|(key, _, _)| *key == (cp, ppm.to_bits())).expect("reference");
+            let ref_e = refs.s1[idx].2;
+            for ((o, a), b) in corr_buf.iter_mut().zip(&zf).zip(&specs[idx]) {
+                *o = a * b;
+            }
+            inv.process(&mut corr_buf);
             for u in 0..n_u {
-                let mut acc = Complex64::new(0.0, 0.0);
-                for (a, b) in z[u..u + conj.len()].iter().zip(&conj) {
-                    acc += a * b;
-                }
                 let e = energy[u].max(0.0) + (2 * lag) as f64 * floor;
-                let val = acc.norm() / (e * ref_e).sqrt();
+                let val = corr_buf[u].norm() / (e * ref_e).sqrt();
                 if val > rho[u] {
                     rho[u] = val;
                     rho_ppm[u] = ppm;
@@ -436,7 +473,7 @@ impl Detector {
         if own_hi <= self.owned {
             return Vec::new();
         }
-        let found = scan_with(&self.buf, &self.cfg, &self.refs, Some(&mut self.stats));
+        let found = scan_with(&self.buf, &self.cfg, &mut self.refs, Some(&mut self.stats));
         let mut out = Vec::new();
         for mut d in found {
             let a = d.start + self.buf_start;
