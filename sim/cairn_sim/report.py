@@ -174,6 +174,9 @@ def thresholds_section() -> list[str]:
         for prof, w in (("mic", 24), ("flat12", 30), ("flat25", 56), ("repeater", 24)):
             if any(r["profile"] == prof for r in chans):
                 cols.append((f"{prof} ({w})", chans, {"profile": prof}))
+    masked = _load("repeater_masked")
+    if masked:
+        cols.append(("repeater, tones 0–2 masked (24)", masked, {}))
     head = ("| MCS | Rung | Clip (dB) | SPEC 6.2 nominal | " + " | ".join(c for c, _, _ in cols)
             + " | Worst Δ vs nominal | Table value |")
     lines += [head, "|" + " --- |" * (6 + len(cols))]
