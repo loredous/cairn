@@ -31,12 +31,25 @@ uv run --package cairn-sim pytest sim/tests          # add -m slow for the long 
 | `interleaver_eval` | SPEC 6.4 interleaver checks: bit layout under tone masks, dead-tone and burst BLER |
 | `experiments` | Runs the threshold sweeps in parallel, writes `results/*.json` |
 | `report` | Builds `report.md` from the results |
+| `bench` | The `cairn-bench` CLI: test WAV out (`tx`), offline decode of a radio recording (`rx`), optional `play`/`record`/`levels`/`ptt-test` |
 
 ```sh
 uv run --package cairn-sim python -m cairn_sim.experiments awgn      # also: channels, clip, interleaver, header
 uv run --package cairn-sim python -m cairn_sim.report
 uv run --package cairn-sim python -m cairn_sim.vectors               # regenerate codes/ and vectors/
 uv run --package cairn-sim python -m cairn_sim.bitmap_vectors        # regenerate vectors/bitmap/
+```
+
+## Bench kit
+
+`cairn-bench` generates a WAV of test frames, decodes a recording of it offline, and
+(with the optional `audio` extra) plays and records through a sound interface with
+serial PTT. It lets you test the waveform through two real radios without a real-time
+modem; see [`docs/bench-testing.md`](../docs/bench-testing.md).
+
+```sh
+uv run --package cairn-sim cairn-bench tx --plan quick --callsign N0CALL -o quick.wav
+uv run --package cairn-sim cairn-bench rx recording.wav --manifest quick.json
 ```
 
 ## Bit mapping

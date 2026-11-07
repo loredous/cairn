@@ -265,6 +265,10 @@ class RxResult:
     start: int                      # detected frame start (sample index)
     snr_db: np.ndarray              # per tone, from S2 (base tones) and the probe
     iterations: np.ndarray
+    # Receiver internals for measurement tools (bench rx): channel ``h`` and
+    # ``noise`` per tone, equalized symbols ``eq`` (rows after the preamble),
+    # ``d0`` (first data row of ``eq``), ``window_start``, ``shifts``, ``drift``.
+    detail: dict = field(default_factory=dict, repr=False)
 
 
 def header_noise_floor(pre: np.ndarray, h: np.ndarray, thermal: np.ndarray,
@@ -579,4 +583,6 @@ def receive(rx: np.ndarray, cfg: FrameConfig, *, reference: np.ndarray | None = 
                                             1 + i)
                      for i in range(cfg.n_blocks)])
     dres = ldpc.decode(dcode, dcode.rate_recover(llrs, e), rows=dcode.rows_needed(dcode.tx_positions(e)))
-    return RxResult(bool(hres.ok[0]), hres.bits[0], dres.ok, dres.bits, start, snr_db, dres.iterations)
+    detail = {"h": h, "noise": noise, "thermal": thermal, "eq": eq, "d0": d0, "window_start": window_start,
+              "shifts": shifts, "drift": drift}
+    return RxResult(bool(hres.ok[0]), hres.bits[0], dres.ok, dres.bits, start, snr_db, dres.iterations, detail)
