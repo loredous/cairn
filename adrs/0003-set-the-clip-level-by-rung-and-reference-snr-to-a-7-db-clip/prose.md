@@ -67,7 +67,10 @@ at every rung.
 - **Top rungs work.** MCS 5 and MCS 6 reach 1% block error at 21.0 and
   25.5 dB (7 dB-equivalent), 2.0 and 1.5 dB under the draft column. The
   56-tone throughput target (§14.1: 16 kbps at 30 dB) depends on MCS 5,
-  because MCS 4 tops out at 15.0 kbps; it now has margin.
+  because MCS 4 tops out at 15.0 kbps; it now has margin. Through the mic
+  chain they reach 1% at 22.2 and 27.7 dB. On the repeater profile they
+  need the three dispersed low tones masked, as SPEC 10.3 would do; with
+  that, they reach 22.1 and 27.0 dB.
 - **Decoding is unchanged.** The receiver needs no new information to decode:
   it already measures distortion from the pilots. The rung, and so the clip
   level, is in the header.
