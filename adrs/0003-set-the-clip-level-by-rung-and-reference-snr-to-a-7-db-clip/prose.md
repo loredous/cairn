@@ -21,7 +21,7 @@ these decisions.
   distortion 21.7 dB below the signal. MCS 0–4 do not notice it. MCS 5
   (64-QAM 5/6) stops improving at about 1% block error, and MCS 6 (256-QAM
   3/4) at about 27%, however strong the signal.
-- **The SNR column is pessimistic.** MCS 0–4 reach 1% block error 2–3 dB
+- **The SNR column is pessimistic.** MCS 0–4 reach 1% block error 1.5–3 dB
   below the column in white noise, with every receiver impairment included.
   Link adaptation starts from that column (`default-rung-thresholds`), so a
   link would sit about one rung lower than it should.
@@ -98,5 +98,5 @@ at every rung.
   receiver compute and makes the top rungs depend on an optional receiver
   feature. It remains open as a v1.x receiver improvement.
 - **Keep the textbook SNR column and absorb the difference in the Stage 2
-  margin.** That would hide a known 2–3 dB error in a margin meant for
+  margin.** That would hide a known 1.5–3 dB error in a margin meant for
   hardware effects.

@@ -224,13 +224,13 @@ Rates scale with the negotiated width; the two extremes are shown. Rates are raw
 
 | MCS | Modulation | Code rate | Payload bits per data tone-symbol | bps at 24 tones | bps at 56 tones | Threshold |
 | --- | --- | --- | --- | --- | --- | --- |
-| 0 (base) | QPSK | 1/2 | 1.0 | 1,956 | 4,622 | THR0 |
-| 1 | QPSK | 3/4 | 1.5 | 2,933 | 6,933 | THR1 |
-| 2 | 16-QAM | 1/2 | 2.0 | 3,911 | 9,244 | THR2 |
-| 3 | 16-QAM | 3/4 | 3.0 | 5,867 | 13,867 | THR3 |
-| 4 | 64-QAM | 2/3 | 4.0 | 7,822 | 18,489 | THR4 |
-| 5 | 64-QAM | 5/6 | 5.0 | 9,778 | 23,111 | THR5 |
-| 6 | 256-QAM | 3/4 | 6.0 | 11,733 | 27,733 | THR6 |
+| 0 (base) | QPSK | 1/2 | 1.0 | 1,956 | 4,622 | 3.5 dB |
+| 1 | QPSK | 3/4 | 1.5 | 2,933 | 6,933 | 6.0 dB |
+| 2 | 16-QAM | 1/2 | 2.0 | 3,911 | 9,244 | 8.5 dB |
+| 3 | 16-QAM | 3/4 | 3.0 | 5,867 | 13,867 | 12.5 dB |
+| 4 | 64-QAM | 2/3 | 4.0 | 7,822 | 18,489 | 17.5 dB |
+| 5 | 64-QAM | 5/6 | 5.0 | 9,778 | 23,111 | 21.0 dB |
+| 6 | 256-QAM | 3/4 | 6.0 | 11,733 | 27,733 | 25.5 dB |
 
 - Constellations are Gray-mapped, unit average power per tone. The transmitter scales the whole symbol, never individual tones, so the receiver's per-tone estimate stays valid across rungs once the clip-level offset of 7.1 is applied.
 - MCS 0 is the base rate: headers, control blocks, link setup and broadcast frames by default. A BPSK rung below it is deliberately omitted (Section 2; decision 20.4): the FM cliff makes it nearly useless, and header robustness, if ever short, comes from a rate-1/3 header code instead.
