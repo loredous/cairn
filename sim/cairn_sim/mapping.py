@@ -13,6 +13,8 @@ protocol's yet:
   coded bits, with a the integer nearest 0.618 E that is coprime to E. It
   needs no knowledge of the tone mask, so it is defined for every mask; the
   bit-to-tone order below spreads the result across tones and symbols.
+  ``interleaver_eval`` finds it as good as a uniformly random permutation
+  under tone masks, a dead tone and a short burst.
 - Labeling: the TS 38.211 5.1 Gray mapping (even bits on I, odd bits on Q,
   first bit of each axis the sign), normalized to unit average power.
 - Bit-to-tone order: constellation points fill data tones lowest first

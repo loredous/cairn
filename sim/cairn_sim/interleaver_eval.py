@@ -21,6 +21,16 @@ for every tone mask. Two measurements:
 
 Both compare the provisional linear interleaver with a uniformly random
 permutation, the idealised reference.
+
+Stage 1 result (``experiments interleaver``): the linear interleaver is as
+good as the random reference on every measure. Structurally its worst
+parity-check collisions match or beat random's for every data-tone count
+12-52. By BLER (MCS 2 and 4, 24 and 56 tones, 3000-6000 blocks per point)
+the two agree within the Monte Carlo spread with a dead tone and with a
+burst. What a dead tone or a burst costs is set by the receiver (channel
+smoothing across a dead tone; discounting a burst) and, for a burst at
+high rungs and wide links, by how few symbols a block spans; not by the
+interleaver.
 """
 
 from __future__ import annotations
