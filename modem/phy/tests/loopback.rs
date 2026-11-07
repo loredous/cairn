@@ -48,6 +48,43 @@ fn every_rung_and_width_ideal_channel() {
     }
 }
 
+/// ADR 0006: the reported SNR is the channel's, excluding clip-and-filter's
+/// designed distortion, within 1 dB up to at least 40 dB.
+#[test]
+fn channel_snr_excludes_designed_clipping() {
+    let mut rng = Rng::new(10);
+    for (width, mcs, n) in [(24, 0, 4), (24, 4, 8), (56, 6, 12)] {
+        let cfg = FrameConfig::new(width, mcs, n).unwrap();
+        for snr in [12.0, 25.0, 35.0, 40.0, 45.0] {
+            let header = rng.bits(128);
+            let payloads: Vec<Vec<u8>> = (0..n).map(|_| rng.bits(params::DATA_PAYLOAD_BITS)).collect();
+            let frame = Transmitter::new().build(&cfg, &header, &payloads);
+            // Channel SNR as seen by the data symbols: preamble and header
+            // carry only 24 tones, so at wider widths the frame average is lower.
+            let data = &frame.samples[cfg.first_data() * cfg.stride()..];
+            let p = data.iter().map(|v| v * v).sum::<f64>() / data.len() as f64;
+            let mut x = vec![0.0; 500];
+            x.extend_from_slice(&frame.samples);
+            x.extend(vec![0.0; 500]);
+            let y = awgn(&x, snr, width, &mut rng, Some(p));
+            let r = Receiver::new().receive(&y, &cfg, 500, &RxOptions::default());
+            let c = r.channel_snr.as_ref().unwrap();
+            let old = {
+                let t = &cfg.data_active_tones;
+                10.0 * (t.iter().map(|&k| 10f64.powf(r.snr_db[k] / 10.0)).sum::<f64>() / t.len() as f64).log10()
+            };
+            eprintln!(
+                "w{width} mcs{mcs} channel {snr:4.1} dB: rebuilt {:5.2} dB ({} known symbols), decoder estimate {old:5.2} dB",
+                c.effective_db, c.known_symbols
+            );
+            assert!(r.block_ok.iter().all(|&v| v) || snr < 20.0);
+            assert!((c.effective_db - snr).abs() < 1.0, "w{width} mcs{mcs} at {snr} dB: {}", c.effective_db);
+            let snr7 = r.snr_7db_equivalent(&cfg);
+            assert!((snr7 - (snr + params::clip_offset_db(mcs))).abs() < 1.0);
+        }
+    }
+}
+
 #[test]
 fn header_only_frames() {
     // No data blocks: preamble, header (and probe) only, clipped at 7 dB (SPEC 7.1).

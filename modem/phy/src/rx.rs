@@ -9,7 +9,8 @@
 //! header-noise method ("measured", the simulator's default); re-estimates
 //! the base tones' noise from the decoded header (decision-directed);
 //! raises the noise of burst-hit symbols (SPEC 6.5); demaps max-log LLRs and
-//! decodes every data block.
+//! decodes every data block. Finally it measures the channel SNR (ADR 0006)
+//! against the frame rebuilt from the decoded bits.
 //!
 //! Arithmetic is `f64` (LDPC in `f32`, as the simulator), so results agree
 //! with the simulator to rounding, not bit for bit.
@@ -54,6 +55,8 @@ pub struct RxOptions {
     pub header_noise: HeaderNoise,
     /// LDPC iterations.
     pub max_iter: usize,
+    /// Measure the channel SNR by rebuilding the sent symbols (ADR 0006).
+    pub rebuild_snr: bool,
 }
 
 impl Default for RxOptions {
@@ -66,6 +69,7 @@ impl Default for RxOptions {
             burst_aware: true,
             header_noise: HeaderNoise::Measured,
             max_iter: params::LDPC_MAX_ITER,
+            rebuild_snr: true,
         }
     }
 }
@@ -91,15 +95,39 @@ pub struct RxResult {
     pub snr_db: Vec<f64>,
     /// Sample-clock drift estimate, samples per symbol.
     pub drift: f64,
+    /// Channel SNR excluding the designed clipping (ADR 0006), if measured.
+    pub channel_snr: Option<ChannelSnr>,
 }
 
 impl RxResult {
-    /// Effective SNR over the tones, on the 7 dB-clip scale (SPEC 7.1): the
-    /// mean per-tone linear SNR in dB plus the rung's clip offset.
+    /// The SNR the protocol reports (SPEC 7.1, ADR 0006): the channel SNR on
+    /// the 7 dB-equivalent scale, from the rebuilt symbols when measured,
+    /// else the decoder's per-tone estimate over the active tones (which
+    /// counts the designed clipping and so errs low).
     pub fn snr_7db_equivalent(&self, cfg: &FrameConfig) -> f64 {
-        let lin: f64 = self.snr_db.iter().map(|d| 10f64.powf(d / 10.0)).sum::<f64>() / self.snr_db.len() as f64;
-        10.0 * lin.log10() + params::clip_offset_db(cfg.mcs)
+        let avg = match &self.channel_snr {
+            Some(c) => c.effective_db,
+            None => {
+                let t = &cfg.data_active_tones;
+                let lin: f64 = t.iter().map(|&k| 10f64.powf(self.snr_db[k] / 10.0)).sum::<f64>() / t.len() as f64;
+                10.0 * lin.log10()
+            }
+        };
+        avg + cfg.clip_db - params::CLIP_DB_REFERENCE
     }
+}
+
+/// Channel SNR measured against the rebuilt transmitted symbols (ADR 0006).
+#[derive(Clone, Debug, PartialEq)]
+pub struct ChannelSnr {
+    /// Per tone, dB (NaN where no symbol of the tone was known).
+    pub per_tone_db: Vec<f64>,
+    /// Over the data symbols' active tones: total signal over total noise, dB,
+    /// average-referenced (add the clip offset for the 7 dB scale).
+    pub effective_db: f64,
+    /// Symbols whose content was known (preamble, probe, header if decoded,
+    /// data symbols whose blocks all decoded).
+    pub known_symbols: usize,
 }
 
 struct Estimate {
@@ -366,6 +394,7 @@ impl Receiver {
             est = self.estimate(&tones, cfg, opts);
         }
         let Estimate { h, mut noise, thermal, excess, mut snr_db, corr, drift } = est;
+        let corr_kept = corr.clone();
         let w = cfg.width;
         let hs = cfg.header_symbols();
         let d0 = hs + cfg.probe_symbols();
@@ -493,17 +522,145 @@ impl Receiver {
                 dec.decode(&dcode.rate_recover(&l, 0), &rows, opts.max_iter, LDPC_ALPHA)
             })
             .collect();
+        let block_ok: Vec<bool> = results.iter().map(|r| r.ok).collect();
+        let block_bits: Vec<Vec<u8>> = results.iter().map(|r| r.bits.clone()).collect();
+        let channel_snr = opts
+            .rebuild_snr
+            .then(|| rebuild_snr(&tones, &corr_kept, cfg, advance, hres.ok, &hres.bits, &block_ok, &block_bits));
         RxResult {
+            channel_snr,
             header_ok: hres.ok,
             header_bits: hres.bits,
             header_iterations: hres.iterations,
-            block_ok: results.iter().map(|r| r.ok).collect(),
+            block_ok,
             iterations: results.iter().map(|r| r.iterations).collect(),
-            block_bits: results.into_iter().map(|r| r.bits).collect(),
+            block_bits,
             start,
             snr_db,
             drift,
         }
+    }
+}
+
+/// ADR 0006 channel SNR: rebuild the transmitted frame from the decoded bits
+/// (encode, map, clip-and-filter), demodulate it with the receiver's window,
+/// and fit received = g_k x corr x rebuilt per tone over the symbols whose
+/// content is known; the residual is everything the channel added, without
+/// the designed clipping (which is in the rebuilt reference).
+#[allow(clippy::too_many_arguments)]
+fn rebuild_snr(
+    tones: &Grid,
+    corr: &Grid,
+    cfg: &FrameConfig,
+    advance: usize,
+    header_ok: bool,
+    header_bits: &[u8],
+    block_ok: &[bool],
+    block_bits: &[Vec<u8>],
+) -> ChannelSnr {
+    let w = cfg.width;
+    let n_sym = cfg.total_symbols();
+    let first = PREAMBLE_SYMBOLS;
+    let hdr: Vec<u8> = header_bits[..params::HEADER_INFO_BITS - params::CRC_BITS].to_vec();
+    let payloads: Vec<Vec<u8>> = block_bits.iter().map(|b| b[..params::DATA_PAYLOAD_BITS].to_vec()).collect();
+    let frame = tx::Transmitter::new().build(cfg, &hdr, &payloads);
+    let mut ofdm = Ofdm::new();
+    let mut reference = ofdm.demodulate(&frame.samples, cfg.cp - advance, n_sym, w, cfg.cp, w, None);
+    let gain = cfg.data_gain();
+    for s in cfg.first_data()..n_sym {
+        for v in reference.row_mut(s) {
+            *v /= gain;
+        }
+    }
+    // Known symbols and the tones each one carries.
+    let base: Vec<usize> = (0..BASE_TONES).collect();
+    let all: Vec<usize> = (0..w).collect();
+    let mut known: Vec<(usize, &[usize])> = (0..first).map(|s| (s, &base[..])).collect();
+    if header_ok {
+        known.extend((cfg.first_header()..cfg.first_probe()).map(|s| (s, &base[..])));
+    }
+    known.extend((cfg.first_probe()..cfg.first_data()).map(|s| (s, &all[..])));
+    let (q, d, e) = (cfg.rung().bits_per_point, cfg.data_tones.len(), cfg.rung().coded_bits);
+    for ds in 0..cfg.data_symbols() {
+        // Points ds*D .. (ds+1)*D; block i holds points i*E/Q .. (i+1)*E/Q, padding after.
+        let (p0, p1) = (ds * d * q, (ds + 1) * d * q);
+        let all_ok = (0..cfg.n_blocks).filter(|&i| i * e < p1 && (i + 1) * e > p0).all(|i| block_ok[i]);
+        if all_ok {
+            known.push((cfg.first_data() + ds, &cfg.data_active_tones[..]));
+        }
+    }
+    // The pilot track is a per-tone phase ramp over symbols; extend it back
+    // over the preamble rows.
+    let step: Vec<Complex64> = (0..w)
+        .map(|k| if corr.rows > 1 { corr.at(1, k) * corr.at(0, k).conj() } else { Complex64::new(1.0, 0.0) })
+        .collect();
+    // Per tone: (symbol, received, rebuilt reference with the phase track).
+    let mut obs: Vec<Vec<(f64, Complex64, Complex64)>> = vec![Vec::new(); w];
+    for &(s, ks) in &known {
+        for &k in ks {
+            let c =
+                if s >= first { corr.at(s - first, k) } else { corr.at(0, k) * step[k].powi(s as i32 - first as i32) };
+            obs[k].push((s as f64, tones.at(s, k), reference.at(s, k) * c));
+        }
+    }
+    let mut per_tone = vec![f64::NAN; w];
+    let (mut sig_sum, mut noise_sum) = (0.0, 0.0);
+    let data_act = &cfg.data_active_tones;
+    for (k, o) in obs.iter().enumerate() {
+        if o.len() < 4 {
+            continue;
+        }
+        let (sig, resid) = tone_fit(o);
+        per_tone[k] = 10.0 * (sig / resid).log10();
+        if data_act.contains(&k) {
+            sig_sum += sig;
+            noise_sum += resid;
+        }
+    }
+    ChannelSnr { per_tone_db: per_tone, effective_db: 10.0 * (sig_sum / noise_sum).log10(), known_symbols: known.len() }
+}
+
+/// Signal and residual power of one tone: received = g x reference by least
+/// squares, then again with a residual phase ramp over the symbols fitted
+/// (the pilots' drift track is noisy at high SNR, and a timing-slope error
+/// grows over a long frame); the smaller residual, per degree of freedom.
+fn tone_fit(o: &[(f64, Complex64, Complex64)]) -> (f64, f64) {
+    let fit = |rot: &dyn Fn(f64) -> Complex64| -> (Complex64, f64, f64) {
+        let (mut yx, mut xx) = (Complex64::new(0.0, 0.0), 0.0);
+        for &(s, y, x) in o {
+            let x = x * rot(s);
+            yx += y * x.conj();
+            xx += x.norm_sqr();
+        }
+        let g = yx / xx;
+        let r: f64 = o.iter().map(|&(s, y, x)| (y - g * x * rot(s)).norm_sqr()).sum();
+        (g, xx, r)
+    };
+    let n = o.len() as f64;
+    let (g, xx, r1) = fit(&|_| Complex64::new(1.0, 0.0));
+    // Residual phase against the first fit, weighted line over the symbols.
+    let (mut sw, mut ss, mut st, mut sss, mut sst) = (0.0, 0.0, 0.0, 0.0, 0.0);
+    for &(s, y, x) in o {
+        let z = y * (g * x).conj();
+        let wgt = (g * x).norm_sqr();
+        let t = z.arg();
+        sw += wgt;
+        ss += wgt * s;
+        st += wgt * t;
+        sss += wgt * s * s;
+        sst += wgt * s * t;
+    }
+    let den = sw * sss - ss * ss;
+    let slope = if den > 0.0 { (sw * sst - ss * st) / den } else { 0.0 };
+    let (g2, xx2, r2) = fit(&|s| Complex64::from_polar(1.0, slope * s));
+    // Keep the ramp only if it removes far more than the half complex degree
+    // of freedom of noise it absorbs by itself; choosing the smaller residual
+    // outright would bias the noise low and over-report.
+    let per_dof = r1 / (n - 1.0);
+    if r1 - r2 > 8.0 * per_dof {
+        (g2.norm_sqr() * xx2 / n, (r2 / (n - 1.5)).max(1e-30))
+    } else {
+        (g.norm_sqr() * xx / n, per_dof.max(1e-30))
     }
 }
 
