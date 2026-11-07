@@ -12,3 +12,25 @@ index 6, control blocks) and Z = 15 (BG2, set index 7, headers); the shift is
 V mod Z (SPEC 6.3, 20.2). The lifted matrices, rate-matching tables and
 known-answer vectors that v0.2 publishes are generated from these files by
 `sim/`.
+
+## Published files (generated)
+
+Regenerate with `uv run --package cairn-sim python -m cairn_sim.vectors`; the
+output is deterministic and a test checks the committed files are current.
+`<stem>` is `data_bg1_z48`, `control_bg2_z26` or `header_bg2_z15`.
+
+- `<stem>_lifted.txt`: the lifted code in compact form. `#` lines are
+  comments; every other line is `block_row block_col shift`. Block (i, j) is
+  the Z x Z identity matrix with the one of row z in column
+  `j*Z + (z + shift) mod Z`, and shift = V mod Z.
+- `<stem>.alist`: the full parity-check matrix H in MacKay's alist format
+  (1-based indices; N = base columns x Z, including the 2Z punctured and the
+  filler columns; M = base rows x Z). Columns 0..K'-1 are information bits,
+  K'..K-1 are shortened filler zeros, K..N-1 are parity.
+- `<stem>_ratematch.txt`: for each on-air length E, a `length E` line then the
+  E 0-based codeword bit indices in transmission order, 32 per line. This is
+  38.212 5.4.2 rv0: the first 2Z bits are punctured, fillers are skipped, and
+  the bits form a circular buffer; every length is a prefix of the buffer,
+  and a retransmission continues at buffer index E.
+
+Known-answer encodings are in `vectors/`.
