@@ -1,0 +1,36 @@
+name: Simulation tests
+
+# Fast tests of the Stage 1 simulation (sim/) and the published code files.
+on:
+  push:
+    paths:
+      - "sim/**"
+      - "codes/**"
+      - "vectors/**"
+      - "uv.lock"
+      - ".github/workflows/sim-tests.yml"
+  pull_request:
+    paths:
+      - "sim/**"
+      - "codes/**"
+      - "vectors/**"
+      - "uv.lock"
+      - ".github/workflows/sim-tests.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  sim:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Test the simulation (slow statistical runs excluded)
+        env:
+          OMP_NUM_THREADS: "1"
+        run: uv run --locked --package cairn-sim pytest sim/tests -q

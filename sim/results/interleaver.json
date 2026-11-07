@@ -1,0 +1,950 @@
+[
+ {
+  "experiment": "interleaver",
+  "mcs": 2,
+  "width": 24,
+  "impairment": "dead_tone",
+  "interleaver": "linear",
+  "snrs": [
+   8.5,
+   9.5,
+   10.5
+  ],
+  "blocks_per_frame": 2,
+  "rx_kw": {
+   "burst_aware": false
+  },
+  "min_blocks": 3000,
+  "max_blocks": 6000,
+  "min_errors": 100,
+  "quick_bler": 0.95,
+  "seed": 4224,
+  "points": [
+   {
+    "snr_db": 8.5,
+    "blocks": 3000,
+    "block_errors": 325,
+    "frames": 1500,
+    "header_errors": 0,
+    "missed_frames": 0,
+    "bler": 0.10833333333333334,
+    "header_fer": 0.0
+   },
+   {
+    "snr_db": 9.5,
+    "blocks": 6000,
+    "block_errors": 20,
+    "frames": 3000,
+    "header_errors": 0,
+    "missed_frames": 0,
+    "bler": 0.0033333333333333335,
+    "header_fer": 0.0
+   },
+   {
+    "snr_db": 10.5,
+    "blocks": 6000,
+    "block_errors": 1,
+    "frames": 3000,
+    "header_errors": 0,
+    "missed_frames": 0,
+    "bler": 0.00016666666666666666,
+    "header_fer": 0.0
+   }
+  ],
+  "seconds": 2381.6
+ },
+ {
+  "experiment": "interleaver",
+  "mcs": 2,
+  "width": 24,
+  "impairment": "dead_tone",
+  "interleaver": "random",
+  "snrs": [
+   8.5,
+   9.5,
+   10.5
+  ],
+  "blocks_per_frame": 2,
+  "rx_kw": {
+   "burst_aware": false
+  },
+  "min_blocks": 3000,
+  "max_blocks": 6000,
+  "min_errors": 100,
+  "quick_bler": 0.95,
+  "seed": 4225,
+  "points": [
+   {
+    "snr_db": 8.5,
+    "blocks": 3000,
+    "block_errors": 354,
+    "frames": 1500,
+    "header_errors": 0,
+    "missed_frames": 0,
+    "bler": 0.118,
+    "header_fer": 0.0
+   },
+   {
+    "snr_db": 9.5,
+    "blocks": 6000,
+    "block_errors": 15,
+    "frames": 3000,
+    "header_errors": 0,
+    "missed_frames": 0,
+    "bler": 0.0025,
+    "header_fer": 0.0
+   },
+   {
+    "snr_db": 10.5,
+    "blocks": 6000,
+    "block_errors": 0,
+    "frames": 3000,
+    "header_errors": 0,
+    "missed_frames": 0,
+    "bler": 0.0,
+    "header_fer": 0.0
+   }
+  ],
+  "seconds": 2446.8
+ },
+ {
+  "experiment": "interleaver",
+  "mcs": 2,
+  "width": 56,
+  "impairment": "dead_tone",
+  "interleaver": "linear",
+  "snrs": [
+   8.5,
+   9.5,
+   10.5
+  ],
+  "blocks_per_frame": 2,
+  "rx_kw": {
+   "burst_aware": false
+  },
+  "min_blocks": 3000,
+  "max_blocks": 6000,
+  "min_errors": 100,
+  "quick_bler": 0.95,
+  "seed": 4256,
+  "points": [
+   {
+    "snr_db": 8.5,
+    "blocks": 6000,
+    "block_errors": 6,
+    "frames": 3000,
+    "header_errors": 0,
+    "missed_frames": 0,
+    "bler": 0.001,
+    "header_fer": 0.0
+   },
+   {
+    "snr_db": 9.5,
+    "blocks": 6000,
+    "block_errors": 0,
+    "frames": 3000,
+    "header_errors": 0,
+    "missed_frames": 0,
+    "bler": 0.0,
+    "header_fer": 0.0
+   },
+   {
+    "snr_db": 10.5,
+    "blocks": 6000,
+    "block_errors": 0,
+    "frames": 3000,
+    "header_errors": 0,
+    "missed_frames": 0,
+    "bler": 0.0,
+    "header_fer": 0.0
+   }
+  ],
+  "seconds": 2904.8
+ },
+ {
+  "experiment": "interleaver",
+  "mcs": 2,
+  "width": 56,
+  "impairment": "dead_tone",
+  "interleaver": "random",
+  "snrs": [
+   8.5,
+   9.5,
+   10.5
+  ],
+  "blocks_per_frame": 2,
+  "rx_kw": {
+   "burst_aware": false
+  },
+  "min_blocks": 3000,
+  "max_blocks": 6000,
+  "min_errors": 100,
+  "quick_bler": 0.95,
+  "seed": 4257,
+  "points": [
+   {
+    "snr_db": 8.5,
+    "blocks": 6000,
+    "block_errors": 7,
+    "frames": 3000,
+    "header_errors": 0,
+    "missed_frames": 0,
+    "bler": 0.0011666666666666668,
+    "header_fer": 0.0
+   },
+   {
+    "snr_db": 9.5,
+    "blocks": 6000,
+    "block_errors": 0,
+    "frames": 3000,
+    "header_errors": 0,
+    "missed_frames": 0,
+    "bler": 0.0,
+    "header_fer": 0.0
+   },
+   {
+    "snr_db": 10.5,
+    "blocks": 6000,
+    "block_errors": 0,
+    "frames": 3000,
+    "header_errors": 0,
+    "missed_frames": 0,
+    "bler": 0.0,
+    "header_fer": 0.0
+   }
+  ],
+  "seconds": 2932.3
+ },
+ {
+  "experiment": "interleaver",
+  "mcs": 4,
+  "width": 24,
+  "impairment": "dead_tone",
+  "interleaver": "linear",
+  "snrs": [
+   16.5,
+   17.5,
+   18.5
+  ],
+  "blocks_per_frame": 2,
+  "rx_kw": {
+   "burst_aware": false
+  },
+  "min_blocks": 3000,
+  "max_blocks": 6000,
+  "min_errors": 100,
+  "quick_bler": 0.95,
+  "seed": 4424,
+  "points": [
+   {
+    "snr_db": 16.5,
+    "blocks": 3000,
+    "block_errors": 1682,
+    "frames": 1500,
+    "header_errors": 0,
+    "missed_frames": 0,
+    "bler": 0.5606666666666666,
+    "header_fer": 0.0
+   },
+   {
+    "snr_db": 17.5,
+    "blocks": 3000,
+    "block_errors": 416,
+    "frames": 1500,
+    "header_errors": 0,
+    "missed_frames": 0,
+    "bler": 0.13866666666666666,
+    "header_fer": 0.0
+   },
+   {
+    "snr_db": 18.5,
+    "blocks": 5162,
+    "block_errors": 100,
+    "frames": 2581,
+    "header_errors": 0,
+    "missed_frames": 0,
+    "bler": 0.019372336303758234,
+    "header_fer": 0.0
+   }
+  ],
+  "seconds": 1724.7
+ },
+ {
+  "experiment": "interleaver",
+  "mcs": 4,
+  "width": 24,
+  "impairment": "dead_tone",
+  "interleaver": "random",
+  "snrs": [
+   16.5,
+   17.5,
+   18.5
+  ],
+  "blocks_per_frame": 2,
+  "rx_kw": {
+   "burst_aware": false
+  },
+  "min_blocks": 3000,
+  "max_blocks": 6000,
+  "min_errors": 100,
+  "quick_bler": 0.95,
+  "seed": 4425,
+  "points": [
+   {
+    "snr_db": 16.5,
+    "blocks": 3000,
+    "block_errors": 1704,
+    "frames": 1500,
+    "header_errors": 0,
+    "missed_frames": 0,
+    "bler": 0.568,
+    "header_fer": 0.0
+   },
+   {
+    "snr_db": 17.5,
+    "blocks": 3000,
+    "block_errors": 445,
+    "frames": 1500,
+    "header_errors": 0,
+    "missed_frames": 0,
+    "bler": 0.14833333333333334,
+    "header_fer": 0.0
+   },
+   {
+    "snr_db": 18.5,
+    "blocks": 4224,
+    "block_errors": 100,
+    "frames": 2112,
+    "header_errors": 0,
+    "missed_frames": 0,
+    "bler": 0.023674242424242424,
+    "header_fer": 0.0
+   }
+  ],
+  "seconds": 1771.0
+ },
+ {
+  "experiment": "interleaver",
+  "mcs": 4,
+  "width": 56,
+  "impairment": "dead_tone",
+  "interleaver": "linear",
+  "snrs": [
+   16.5,
+   17.5,
+   18.5
+  ],
+  "blocks_per_frame": 2,
+  "rx_kw": {
+   "burst_aware": false
+  },
+  "min_blocks": 3000,
+  "max_blocks": 6000,
+  "min_errors": 100,
+  "quick_bler": 0.95,
+  "seed": 4456,
+  "points": [
+   {
+    "snr_db": 16.5,
+    "blocks": 3244,
+    "block_errors": 100,
+    "frames": 1622,
+    "header_errors": 0,
+    "missed_frames": 0,
+    "bler": 0.030826140567200986,
+    "header_fer": 0.0
+   },
+   {
+    "snr_db": 17.5,
+    "blocks": 6000,
+    "block_errors": 63,
+    "frames": 3000,
+    "header_errors": 0,
+    "missed_frames": 0,
+    "bler": 0.0105,
+    "header_fer": 0.0
+   },
+   {
+    "snr_db": 18.5,
+    "blocks": 6000,
+    "block_errors": 49,
+    "frames": 3000,
+    "header_errors": 0,
+    "missed_frames": 0,
+    "bler": 0.008166666666666666,
+    "header_fer": 0.0
+   }
+  ],
+  "seconds": 2609.7
+ },
+ {
+  "experiment": "interleaver",
+  "mcs": 4,
+  "width": 56,
+  "impairment": "dead_tone",
+  "interleaver": "random",
+  "snrs": [
+   16.5,
+   17.5,
+   18.5
+  ],
+  "blocks_per_frame": 2,
+  "rx_kw": {
+   "burst_aware": false
+  },
+  "min_blocks": 3000,
+  "max_blocks": 6000,
+  "min_errors": 100,
+  "quick_bler": 0.95,
+  "seed": 4457,
+  "points": [
+   {
+    "snr_db": 16.5,
+    "blocks": 3464,
+    "block_errors": 100,
+    "frames": 1732,
+    "header_errors": 0,
+    "missed_frames": 0,
+    "bler": 0.028868360277136258,
+    "header_fer": 0.0
+   },
+   {
+    "snr_db": 17.5,
+    "blocks": 6000,
+    "block_errors": 87,
+    "frames": 3000,
+    "header_errors": 0,
+    "missed_frames": 0,
+    "bler": 0.0145,
+    "header_fer": 0.0
+   },
+   {
+    "snr_db": 18.5,
+    "blocks": 6000,
+    "block_errors": 58,
+    "frames": 3000,
+    "header_errors": 0,
+    "missed_frames": 0,
+    "bler": 0.009666666666666667,
+    "header_fer": 0.0
+   }
+  ],
+  "seconds": 2612.2
+ },
+ {
+  "experiment": "interleaver",
+  "mcs": 2,
+  "width": 24,
+  "impairment": "burst",
+  "interleaver": "linear",
+  "snrs": [
+   9.0,
+   11.0
+  ],
+  "blocks_per_frame": 2,
+  "rx_kw": {
+   "burst_aware": true
+  },
+  "min_blocks": 3000,
+  "max_blocks": 6000,
+  "min_errors": 100,
+  "quick_bler": 0.95,
+  "seed": 4224,
+  "points": [
+   {
+    "snr_db": 9.0,
+    "blocks": 6000,
+    "block_errors": 64,
+    "frames": 3000,
+    "header_errors": 0,
+    "missed_frames": 0,
+    "bler": 0.010666666666666666,
+    "header_fer": 0.0
+   },
+   {
+    "snr_db": 11.0,
+    "blocks": 6000,
+    "block_errors": 0,
+    "frames": 3000,
+    "header_errors": 0,
+    "missed_frames": 0,
+    "bler": 0.0,
+    "header_fer": 0.0
+   }
+  ],
+  "seconds": 2100.7
+ },
+ {
+  "experiment": "interleaver",
+  "mcs": 2,
+  "width": 24,
+  "impairment": "burst",
+  "interleaver": "random",
+  "snrs": [
+   9.0,
+   11.0
+  ],
+  "blocks_per_frame": 2,
+  "rx_kw": {
+   "burst_aware": true
+  },
+  "min_blocks": 3000,
+  "max_blocks": 6000,
+  "min_errors": 100,
+  "quick_bler": 0.95,
+  "seed": 4225,
+  "points": [
+   {
+    "snr_db": 9.0,
+    "blocks": 6000,
+    "block_errors": 56,
+    "frames": 3000,
+    "header_errors": 0,
+    "missed_frames": 0,
+    "bler": 0.009333333333333334,
+    "header_fer": 0.0
+   },
+   {
+    "snr_db": 11.0,
+    "blocks": 6000,
+    "block_errors": 0,
+    "frames": 3000,
+    "header_errors": 0,
+    "missed_frames": 0,
+    "bler": 0.0,
+    "header_fer": 0.0
+   }
+  ],
+  "seconds": 2093.5
+ },
+ {
+  "experiment": "interleaver",
+  "mcs": 2,
+  "width": 56,
+  "impairment": "burst",
+  "interleaver": "linear",
+  "snrs": [
+   9.0,
+   11.0
+  ],
+  "blocks_per_frame": 2,
+  "rx_kw": {
+   "burst_aware": true
+  },
+  "min_blocks": 3000,
+  "max_blocks": 6000,
+  "min_errors": 100,
+  "quick_bler": 0.95,
+  "seed": 4256,
+  "points": [
+   {
+    "snr_db": 9.0,
+    "blocks": 3000,
+    "block_errors": 112,
+    "frames": 1500,
+    "header_errors": 0,
+    "missed_frames": 0,
+    "bler": 0.037333333333333336,
+    "header_fer": 0.0
+   },
+   {
+    "snr_db": 11.0,
+    "blocks": 6000,
+    "block_errors": 3,
+    "frames": 3000,
+    "header_errors": 0,
+    "missed_frames": 0,
+    "bler": 0.0005,
+    "header_fer": 0.0
+   }
+  ],
+  "seconds": 1646.0
+ },
+ {
+  "experiment": "interleaver",
+  "mcs": 2,
+  "width": 56,
+  "impairment": "burst",
+  "interleaver": "random",
+  "snrs": [
+   9.0,
+   11.0
+  ],
+  "blocks_per_frame": 2,
+  "rx_kw": {
+   "burst_aware": true
+  },
+  "min_blocks": 3000,
+  "max_blocks": 6000,
+  "min_errors": 100,
+  "quick_bler": 0.95,
+  "seed": 4257,
+  "points": [
+   {
+    "snr_db": 9.0,
+    "blocks": 3000,
+    "block_errors": 138,
+    "frames": 1500,
+    "header_errors": 0,
+    "missed_frames": 0,
+    "bler": 0.046,
+    "header_fer": 0.0
+   },
+   {
+    "snr_db": 11.0,
+    "blocks": 6000,
+    "block_errors": 1,
+    "frames": 3000,
+    "header_errors": 0,
+    "missed_frames": 0,
+    "bler": 0.00016666666666666666,
+    "header_fer": 0.0
+   }
+  ],
+  "seconds": 1698.6
+ },
+ {
+  "experiment": "interleaver",
+  "mcs": 4,
+  "width": 24,
+  "impairment": "burst",
+  "interleaver": "linear",
+  "snrs": [
+   18.0,
+   21.0
+  ],
+  "blocks_per_frame": 2,
+  "rx_kw": {
+   "burst_aware": true
+  },
+  "min_blocks": 3000,
+  "max_blocks": 6000,
+  "min_errors": 100,
+  "quick_bler": 0.95,
+  "seed": 4424,
+  "points": [
+   {
+    "snr_db": 18.0,
+    "blocks": 3000,
+    "block_errors": 574,
+    "frames": 1500,
+    "header_errors": 0,
+    "missed_frames": 0,
+    "bler": 0.19133333333333333,
+    "header_fer": 0.0
+   },
+   {
+    "snr_db": 21.0,
+    "blocks": 6000,
+    "block_errors": 77,
+    "frames": 3000,
+    "header_errors": 0,
+    "missed_frames": 0,
+    "bler": 0.012833333333333334,
+    "header_fer": 0.0
+   }
+  ],
+  "seconds": 1505.2
+ },
+ {
+  "experiment": "interleaver",
+  "mcs": 4,
+  "width": 24,
+  "impairment": "burst",
+  "interleaver": "random",
+  "snrs": [
+   18.0,
+   21.0
+  ],
+  "blocks_per_frame": 2,
+  "rx_kw": {
+   "burst_aware": true
+  },
+  "min_blocks": 3000,
+  "max_blocks": 6000,
+  "min_errors": 100,
+  "quick_bler": 0.95,
+  "seed": 4425,
+  "points": [
+   {
+    "snr_db": 18.0,
+    "blocks": 3000,
+    "block_errors": 575,
+    "frames": 1500,
+    "header_errors": 0,
+    "missed_frames": 0,
+    "bler": 0.19166666666666668,
+    "header_fer": 0.0
+   },
+   {
+    "snr_db": 21.0,
+    "blocks": 6000,
+    "block_errors": 69,
+    "frames": 3000,
+    "header_errors": 0,
+    "missed_frames": 0,
+    "bler": 0.0115,
+    "header_fer": 0.0
+   }
+  ],
+  "seconds": 1618.6
+ },
+ {
+  "experiment": "interleaver",
+  "mcs": 4,
+  "width": 56,
+  "impairment": "burst",
+  "interleaver": "linear",
+  "snrs": [
+   18.0,
+   21.0
+  ],
+  "blocks_per_frame": 2,
+  "rx_kw": {
+   "burst_aware": true
+  },
+  "min_blocks": 3000,
+  "max_blocks": 6000,
+  "min_errors": 100,
+  "quick_bler": 0.95,
+  "seed": 4456,
+  "points": [
+   {
+    "snr_db": 18.0,
+    "blocks": 3000,
+    "block_errors": 1216,
+    "frames": 1500,
+    "header_errors": 0,
+    "missed_frames": 0,
+    "bler": 0.4053333333333333,
+    "header_fer": 0.0
+   },
+   {
+    "snr_db": 21.0,
+    "blocks": 3000,
+    "block_errors": 1047,
+    "frames": 1500,
+    "header_errors": 0,
+    "missed_frames": 0,
+    "bler": 0.349,
+    "header_fer": 0.0
+   }
+  ],
+  "seconds": 1111.4
+ },
+ {
+  "experiment": "interleaver",
+  "mcs": 4,
+  "width": 56,
+  "impairment": "burst",
+  "interleaver": "random",
+  "snrs": [
+   18.0,
+   21.0
+  ],
+  "blocks_per_frame": 2,
+  "rx_kw": {
+   "burst_aware": true
+  },
+  "min_blocks": 3000,
+  "max_blocks": 6000,
+  "min_errors": 100,
+  "quick_bler": 0.95,
+  "seed": 4457,
+  "points": [
+   {
+    "snr_db": 18.0,
+    "blocks": 3000,
+    "block_errors": 1210,
+    "frames": 1500,
+    "header_errors": 0,
+    "missed_frames": 0,
+    "bler": 0.4033333333333333,
+    "header_fer": 0.0
+   },
+   {
+    "snr_db": 21.0,
+    "blocks": 3000,
+    "block_errors": 1043,
+    "frames": 1500,
+    "header_errors": 0,
+    "missed_frames": 0,
+    "bler": 0.3476666666666667,
+    "header_fer": 0.0
+   }
+  ],
+  "seconds": 998.8
+ },
+ {
+  "experiment": "interleaver",
+  "mcs": 2,
+  "width": 24,
+  "impairment": "none",
+  "interleaver": "linear",
+  "snrs": [
+   8.5,
+   9.5
+  ],
+  "blocks_per_frame": 2,
+  "rx_kw": {
+   "burst_aware": false
+  },
+  "min_blocks": 3000,
+  "max_blocks": 6000,
+  "min_errors": 100,
+  "quick_bler": 0.95,
+  "seed": 4224,
+  "points": [
+   {
+    "snr_db": 8.5,
+    "blocks": 6000,
+    "block_errors": 40,
+    "frames": 3000,
+    "header_errors": 0,
+    "missed_frames": 0,
+    "bler": 0.006666666666666667,
+    "header_fer": 0.0
+   },
+   {
+    "snr_db": 9.5,
+    "blocks": 6000,
+    "block_errors": 1,
+    "frames": 3000,
+    "header_errors": 0,
+    "missed_frames": 0,
+    "bler": 0.00016666666666666666,
+    "header_fer": 0.0
+   }
+  ],
+  "seconds": 1992.0
+ },
+ {
+  "experiment": "interleaver",
+  "mcs": 2,
+  "width": 56,
+  "impairment": "none",
+  "interleaver": "linear",
+  "snrs": [
+   8.5,
+   9.5
+  ],
+  "blocks_per_frame": 2,
+  "rx_kw": {
+   "burst_aware": false
+  },
+  "min_blocks": 3000,
+  "max_blocks": 6000,
+  "min_errors": 100,
+  "quick_bler": 0.95,
+  "seed": 4256,
+  "points": [
+   {
+    "snr_db": 8.5,
+    "blocks": 6000,
+    "block_errors": 1,
+    "frames": 3000,
+    "header_errors": 0,
+    "missed_frames": 0,
+    "bler": 0.00016666666666666666,
+    "header_fer": 0.0
+   },
+   {
+    "snr_db": 9.5,
+    "blocks": 6000,
+    "block_errors": 0,
+    "frames": 3000,
+    "header_errors": 0,
+    "missed_frames": 0,
+    "bler": 0.0,
+    "header_fer": 0.0
+   }
+  ],
+  "seconds": 1779.3
+ },
+ {
+  "experiment": "interleaver",
+  "mcs": 4,
+  "width": 24,
+  "impairment": "none",
+  "interleaver": "linear",
+  "snrs": [
+   16.5,
+   17.5
+  ],
+  "blocks_per_frame": 2,
+  "rx_kw": {
+   "burst_aware": false
+  },
+  "min_blocks": 3000,
+  "max_blocks": 6000,
+  "min_errors": 100,
+  "quick_bler": 0.95,
+  "seed": 4424,
+  "points": [
+   {
+    "snr_db": 16.5,
+    "blocks": 6000,
+    "block_errors": 51,
+    "frames": 3000,
+    "header_errors": 0,
+    "missed_frames": 0,
+    "bler": 0.0085,
+    "header_fer": 0.0
+   },
+   {
+    "snr_db": 17.5,
+    "blocks": 6000,
+    "block_errors": 1,
+    "frames": 3000,
+    "header_errors": 0,
+    "missed_frames": 0,
+    "bler": 0.00016666666666666666,
+    "header_fer": 0.0
+   }
+  ],
+  "seconds": 1789.5
+ },
+ {
+  "experiment": "interleaver",
+  "mcs": 4,
+  "width": 56,
+  "impairment": "none",
+  "interleaver": "linear",
+  "snrs": [
+   16.5,
+   17.5
+  ],
+  "blocks_per_frame": 2,
+  "rx_kw": {
+   "burst_aware": false
+  },
+  "min_blocks": 3000,
+  "max_blocks": 6000,
+  "min_errors": 100,
+  "quick_bler": 0.95,
+  "seed": 4456,
+  "points": [
+   {
+    "snr_db": 16.5,
+    "blocks": 6000,
+    "block_errors": 1,
+    "frames": 3000,
+    "header_errors": 0,
+    "missed_frames": 0,
+    "bler": 0.00016666666666666666,
+    "header_fer": 0.0
+   },
+   {
+    "snr_db": 17.5,
+    "blocks": 6000,
+    "block_errors": 0,
+    "frames": 3000,
+    "header_errors": 0,
+    "missed_frames": 0,
+    "bler": 0.0,
+    "header_fer": 0.0
+   }
+  ],
+  "seconds": 1652.9
+ }
+]

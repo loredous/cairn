@@ -25,3 +25,6 @@ packages = ["tools/adrsite"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["tests"]
+
+[tool.uv.workspace]
+members = ["sim"]
