@@ -22,7 +22,7 @@ Not yet modelled: control blocks.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from functools import cached_property
+from functools import cache, cached_property
 
 import numpy as np
 from scipy import signal
@@ -47,6 +47,7 @@ class FrameConfig:
     clip_db: float | None = None  # clip level, dB above RMS; default: the rung's (params.clip_db)
     probe: bool | None = None   # width probe after the header; default: when width > 24
     mask: frozenset[int] | None = None  # usable tones (SPEC 5.4); None: every tone usable
+    interleaver: str = "linear"         # mapping.INTERLEAVERS; "random" is an evaluation reference
 
     def __post_init__(self) -> None:
         if not 0 <= self.mcs < len(params.RUNGS):
@@ -62,6 +63,8 @@ class FrameConfig:
             raise ValueError("tones above the base set need the width probe")
         if self.mask is not None:
             object.__setattr__(self, "mask", frozenset(int(k) for k in self.mask))
+        if self.interleaver not in mapping.INTERLEAVERS:
+            raise ValueError(f"unknown interleaver {self.interleaver!r}")
         params.masked_tones(self.width, self.mask)          # validates the mask
 
     @property
@@ -171,7 +174,7 @@ def header_points(cfg: FrameConfig, header_bits: np.ndarray) -> np.ndarray:
     hcode = ldpc.code_for(params.HEADER_CODE)
     e_h = params.HEADER_CODE.coded_bits[0]
     hcoded = hcode.rate_match(hcode.encode(header_bits[None])[0], e_h)
-    hbits = mapping.interleave(mapping.scramble(hcoded, HEADER_POSITION))
+    hbits = mapping.interleave(mapping.scramble(hcoded, HEADER_POSITION), cfg.interleaver, HEADER_POSITION)
     h_res = cfg.header_symbols * len(cfg.base_data_tones) * QPSK
     hbits = np.concatenate([hbits, _pad_bits(h_res - hbits.size)])
     return mapping.modulate(hbits, QPSK)
@@ -209,7 +212,7 @@ def build(cfg: FrameConfig, rng: np.random.Generator, header_msg: np.ndarray | N
         payloads = rng.integers(0, 2, (cfg.n_blocks, params.DATA_PAYLOAD_BITS), dtype=np.uint8)
     block_bits = append_crc(payloads)
     coded = dcode.rate_match(dcode.encode(block_bits), rung.coded_bits)
-    stream = np.concatenate([mapping.interleave(mapping.scramble(coded[i], 1 + i))
+    stream = np.concatenate([mapping.interleave(mapping.scramble(coded[i], 1 + i), cfg.interleaver, 1 + i)
                              for i in range(cfg.n_blocks)])
     d_res = cfg.data_symbols * len(cfg.data_tones) * rung.bits_per_symbol
     stream = np.concatenate([stream, _pad_bits(d_res - stream.size)])
@@ -257,6 +260,60 @@ class RxResult:
     start: int                      # detected frame start (sample index)
     snr_db: np.ndarray              # per tone, from S2 (base tones) and the probe
     iterations: np.ndarray
+
+
+@cache
+def smoothing_noise_gain(n: int, window: int = 7) -> np.ndarray:
+    """(n, n) squared weights of ``estimate_channel``'s smoother.
+
+    The smoother is linear in the raw estimate (its rotation only changes
+    phases), so the estimate's error variance at tone k is
+    sum_j gain[k, j] * var(raw_j). Interior tones of a 7-tone quadratic fit
+    keep 1/3 of the raw variance; the edge tones, extrapolated, keep 0.76.
+    """
+    if window < 3:
+        return np.eye(n)
+    w = signal.savgol_filter(np.eye(n), window, 2, axis=0, mode="interp")
+    g = w ** 2
+    g.setflags(write=False)
+    return g
+
+
+def estimate_header_noise(eq: np.ndarray, known_pilots: np.ndarray, thermal: np.ndarray, h: np.ndarray,
+                          data_tones: list[int], pilot_tones: list[int], window: int = 7,
+                          margin: float = 2.0) -> np.ndarray:
+    """Noise variance per base tone for the header's equalized symbols.
+
+    The S2 difference measures additive noise but not what changes from
+    symbol to symbol with the data (inter-symbol interference beyond the
+    prefix, a limiter), and the pilots' excess, interpolated across the band
+    from tone 3, smears the low edge's distortion over every tone. Instead:
+
+    * floor: S2 noise plus the error the smoothed channel estimate leaves
+      (``smoothing_noise_gain``; the raw estimate averages two symbols);
+    * measured: the header symbols themselves. QPSK has unit power, so
+      mean |eq|^2 - 1 over the header's symbols is the error variance on a
+      data tone; on a pilot tone the known value gives it directly. Pooled
+      over three neighbouring tones.
+
+    Returns the larger of the two, as variance of ``eq`` (already divided by h).
+    """
+    n = h.size
+    raw_var = thermal[:n] / 2                                   # (y2 + y3) / 2
+    est = smoothing_noise_gain(n, window) @ raw_var
+    floor = (thermal[:n] + est) / np.abs(h) ** 2
+    m = np.full(n, np.nan)
+    m[data_tones] = np.mean(np.abs(eq[:, data_tones]) ** 2, axis=0) - 1
+    m[pilot_tones] = np.mean(np.abs(eq[:, pilot_tones] - known_pilots) ** 2, axis=0)
+    kernel = np.ones(3)
+    count = np.convolve(np.ones(n), kernel, mode="same")
+    pooled = np.convolve(m, kernel, mode="same") / count
+    # The measurement is noisy (|eq|^2 of QPSK in noise v has variance
+    # 2v + v^2 per sample), so it replaces the floor only by what it exceeds
+    # it with confidence: its value less ``margin`` standard deviations.
+    samples = count * eq.shape[0]
+    sd = np.sqrt((2 * floor + floor ** 2) / samples)
+    return np.maximum(floor, pooled - margin * sd)
 
 
 def estimate_channel(y2: np.ndarray, y3: np.ndarray, s2: np.ndarray, window: int = 7,
@@ -322,13 +379,16 @@ def track_drift(pilot_obs: np.ndarray, pilots: tuple[int, ...], width: int, *,
     return corr, float(-beta * params.N_USEFUL / (2 * np.pi))
 
 
-def _estimate(tones: np.ndarray, cfg: FrameConfig, smooth_window: int, phase_window: int):
+def _estimate(tones: np.ndarray, cfg: FrameConfig, smooth_window: int, phase_window: int,
+              robust: bool = False):
     """Channel, noise and drift estimates from demodulated tones.
 
     ``tones`` has the data symbols already divided by ``cfg.data_gain``.
     Returns ``noise`` (noise plus distortion per tone, at the preamble's
     scale) and ``thermal``, its additive-noise part, which a data symbol
-    raised by the mask gain sees reduced by ``data_gain ** 2``.
+    raised by the mask gain sees reduced by ``data_gain ** 2``. With
+    ``robust``, data symbols whose power shows a noise burst are left out of
+    the pilots' phase tracking and distortion estimate.
     """
 
     b = params.BASE_TONES
@@ -355,6 +415,13 @@ def _estimate(tones: np.ndarray, cfg: FrameConfig, smooth_window: int, phase_win
     pv = pilots_on(tones.shape[0], pilots)[first:]
     obs = body[:, list(pilots)] / pv
     obs[:hs, [j for j, p in enumerate(pilots) if p >= b]] = np.nan   # header: base pilots only
+    d0 = hs + cfg.probe_symbols
+    if robust and body.shape[0] > d0:
+        # A burst hitting one symbol's pilots would turn the smoothed phase
+        # track for the symbols around it: leave such symbols out.
+        act = list(cfg.data_active_tones)
+        power = np.mean(np.abs(body[d0:, act]) ** 2 / np.abs(h[act]) ** 2, axis=1)
+        obs[d0:][_outliers(power)] = np.nan
     corr, drift = track_drift(obs, pilots, cfg.width, s_ref=2.5 - first, window=phase_window)
 
     # The S2 pair sees only noise: both symbols carry the same clipping
@@ -362,15 +429,39 @@ def _estimate(tones: np.ndarray, cfg: FrameConfig, smooth_window: int, phase_win
     # distortion (clipping, a radio limiter) and inter-symbol interference,
     # which the pilots in the data symbols measure; add it, as a fraction of
     # signal power interpolated between pilots, to every tone.
-    d0 = hs + cfg.probe_symbols
     if body.shape[0] > d0:
         hp = h[list(pilots)]
         resid = obs[d0:] / (hp[None, :] * corr[d0:, list(pilots)]) - 1
+        r2 = np.abs(resid) ** 2
+        r2 = r2[~np.isnan(r2).any(axis=1)]
         floor = noise[list(pilots)] / (np.abs(hp) ** 2 * cfg.data_gain ** 2)
-        excess = np.maximum(np.mean(np.abs(resid) ** 2, axis=0) - floor, 0)
+        excess = np.maximum(np.mean(r2, axis=0) - floor, 0)
         noise = noise + np.interp(np.arange(cfg.width), pilots, excess) * np.abs(h) ** 2
         snr_db = 10 * np.log10(np.abs(h) ** 2 / noise)
     return h, noise, thermal, snr_db, corr, body, drift
+
+
+def _outliers(m: np.ndarray, k_sigma: float = 6.0) -> np.ndarray:
+    """Values more than ``k_sigma`` robust standard deviations above the median."""
+    med = np.median(m)
+    spread = 1.4826 * np.median(np.abs(m - med)) + 1e-9
+    return m - med > k_sigma * spread
+
+
+def burst_noise(eq: np.ndarray, nv: np.ndarray, h: np.ndarray) -> np.ndarray:
+    """Extra noise variance (n_sym, n_tones) for symbols hit by a burst.
+
+    ``eq`` and ``nv`` are equalized data symbols on their active tones and the
+    noise variance assumed for them; ``h`` the channel on those tones. A
+    symbol's mean |eq|^2 is 1 plus its noise; one well above the frame's
+    median (``_outliers``) carries extra white noise of that excess power,
+    which is spread over the tones as 1/|h|^2 (white noise before
+    equalization) and added to their variance.
+    """
+    m = np.mean(np.abs(eq) ** 2 - nv, axis=1)
+    excess = np.where(_outliers(m), m - np.median(m), 0.0)
+    inv = 1 / np.abs(h) ** 2
+    return excess[:, None] * (inv / inv.mean())[None, :]
 
 
 def _data_noise(noise: np.ndarray, thermal: np.ndarray, gain: float) -> np.ndarray:
@@ -389,15 +480,23 @@ def find_start(rx: np.ndarray, reference: np.ndarray) -> int:
 def receive(rx: np.ndarray, cfg: FrameConfig, *, reference: np.ndarray | None = None,
             start: int | None = None, advance: int | None = None,
             phase_window: int = 15, smooth_window: int = 7,
-            decision_directed: bool = True) -> RxResult:
+            decision_directed: bool = True, burst_aware: bool = False,
+            header_noise: str = "s2") -> RxResult:
     """Decode one frame from real samples ``rx``.
 
     Give ``start`` (index of the frame's first sample) or ``reference`` (the
     preamble waveform) to locate it. ``advance`` moves the FFT window that
     many samples into the prefix, to absorb channel delay spread. With
     ``decision_directed``, the decoded header re-estimates each base tone's
-    noise plus distortion before the data blocks are demapped.
+    noise plus distortion before the data blocks are demapped. With
+    ``burst_aware``, data symbols whose power shows a noise burst get their
+    noise variance raised by it (``burst_noise``), so their LLRs are
+    discounted instead of trusted. ``header_noise`` picks the header's
+    per-tone noise: "s2" (the S2 difference plus the pilots' excess, as for
+    the data) or "blind" (``estimate_header_noise``).
     """
+    if header_noise not in ("s2", "blind"):
+        raise ValueError(f"unknown header_noise {header_noise!r}")
     if start is None:
         if reference is None:
             reference = ofdm.modulate(preamble.grid(cfg.width), cfg.cp, active=cfg.width)
@@ -409,7 +508,8 @@ def receive(rx: np.ndarray, cfg: FrameConfig, *, reference: np.ndarray | None = 
     d_first = first + cfg.header_symbols + cfg.probe_symbols   # first data symbol
     tones = ofdm.demodulate(rx, window_start, n_sym, cfg.width, cfg.cp, active=cfg.width)
     tones[d_first:] /= cfg.data_gain                           # the mask's known power boost
-    h, noise, thermal, snr_db, corr, body, drift = _estimate(tones, cfg, smooth_window, phase_window)
+    h, noise, thermal, snr_db, corr, body, drift = _estimate(tones, cfg, smooth_window, phase_window,
+                                                             burst_aware)
     # Follow sample-clock drift: if the windows would wander by a sample or
     # more over the frame, move each symbol's window and estimate again.
     pos = np.arange(n_sym) - 2.5                      # symbols from the channel estimate
@@ -424,7 +524,8 @@ def receive(rx: np.ndarray, cfg: FrameConfig, *, reference: np.ndarray | None = 
         f = params.BIN_OFFSET + np.arange(cfg.width)
         tones = tones * np.exp(-2j * np.pi * f[None, :] * shifts[:, None] / params.N_USEFUL)
         tones[d_first:] /= cfg.data_gain
-        h, noise, thermal, snr_db, corr, body, drift = _estimate(tones, cfg, smooth_window, phase_window)
+        h, noise, thermal, snr_db, corr, body, drift = _estimate(tones, cfg, smooth_window, phase_window,
+                                                                 burst_aware)
     hs = cfg.header_symbols
     d0 = hs + cfg.probe_symbols
     eq = body / (h[None, :] * corr)
@@ -434,9 +535,16 @@ def receive(rx: np.ndarray, cfg: FrameConfig, *, reference: np.ndarray | None = 
     # Header.
     hcode = ldpc.code_for(params.HEADER_CODE)
     btones = list(cfg.base_data_tones)
+    if header_noise == "blind":
+        b = params.BASE_TONES
+        bp = list(params.pilots_for(b))
+        known_p = pilots_on(first + hs, tuple(bp))[first:]
+        nv[:hs, :b] = estimate_header_noise(eq[:hs, :b], known_p, thermal, h[:b], btones, bp,
+                                            smooth_window)[None, :]
     hl = mapping.demodulate_llr(eq[:hs, btones], nv[:hs, btones], QPSK)
     e_h = params.HEADER_CODE.coded_bits[0]
-    hl = mapping.descramble_llr(mapping.deinterleave(hl[:e_h]), HEADER_POSITION)
+    hl = mapping.descramble_llr(mapping.deinterleave(hl[:e_h], cfg.interleaver, HEADER_POSITION),
+                                HEADER_POSITION)
     hres = ldpc.decode(hcode, hcode.rate_recover(hl, e_h), rows=hcode.rows_needed(hcode.tx_positions(e_h)))
     if hres.ok[0] and decision_directed:
         # The decoded header is a known signal on every base data tone: its
@@ -456,9 +564,13 @@ def receive(rx: np.ndarray, cfg: FrameConfig, *, reference: np.ndarray | None = 
     dcode = ldpc.code_for(params.DATA_CODE)
     rung = cfg.rung
     dt = list(cfg.data_tones)
+    if burst_aware and body.shape[0] > d0:
+        act = list(cfg.data_active_tones)
+        nv[d0:, act] += burst_noise(eq[d0:, act], nv[d0:, act], h[act])
     dl = mapping.demodulate_llr(eq[d0:, dt], nv[d0:, dt], rung.bits_per_symbol)
     e = rung.coded_bits
-    llrs = np.stack([mapping.descramble_llr(mapping.deinterleave(dl[i * e:(i + 1) * e]), 1 + i)
+    llrs = np.stack([mapping.descramble_llr(mapping.deinterleave(dl[i * e:(i + 1) * e], cfg.interleaver, 1 + i),
+                                            1 + i)
                      for i in range(cfg.n_blocks)])
     dres = ldpc.decode(dcode, dcode.rate_recover(llrs, e), rows=dcode.rows_needed(dcode.tx_positions(e)))
     return RxResult(bool(hres.ok[0]), hres.bits[0], dres.ok, dres.bits, start, snr_db, dres.iterations)

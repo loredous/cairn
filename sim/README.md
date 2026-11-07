@@ -24,14 +24,15 @@ uv run --package cairn-sim pytest sim/tests          # add -m slow for the long 
 | `ofdm` | Half-bin OFDM modulator/demodulator, clip-and-filter PAPR control |
 | `preamble` | S1/S2 (chosen by the Stage 1 search) and the SPEC 6.1 dual-lag detector |
 | `preamble_eval` | Detection, false-alarm and prefix-identification measurements |
-| `frame` | Frame assembly (preamble, header, width probe, data blocks) and the receiver |
+| `frame` | Frame assembly (preamble, header, width probe, data blocks, SPEC 5.4 tone masks) and the receiver |
 | `channel` | AWGN and the SPEC 14.2 FM audio chain (`mic`, `flat12`, `flat25`, `repeater`) |
 | `link_sim` | Block error rate against SNR, rung thresholds, and the SPEC 7.4 time budget |
+| `interleaver_eval` | SPEC 6.4 interleaver checks: bit layout under tone masks, dead-tone and burst BLER |
 | `experiments` | Runs the threshold sweeps in parallel, writes `results/*.json` |
 | `report` | Builds `report.md` from the results |
 
 ```sh
-uv run --package cairn-sim python -m cairn_sim.experiments awgn      # also: channels, clip
+uv run --package cairn-sim python -m cairn_sim.experiments awgn      # also: channels, clip, interleaver, header
 uv run --package cairn-sim python -m cairn_sim.report
 uv run --package cairn-sim python -m cairn_sim.vectors               # regenerate codes/ and vectors/
 ```
@@ -45,6 +46,17 @@ are meant to be replaced by whatever the ADR specifies.
 
 S1 and S2 (§20.3) are the Stage 1 search results; the top of `preamble.py`
 says exactly how they were chosen, for publication as test vectors.
+
+## Clip level and tone masks
+
+Frames are clipped at their data rung's level, `params.clip_db(mcs)`: 7 dB
+above RMS at MCS 0–3, 8, 9 and 10 dB at MCS 4, 5 and 6. The whole frame,
+preamble to data, uses that level. Results stay on the average-referenced
+SNR axis below; add `params.clip_offset_db(mcs)` (`clip_db - 7`) to quote a
+threshold on the 7 dB-clip scale a peak-limited radio sees.
+
+`FrameConfig.mask` is the SPEC 5.4 set of usable tones. It applies to data
+symbols only; see the top of `frame.py` for exactly what it changes.
 
 ## Audio SNR
 

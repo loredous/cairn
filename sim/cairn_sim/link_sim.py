@@ -49,7 +49,8 @@ def bler_point(mcs: int, snr_db: float, *, width: int = 24, chan: Channel = awgn
                clip: bool = True, rng: np.random.Generator | None = None,
                guard: int = 400, quick_bler: float = 0.3, quick_blocks: int = 480,
                detector: bool = True, cp: int = params.CP_SHORT,
-               mask: frozenset[int] | None = None, **frame_kw) -> Point:
+               mask: frozenset[int] | None = None, rx_kw: dict | None = None,
+               **frame_kw) -> Point:
     """Run frames until ``min_blocks`` and ``min_errors`` (or ``max_blocks``) are reached.
 
     Points with BLER above ``quick_bler`` after ``quick_blocks`` stop early.
@@ -57,7 +58,8 @@ def bler_point(mcs: int, snr_db: float, *, width: int = 24, chan: Channel = awgn
     ``clip_db`` defaults to the rung's clip level (``params.clip_db``). The
     SNR axis stays average-referenced: add ``params.clip_offset_db(mcs)``
     to put a result on the 7 dB-clip (peak-limited) scale. ``mask`` is the
-    usable-tone set (SPEC 5.4); other ``frame_kw`` go to ``FrameConfig``.
+    usable-tone set (SPEC 5.4); other ``frame_kw`` go to ``FrameConfig``
+    and ``rx_kw`` to ``frame.receive``.
 
     The frame is found by the SPEC 6.1 detector (``detector=True``) or, for
     comparison, by cross-correlation with the known preamble waveform. A
@@ -86,9 +88,9 @@ def bler_point(mcs: int, snr_db: float, *, width: int = 24, chan: Channel = awgn
                 pt.blocks += blocks_per_frame
                 pt.block_errors += blocks_per_frame
                 continue
-            r = frame.receive(rx, cfg, start=dets[0].start)
+            r = frame.receive(rx, cfg, start=dets[0].start, **(rx_kw or {}))
         else:
-            r = frame.receive(rx, cfg, reference=tx.preamble_samples)
+            r = frame.receive(rx, cfg, reference=tx.preamble_samples, **(rx_kw or {}))
         good = r.block_ok & np.all(r.block_bits == tx.block_bits, axis=1)
         if not r.header_ok:
             good[:] = False

@@ -64,26 +64,39 @@ def descramble_llr(llr: np.ndarray, position: int) -> np.ndarray:
 # --- interleaver -------------------------------------------------------------
 
 
+INTERLEAVERS = ("linear", "random")
+
+
 @cache
-def interleaver(e: int) -> np.ndarray:
-    """Permutation p with interleaved[p[i]] = coded[i]."""
-    a = round(0.618 * e)
-    while math.gcd(a, e) != 1:
-        a += 1
-    p = (a * np.arange(e)) % e
+def interleaver(e: int, kind: str = "linear", key: int = 0) -> np.ndarray:
+    """Permutation p with interleaved[p[i]] = coded[i].
+
+    ``linear`` is the provisional design above. ``random`` is a reference
+    for evaluation only: a uniformly random permutation drawn from a seed of
+    (e, key), with ``key`` the block's position so every block differs.
+    """
+    if kind == "linear":
+        a = round(0.618 * e)
+        while math.gcd(a, e) != 1:
+            a += 1
+        p = (a * np.arange(e)) % e
+    elif kind == "random":
+        p = np.random.default_rng([e, key, 0x1E]).permutation(e)
+    else:
+        raise ValueError(f"unknown interleaver {kind!r}")
     p.setflags(write=False)
     return p
 
 
-def interleave(bits: np.ndarray) -> np.ndarray:
-    p = interleaver(bits.shape[-1])
+def interleave(bits: np.ndarray, kind: str = "linear", key: int = 0) -> np.ndarray:
+    p = interleaver(bits.shape[-1], kind, key)
     out = np.empty_like(bits)
     out[..., p] = bits
     return out
 
 
-def deinterleave(values: np.ndarray) -> np.ndarray:
-    return values[..., interleaver(values.shape[-1])]
+def deinterleave(values: np.ndarray, kind: str = "linear", key: int = 0) -> np.ndarray:
+    return values[..., interleaver(values.shape[-1], kind, key)]
 
 
 # --- constellations ----------------------------------------------------------
