@@ -5,12 +5,18 @@
     uv run --package cairn-sim python -m cairn_sim.experiments channels
 
 Each experiment is a list of jobs (one rung threshold each) run in parallel
-processes with fixed seeds, so results are reproducible.
+processes with fixed seeds, so results are reproducible. Worker processes
+are limited to one BLAS thread each, since the jobs already run in parallel.
 """
 
 from __future__ import annotations
 
-import argparse
+import os
+
+for _var in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS"):
+    os.environ.setdefault(_var, "1")
+
+import argparse  # noqa: E402
 import json
 import time
 from concurrent.futures import ProcessPoolExecutor

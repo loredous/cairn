@@ -1,0 +1,162 @@
+[
+ {
+  "experiment": "awgn",
+  "mcs": 0,
+  "width": 24,
+  "profile": "awgn",
+  "start_db": 2.0,
+  "seed": 1024,
+  "threshold_db": 3.6720304651117908,
+  "points": [
+   {
+    "snr_db": 2.0,
+    "blocks": 480,
+    "block_errors": 298,
+    "frames": 30,
+    "header_errors": 15,
+    "bler": 0.6208333333333333
+   },
+   {
+    "snr_db": 3.0,
+    "blocks": 2000,
+    "block_errors": 144,
+    "frames": 125,
+    "header_errors": 8,
+    "bler": 0.072
+   },
+   {
+    "snr_db": 3.5,
+    "blocks": 5440,
+    "block_errors": 115,
+    "frames": 340,
+    "header_errors": 7,
+    "bler": 0.021139705882352942
+   },
+   {
+    "snr_db": 4.0,
+    "blocks": 20000,
+    "block_errors": 48,
+    "frames": 1250,
+    "header_errors": 3,
+    "bler": 0.0024
+   }
+  ],
+  "seconds": 708.3
+ },
+ {
+  "experiment": "awgn",
+  "mcs": 1,
+  "width": 24,
+  "profile": "awgn",
+  "start_db": 5.0,
+  "seed": 1034,
+  "threshold_db": 5.871546739227464,
+  "points": [
+   {
+    "snr_db": 5.0,
+    "blocks": 480,
+    "block_errors": 157,
+    "frames": 30,
+    "header_errors": 0,
+    "bler": 0.32708333333333334
+   },
+   {
+    "snr_db": 5.5,
+    "blocks": 3120,
+    "block_errors": 106,
+    "frames": 195,
+    "header_errors": 0,
+    "bler": 0.03397435897435897
+   },
+   {
+    "snr_db": 6.0,
+    "blocks": 15568,
+    "block_errors": 102,
+    "frames": 973,
+    "header_errors": 0,
+    "bler": 0.006551901336073998
+   }
+  ],
+  "seconds": 428.8
+ },
+ {
+  "experiment": "awgn",
+  "mcs": 2,
+  "width": 24,
+  "profile": "awgn",
+  "start_db": 8.0,
+  "seed": 1044,
+  "threshold_db": 8.338057689700662,
+  "points": [
+   {
+    "snr_db": 8.0,
+    "blocks": 2304,
+    "block_errors": 100,
+    "frames": 144,
+    "header_errors": 0,
+    "bler": 0.043402777777777776
+   },
+   {
+    "snr_db": 8.5,
+    "blocks": 20000,
+    "block_errors": 99,
+    "frames": 1250,
+    "header_errors": 0,
+    "bler": 0.00495
+   },
+   {
+    "snr_db": 9.0,
+    "blocks": 20000,
+    "block_errors": 17,
+    "frames": 1250,
+    "header_errors": 0,
+    "bler": 0.00085
+   }
+  ],
+  "seconds": 1052.6
+ },
+ {
+  "experiment": "awgn",
+  "mcs": 3,
+  "width": 24,
+  "profile": "awgn",
+  "start_db": 11.0,
+  "seed": 1054,
+  "threshold_db": 12.228008997156396,
+  "points": [
+   {
+    "snr_db": 11.0,
+    "blocks": 480,
+    "block_errors": 265,
+    "frames": 30,
+    "header_errors": 0,
+    "bler": 0.5520833333333334
+   },
+   {
+    "snr_db": 12.0,
+    "blocks": 4272,
+    "block_errors": 103,
+    "frames": 267,
+    "header_errors": 0,
+    "bler": 0.024110486891385768
+   },
+   {
+    "snr_db": 12.5,
+    "blocks": 20000,
+    "block_errors": 70,
+    "frames": 1250,
+    "header_errors": 0,
+    "bler": 0.0035
+   },
+   {
+    "snr_db": 13.0,
+    "blocks": 20000,
+    "block_errors": 7,
+    "frames": 1250,
+    "header_errors": 0,
+    "bler": 0.00035
+   }
+  ],
+  "seconds": 967.7
+ }
+]

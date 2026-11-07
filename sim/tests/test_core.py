@@ -134,7 +134,9 @@ def test_frame_decodes_qpsk_at_6db():
     rx = channel.awgn(np.concatenate([np.zeros(300), tx.samples, np.zeros(300)]), 6.0, 24, rng)
     r = frame.receive(rx, cfg, reference=tx.preamble_samples)
     assert r.header_ok and r.block_ok.all()
-    assert abs(10 * np.log10(np.mean(10 ** (r.snr_db / 10))) - 6.0) < 1.5
+    # Effective SINR: includes channel-estimation error, so a little below the true SNR.
+    est = 10 * np.log10(np.mean(10 ** (r.snr_db / 10)))
+    assert 6.0 - 3.0 < est < 6.0 + 1.0
 
 
 def test_awgn_sets_in_band_snr():

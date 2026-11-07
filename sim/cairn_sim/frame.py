@@ -121,6 +121,17 @@ def probe_grid(width: int, first_symbol: int) -> np.ndarray:
     return g
 
 
+def header_points(cfg: FrameConfig, header_bits: np.ndarray) -> np.ndarray:
+    """The header's QPSK points on the base data tones, padding included."""
+    hcode = ldpc.code_for(params.HEADER_CODE)
+    e_h = params.HEADER_CODE.coded_bits[0]
+    hcoded = hcode.rate_match(hcode.encode(header_bits[None])[0], e_h)
+    hbits = mapping.interleave(mapping.scramble(hcoded, HEADER_POSITION))
+    h_res = cfg.header_symbols * len(cfg.base_data_tones) * QPSK
+    hbits = np.concatenate([hbits, _pad_bits(h_res - hbits.size)])
+    return mapping.modulate(hbits, QPSK)
+
+
 def _pad_bits(n: int) -> np.ndarray:
     return mapping.scramble_sequence(PAD_POSITION, n) if n else np.zeros(0, dtype=np.uint8)
 
@@ -141,19 +152,13 @@ class TxFrame:
 def build(cfg: FrameConfig, rng: np.random.Generator, header_msg: np.ndarray | None = None,
           payloads: np.ndarray | None = None) -> TxFrame:
     """Assemble a frame; random header and payloads unless given."""
-    hcode = ldpc.code_for(params.HEADER_CODE)
     dcode = ldpc.code_for(params.DATA_CODE)
     rung = cfg.rung
 
     if header_msg is None:
         header_msg = rng.integers(0, 2, params.HEADER_INFO_BITS - 16, dtype=np.uint8)
     header_bits = append_crc(header_msg[None])[0]
-    e_h = params.HEADER_CODE.coded_bits[0]
-    hcoded = hcode.rate_match(hcode.encode(header_bits[None])[0], e_h)
-    hbits = mapping.interleave(mapping.scramble(hcoded, HEADER_POSITION))
-    h_res = cfg.header_symbols * len(cfg.base_data_tones) * QPSK
-    hbits = np.concatenate([hbits, _pad_bits(h_res - hbits.size)])
-    hpoints = mapping.modulate(hbits, QPSK)
+    hpoints = header_points(cfg, header_bits)
 
     if payloads is None:
         payloads = rng.integers(0, 2, (cfg.n_blocks, params.DATA_PAYLOAD_BITS), dtype=np.uint8)
@@ -295,14 +300,15 @@ def _estimate(tones: np.ndarray, cfg: FrameConfig, smooth_window: int, phase_win
 
     # The S2 pair sees only noise: both symbols carry the same clipping
     # distortion, so it cancels in their difference. Data symbols also carry
-    # distortion (clipping, a radio limiter), which the pilots in the data
-    # symbols measure; add it, as a fraction of signal power, to every tone.
+    # distortion (clipping, a radio limiter) and inter-symbol interference,
+    # which the pilots in the data symbols measure; add it, as a fraction of
+    # signal power interpolated between pilots, to every tone.
     d0 = hs + cfg.probe_symbols
     if body.shape[0] > d0:
         hp = h[list(pilots)]
         resid = obs[d0:] / (hp[None, :] * corr[d0:, list(pilots)]) - 1
-        excess = np.mean(np.abs(resid) ** 2, axis=0) - noise[list(pilots)] / np.abs(hp) ** 2
-        noise = noise + max(float(np.mean(excess)), 0.0) * np.abs(h) ** 2
+        excess = np.maximum(np.mean(np.abs(resid) ** 2, axis=0) - noise[list(pilots)] / np.abs(hp) ** 2, 0)
+        noise = noise + np.interp(np.arange(cfg.width), pilots, excess) * np.abs(h) ** 2
         snr_db = 10 * np.log10(np.abs(h) ** 2 / noise)
     return h, noise, snr_db, corr, body, drift
 
@@ -315,12 +321,15 @@ def find_start(rx: np.ndarray, reference: np.ndarray) -> int:
 
 def receive(rx: np.ndarray, cfg: FrameConfig, *, reference: np.ndarray | None = None,
             start: int | None = None, advance: int | None = None,
-            phase_window: int = 15, smooth_window: int = 7) -> RxResult:
+            phase_window: int = 15, smooth_window: int = 7,
+            decision_directed: bool = True) -> RxResult:
     """Decode one frame from real samples ``rx``.
 
     Give ``start`` (index of the frame's first sample) or ``reference`` (the
     preamble waveform) to locate it. ``advance`` moves the FFT window that
-    many samples into the prefix, to absorb channel delay spread.
+    many samples into the prefix, to absorb channel delay spread. With
+    ``decision_directed``, the decoded header re-estimates each base tone's
+    noise plus distortion before the data blocks are demapped.
     """
     if start is None:
         if reference is None:
@@ -358,6 +367,19 @@ def receive(rx: np.ndarray, cfg: FrameConfig, *, reference: np.ndarray | None = 
     e_h = params.HEADER_CODE.coded_bits[0]
     hl = mapping.descramble_llr(mapping.deinterleave(hl[:e_h]), HEADER_POSITION)
     hres = ldpc.decode(hcode, hcode.rate_recover(hl, e_h), rows=hcode.rows_needed(hcode.tx_positions(e_h)))
+    if hres.ok[0] and decision_directed:
+        # The decoded header is a known signal on every base data tone: its
+        # error per tone is noise plus distortion plus ISI, measured where
+        # it happens rather than interpolated between two pilots.
+        known = header_points(cfg, hres.bits[0]).reshape(hs, len(btones))
+        err = np.mean(np.abs(eq[:hs, btones] - known) ** 2, axis=0)
+        rel = np.interp(np.arange(params.BASE_TONES), btones, err)
+        rel = np.convolve(rel, np.ones(3) / 3, mode="same") / np.convolve(
+            np.ones(params.BASE_TONES), np.ones(3) / 3, mode="same")
+        noise[:params.BASE_TONES] = np.maximum(rel * np.abs(h[:params.BASE_TONES]) ** 2,
+                                               1e-6 * np.mean(np.abs(h) ** 2))
+        snr_db = 10 * np.log10(np.abs(h) ** 2 / noise)
+        nv = noise[None, :] / np.abs(h[None, :]) ** 2 * np.ones_like(body.real)
 
     # Data blocks.
     dcode = ldpc.code_for(params.DATA_CODE)
