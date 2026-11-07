@@ -3,6 +3,8 @@ name = "cairn-adrsite"
 version = "0.1.0"
 description = "Validation, scaffolding, and static-site tooling for Cairn's ADRs"
 requires-python = ">=3.11"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
 dependencies = [
     "jsonschema>=4.21",
     "pyyaml>=6.0",
@@ -23,3 +25,6 @@ packages = ["tools/adrsite"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["tests"]
+
+[tool.uv.workspace]
+members = ["sim"]

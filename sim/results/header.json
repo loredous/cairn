@@ -1,0 +1,214 @@
+[
+ {
+  "experiment": "header",
+  "mcs": 0,
+  "width": 24,
+  "profile": "repeater",
+  "snrs": [
+   4.0,
+   5.0,
+   6.0
+  ],
+  "blocks_per_frame": 2,
+  "rx_kw": {
+   "header_noise": "s2"
+  },
+  "min_blocks": 2000,
+  "max_blocks": 2000,
+  "min_errors": 0,
+  "quick_bler": 1.1,
+  "seed": 5001,
+  "points": [
+   {
+    "snr_db": 4.0,
+    "blocks": 2000,
+    "block_errors": 485,
+    "frames": 1000,
+    "header_errors": 226,
+    "missed_frames": 0,
+    "bler": 0.2425,
+    "header_fer": 0.226
+   },
+   {
+    "snr_db": 5.0,
+    "blocks": 2000,
+    "block_errors": 112,
+    "frames": 1000,
+    "header_errors": 56,
+    "missed_frames": 0,
+    "bler": 0.056,
+    "header_fer": 0.056
+   },
+   {
+    "snr_db": 6.0,
+    "blocks": 2000,
+    "block_errors": 14,
+    "frames": 1000,
+    "header_errors": 7,
+    "missed_frames": 0,
+    "bler": 0.007,
+    "header_fer": 0.007
+   }
+  ],
+  "seconds": 1375.9
+ },
+ {
+  "experiment": "header",
+  "mcs": 0,
+  "width": 24,
+  "profile": "repeater",
+  "snrs": [
+   4.0,
+   5.0,
+   6.0
+  ],
+  "blocks_per_frame": 2,
+  "rx_kw": {
+   "header_noise": "measured"
+  },
+  "min_blocks": 2000,
+  "max_blocks": 2000,
+  "min_errors": 0,
+  "quick_bler": 1.1,
+  "seed": 5001,
+  "points": [
+   {
+    "snr_db": 4.0,
+    "blocks": 2000,
+    "block_errors": 360,
+    "frames": 1000,
+    "header_errors": 162,
+    "missed_frames": 0,
+    "bler": 0.18,
+    "header_fer": 0.162
+   },
+   {
+    "snr_db": 5.0,
+    "blocks": 2000,
+    "block_errors": 30,
+    "frames": 1000,
+    "header_errors": 15,
+    "missed_frames": 0,
+    "bler": 0.015,
+    "header_fer": 0.015
+   },
+   {
+    "snr_db": 6.0,
+    "blocks": 2000,
+    "block_errors": 4,
+    "frames": 1000,
+    "header_errors": 2,
+    "missed_frames": 0,
+    "bler": 0.002,
+    "header_fer": 0.002
+   }
+  ],
+  "seconds": 1257.8
+ },
+ {
+  "experiment": "header",
+  "mcs": 0,
+  "width": 24,
+  "profile": "awgn",
+  "snrs": [
+   3.0,
+   3.5,
+   4.0
+  ],
+  "blocks_per_frame": 2,
+  "rx_kw": {
+   "header_noise": "s2"
+  },
+  "min_blocks": 2000,
+  "max_blocks": 2000,
+  "min_errors": 0,
+  "quick_bler": 1.1,
+  "seed": 5000,
+  "points": [
+   {
+    "snr_db": 3.0,
+    "blocks": 2000,
+    "block_errors": 124,
+    "frames": 1000,
+    "header_errors": 55,
+    "missed_frames": 1,
+    "bler": 0.062,
+    "header_fer": 0.055
+   },
+   {
+    "snr_db": 3.5,
+    "blocks": 2000,
+    "block_errors": 22,
+    "frames": 1000,
+    "header_errors": 10,
+    "missed_frames": 0,
+    "bler": 0.011,
+    "header_fer": 0.01
+   },
+   {
+    "snr_db": 4.0,
+    "blocks": 2000,
+    "block_errors": 8,
+    "frames": 1000,
+    "header_errors": 4,
+    "missed_frames": 0,
+    "bler": 0.004,
+    "header_fer": 0.004
+   }
+  ],
+  "seconds": 1172.6
+ },
+ {
+  "experiment": "header",
+  "mcs": 0,
+  "width": 24,
+  "profile": "awgn",
+  "snrs": [
+   3.0,
+   3.5,
+   4.0
+  ],
+  "blocks_per_frame": 2,
+  "rx_kw": {
+   "header_noise": "measured"
+  },
+  "min_blocks": 2000,
+  "max_blocks": 2000,
+  "min_errors": 0,
+  "quick_bler": 1.1,
+  "seed": 5000,
+  "points": [
+   {
+    "snr_db": 3.0,
+    "blocks": 2000,
+    "block_errors": 100,
+    "frames": 1000,
+    "header_errors": 42,
+    "missed_frames": 1,
+    "bler": 0.05,
+    "header_fer": 0.042
+   },
+   {
+    "snr_db": 3.5,
+    "blocks": 2000,
+    "block_errors": 22,
+    "frames": 1000,
+    "header_errors": 10,
+    "missed_frames": 0,
+    "bler": 0.011,
+    "header_fer": 0.01
+   },
+   {
+    "snr_db": 4.0,
+    "blocks": 2000,
+    "block_errors": 4,
+    "frames": 1000,
+    "header_errors": 2,
+    "missed_frames": 0,
+    "bler": 0.002,
+    "header_fer": 0.002
+   }
+  ],
+  "seconds": 917.1
+ }
+]
