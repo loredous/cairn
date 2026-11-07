@@ -1,0 +1,248 @@
+# yaml-language-server: $schema=../../tools/adrsite/schemas/decisions.schema.json
+#
+# Once merged into main this file is frozen. Change decisions via a new ADR.
+
+- slug: symbol-waveform
+  title: Symbols are anti-periodic, with the negated tail as the prefix
+  category: physical-layer
+  strength: MUST
+  statement: |
+    An OFDM symbol whose tone values are X[k] (k = 0 … 55; zero on silent
+    tones) is transmitted as the real samples
+
+    x(n) = A · Re{ Σ_k X[k] · exp(j2π(3.5 + k)n / 480) },  n = −N_cp … 479,
+
+    at 48 kHz, where N_cp is 60 (short prefix) or 120 (long prefix) and n = 0
+    is the first sample of the useful symbol. Symbols follow each other with
+    no gap. Because every tone completes 3.5 + k cycles in 480 samples, the
+    prefix is the last N_cp samples of the useful symbol negated:
+    x(n) = −x(n + 480) for n < 0. A is one positive constant for every symbol
+    of the frame before clip-and-filter (SPEC §7.1); its value is set by the
+    level rules, not here. (SPEC §5.2)
+  rationale: >-
+    Only the negated tail joins the useful symbol without a step, which keeps
+    the channel's effect a per-tone complex gain as a cyclic prefix does for
+    whole-cycle tones (`prefix-is-negated-tail`). The sign of the exponent
+    fixes which way the quadrature axis points: a receiver that assumed
+    exp(−j…) would see every constellation point conjugated.
+  tags: [phy, waveform, v0.2]
+
+- slug: frame-symbol-content
+  title: What each tone of each symbol carries
+  category: physical-layer
+  strength: MUST
+  statement: |
+    Symbols are numbered s = 0, 1, … from the first preamble symbol. W is the
+    link width, W_p the probe width (the sender's cap), D the number of data
+    tones of a segment. Tones not listed for a segment carry zero.
+
+    | Segment | Symbols | Data tones (lowest first) | Pilot tones | Scale |
+    | --- | --- | --- | --- | --- |
+    | Preamble | s = 0–1 S1, s = 2–3 S2 (`preamble-sequences`) | — (tones 0–23 carry the sequence) | none | 1 |
+    | Header | 7 (10 with the rate-1/3 contingency header) | tones 0–23 except 3 and 20 (D = 22) | 3, 20 | 1 |
+    | Width probe | 2 (`probe-sequence`) | — (every tone below W_p) | every pilot tone below W_p | 1 |
+    | Control | ⌈512 · n_c / (2 · D)⌉ | tones 0–23 except 3, 20 and masked tones | 3, 20 | √(24 / (D + 2)) |
+    | Data | ⌈E · n_d / (Q · D)⌉ | tones 0 … W−1 except pilot tones and masked tones | each of 3, 20, 37, 52 below W and not masked | √(W / (D + pilots)) |
+
+    n_c and n_d are the frame's control and data block counts, E the data
+    block's coded length and Q the bits per point of its rung. Data and
+    pilot values have unit average power before the segment's scale, which
+    multiplies every active tone of the symbol alike. The segments follow
+    each other in the order above; a segment with no symbols is absent.
+    Which tones are masked, and which symbols a mask applies to, are set by
+    `tone-mask-scope`, `masked-upper-pilots` and `masked-tone-content`
+    (ADR 0004); for a data symbol the scale is the one `masked-tone-content`
+    defines. (SPEC §5.2, §5.4, §8.1)
+  rationale: >-
+    The table is the layout the Stage 1 simulation transmits, written out so
+    that a second implementation produces the same tone grid. The control
+    scale applies `masked-tone-content`'s rule (constant power, every active
+    tone scaled alike) to a symbol on the 24 base tones: an unmasked control
+    symbol has the power of 24 unit-power tones, and a masked one keeps it.
+  tags: [phy, waveform, framing, v0.2]
+
+- slug: preamble-sequences
+  title: S1 phases and the S2 seed
+  category: physical-layer
+  strength: MUST
+  statement: |
+    S1 on base tone k (k = 0 … 23) is exp(j2π·u[k] / 256), with
+
+    u = 181, 160, 172, 183, 202, 203, 204, 79, 7, 184, 91, 108,
+    195, 191, 29, 125, 88, 203, 26, 202, 223, 107, 168, 82.
+
+    S2 on base tone k is 1 − 2c(k), where c is the sequence of
+    `scrambler-sequence` with c_init = 5237: c(0 … 23) =
+    0 0 1 1 1 1 1 1 1 0 0 1 0 1 0 1 0 0 1 1 0 0 0 0.
+    (SPEC §6.1; decision §20.3)
+  rationale: >-
+    S1 is the result of the Stage 1 search for the lowest worst-case PAPR of
+    the real symbol over both prefixes (2.75 dB short, 2.80 dB long, at
+    48 kHz). S2 is the lowest-PAPR Gold segment (5.07 dB) whose
+    cross-correlation with S1 stays at or below 0.40 at every time shift, so
+    the detector's S1 check does not fire on S2. `sim/cairn_sim/preamble.py`
+    documents both searches.
+  tags: [phy, sync, v0.2]
+
+- slug: pilot-sequence
+  title: Pilot values depend only on the symbol and the pilot tone
+  category: physical-layer
+  strength: MUST
+  statement: >-
+    In symbol s, pilot tone j (j = 0, 1, 2, 3 for tones 3, 20, 37, 52)
+    carries 1 − 2c(4s + j), where c is the sequence of `scrambler-sequence`
+    with c_init = 0x0B1D (2845) and s counts from the first preamble symbol.
+    Pilots are sent in every header, probe, control and data symbol, on the
+    pilot tones `frame-symbol-content` lists for it; the preamble carries
+    none. (SPEC §5.2)
+  rationale: >-
+    A pilot's value does not depend on how many pilots are active, so a
+    masked or absent pilot changes nothing for the others, and a receiver
+    can compute any pilot from the symbol index alone.
+  tags: [phy, sync, v0.2]
+
+- slug: probe-sequence
+  title: Width-probe values
+  category: physical-layer
+  strength: MUST
+  statement: >-
+    In probe symbol r (r = 0, 1), tone k (k = 0 … W_p − 1) carries
+    1 − 2c(56·r + k), where c is the sequence of `scrambler-sequence` with
+    c_init = 0x0D0E (3342) and W_p is the number of probed tones (the
+    sender's cap), except that every pilot tone below W_p, masked or not,
+    carries its pilot value (`pilot-sequence`). (SPEC §5.4)
+  rationale: >-
+    Indexing by 56·r + k, not by the probe width, gives each tone the same
+    value whatever the sender's cap, as pilot values do not depend on how
+    many pilots are active. A receiver can therefore use the probe, and see
+    where the probed tones stop, without first knowing the cap.
+  tags: [phy, sync, v0.2]
+
+- slug: scrambler-sequence
+  title: Coded bits are scrambled with the 3GPP Gold sequence seeded by block position
+  category: physical-layer
+  strength: MUST
+  statement: |
+    The scrambling sequence is the length-31 Gold sequence of 3GPP TS 38.211
+    §5.2.1:
+
+    c(n) = (x1(n + 1600) + x2(n + 1600)) mod 2,
+    x1(n + 31) = (x1(n + 3) + x1(n)) mod 2,
+    x2(n + 31) = (x2(n + 3) + x2(n + 2) + x2(n + 1) + x2(n)) mod 2,
+
+    with x1(0) = 1, x1(1 … 30) = 0 and x2(i) = bit i of c_init (i = 0 … 30,
+    least significant first).
+
+    A block at position p is scrambled with c_init = 1 + p: its E coded bits
+    after rate matching, b(0 … E−1), become b(i) XOR c(i). The header has
+    position 0. The frame's control and data blocks take positions 1, 2, …
+    in transmission order, control blocks first. Padding bits
+    (`bit-to-tone-order`) are c(0), c(1), … with c_init = 256 (position
+    255), restarting at c(0) in each padded segment. (SPEC §6.4)
+  rationale: >-
+    A published, well-studied sequence with a cheap generator. The position
+    gives every block of a frame a different sequence, so blocks carrying
+    the same bits (an all-zero payload, a repeated retransmission) do not
+    produce repeating patterns. A frame holds at most 131 blocks, so
+    position 255 never collides with a block.
+  tags: [phy, waveform, fec, v0.2]
+
+- slug: block-interleaver
+  title: Each block is interleaved by a linear permutation of its own bits
+  category: physical-layer
+  strength: MUST
+  statement: |
+    After scrambling, the E bits of each block are permuted: input bit i goes
+    to output position (a · i) mod E, i = 0 … E−1. The multiplier a is the
+    smallest integer at or above ⌊(618 · E + 500) / 1000⌋ (0.618 · E, rounded
+    half up) that is coprime to E:
+
+    | Coded length E | Used for | a |
+    | --- | --- | --- |
+    | 288 | header | 179 |
+    | 432 | header, rate-1/3 contingency | 269 |
+    | 512 | control | 317 |
+    | 1,232 | data, rate 5/6 | 761 |
+    | 1,368 | data, rate 3/4 | 845 |
+    | 1,536 | data, rate 2/3 | 949 |
+    | 2,048 | data, rate 1/2 | 1,267 |
+
+    The permutation depends only on E: it is the same for every width, tone
+    mask and block position. It acts within one block; bits of different
+    blocks are never interleaved together. (SPEC §6.4)
+  rationale: >-
+    Together with `bit-to-tone-order` it spreads each block across all
+    active tones and every symbol the block occupies, as `interleaving`
+    requires, and it is defined for every tone mask because it never sees
+    the mask. Stage 1 found it as good as a uniformly random permutation
+    (`sim/results/interleaver.json`). Keeping it within the block preserves
+    per-block decoding and acknowledgement, which selective retransmission
+    and planned HARQ rely on.
+  tags: [phy, fec, v0.2]
+
+- slug: constellation-labeling
+  title: 3GPP Gray labeling, even bits on I and odd bits on Q
+  category: physical-layer
+  strength: MUST
+  statement: |
+    Each group of Q bits b(0) … b(Q−1) (Q = 2, 4, 6, 8) becomes one point
+    as in 3GPP TS 38.211 §5.1: the in-phase level is formed from b(0), b(2),
+    b(4), … and the quadrature level from b(1), b(3), b(5), …, each by
+
+    | Q | Level from axis bits (c0, c1, …) |
+    | --- | --- |
+    | 2 | (1−2c0) |
+    | 4 | (1−2c0)(2 − (1−2c1)) |
+    | 6 | (1−2c0)(4 − (1−2c1)(2 − (1−2c2))) |
+    | 8 | (1−2c0)(8 − (1−2c1)(4 − (1−2c2)(2 − (1−2c3)))) |
+
+    and the point (I + jQ) is scaled by 1/√2, 1/√10, 1/√42 or 1/√170 for
+    QPSK, 16-QAM, 64-QAM and 256-QAM, giving unit average power. (SPEC §6.2)
+  rationale: >-
+    The 3GPP tables are Gray-mapped, published, and match what existing
+    demappers and test equipment expect.
+  tags: [phy, waveform, v0.2]
+
+- slug: bit-to-tone-order
+  title: Points fill each symbol's data tones lowest first; segments are padded to whole symbols
+  category: physical-layer
+  strength: MUST
+  statement: |
+    The header, the control blocks and the data blocks each form one
+    segment. A segment's bit stream is its blocks' interleaved bits, block
+    after block in transmission order, followed by padding bits
+    (`scrambler-sequence`) up to the end of the segment's last symbol. The
+    stream is cut into groups of Q bits (Q = 2 for header and control); group
+    m is point m (`constellation-labeling`), and point m goes to symbol
+    ⌊m / D⌋ of the segment, on its (m mod D)-th data tone counted from the
+    lowest (`frame-symbol-content`). A block therefore starts wherever the
+    previous block ended, often mid-symbol; every segment starts on a new
+    symbol. (SPEC §6.4, §8.1)
+  rationale: >-
+    Frequency-first filling needs no knowledge of the mask beyond the list of
+    active data tones, and spreads consecutive points of a block across the
+    band. The header and control segments are padded because their tones
+    (base tones at MCS 0) differ from the data segment's, so the data cannot
+    share their last symbol; the per-frame costs of SPEC A.1 already assume
+    this.
+  supersedes:
+    adr: 0002-adopt-the-cairn-v0-1-protocol-specification
+    decision: block-packing
+  tags: [phy, framing, v0.2]
+
+- slug: bit-mapping-test-vectors
+  title: The bit-mapping test vectors are normative
+  category: performance-conformance
+  strength: MUST
+  statement: >-
+    An implementation MUST reproduce the published vectors in
+    `vectors/bitmap/`: every bit field and integer constellation level
+    exactly, and every tone value and time-domain sample to the printed
+    precision (with the vectors' scale A = √(2/W), before clip-and-filter).
+    Where these decisions and the vectors disagree, the disagreement is a
+    defect to be resolved by a new ADR. (SPEC §6.4)
+  rationale: >-
+    The vectors follow whole frames from payload to samples at every rung,
+    at 24, 30 and 56 tones, with and without masks and with both prefixes,
+    so a second implementation can find the first stage where it diverges.
+  tags: [phy, conformance, v0.2]

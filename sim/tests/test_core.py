@@ -175,6 +175,12 @@ def test_pilot_value_depends_only_on_symbol_and_slot():
     assert np.array_equal(frame.pilot_values(10, 2), frame.pilot_values(10, 4)[:, :2])
 
 
+def test_probe_value_does_not_depend_on_probe_width():
+    wide = frame.probe_grid(56, 11)
+    for width in (24, 30, 38, 53):
+        assert np.array_equal(frame.probe_grid(width, 11), wide[:, :width]), width
+
+
 def test_clip_and_filter_bounds_papr_on_10000_symbols():
     """SPEC 21.2 ofdm acceptance: PAPR <= 7 dB on 10,000 random symbols."""
     rng = np.random.default_rng(11)

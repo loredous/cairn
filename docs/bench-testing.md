@@ -1,0 +1,251 @@
+# Bench testing the Cairn waveform through real radios
+
+This is a how-to for testing the Cairn modem waveform through two real FM radios
+without a real-time modem. You generate a WAV of test frames, play it through
+radio A, record what radio B hears, and decode the recording afterwards with the
+Stage 1 receiver (`sim/cairn_sim`). It is the cheapest way to start on the Stage 2
+bench plan of [SPEC §14.3](SPEC.md): real audio chains, real deviation, real
+radios, no modem firmware.
+
+The tool is `cairn-bench`, part of the simulation package:
+
+```sh
+uv sync --package cairn-sim                  # core: tx and rx
+uv sync --package cairn-sim --extra audio    # adds play, record, levels, ptt-test (sounddevice, pyserial)
+uv run --package cairn-sim cairn-bench --help
+```
+
+The `audio` extra is optional. Without it, play and record with any audio tool
+(Audacity, `aplay`/`arecord`, `ffmpeg`) and key the radio with VOX; `tx` and `rx`
+need nothing else.
+
+## What you need
+
+- Two FM radios, or one radio and a receiver, on the same channel. Use simplex.
+  The transmitter should have low power or, better, no antenna at all (see below).
+- A sound interface for each radio, or one interface per radio on one computer:
+  a Digirig, an AIOC (All-In-One-Cable), a SignaLink-style box, or a CM108 USB
+  sound-card cable. Any of them works for a bench test. Check that the interface
+  gives you a *flat* audio path (see "Mic path or data port").
+- A computer with the tool installed. One computer with two interfaces is
+  simplest: it plays out of one and records from the other, and the recording and
+  playback clocks are then different sound cards, which is a realistic test of the
+  receiver's clock tracking.
+
+### Wiring for the bench
+
+Never connect one radio's antenna output straight to another radio's input. The
+usual arrangements are:
+
+1. **Dummy load plus attenuator.** Radio A transmits into a dummy load through a
+   tee (or a directional coupler) and a step attenuator; radio B's antenna port is
+   fed from the attenuator. A transmitter at 5 W (37 dBm) needs about 70 to 90 dB of
+   total attenuation to bring radio B to a few microvolts. With a step attenuator you
+   can sweep the received signal across the FM threshold, which is what Stage 2 asks
+   for. Keep the attenuator and the coax rated for the power you use.
+2. **Low power, short distance.** Lowest power setting, antennas a few metres apart
+   (or in different rooms). No equipment needed, but the signal is not
+   controllable, and you are on the air (see "Station identification").
+3. **Both radios in a shielded setup.** A shielded box or tent works, with a small
+   antenna near the receiver. Be careful about leakage.
+
+## Mic path or data port
+
+The waveform expects a *flat* audio path (SPEC §3.1). Radios give you three ways in:
+
+- **Data/9600 port (flat).** No pre-emphasis in transmit, no de-emphasis in receive. This is the
+  intended path where the radio has one, and the `flat12` and `flat25` channel profiles
+  in the simulation model it. On receive the discriminator noise rises with frequency
+  (the upper tones see lower SNR); the per-tone SNR plot shows it.
+- **Mic and speaker path.** Pre-emphasis in transmit and de-emphasis in receive, a mic
+  band-pass and a limiter. It works, and the simulation's `mic` profile models it, but
+  the tone levels are no longer flat and the limiter is closer. Turn off any mic
+  compressor, voice scrambler, VOX gain or "voice enhancement" on the radio.
+- **1200 baud packet port.** Usually mic-like (with emphasis) at a fixed level.
+
+Record which path you used next to every result. Results from the two are not comparable.
+
+## Setting levels
+
+Levels are the main way a bench test goes wrong. Set them in this order, with the
+tone that `tx` puts at the start of the WAV (the **level-setting tone**, SPEC §7.1: 1000 Hz at the same
+peak level as the data, 5 s by default, `--tone-s` to change).
+
+### Transmit drive
+
+SPEC §7.1: drive the radio so the tone produces **70% of maximum deviation**: 3.5 kHz on a
+25 kHz channel and 1.75 kHz on a 12.5 kHz channel. The 30% headroom is for the
+peaks that remain above the clip point.
+
+1. Set the computer's playback volume (and the interface's output control, if it has one) to about half.
+2. Put the radio in transmit into the dummy load. Play the WAV (or `play`; the tone comes first).
+3. Read the deviation with a service monitor or deviation meter, and set the drive to
+   3.5 kHz (or 1.75 kHz). If you have no deviation meter, use a second receiver with a
+   discriminator output or an SDR with FM deviation display, or use the decode results as a
+   check: raise the drive until the report's distortion index rises above 1 or the
+   constellation compresses, then back off by 3 dB. That gets you close, no more.
+4. Leave the radio's own mic gain, deviation limit and (on mic paths) any compressor alone from now on.
+
+The tone is also the best check on the *file*: its peak is -3 dBFS (`--peak-dbfs`
+changes it). A tone that plays quietly means the playback volume is low, not that
+the file is.
+
+### Receive level
+
+The receiver accepts input from -30 to -3 dBFS (SPEC §7.1). Aim for the **tone peak
+near -10 dBFS** in the recording, and never at full scale. Check with `levels`
+(or any recorder meter) while radio A sends the tone, and set radio B's volume
+(or the interface's input control) to suit. `rx` reports the level-tone peak and
+flags recordings that reach full scale: a clipped receive path is the most common
+cause of frames stuck at low rungs.
+
+`cairn-bench levels --device NAME --seconds 2` prints RMS, peak and DC of the input.
+With nothing connected, a clean interface reads very low (an AIOC reads about -46 dBFS RMS,
+mostly a small DC offset). If your idle noise floor is much higher than that, the receive
+level is too high or the interface is noisy.
+
+## Keying: PTT or VOX
+
+- **PTT**: `play` keys the radio through a serial control line (DTR or RTS on a USB serial
+  port that the interface provides: Digirig, AIOC) for the whole WAV, with a `--txdelay` lead
+  before the audio and `--txtail` after it. The AIOC default is DTR asserted and RTS
+  deasserted, which is the default here. Use `--ptt-line rts` or `--ptt-invert`
+  for other wiring. `ptt-test` keys for half a second to check the wiring. The tool forces
+  both lines low before it opens the port and always releases PTT on exit, on an error, and
+  on Ctrl-C, but check once with a dummy load connected.
+- **VOX**: a sound-card interface with VOX, or the radio's own VOX. Radio VOX has an attack
+  time that can eat the first 100 ms or more of audio, and a hang time. The WAV starts with
+  1 s of silence and the level tone for exactly this reason: they open the VOX before the
+  first frame. Between frames the default gap is 0.5 s; keep it *shorter than the hang time*
+  so the radio stays keyed (increase the hang time, or reduce `--gap`). If VOX drops
+  between frames, the next preamble is clipped and `rx` reports that frame as missed.
+- **Time-out timer.** Most radios cut transmit after 1 to 3 minutes. `tx` warns when the
+  WAV is longer than 2 minutes. Either split a long plan into several files (different
+  `--seed`, so their payloads differ) or raise the radio's timer.
+
+A keyed carrier with no audio is fine: a PTT radio sends the carrier during the gaps.
+
+## Station identification
+
+If any of this goes out on the air, you are a licensed station transmitting data and have to
+identify (in the US, Part 97 requires your callsign at the end of the communication and at least
+every 10 minutes during it). Pass your callsign:
+
+```sh
+cairn-bench tx --callsign N0CALL ...
+```
+
+That sends a CW ID (about 20 WPM, 800 Hz, at the same peak level as the data) at the start, at
+least every 9 minutes within the file (the file's first and last signals are IDs), and at the end.
+Never use `--callsign` for someone else's. Other administrations have their own rules,
+so check yours. On a dummy load into an attenuator nothing is radiated and no ID is needed,
+but there is no harm. The detector ignores the CW tone and the level tone (a steady tone is
+never a preamble, SPEC §6.1).
+
+## Step by step
+
+```sh
+# 1. Make the test WAV (and ladder24.json, the manifest, next to it).
+uv run --package cairn-sim cairn-bench tx --plan ladder24 --callsign N0CALL -o ladder24.wav
+
+# 2. Set levels with the tone (play it alone first if you like; see above).
+uv run --package cairn-sim --extra audio cairn-bench levels --device "Digirig" --seconds 2
+
+# 3. Record on radio B's interface, then play on radio A's. Two terminals, record first:
+uv run --package cairn-sim --extra audio cairn-bench record --device "Digirig" --seconds 60 -o rec.wav
+uv run --package cairn-sim --extra audio cairn-bench play ladder24.wav --device "AllInOneCable" \
+    --ptt-port /dev/serial/by-id/usb-AIOC_All-In-One-Cable_*-if04
+
+# 4. Decode and report.
+uv run --package cairn-sim cairn-bench rx rec.wav --manifest ladder24.json --json report.json --plots plots/
+```
+
+Devices are chosen by a name substring (`cairn-bench devices` lists them), not by number. `rx`
+reads any WAV: mono or stereo, 44.1 or 48 kHz or other rates (it resamples). For stereo it
+uses the louder channel (`--channel left|right|mix` to override). Record for the whole
+playback plus a few seconds each side; recording extra is harmless, and `rx` scans the
+entire recording for preambles, so you can start recording early and stop late.
+
+### Plans
+
+| `--plan` | Frames |
+| --- | --- |
+| `quick` | MCS 0, 2, 4 at 24 tones (about 12 s) |
+| `ladder24` | every rung, MCS 0 to 6, at 24 tones |
+| `width` | MCS 2 at 24, 32, 40, 48 and 56 tones |
+| `prefix` | MCS 0 and 2 at 24 tones, short then long prefix |
+| `mask` | MCS 2 at 40 tones, then with tones 8-11 and 30-33 silenced |
+| `custom` | the cross product of `--rungs 0-3,6`, `--widths 24,40` and `--prefix` short, long or both |
+
+Common options: `--repeat N` (repeat the whole plan), `--frame-s` or `--blocks` (frame length;
+the default is SPEC §10.2's, 2 s at MCS 0 and 1, 4 s above), `--mask 8-11,30` (silenced tones,
+custom plan), `--gap`, `--lead`, `--tone-s`, `--seed`, `--peak-dbfs`. Payloads are generated from
+a seed per frame and recorded in the manifest, so `rx` can score every bit. Keep the manifest
+that belongs to the WAV you played.
+
+Repeat the plan several times (`--repeat 5`) to get a block error rate rather than a pass or
+fail. One frame at a rung tells you little near its threshold.
+
+## Reading the report
+
+```
+ #  MCS  tones  prefix   time(s)  hdr  blocks  SNR7(dB)  clock(ppm)  EVM(dB)  dist  pick  note
+ 2    2     24  short     15.61   ok   14/14       25.3           0    -21.3     0     4
+```
+
+| Column | Meaning |
+| --- | --- |
+| time | Where the preamble was found in the recording, seconds. Unmatched frames are listed as **MISSED**, with the time they were expected at. A detection that matches no frame is counted as an *extra detection* in the summary. |
+| prefix | The prefix the detector found. A note appears if it differs from what was sent. |
+| hdr | The header decoded, and (in the JSON) matched what was sent. |
+| blocks | Blocks that passed their CRC *and* matched the transmitted payload, out of the blocks sent. |
+| SNR7 | Effective SNR over the active tones on the **7 dB-equivalent scale** (SPEC §7.1, ADR 0003): the measured SNR plus the frame's clip level minus 7 dB. This is directly comparable with the thresholds of SPEC §6.2, whatever rung the frame used. It includes the modem's own clipping distortion and anything the radio adds, so even a perfect link reads a finite figure (about 20 to 30 dB at MCS 0 to 3 for a clean file). |
+| clock | Sound-card clock offset in ppm, from the pilots of that frame. Positive means the recording is shorter than the transmission (the recording clock is faster). The summary also gives a figure from the frame timing across the whole recording, which is much more accurate; if it exceeds 25 ppm the recording is resampled by it before decoding. |
+| EVM | Error vector magnitude of the data constellation, in dB below the constellation power. |
+| dist | Distortion index, 0 (clean) to 7 (severe), in 3 dB steps. It follows the idea of SPEC Appendix B.2 and is **indicative**: energy on silent tones (above the band, and on masked tones) beyond the clip-and-filter regrowth the waveform has by design, combined with amplitude-dependent constellation error (outer points of 16-QAM and above compressing, and symbols with high peaks having more error than quiet ones, compared with the transmitted waveform's own value). It rises when the radio's limiter or deviation clip is working: lower the drive. |
+| pick | The rung that link adaptation would choose for this SNR: the first-frame rule of SPEC §10.1 (the highest rung whose §6.2 threshold is 3 dB below the measured SNR). The "highest supported" rung (threshold at or below the SNR) is in the detail lines. **No Stage 2 hardware margin is applied**; the measured margins are exactly what you are collecting. |
+
+Below the table are the per-frame distortion details and a summary: frames sent, detected and
+missed, headers decoded, frames with every block OK, blocks OK over blocks sent (missed frames
+count as lost), the SNR range, and the clock offset. `rx` exits with status 1 if any frame was missed.
+
+`--plots DIR` writes `snr_per_tone.png` (per-tone SNR for each frame on the 7 dB-equivalent scale, against
+frequency: look for roll-off at the band edges, and for the upward tilt of a flat port's noise and the
+notches of narrow radio filters) and `constellation_N.png` (equalized points of one frame, the highest
+rung decoded unless `--plot-frame N` says otherwise). `--json PATH` (or `-` for stdout) writes everything,
+including the per-tone SNR arrays and the distortion components.
+
+### What to look for
+
+- All frames decoded at every rung: the audio chain is good for the data rate.
+- Even the low rungs fail or the SNR is poor: check levels first (a clipped input or an over-driven
+  transmitter). A distortion index of 3 or higher means the transmitter is over-driven.
+- Low rungs fine, high rungs fail: normal on a real chain; the SNR7 column against the §6.2 thresholds tells
+  you how much margin the hardware costs.
+- Frames missed: with VOX, the attack ate the preamble or the radio dropped between frames. With PTT,
+  the tail of the radio's squelch or a TXDelay problem. Move the gap and `--txdelay`. Weak signals near
+  the FM threshold also miss preambles; the figure to compare is the SNR of the frames that did decode.
+- The measured SNR varying wildly between frames at the same level: noise bursts or a fading path.
+- A big per-tone SNR hole: an audio filter notch, a CTCSS or tone squelch filter, or hum.
+
+## What this cannot test
+
+The offline decoder tests the waveform on a real audio chain, one direction at a time. It cannot
+test, and does not claim to:
+
+- **ACKs and the control channel.** Nothing is sent back; control blocks are not modelled
+  in the Stage 1 transmitter yet.
+- **Link adaptation as a process.** The report says what the thresholds would pick, once per frame,
+  without hysteresis, without a Stage 2 margin, and without ever acting on it.
+- **ARQ, sessions, retries and the 7.4 timing budget.**
+- **DCD and channel sharing.** Nothing here listens before it transmits or sees another station.
+- **Real TXDelay.** The WAV is played with whatever lead you set. Radio keying time
+  (the time from PTT to a stable carrier and audio path) is only observable here as a
+  clipped preamble. Measuring it needs a separate keying-to-carrier test with a scope or SDR.
+- **Receive-side AGC and automatic level control** (SPEC §13.5): the levels are set once by hand.
+- **Mobile, fading and multipath channels** beyond what the path you actually run gives.
+
+The Stage 1 receiver is a research receiver, not a real-time one: it decodes each frame knowing
+the rung, width and block count from the manifest (a real receiver would read them from the
+header), so a header that fails to decode does not stop its blocks being tried. `rx` tells you if
+the header decoded.

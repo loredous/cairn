@@ -19,8 +19,9 @@ uv run --package cairn-sim pytest sim/tests          # add -m slow for the long 
 | `crc` | CRC-16/CCITT-FALSE, bit-serial and batched |
 | `ldpc` | NR BG1/BG2 lifted codes from `codes/`, encoder, rate matching, layered normalized min-sum decoder |
 | `vectors` | Generates the published matrices, rate-matching tables and known-answer vectors (`codes/`, `vectors/`) |
+| `bitmap_vectors` | Generates the ADR 0005 bit-mapping vectors (`vectors/bitmap/`): every stage from payload to samples |
 | `ldpc_eval` | Code performance against the normal-approximation bound and a sum-product reference |
-| `mapping` | Scrambler, interleaver, Gray QAM mapper and max-log demapper (**provisional**, see below) |
+| `mapping` | Scrambler, interleaver, Gray QAM mapper and max-log demapper (ADR 0005) |
 | `ofdm` | Half-bin OFDM modulator/demodulator, clip-and-filter PAPR control |
 | `preamble` | S1/S2 (chosen by the Stage 1 search) and the SPEC 6.1 dual-lag detector |
 | `preamble_eval` | Detection, false-alarm and prefix-identification measurements |
@@ -30,22 +31,38 @@ uv run --package cairn-sim pytest sim/tests          # add -m slow for the long 
 | `interleaver_eval` | SPEC 6.4 interleaver checks: bit layout under tone masks, dead-tone and burst BLER |
 | `experiments` | Runs the threshold sweeps in parallel, writes `results/*.json` |
 | `report` | Builds `report.md` from the results |
+| `bench` | The `cairn-bench` CLI: test WAV out (`tx`), offline decode of a radio recording (`rx`), optional `play`/`record`/`levels`/`ptt-test` |
 
 ```sh
 uv run --package cairn-sim python -m cairn_sim.experiments awgn      # also: channels, clip, interleaver, header
 uv run --package cairn-sim python -m cairn_sim.report
 uv run --package cairn-sim python -m cairn_sim.vectors               # regenerate codes/ and vectors/
+uv run --package cairn-sim python -m cairn_sim.bitmap_vectors        # regenerate vectors/bitmap/
 ```
 
-## Provisional choices
+## Bench kit
 
-SPEC §6.4 defers the scrambler, interleaver and constellation labeling to an
-ADR due before v0.2. Until then the simulation uses the placeholder designs
-documented at the top of `mapping.py`. They meet the normative properties and
-are meant to be replaced by whatever the ADR specifies.
+`cairn-bench` generates a WAV of test frames, decodes a recording of it offline, and
+(with the optional `audio` extra) plays and records through a sound interface with
+serial PTT. It lets you test the waveform through two real radios without a real-time
+modem; see [`docs/bench-testing.md`](../docs/bench-testing.md).
+
+```sh
+uv run --package cairn-sim cairn-bench tx --plan quick --callsign N0CALL -o quick.wav
+uv run --package cairn-sim cairn-bench rx recording.wav --manifest quick.json
+```
+
+## Bit mapping
+
+ADR 0005 made the simulation's scrambler, interleaver, constellation
+labeling, bit-to-tone order, pilot, probe and preamble sequences and
+negated-tail prefix normative (SPEC §5.2, §6.1, §6.4). The published vectors
+in `vectors/bitmap/` come from `bitmap_vectors`, and a test checks that
+they regenerate byte for byte, so a change to any of these is a change to
+the protocol and needs a new ADR.
 
 S1 and S2 (§20.3) are the Stage 1 search results; the top of `preamble.py`
-says exactly how they were chosen, for publication as test vectors.
+says exactly how they were chosen.
 
 ## Clip level and tone masks
 

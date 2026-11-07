@@ -30,9 +30,9 @@ from scipy import signal
 from . import ldpc, mapping, ofdm, params, preamble
 from .crc import append_crc
 
-PILOT_C_INIT = 0x0B1D   # provisional pilot BPSK sequence seed
-PROBE_C_INIT = 0x0D0E   # provisional width-probe BPSK sequence seed
-PAD_POSITION = 255      # provisional scrambler position for padding bits
+PILOT_C_INIT = 0x0B1D   # pilot BPSK sequence seed (ADR 0005 pilot-sequence)
+PROBE_C_INIT = 0x0D0E   # width-probe BPSK sequence seed (ADR 0005 probe-sequence)
+PAD_POSITION = 255      # scrambler position for padding bits (ADR 0005 scrambler-sequence)
 HEADER_POSITION = 0     # scrambler position of the header; block i uses 1 + i
 QPSK = 2
 
@@ -161,9 +161,14 @@ def _fill_symbols(points: np.ndarray, n_sym: int, width: int, data_tones: tuple[
 
 
 def probe_grid(width: int, first_symbol: int) -> np.ndarray:
-    """Width-probe symbols (SPEC 5.4): known BPSK on every tone, pilots on the pilot tones."""
-    c = mapping.gold_sequence(PROBE_C_INIT, params.PROBE_SYMBOLS * width)
-    g = (1.0 - 2.0 * c.astype(float)).reshape(params.PROBE_SYMBOLS, width).astype(complex)
+    """Width-probe symbols (SPEC 5.4): known BPSK on every tone, pilots on the pilot tones.
+
+    Tone k of probe symbol r is 1 - 2 c(56 r + k) (ADR 0005 probe-sequence),
+    so a tone's value does not depend on the probe width.
+    """
+    c = mapping.gold_sequence(PROBE_C_INIT, params.PROBE_SYMBOLS * params.MAX_TONES)
+    g = (1.0 - 2.0 * c.astype(float)).reshape(params.PROBE_SYMBOLS, params.MAX_TONES)[:, :width]
+    g = g.astype(complex)
     pilots = params.pilots_for(width)
     g[:, list(pilots)] = pilot_values(first_symbol + params.PROBE_SYMBOLS, len(pilots))[first_symbol:]
     return g
@@ -260,6 +265,10 @@ class RxResult:
     start: int                      # detected frame start (sample index)
     snr_db: np.ndarray              # per tone, from S2 (base tones) and the probe
     iterations: np.ndarray
+    # Receiver internals for measurement tools (bench rx): channel ``h`` and
+    # ``noise`` per tone, equalized symbols ``eq`` (rows after the preamble),
+    # ``d0`` (first data row of ``eq``), ``window_start``, ``shifts``, ``drift``.
+    detail: dict = field(default_factory=dict, repr=False)
 
 
 def header_noise_floor(pre: np.ndarray, h: np.ndarray, thermal: np.ndarray,
@@ -479,7 +488,7 @@ def find_start(rx: np.ndarray, reference: np.ndarray) -> int:
 def receive(rx: np.ndarray, cfg: FrameConfig, *, reference: np.ndarray | None = None,
             start: int | None = None, advance: int | None = None,
             phase_window: int = 15, smooth_window: int = 7,
-            decision_directed: bool = True, burst_aware: bool = False,
+            decision_directed: bool = True, burst_aware: bool = True,
             header_noise: str = "measured") -> RxResult:
     """Decode one frame from real samples ``rx``.
 
@@ -490,7 +499,8 @@ def receive(rx: np.ndarray, cfg: FrameConfig, *, reference: np.ndarray | None = 
     noise plus distortion before the data blocks are demapped. With
     ``burst_aware``, data symbols whose power shows a noise burst get their
     noise variance raised by it (``burst_noise``), so their LLRs are
-    discounted instead of trusted. ``header_noise`` picks the header's
+    discounted instead of trusted (on by default; it never triggered on the
+    AWGN, mic or repeater profiles in Stage 1). ``header_noise`` picks the header's
     per-tone noise: "measured" (``header_noise_floor`` raised by
     ``estimate_header_noise``) or "s2" (the S2 difference plus the pilots'
     excess interpolated across the band, as used for the data).
@@ -573,4 +583,6 @@ def receive(rx: np.ndarray, cfg: FrameConfig, *, reference: np.ndarray | None = 
                                             1 + i)
                      for i in range(cfg.n_blocks)])
     dres = ldpc.decode(dcode, dcode.rate_recover(llrs, e), rows=dcode.rows_needed(dcode.tx_positions(e)))
-    return RxResult(bool(hres.ok[0]), hres.bits[0], dres.ok, dres.bits, start, snr_db, dres.iterations)
+    detail = {"h": h, "noise": noise, "thermal": thermal, "eq": eq, "d0": d0, "window_start": window_start,
+              "shifts": shifts, "drift": drift}
+    return RxResult(bool(hres.ok[0]), hres.bits[0], dres.ok, dres.bits, start, snr_db, dres.iterations, detail)
