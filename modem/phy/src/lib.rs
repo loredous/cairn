@@ -20,6 +20,7 @@ pub mod params;
 pub mod preamble;
 pub mod rx;
 pub mod tx;
+pub mod wav;
 
 pub use frame::{ConfigError, FrameConfig};
 pub use rx::{Receiver, RxOptions, RxResult};
