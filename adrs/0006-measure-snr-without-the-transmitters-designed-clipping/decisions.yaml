@@ -1,0 +1,58 @@
+# yaml-language-server: $schema=../../tools/adrsite/schemas/decisions.schema.json
+#
+# Once merged into main this file is frozen. Change decisions via a new ADR.
+
+- slug: snr-reference-channel
+  title: Reported SNR is the channel's, referenced to a 7 dB clip
+  category: link-adaptation
+  strength: MUST
+  statement: >-
+    Every SNR the protocol reports or compares with a rung threshold (the
+    measured SNR in the ACK, the link-test and PROBE results, and the
+    thresholds of ADR 0003 `mcs-ladder-thresholds`) is the 7 dB-equivalent
+    channel SNR: the ratio of signal power to noise and distortion power over
+    the active tones of the received frame, counting everything the channel
+    and both radios add (noise, interference, dispersion, the radio's own
+    clipping) but not the distortion that clip-and-filter produces by design
+    at the frame's clip level (ADR 0003 `clip-level-by-rung`), plus that clip
+    level minus 7 dB. The receiver knows the rung from the header.
+    (SPEC §7.1, §10.1, B.2)
+  rationale: >-
+    The designed clipping is the transmitter's, not the link's. Counted as
+    noise, it caps what a frame can report at its own signal-to-distortion
+    ratio: about 21.7 dB (7 dB-equivalent) for MCS 0–3 frames and 26.9 dB for
+    MCS 4. Frames sent at MCS 0 (CONNECT, SOUND, PROBE replies) could then
+    never show that a link supports MCS 6 (threshold 25.5 dB), the link test
+    would under-report strong links, and a session would have to climb rung
+    by rung to find a capacity the first frame could have measured. The
+    thresholds themselves were measured against channel SNR, so a reported
+    SNR on the same basis compares with them directly.
+  supersedes:
+    adr: 0003-set-the-clip-level-by-rung-and-reference-snr-to-a-7-db-clip
+    decision: snr-reference
+  tags: [adaptation, phy, v0.2]
+
+- slug: snr-measurement-accuracy
+  title: SNR is accurate when the frame's content is known, and never over-reported
+  category: link-adaptation
+  strength: MUST
+  statement: >-
+    Over symbols whose transmitted content the receiver knows (the preamble,
+    the width probe, and every symbol whose blocks all decoded with a valid
+    CRC), the SNR of `snr-reference-channel` MUST be within 1 dB of the
+    channel SNR up to at least 40 dB (7 dB-equivalent). Where the content is
+    not known, the receiver MAY count the designed clipping as noise, so the
+    figure errs low, but MUST NOT report an SNR more than 1 dB above the
+    channel SNR. Values above the field's range saturate at its maximum.
+    (SPEC §7.1, B.2)
+  rationale: >-
+    In Stage 1 simulation, rebuilding the transmitted symbols from the decoded
+    bits (re-encoding and repeating clip-and-filter) recovered the channel SNR
+    within 0.1 dB from 15 to 45 dB at every rung. Subtracting a fixed
+    allowance for the designed clipping did not: clipping distortion varies
+    from frame to frame, and the estimate failed once the channel was more
+    than about 3 dB cleaner than the clipping (35 dB read as 56 ± 8 dB at a
+    7 dB clip). Frames that fail to decode are weak, and at those SNRs the
+    designed clipping is at least 9 dB below the channel noise, so counting
+    it costs under 0.5 dB.
+  tags: [adaptation, phy, v0.2]
