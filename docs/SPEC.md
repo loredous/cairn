@@ -176,8 +176,8 @@ The waveform is OFDM on 100 Hz-spaced tones in the FM audio band, with 10 ms sym
 | Base tone set | Tones 0–23 (350–2650 Hz): preamble, header and control blocks at every width |
 | Link width | 24–56 tones, negotiated per direction (5.4); occupied band 300 Hz to the highest active tone + 50 Hz (2700 Hz at 24 tones, 5900 Hz at 56) |
 | Width cap by channel | 30 tones (to 3300 Hz) on 12.5 kHz; 56 tones (to 5900 Hz) on 25 kHz |
-| Pilot tones (continuous) | Tones 3 and 20 (650, 2350 Hz) always; tones 37 and 52 (4050, 5550 Hz) when active |
-| Data tones | Width minus active pilots: 22 at 24 tones, 52 at 56 |
+| Pilot tones (continuous) | Tones 3 and 20 (650, 2350 Hz) always; tones 37 and 52 (4050, 5550 Hz) when active and not masked (5.4) |
+| Data tones | Width minus active pilots: 22 at 24 tones, 52 at 56; fewer when tones are masked (5.4) |
 | Data tone-symbols per second | 1,956 at 24 tones, 4,622 at 56 (1,760 and 4,160 in repeater mode) |
 | Internal FFT | 80 points at 8 kHz (up to 30 tones) or 160 points at 16 kHz (up to 56 tones) |
 
@@ -198,7 +198,8 @@ Tone index k = 0…N−1 sits at 350 + 100·k Hz. Tones are numbered from the lo
 Width is discovered by measurement, not configured. The operator sets only the channel width, which fixes the cap; the link finds how many tones each direction actually passes.
 
 - **Width probe.** Two symbols of known pilots on every tone up to the sender's cap, sent after the header when header flag bit 4 is set: always in CONNECT, CONNECT-ACK and SOUND, and in a DATA frame when the peer has requested a re-probe (ACK flag bit 2). Because headers use the base tones, a probe is never needed to decode the frame that carries it.
-- **Mask report.** The receiver measures which probed tones arrive above threshold and returns a bitmap of usable tones (56 bits, tones 0–55) in its next control block. Pilot tones 3 and 20 cannot be masked. The transmitter sends zero energy on masked tones, reassigns coded bits to the remainder, and keeps total power constant, so a 24-tone link pays no penalty for having probed at 56.
+- **Mask report.** The receiver measures which probed tones arrive above threshold and returns a bitmap of usable tones (56 bits, tones 0–55) in its next control block. Pilot tones 3 and 20 cannot be masked; pilots 37 and 52 can, and tracking then uses the remaining pilots. The transmitter puts no data or pilot on masked tones, reassigns coded bits to the remainder, and keeps total power constant: a data symbol carries the power of `width` unit-power tones, with every active tone, pilots included, scaled by the same factor, so a 24-tone link pays no penalty for having probed at 56. Clip-and-filter (7.1) regrows a little energy on masked tones, as it does above the band; that residue may be no higher than the regrowth just above the highest active tone (about 30 dB below the active tones at a 7 dB clip).
+- **Mask scope.** The mask applies to the symbols carrying data and control blocks. The preamble and header always use every base tone, and the width probe every tone up to the sender's cap, including masked ones, so a frame decodes without knowing the mask and masked tones keep being measured (10.3). The 56-bit mask applies at any width; bits at or above the width are ignored.
 - **Caps.** Neither the probe nor the data ever exceeds the sender's own cap, whatever the far end reports. By Carson's rule, 56 tones through a flat port would not fit a 12.5 kHz channel; the cap is the spectral safety limit and is configuration, not negotiation.
 - **Per direction.** Each direction's width is the product of one station's transmit chain and the other's receive chain, so a station with a flat data port talking to a handheld runs wide one way and narrow the other.
 - **Broadcast.** Broadcast frames do not probe; they use the configured broadcast width (default 24 tones).
@@ -222,19 +223,19 @@ Receivers run the autocorrelation at both repeat lags and over a small grid of s
 
 ### 6.2 Modulation and coding scheme (MCS) ladder
 
-Rates scale with the negotiated width; the two extremes are shown. Rates are raw coded-information rates before preamble, header and ACK overhead: they count each block's 16 CRC bits, so payload alone is 1,008/1,024 of each figure (1,925 bps at MCS 0 and 24 tones). SNR values are textbook AWGN figures for about 1% block error; a real audio chain adds roughly 1–3 dB.
+Rates scale with the negotiated width; the two extremes are shown. Rates are raw coded-information rates before preamble, header and ACK overhead: they count each block's 16 CRC bits, so payload alone is 1,008/1,024 of each figure (1,925 bps at MCS 0 and 24 tones). Thresholds are 7 dB-equivalent audio SNRs (7.1) for 1% block error in white noise at 24 tones, measured in Stage 1 simulation with the rung's clip level and rounded up to the next 0.5 dB (ADR 0003). Stage 2 adds the hardware margin (10.1).
 
-| MCS | Modulation | Code rate | Payload bits per data tone-symbol | bps at 24 tones | bps at 56 tones | Nominal SNR |
+| MCS | Modulation | Code rate | Payload bits per data tone-symbol | bps at 24 tones | bps at 56 tones | Threshold |
 | --- | --- | --- | --- | --- | --- | --- |
-| 0 (base) | QPSK | 1/2 | 1.0 | 1,956 | 4,622 | 5 dB |
-| 1 | QPSK | 3/4 | 1.5 | 2,933 | 6,933 | 8 dB |
-| 2 | 16-QAM | 1/2 | 2.0 | 3,911 | 9,244 | 11 dB |
-| 3 | 16-QAM | 3/4 | 3.0 | 5,867 | 13,867 | 15 dB |
-| 4 | 64-QAM | 2/3 | 4.0 | 7,822 | 18,489 | 19 dB |
-| 5 | 64-QAM | 5/6 | 5.0 | 9,778 | 23,111 | 23 dB |
-| 6 | 256-QAM | 3/4 | 6.0 | 11,733 | 27,733 | 27 dB |
+| 0 (base) | QPSK | 1/2 | 1.0 | 1,956 | 4,622 | 3.5 dB |
+| 1 | QPSK | 3/4 | 1.5 | 2,933 | 6,933 | 6.0 dB |
+| 2 | 16-QAM | 1/2 | 2.0 | 3,911 | 9,244 | 8.5 dB |
+| 3 | 16-QAM | 3/4 | 3.0 | 5,867 | 13,867 | 12.5 dB |
+| 4 | 64-QAM | 2/3 | 4.0 | 7,822 | 18,489 | 17.5 dB |
+| 5 | 64-QAM | 5/6 | 5.0 | 9,778 | 23,111 | 21.0 dB |
+| 6 | 256-QAM | 3/4 | 6.0 | 11,733 | 27,733 | 25.5 dB |
 
-- Constellations are Gray-mapped, unit average power per tone. The transmitter scales the whole symbol, never individual tones, so the receiver's per-tone estimate stays valid across rungs.
+- Constellations are Gray-mapped, unit average power per tone. The transmitter scales the whole symbol, never individual tones, so the receiver's per-tone estimate stays valid across rungs once the clip-level offset of 7.1 is applied.
 - MCS 0 is the base rate: headers, control blocks, link setup and broadcast frames by default. A BPSK rung below it is deliberately omitted (Section 2; decision 20.4): the FM cliff makes it nearly useless, and header robustness, if ever short, comes from a rate-1/3 header code instead.
 - MCS 6 requires a linear path and full quieting. It is expected to work through good data ports and rarely through a handheld mic path.
 - Rung IDs 7–15 are reserved. Future rungs must not renumber existing ones.
@@ -263,12 +264,22 @@ Rates scale with the negotiated width; the two extremes are shown. Rates are raw
 
 ## 7. Physical layer: levels, carrier detect and timing
 
-The modem bounds its own peak-to-average ratio to 7 dB, sets deviation once with a reference tone, detects the channel from FM quieting rather than audio energy, and budgets fixed overhead so that 4 s frames run above 80% efficiency.
+The modem bounds its own peak-to-average ratio to 7–10 dB depending on the rung, sets deviation once with a reference tone, detects the channel from FM quieting rather than audio energy, and budgets fixed overhead so that 4 s frames run above 80% efficiency.
 
 ### 7.1 Transmit level and PAPR
 
-- OFDM peaks are tamed in the modem by clip-and-filter: each symbol is clipped at 7 dB above its RMS level, re-filtered to the occupied band, and clipped once more. Resulting PAPR ≤ 7 dB at the output; the radio's limiter is never the mechanism.
-- The digital output is scaled so that waveform peaks sit at −3 dBFS. Average level is then about −10 dBFS and does not change between rungs or widths.
+- OFDM peaks are tamed in the modem by clip-and-filter: each symbol is clipped above its RMS level, re-filtered to the occupied band (the active, unmasked tones), and clipped once more, so PAPR at the output is at most the clip level. The radio's limiter is never the mechanism. The clip level rises with the rung, because the clipper's own distortion (about 22 dB below the signal at 7 dB) would otherwise cap the top rungs (ADR 0003):
+
+| Rung | Clip level above symbol RMS |
+| --- | --- |
+| MCS 0–3 | 7 dB |
+| MCS 4 | 8 dB |
+| MCS 5 | 9 dB |
+| MCS 6 | 10 dB |
+
+- Every symbol of a frame (preamble, header, probe, control and data blocks) uses the level of the frame's data rung, so the per-tone scale is constant across the frame. A frame with no data blocks uses 7 dB.
+- The digital output is scaled so that waveform peaks sit at −3 dBFS at every rung and width. Average level is then about −10 dBFS at a 7 dB clip, and 1 dB lower for each dB of clip level above that (about −13 dBFS at MCS 6). It does not change with width.
+- **SNR reference.** Every SNR the protocol reports or compares with a threshold (the ACK's measured SNR, link-test and PROBE results, the thresholds of 6.2 and 10.1) is the 7 dB-equivalent SNR: the effective SNR measured over the active tones, plus the received frame's clip level minus 7 dB. The receiver knows the rung from the header. An SNR measured at one rung can then be compared directly with another rung's threshold.
 - **Level-setting tone.** A single 1000 Hz tone with the same peak amplitude as the data waveform. The operator sets radio drive so this tone produces 70% of the channel's maximum deviation: 3.5 kHz on a 25 kHz channel, 1.75 kHz on 12.5 kHz. The 30% margin covers level drift and the residual peaks above the clip point. Values to be confirmed on the bench (Section 14).
 - Receive side: digital AGC accepts input anywhere from −30 to −3 dBFS. The receiver flags input clipping to the operator; a clipped receive path is the most common cause of a link stuck at low rungs.
 - Where the host allows it, the modem sets levels itself (Section 13.5): receive gain automatically between frames, transmit drive by a stepped-tone calibration with a peer.
@@ -458,7 +469,7 @@ The loop runs once per received frame; steps down are immediate and steps up are
 | Receive-side clipping detected | Hold the current rung and warn the operator; adaptation cannot fix an overdriven path |
 | Frames reported at distortion index 3 or higher (B.2) | Excluded from the step-down count; the sender lowers its drive (13.5) or warns the operator, since a slower rung would only hide clipping |
 
-Thresholds default to the Section 6.2 nominal values plus a margin measured in Stage 2 testing. A receiver may instead compute per-link thresholds at connect by simulating each rung over the measured per-tone channel (a one-second Monte Carlo on the probe's estimate), which recovers the 1–2 dB a blanket margin wastes on good radios. The 5–10% target block error rate is deliberate: throughput is rate × (1 − error rate), and the maximum sits above zero errors.
+Thresholds default to the Section 6.2 thresholds plus a margin measured in Stage 2 testing, all on the 7 dB-equivalent scale of 7.1. A receiver may instead compute per-link thresholds at connect by simulating each rung over the measured per-tone channel (a one-second Monte Carlo on the probe's estimate), which recovers the 1–2 dB a blanket margin wastes on good radios. The 5–10% target block error rate is deliberate: throughput is rate × (1 − error rate), and the maximum sits above zero errors.
 
 ### 10.2 Frame length by rung
 
@@ -666,7 +677,7 @@ The targets below are what v1.0 must demonstrate on real radios; the simulation 
 
 ### 14.2 Stage 1: simulation
 
-A Python/NumPy model of the full transmit and receive chain, run entirely offline, with a channel model made of these stages in order: FM transmit pre-emphasis (mic path) → mic-path band-pass and limiter → deviation clipping → additive white noise at a set audio SNR → FM receive noise tilt (flat port) → de-emphasis (mic path) → receive band-pass → sample-clock offset (resampling by 1 + ε) → DC offset and 60 Hz hum; a repeater-mode variant cascades two such chains with a controller band-pass and 2 ms of added dispersion. Outputs: block error rate versus SNR per rung, preamble detection rate versus SNR, PAPR distribution before and after clip-and-filter, and net throughput versus TXDelay and frame length. Pass criterion for moving on: the measured rung thresholds within 3 dB of the table in Section 6.2.
+A Python/NumPy model of the full transmit and receive chain, run entirely offline, with a channel model made of these stages in order: FM transmit pre-emphasis (mic path) → mic-path band-pass and limiter → deviation clipping → additive white noise at a set audio SNR → FM receive noise tilt (flat port) → de-emphasis (mic path) → receive band-pass → sample-clock offset (resampling by 1 + ε) → DC offset and 60 Hz hum; a repeater-mode variant cascades two such chains with a controller band-pass and 2 ms of added dispersion. Outputs: block error rate versus SNR per rung, preamble detection rate versus SNR, PAPR distribution before and after clip-and-filter, and net throughput versus TXDelay and frame length. Pass criterion for moving on: the rung thresholds of Section 6.2 set from the measured values (done in ADR 0003; the draft's nominal values were within 3 dB at MCS 0–4 and are replaced). Stage 2 confirms them within 3 dB on real audio chains.
 
 ### 14.3 Stage 2: bench
 
@@ -730,7 +741,7 @@ All fourteen questions were decided on 2026-11-05; Section 20 records each decis
 | Version | Contents | Exit criterion |
 | --- | --- | --- |
 | v0.1 (this draft) | Architecture and nominal parameters; review additions of Sections 17–19 folded in; decisions of Section 20 | Decisions in Section 2 confirmed by ADR 0002 |
-| v0.2 | Stage 1 simulation; NR matrices, S1/S2 preambles and thresholds fixed; measured compression gains | Rung thresholds within 3 dB of table; test vectors published |
+| v0.2 | Stage 1 simulation; NR matrices, S1/S2 preambles and thresholds fixed; measured compression gains | Rung thresholds set from Stage 1 (6.2); test vectors published |
 | v0.5 | Real-time reference implementation: 24-tone width, broadcast and sessions with resume, link test, ID control block, blind prefix detection (both prefix lengths received without configuration, 6.1), KISS, CSMA, receive auto-gain, heard list, guided setup, rig profiles, raw-audio buffer and diagnostic capture, unattended mode; bench results | Section 14.1 24-tone targets met on two radio makes |
 | v1.0 | Full 56-tone width, drive calibration and distortion report, zstd dictionaries with governance, signatures, native API frozen; second implementation | Conformance suite passed by two code bases; 1 MB each way error-free on air |
 | v1.x | Multi-mode receiver, SDR receive front end, iterative receiver, soft combining of repeats, stream multiplexing, dictionary fetch, per-link thresholds, predistortion, repeater mode, AX.25 connected-mode proxy, broadcast digipeating with path block, schema-encoded forms, channel presets, reference chat and file client, link analytics, periodic-ID options | Backward compatible with v1.0 |
@@ -985,7 +996,7 @@ cairn/
 | Module | Scope | Acceptance |
 | --- | --- | --- |
 | `ldpc` | Load the three matrices; systematic encode with 38.212 rate matching; layered normalized min-sum decode, 30 iterations, early stop on CRC | Known-answer vectors round-trip; block error rate versus Eb/N0 within 0.3 dB of published NR curves at n = 2,048 |
-| `ofdm` | Tone plan (5.2), symbol assembly with both prefixes, clip-and-filter PAPR (7.1), scrambler and interleaver (6.4), tone mask and power reassignment (5.4) | PAPR ≤ 7 dB on 10,000 random symbols; loopback through an ideal channel decodes every rung and every width error-free |
+| `ofdm` | Tone plan (5.2), symbol assembly with both prefixes, clip-and-filter PAPR (7.1), scrambler and interleaver (6.4), tone mask and power reassignment (5.4) | PAPR at or below each rung's clip level (7.1) on 10,000 random symbols; loopback through an ideal channel decodes every rung and every width error-free |
 | `preamble` | S1 search (Newman phases, then random search for PAPR ≤ 3 dB), S2 generation, dual-lag detector with S1 cross-correlation and the sample-clock offset grid | ≥ 99% detection at 6 dB; ≤ 1 false alarm per 10 minutes of open-squelch noise; prefix identified correctly ≥ 99.9% |
 | `channel` | The 14.2 chain: pre-emphasis, mic band-pass and limiter, deviation clipping, AWGN at a set audio SNR, receive noise tilt, de-emphasis, receive band-pass, sample-clock offset, DC and hum; the repeater cascade | Each stage unit-tested against its analytic expectation (limiter knee, noise-tilt slope, group delay) |
 | `link_sim` | Header, control and data framing; per-rung block error rate versus SNR; net throughput versus TXDelay and frame length; width negotiation on a roll-off channel | Rung thresholds within 3 dB of the 6.2 table; the 7.4 worked example reproduced within 5% |
@@ -1085,10 +1096,10 @@ Six characters at 6 bits each (first character in the most significant bits) fol
 | Acknowledged base sequence | 16 | Sequence number of the peer's last frame |
 | Block bitmap | 128 | Bit i set = block base+i passed its CRC |
 | Requested MCS | 4 | Rung the sender should use next |
-| Measured SNR | 8 | 0.25 dB steps, 0–63.75 dB, effective SNR over active tones |
+| Measured SNR | 8 | 0.25 dB steps, 0–63.75 dB, effective SNR over active tones, 7 dB-equivalent (7.1) |
 | Block errors in last frame | 8 | Count, for the peer's hysteresis logic |
 | Tone mask | 56 | Usable tones 0–55; valid when flag bit 0 set |
-| Distortion index | 3 | 0 clean to 7 severe: transmit-side clipping or over-deviation as seen at this receiver, from intermodulation energy on silent tones and amplitude-dependent constellation error, in 3 dB steps |
+| Distortion index | 3 | 0 clean to 7 severe: transmit-side clipping or over-deviation as seen at this receiver, beyond what clip-and-filter at the frame's rung produces by design (7.1), from intermodulation energy on silent tones and amplitude-dependent constellation error, in 3 dB steps |
 | Own ADC clipped | 1 | This receiver's input clipped during the frame: its measurements are unreliable and its own receive gain is wrong, not the sender's drive |
 | Reserved | 8 |  |
 | CRC-16 | 16 |  |

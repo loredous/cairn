@@ -1,0 +1,66 @@
+# yaml-language-server: $schema=../../tools/adrsite/schemas/decisions.schema.json
+#
+# Once merged into main this file is frozen. Change decisions via a new ADR.
+
+- slug: masked-tone-content
+  title: Masked tones carry no data or pilots; total data-symbol power stays constant
+  category: physical-layer
+  strength: MUST
+  statement: |
+    The transmitter places no data and no pilot on masked tones and reassigns
+    coded bits to the remaining active tones. After clip-and-filter
+    (SPEC §7.1), the energy on masked tones MUST be no higher than the
+    clipping regrowth on the tones just above the highest active tone.
+
+    Total power stays constant: the power of a data symbol equals that of
+    `width` unit-power tones, whatever the mask. Every active tone of the
+    symbol, pilots included, is scaled by the same factor,
+    sqrt(width / active tones). (SPEC §5.4)
+  rationale: >-
+    Zero energy cannot be met literally: the final clip of clip-and-filter
+    regrows energy on every tone outside the kept set, masked tones included,
+    to about 30 dB below the active tones at a 7 dB clip and 47 dB at 10 dB.
+    That wastes about 0.1% of power, on tones the channel already loses.
+    Reaching 40 dB at a 7 dB clip would take two or three more clip-and-filter
+    passes and cost 3–4 dB of in-band signal-to-distortion ratio. Scaling
+    every active tone alike follows the rule that the transmitter scales the
+    whole symbol, never individual tones (SPEC §6.2), so a 24-tone link still
+    pays no penalty for having probed at 56.
+  supersedes:
+    adr: 0002-adopt-the-cairn-v0-1-protocol-specification
+    decision: masked-tone-power-reassignment
+  tags: [phy, waveform, v1.0]
+
+- slug: tone-mask-scope
+  title: The mask applies to data and control symbols only, at any width
+  category: physical-layer
+  strength: MUST
+  statement: >-
+    The tone mask applies to the symbols carrying data and control blocks.
+    The preamble, the header and the width probe ignore it: the preamble and
+    header always use every base tone, and the probe every tone up to the
+    sender's cap. The 56-bit mask applies at any width; bits for tones at or
+    above the width are ignored, and the width alone sets the per-tone scale
+    of `masked-tone-content`. (SPEC §5.4)
+  rationale: >-
+    A receiver must find and decode a frame before it knows which mask the
+    sender applied, and must keep probing masked tones to see them recover
+    (SPEC §10.3). A mask report measured at one width stays meaningful after
+    the width changes.
+  tags: [phy, adaptation, v1.0]
+
+- slug: masked-upper-pilots
+  title: Pilots 37 and 52 may be masked; they stay in the probe
+  category: physical-layer
+  strength: MUST
+  statement: >-
+    Pilot tones 3 and 20 cannot be masked (`tone-mask-report`). Pilot tones
+    37 and 52 can: a masked upper pilot is absent from data and control
+    symbols, and pilot tracking uses the remaining pilots. Both stay in the
+    width probe. (SPEC §5.2, §5.4)
+  rationale: >-
+    An upper pilot on a dead tone tracks nothing, and two pilots suffice:
+    Stage 1 simulation tracked an 80 ppm clock offset over a 3.3 s frame with
+    an upper pilot masked. Keeping it in the probe lets the receiver see the
+    tone recover.
+  tags: [phy, v1.0]
