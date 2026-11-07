@@ -215,7 +215,7 @@ def decode(code: LiftedCode, llr: np.ndarray, *, rows: list[int] | None = None,
     ``llr`` is (B, n_codeword) from ``rate_recover``. A block stops as soon as
     its CRC passes and its syndrome (over ``rows``) is satisfied.
     """
-    llr = np.array(np.atleast_2d(llr), dtype=np.float32)
+    llr = np.atleast_2d(llr)
     b = llr.shape[0]
     rows = list(range(code.graph.rows)) if rows is None else rows
     index = [code.layer_index[i] for i in rows]
@@ -226,46 +226,53 @@ def decode(code: LiftedCode, llr: np.ndarray, *, rows: list[int] | None = None,
     out_ok = np.zeros(b, dtype=bool)
     out_iter = np.full(b, max_iter, dtype=np.int32)
     active = np.arange(b)
-    lv = llr
-    msgs = [np.zeros((b, idx.shape[0], code.z), dtype=np.float32) for idx in index]
+    # Internal layout is (codeword bit, block): a layer gather then moves
+    # contiguous runs of B floats, and the per-check reductions run over the
+    # leading axis.
+    lv = np.ascontiguousarray(llr.T, dtype=np.float32)
+    msgs = [np.zeros((idx.shape[0], code.z, b), dtype=np.float32) for idx in index]
+    inf = np.float32(np.inf)
 
     def finish(done_local: np.ndarray, it: int) -> None:
         nonlocal active, lv, msgs
         ids = active[done_local]
-        out_bits[ids] = (lv[done_local, :k] < 0).astype(np.uint8)
+        out_bits[ids] = (lv[:k, done_local].T < 0).astype(np.uint8)
         out_ok[ids] = True
         out_iter[ids] = it
         keep = ~done_local
-        active, lv = active[keep], lv[keep]
-        msgs = [m[keep] for m in msgs]
+        active, lv = active[keep], np.ascontiguousarray(lv[:, keep])
+        msgs = [np.ascontiguousarray(m[:, :, keep]) for m in msgs]
 
     for it in range(1, max_iter + 1):
         for li, idx in enumerate(index):
-            g = lv[:, idx]                      # (B, deg, Z)
-            q = g - msgs[li]
+            q = lv[idx]                         # (deg, Z, B)
+            q -= msgs[li]
             neg = q < 0
             mag = np.abs(q)
-            amin = mag.argmin(axis=1)           # (B, Z)
-            part = np.partition(mag, 1, axis=1)
-            min1, min2 = part[:, 0], part[:, 1]
-            deg = idx.shape[0]
-            is_min = np.arange(deg)[None, :, None] == amin[:, None, :]
-            r = alpha * np.where(is_min, min2[:, None, :], min1[:, None, :])
-            sign = np.bitwise_xor.reduce(neg, axis=1)[:, None, :] ^ neg
-            r = np.where(sign, -r, r)
+            min1 = mag.min(axis=0, keepdims=True)
+            is_min = mag == min1
+            # Second minimum; if the minimum occurs twice it equals the first
+            # (what argmin plus "the other minimum" gives).
+            min2 = np.where(is_min, inf, mag).min(axis=0, keepdims=True)
+            min2 = np.minimum(min2, np.where(is_min.sum(axis=0, dtype=np.int8) > 1, min1, inf))
+            r = np.where(is_min, min2, min1)
+            r *= np.float32(alpha)
+            sign = np.bitwise_xor.reduce(neg, axis=0, keepdims=True) ^ neg
+            # Flip the sign bit of r where the check's sign for this edge is negative.
+            r.view(np.uint32)[...] ^= sign.view(np.uint8).astype(np.uint32) << 31
             msgs[li] = r
-            lv[:, idx] = q + r
-        if lv.shape[0] == 0:
+            q += r
+            lv[idx] = q
+        if lv.shape[1] == 0:
             break
-        hard = (lv < 0).astype(np.uint8)
+        hard = (lv < 0).view(np.uint8).T        # (B, N)
         done = checker.check(hard[:, :k])
         if done.any():
             done[done] = code.syndrome_ok(hard[done], rows)
             if done.any():
                 finish(done, it)
-        if lv.shape[0] == 0:
+        if lv.shape[1] == 0:
             break
-    if lv.shape[0]:
-        out_bits[active] = (lv[:, :k] < 0).astype(np.uint8)
+    if lv.shape[1]:
+        out_bits[active] = (lv[:k].T < 0).astype(np.uint8)
     return DecodeResult(out_bits, out_ok, out_iter)
-
