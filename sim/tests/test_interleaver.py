@@ -94,13 +94,32 @@ def test_header_noise_sees_a_distorted_tone_the_s2_pair_misses():
     v = np.full(b, 0.3)
     v[1] = 30.0                                       # distortion the S2 pair did not see
     eq = s + np.sqrt(v / 2) * (rng.standard_normal((hs, b)) + 1j * rng.standard_normal((hs, b)))
-    thermal = np.full(b, 0.3)                         # S2 noise: thermal only, |h| = 1
-    nv = frame.estimate_header_noise(eq, known, thermal, np.ones(b), data, pil)
-    floor = 0.3 * (1 + frame.smoothing_noise_gain(b).sum(axis=1) / 2)
+    floor = np.full(b, 0.35)                          # what the S2 pair and pilots predict
+    nv = frame.estimate_header_noise(eq, known, floor, data, pil)
     assert np.all(nv >= floor - 1e-12)
     assert nv[1] > 5 and nv[0] > 3 and nv[2] > 3      # pooled over three tones
     ratio = nv[5:20] / floor[5:20]                    # where nothing is wrong: mostly the floor
     assert np.median(ratio) == pytest.approx(1.0) and ratio.max() < 2.0
+
+
+def test_header_noise_floor_is_flat_in_white_noise_and_ignores_pilot_3_slope():
+    rng = np.random.default_rng(8)
+    b = params.BASE_TONES
+    s1, s2 = np.exp(2j * np.pi * rng.random(b)), rng.choice([-1.0, 1.0], b)
+    clean = np.stack([s1, s1, s2, s2])
+    floors = []
+    for _ in range(200):
+        n = np.sqrt(0.25) * (rng.standard_normal((4, b)) + 1j * rng.standard_normal((4, b)))
+        pre = clean + n
+        thermal = frame.estimate_noise(pre[2], pre[3])
+        floors.append(frame.header_noise_floor(pre, np.ones(b), thermal, np.array([0.4, 0.0])))
+    f = np.mean(floors, axis=0)
+    # Noise 0.5 everywhere, plus the pilots' mean excess (0.2) on every tone,
+    # not 0.4 sloping down to 0 from tone 3 to tone 20.
+    assert np.allclose(f, 0.7, rtol=0.1)
+    assert np.std(floors, axis=0).mean() < np.std([frame.estimate_noise(c[2], c[3]) for c in
+                                                   [clean + 0.5 * (rng.standard_normal((4, b)) + 1j * rng.standard_normal((4, b)))
+                                                    for _ in range(200)]], axis=0).mean()
 
 
 def test_burst_noise_flags_only_outlying_symbols():

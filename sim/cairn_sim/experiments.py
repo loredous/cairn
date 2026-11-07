@@ -128,7 +128,7 @@ def jobs_for(name: str) -> list[dict]:
         # receiver's header noise estimate (frame.receive header_noise).
         for profile, cp, snrs in (("repeater", params.CP_LONG, [4.0, 5.0, 6.0]),
                                   ("awgn", params.CP_SHORT, [3.0, 3.5, 4.0])):
-            for hn in ("s2", "blind"):
+            for hn in ("s2", "measured"):
                 jobs.append({"experiment": name, "mcs": 0, "width": 24, "profile": profile,
                              "snrs": snrs, "blocks_per_frame": 2, "rx_kw": {"header_noise": hn},
                              "min_blocks": 2000, "max_blocks": 2000, "min_errors": 0, "quick_bler": 1.1,
