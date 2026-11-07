@@ -1,0 +1,16 @@
+{
+ "format": "cairn-control-vectors",
+ "version": 1,
+ "license": "CC BY 4.0",
+ "name": "id_grid",
+ "description": "ID: a 7-character callsign with a grid locator",
+ "valid": true,
+ "fields": {
+  "type": 5,
+  "callsign": "N0CALL/7",
+  "ssid": 0,
+  "grid": "FN31PR"
+ },
+ "message_hex": "514e3043414c4c2f3720200464e333150520000000000000000000000000",
+ "info_hex": "514e3043414c4c2f3720200464e33315052000000000000000000000000063bf"
+}

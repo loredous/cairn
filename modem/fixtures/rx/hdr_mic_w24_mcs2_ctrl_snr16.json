@@ -1,0 +1,97 @@
+{
+ "name": "hdr_mic_w24_mcs2_ctrl_snr16",
+ "width": 24,
+ "mcs": 2,
+ "n_blocks": 4,
+ "cp": 60,
+ "usable_tones": null,
+ "channel": "mic",
+ "snr_db": 16.0,
+ "sco_ppm": 0.0,
+ "burst_db": null,
+ "seed": 71,
+ "guard": 400,
+ "header_message_hex": "240b39b0c130c139b0c130c200302418",
+ "payload_hex": [
+  "b6ad5b055c26fbce672ed3ec001d05fa5d532af20e8a91c06f0bd8efdb5dd4cfa59bee3f593d6b9a910e1331783badd8dc017f15a46dc1385a7bec2d2162ef2606360f6257642dac6a0efa686a3ea19fdcd084051ed71a4dbe969ea8b965706b6cc8d22a54eee253790ca0dfc25b5466f7616b577cab0acdffb66166ef0d",
+  "95b26f236d687b271ebf8e25c341175fd73a607338229b4bddc792944ef52a6a1156343ee2a7224397fc3638c4f4598cc71645a3fa9ee6ac3f7590b81739faac1c0fadd63fc7863c51b9b2ec6fb722ff2c6ccdc73b1f87a4897016293c84b11235abb1d65c28cbf21bc60427e3dbdf4a91a648d61754b0c33ca8232f9609",
+  "0a583fee89997d8506c3eb20217fca923443222a109f5199fe621993299d0005243aa283cccad55107a6a0a2a9126fb98af43f25f1f2ea7f8f6d7c30180ad80d8b8f6bab3d4d86a79abac72ef27c4b627f6fad1cc62b2e0625e509e0ee4355650cfc62d800e369ef0bfb4b5ce8d8ea6411896ed78285e301a07015de8fb9",
+  "e5750535ba2178d15114db11efe0172c8b5700f345f023c115ad380da42273d15e84927ae210dcd7ae80be72f5cd5ca06038371706f07e6dbba79939f90ee53b8115888e0be167e8530dcd4c8ea91e382140b69b4a719d1b0efdf51f9cbc50d214d9d175d87d6f51150bde91c535d778b17681aa4f4cbd997f60c21f6893"
+ ],
+ "total_symbols": 117,
+ "header_first": true,
+ "n_control": 1,
+ "probe": false,
+ "control_message_hex": [
+  "000028000000000000000000000000000000ff23e0000000000000000000"
+ ],
+ "wav_scale": 0.5524936233660744,
+ "python": {
+  "detections": [
+   {
+    "start": 429,
+    "cp": 60,
+    "quality": 0.9220641743812835,
+    "autocorr": 0.9696390730217447,
+    "ppm": 100.0,
+    "coarse_start": 429.01056163697695
+   }
+  ],
+  "rx": {
+   "start": 429,
+   "header_ok": true,
+   "header_correct": true,
+   "block_ok": [
+    true,
+    true,
+    true,
+    true
+   ],
+   "block_correct": [
+    true,
+    true,
+    true,
+    true
+   ],
+   "iterations": [
+    2,
+    2,
+    2,
+    2
+   ],
+   "snr_db": [
+    11.897552754517216,
+    13.048821730777554,
+    14.241679394794769,
+    16.2331334635996,
+    13.994245066226107,
+    13.456835362527162,
+    13.497469416632516,
+    15.380063275161937,
+    16.590223321090658,
+    16.973660820900726,
+    16.605964281689978,
+    15.567729919883416,
+    15.638783282666001,
+    15.409601912241907,
+    15.081970150110749,
+    14.48830250355438,
+    14.472148311926622,
+    14.06772185400336,
+    14.10696117822258,
+    14.215370970334437,
+    15.565267383848758,
+    15.977575428985947,
+    14.727054823989025,
+    14.086889032202494
+   ],
+   "header_fields_ok": true,
+   "control_ok": [
+    true
+   ],
+   "control_correct": [
+    true
+   ]
+  }
+ }
+}

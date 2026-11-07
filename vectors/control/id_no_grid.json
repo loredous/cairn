@@ -1,0 +1,16 @@
+{
+ "format": "cairn-control-vectors",
+ "version": 1,
+ "license": "CC BY 4.0",
+ "name": "id_no_grid",
+ "description": "ID: callsign and SSID, no grid locator",
+ "valid": true,
+ "fields": {
+  "type": 5,
+  "callsign": "N0CALL",
+  "ssid": 1,
+  "grid": null
+ },
+ "message_hex": "504e3043414c4c2020202010000000000000000000000000000000000000",
+ "info_hex": "504e3043414c4c2020202010000000000000000000000000000000000000ab52"
+}

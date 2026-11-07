@@ -1,0 +1,11 @@
+{
+ "format": "cairn-control-vectors",
+ "version": 1,
+ "license": "CC BY 4.0",
+ "name": "reject_crc",
+ "description": "ack with its first CRC bit inverted: CRC failure",
+ "valid": false,
+ "error": "crc",
+ "message_hex": "0004b00000000000000000000000000000000523a0100000000000000000",
+ "info_hex": "0004b00000000000000000000000000000000523a0100000000000000000c82d"
+}

@@ -20,12 +20,14 @@ uv run --package cairn-sim pytest sim/tests          # add -m slow for the long 
 | `ldpc` | NR BG1/BG2 lifted codes from `codes/`, encoder, rate matching, layered normalized min-sum decoder |
 | `vectors` | Generates the published matrices, rate-matching tables and known-answer vectors (`codes/`, `vectors/`) |
 | `bitmap_vectors` | Generates the ADR 0005 bit-mapping vectors (`vectors/bitmap/`): every stage from payload to samples |
+| `fields` | Header (SPEC 8.2), address (B.1) and every Appendix B control block: pack, unpack, CRC and field checks |
+| `frame_vectors` | Generates the header, control block and whole-frame vectors (`vectors/header/`, `control/`, `frame/`) |
 | `ldpc_eval` | Code performance against the normal-approximation bound and a sum-product reference |
 | `mapping` | Scrambler, interleaver, Gray QAM mapper and max-log demapper (ADR 0005) |
 | `ofdm` | Half-bin OFDM modulator/demodulator, clip-and-filter PAPR control |
 | `preamble` | S1/S2 (chosen by the Stage 1 search) and the SPEC 6.1 dual-lag detector |
 | `preamble_eval` | Detection, false-alarm and prefix-identification measurements |
-| `frame` | Frame assembly (preamble, header, width probe, data blocks, SPEC 5.4 tone masks) and the receiver |
+| `frame` | Frame assembly (preamble, header, width probe, control and data blocks, SPEC 5.4 tone masks) and the receiver, header first when not told the configuration |
 | `channel` | AWGN and the SPEC 14.2 FM audio chain (`mic`, `flat12`, `flat25`, `repeater`) |
 | `link_sim` | Block error rate against SNR, rung thresholds, and the SPEC 7.4 time budget |
 | `interleaver_eval` | SPEC 6.4 interleaver checks: bit layout under tone masks, dead-tone and burst BLER |
@@ -38,6 +40,7 @@ uv run --package cairn-sim python -m cairn_sim.experiments awgn      # also: cha
 uv run --package cairn-sim python -m cairn_sim.report
 uv run --package cairn-sim python -m cairn_sim.vectors               # regenerate codes/ and vectors/
 uv run --package cairn-sim python -m cairn_sim.bitmap_vectors        # regenerate vectors/bitmap/
+uv run --package cairn-sim python -m cairn_sim.frame_vectors         # regenerate vectors/header/, control/, frame/
 ```
 
 ## Bench kit
