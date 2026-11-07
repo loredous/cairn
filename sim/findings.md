@@ -99,8 +99,12 @@ The repeater profile needs its three dispersed low tones masked (SPEC
   below.
 - **LDPC.** Codes, rate matching and known-answer vectors are published
   under `codes/` and `vectors/`. Min-sum at 30 iterations is 0.31 dB behind
-  sum-product. That is on the 0.3 dB acceptance line, but no citable
-  published BG1 curve was found to compare against. Raising the cap to 50
+  sum-product. That is on the 0.3 dB acceptance line. An independent check
+  against AFF3CT v4.7.3 (its own decoders on the identical parity-check
+  matrices, `results/ldpc_aff3ct.md`) agrees within 0.02 dB at 1% FER for
+  every code, for both min-sum and sum-product, and shows the same 0.30 dB
+  gap, so the gap is the algorithm's, not a decoder bug. A citable published
+  BG1 curve is still missing for formal acceptance. Raising the cap to 50
   iterations (allowed by 6.3) buys about 0.1 dB.
 - **Time budget.** The model reproduces the SPEC 7.4 worked example (21
   blocks, 4.465 s cycle, 4.74 kbps). Appendix A.2 matches within rounding
