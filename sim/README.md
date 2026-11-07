@@ -80,3 +80,11 @@ symbols only; see the top of `frame.py` for exactly what it changes.
 Signal power over noise power in the occupied band (300 Hz to the top active
 tone + 50 Hz), at the receiver's audio output. With tones filling the band,
 it equals the per-tone SNR.
+
+The SNR a receiver reports (`frame.channel_snr`, `RxResult.detail["snr_db"]`,
+ADR 0006) is a different figure: the channel SNR over the active tones on the
+7 dB-equivalent scale, measured against the frame rebuilt from the decoded bits
+so the transmitter's designed clipping is not counted. In white noise it equals
+the audio SNR above (plus `clip_offset_db`). With too few known symbols it
+falls back to an estimate that counts the clipping and reads low
+(`detail["snr_fallback"]`).

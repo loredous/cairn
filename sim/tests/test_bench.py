@@ -332,3 +332,26 @@ def test_level_stats_and_record():
 def test_ptt_test_command_refuses_long_keying(fake_serial, capsys):
     assert cli.main(["ptt-test", "--ptt-port", "/dev/fake", "--seconds", "9"]) == 2
     assert cli.main(["tx", "--list-plans"]) == 0
+
+
+def test_clean_mcs0_frame_reports_channel_snr_and_picks_mcs6():
+    # ADR 0006: the designed clipping no longer caps an MCS 0 frame's SNR at ~22 dB.
+    x, m = tx.synthesize([tx.FrameSpec(0, 24, blocks=2)], tone_s=1.0, callsign="N0CALL", lead_s=0.5)
+    rep = run(x, m)
+    f = rep["frames"][0]
+    assert f["snr7_db"] >= 40.0 and not f["snr_fallback"]
+    assert f["adaptation"]["first_frame"] == 6
+    assert f["snr_known_symbols"] == f["snr_total_symbols"]
+    assert len(f["snr_per_tone_db"]) == 24 and min(f["snr_per_tone_db"]) >= 40.0
+    assert rep["summary"]["snr_fallback_frames"] == 0
+
+
+def test_report_marks_fallback_frames():
+    x, m = tx.synthesize([tx.FrameSpec(0, 24, blocks=2)], tone_s=1.0, callsign="N0CALL", lead_s=0.5)
+    rep = run(x, m)
+    rep["frames"][0].update(snr_fallback=True)
+    rep["summary"]["snr_fallback_frames"] = 1
+    rec = {"duration_s": 1.0, "sample_rate_in": FS, "channels": 1, "channel_used": "mono",
+           "peak_dbfs": -3.0, "rms_dbfs": -20.0}
+    text = rx.format_report({"recording": rec, **rep})
+    assert "*" in text and "fallback" in text

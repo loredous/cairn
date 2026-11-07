@@ -235,7 +235,7 @@ def decode_run(snr_db: float, cp: int, ppm: float, n_frames: int, rng: np.random
         if not dets:
             continue
         detected += 1
-        r = frame.receive(rx, cfg, start=dets[0].start)
+        r = frame.receive(rx, cfg, start=dets[0].start, measure_snr=False)
         header_ok += r.header_ok
         blocks_ok += bool(r.block_ok.all())
     return DecodeResult(snr_db, cp, ppm, n_frames, detected, header_ok, blocks_ok)
