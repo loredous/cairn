@@ -10,6 +10,12 @@ dependencies = [
     "matplotlib>=3.9",
 ]
 
+[project.optional-dependencies]
+audio = ["sounddevice>=0.4", "pyserial>=3.5"]   # cairn-bench play / record / ptt-test only
+
+[project.scripts]
+cairn-bench = "cairn_sim.bench.cli:main"
+
 [dependency-groups]
 dev = ["pytest>=8"]
 
