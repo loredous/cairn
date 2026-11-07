@@ -1,0 +1,11 @@
+[package]
+name = "cairn-ptt"
+version = "0.1.0"
+description = "Cairn push-to-talk backends: serial RTS/DTR, CM108 HID GPIO, Hamlib rigctld, VOX/none (SPEC 13.3)"
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+publish = false
+
+[target.'cfg(unix)'.dependencies]
+libc = "0.2"
