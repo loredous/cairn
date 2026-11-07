@@ -102,3 +102,20 @@ builds. Uncommitted ADR changes show up at the top of the changelog as
 "Uncommitted changes" so you can preview them before committing. ADRs that are
 not yet on `origin/main` show as proposed; pass `--main-ref` to compare
 against a different ref.
+
+### Pull request previews
+
+Every pull request also gets a built copy of the site. The **Site preview**
+workflow builds it and attaches it to the run as an artifact, and posts a
+comment on the pull request with a download link. Download the zip and serve
+it the same way:
+
+```sh
+unzip site-preview-pr-N.zip -d cairn-preview
+python3 -m http.server -d cairn-preview 8000
+```
+
+A banner at the top of each page names the pull request and the commit the
+preview was built from. Nothing is deployed, and the published site changes
+only when a pull request is merged. Pass `--preview-pr N` to
+`scripts/build_site.py` to add the same banner to a local build.

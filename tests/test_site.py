@@ -8,7 +8,8 @@ import pytest
 from adrsite import pages
 from adrsite.changelog import build_changelog
 from adrsite.model import load_collection, read_tree
-from adrsite.site import LOCAL_BUILD, BuildError, build_site, build_stamp, detect_commit, stage
+from adrsite.site import (LOCAL_BUILD, BuildError, build_site, build_stamp, detect_commit,
+                          stage, write_config)
 from conftest import adr_files, decision
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -148,6 +149,7 @@ def test_full_zensical_build(tmp_path, collection):
     home = (out / "index.html").read_text()
     assert "Built from commit" in home and "0123456789" in home
     assert "Switch to dark mode" in home and 'data-md-component="search"' in home
+    assert "adr-preview-banner" not in home and "md-banner" not in home
     adr = (out / "adrs" / A1 / "index.html").read_text()
     assert 'id="d-old"' in adr and 'adr-strength-may' in adr
     assert "!!!" not in adr and "{ #" not in adr
@@ -179,3 +181,26 @@ def test_errata_render_as_erratum_callout():
     md = pages.render_adr(c, c.adrs[A1])
     assert '<span id="i-e"></span>\n\n!!! bug "Erratum (2026-11-05)"' in md
     assert "**Says recieve**" in md
+
+
+def test_preview_build_shows_pull_request_banner(tmp_path, collection):
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    (docs / "index.md").write_text("# Home\n")
+    out = tmp_path / "site"
+    build_site(collection, out, repo=tmp_path, adrs_dir=tmp_path / "adrs", docs_dir=docs,
+               base_config=REPO_ROOT / "zensical.toml", build_dir=tmp_path / "build",
+               commit="0123456789abcdef", preview_pr=7)
+    for page in (out / "index.html", out / "handbook" / "index.html"):
+        html = page.read_text()
+        assert 'class="adr-preview-banner"' in html
+        assert 'href="https://github.com/loredous/cairn/pull/7">pull request #7</a>' in html
+        assert "<code>0123456789</code>" in html
+
+
+def test_base_config_may_not_set_custom_dir(tmp_path):
+    base = tmp_path / "base.toml"
+    base.write_text('[project]\nsite_name = "x"\n[project.theme]\ncustom_dir = "mine"\n')
+    with pytest.raises(BuildError, match="custom_dir"):
+        write_config(base, tmp_path / "b" / "zensical.toml", docs_dir=tmp_path, site_dir=tmp_path,
+                     nav=[], commit="DEVELOP")

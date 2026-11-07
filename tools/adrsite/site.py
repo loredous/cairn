@@ -10,7 +10,9 @@ Staged layout (``build/site-src/``), which becomes the site::
     stylesheets/adr.css      badge styles
 
 The Zensical config is generated from the committed base ``zensical.toml``,
-with docs_dir, site_dir, nav, and the build stamp (commit) filled in.
+with docs_dir, site_dir, nav, the theme overrides, and the build stamp
+(commit) filled in. A pull request preview build also sets ``extra.preview``,
+which turns on a banner naming the pull request.
 """
 
 from __future__ import annotations
@@ -33,6 +35,7 @@ from .model import Collection
 LOCAL_BUILD = "DEVELOP"
 STYLESHEET = "stylesheets/adr.css"
 SCRIPT = "javascripts/adr.js"
+OVERRIDES = "overrides"  # theme templates, copied next to the effective config
 GENERATED = (pages.ADRS_DIR, pages.HANDBOOK_PAGE, pages.CHANGELOG_PAGE, "stylesheets",
              "javascripts")
 
@@ -127,9 +130,14 @@ def _prefix(folder: str, item: Any) -> Any:
 
 
 def write_config(base_config: Path, out_config: Path, *, docs_dir: Path, site_dir: Path,
-                 nav: list[Any], commit: str) -> dict[str, Any]:
+                 nav: list[Any], commit: str, preview_pr: int | None = None) -> dict[str, Any]:
     config = tomllib.loads(base_config.read_text())
     project = config.setdefault("project", {})
+    theme = project.setdefault("theme", {})
+    if "custom_dir" in theme:
+        raise BuildError("the base config must not set theme.custom_dir; "
+                         "the build supplies its own theme overrides")
+    theme["custom_dir"] = OVERRIDES
     stamp = build_stamp(commit, project.get("repo_url"))
     base_copyright = project.get("copyright")
     project["copyright"] = f"{base_copyright} · {stamp}" if base_copyright else stamp
@@ -138,10 +146,26 @@ def write_config(base_config: Path, out_config: Path, *, docs_dir: Path, site_di
     project["nav"] = nav
     project["extra_css"] = list(dict.fromkeys([*project.get("extra_css", []), STYLESHEET]))
     project["extra_javascript"] = list(dict.fromkeys([*project.get("extra_javascript", []), SCRIPT]))
-    project.setdefault("extra", {})["build_commit"] = commit
+    extra = project.setdefault("extra", {})
+    extra["build_commit"] = commit
+    if preview_pr is not None:
+        repo_url = project.get("repo_url", "").rstrip("/")
+        extra["preview"] = {"pr": preview_pr,
+                            "url": f"{repo_url}/pull/{preview_pr}" if repo_url else ""}
     out_config.parent.mkdir(parents=True, exist_ok=True)
+    _copy_overrides(out_config.parent / OVERRIDES)
     out_config.write_text(tomli_w.dumps(config))
     return config
+
+
+def _copy_overrides(dest: Path) -> None:
+    if dest.exists():
+        shutil.rmtree(dest)
+    dest.mkdir(parents=True)
+    source = resources.files("adrsite").joinpath("assets", OVERRIDES)
+    for item in source.iterdir():
+        if item.is_file():
+            (dest / item.name).write_text(item.read_text())
 
 
 def _zensical_executable() -> str:
@@ -156,7 +180,9 @@ def _zensical_executable() -> str:
 
 def build_site(collection: Collection, out_dir: Path, *, repo: Path, adrs_dir: Path,
                docs_dir: Path | None, base_config: Path, build_dir: Path,
-               commit: str | None = None) -> None:
+               commit: str | None = None, preview_pr: int | None = None) -> None:
+    """Render the site into ``out_dir``. ``preview_pr`` marks it as a preview of
+    that pull request."""
     commit = commit or detect_commit()
     repo_url = tomllib.loads(base_config.read_text()).get("project", {}).get("repo_url")
     staging = build_dir / "site-src"
@@ -167,7 +193,7 @@ def build_site(collection: Collection, out_dir: Path, *, repo: Path, adrs_dir: P
     # into build/site and move the result to out_dir afterwards.
     rendered = build_dir / "site"
     write_config(base_config, config_path, docs_dir=staging, site_dir=rendered,
-                 nav=nav, commit=commit)
+                 nav=nav, commit=commit, preview_pr=preview_pr)
     if rendered.exists():
         shutil.rmtree(rendered)
     result = subprocess.run([_zensical_executable(), "build", "--clean", "-f", str(config_path)],

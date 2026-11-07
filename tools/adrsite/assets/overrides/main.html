@@ -1,0 +1,11 @@
+{#- Theme override used by every build. The banner only appears on pull
+    request preview builds, which set config.extra.preview. -#}
+{% extends "base.html" %}
+{% block announce %}
+{%- if config.extra.preview -%}
+<span class="adr-preview-banner"><strong>Preview</strong> of
+<a href="{{ config.extra.preview.url }}">pull request #{{ config.extra.preview.pr }}</a>,
+built from commit <code>{{ config.extra.build_commit[:10] }}</code>.
+This is not the published site.</span>
+{%- endif -%}
+{% endblock %}

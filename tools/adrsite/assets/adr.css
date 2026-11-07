@@ -110,3 +110,13 @@
 .md-content .adr-ref[data-copy-state]::after { opacity: 1; transform: none; }
 .md-content .adr-ref[data-copy-state="copied"]::after { content: "Copied " attr(data-ref); }
 .md-content .adr-ref[data-copy-state="failed"]::after { content: "Copy failed"; }
+
+/* Pull request preview banner (theme override in overrides/main.html). */
+.md-banner:has(.adr-preview-banner) {
+  background-color: #b45309;
+  color: #fff;
+}
+.md-banner .adr-preview-banner a {
+  color: inherit;
+  text-decoration: underline;
+}

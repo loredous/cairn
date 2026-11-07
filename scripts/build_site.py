@@ -4,7 +4,8 @@
     uv run scripts/build_site.py [--out _site] [--commit SHA]
 
 The footer shows the commit the site was built from: $GITHUB_SHA in GitHub
-Actions, otherwise DEVELOP.
+Actions, otherwise DEVELOP. --preview-pr N adds a banner marking the site as a
+preview of pull request N.
 """
 
 from __future__ import annotations
@@ -31,6 +32,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--build-dir", type=Path, default=REPO_ROOT / "build",
                         help="where staged Markdown and the effective config are written")
     parser.add_argument("--commit", help="commit to show in the footer (default: $GITHUB_SHA or DEVELOP)")
+    parser.add_argument("--preview-pr", type=int, metavar="N",
+                        help="mark the site as a preview of pull request N")
     parser.add_argument("--main-ref", help="ref whose ADRs count as accepted "
                         "(default: $CAIRN_MAIN_REF, origin/main, then main)")
     args = parser.parse_args(argv)
@@ -50,7 +53,8 @@ def main(argv: list[str] | None = None) -> int:
         return 1
     try:
         build_site(collection, args.out, repo=REPO_ROOT, adrs_dir=args.adrs, docs_dir=args.docs,
-                   base_config=args.config, build_dir=args.build_dir, commit=args.commit)
+                   base_config=args.config, build_dir=args.build_dir, commit=args.commit,
+                   preview_pr=args.preview_pr)
     except BuildError as e:
         print(f"error: {e}", file=sys.stderr)
         return 1

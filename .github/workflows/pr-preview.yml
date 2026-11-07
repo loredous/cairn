@@ -1,0 +1,74 @@
+name: Site preview
+
+# Builds the site for every pull request and attaches it to the run as a
+# downloadable artifact. Nothing is deployed and no build output is committed
+# (0001-record-architecture-decisions/no-committed-build-output).
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write # to post the download link; read-only for forks
+
+concurrency:
+  group: site-preview-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    steps:
+      # Build the pull request's own head rather than the merge commit, so the
+      # changelog lists its real commits. Full history also fetches origin/main,
+      # which decides which ADRs show as proposed.
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Build site
+        env:
+          PR: ${{ github.event.pull_request.number }}
+          SHA: ${{ github.event.pull_request.head.sha }}
+        run: uv run --locked scripts/build_site.py --out _site --commit "$SHA" --preview-pr "$PR"
+
+      - id: upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: site-preview-pr-${{ github.event.pull_request.number }}
+          path: _site
+          retention-days: 30
+
+      - name: Post download link
+        if: github.event.pull_request.head.repo.full_name == github.repository
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+          SHA: ${{ github.event.pull_request.head.sha }}
+          URL: ${{ steps.upload.outputs.artifact-url }}
+        run: |
+          marker='<!-- cairn-site-preview -->'
+          body="$marker
+          **Site preview** for ${SHA:0:10}: [download site-preview-pr-$PR.zip]($URL) (kept 30 days).
+
+          To view it:
+
+          \`\`\`sh
+          unzip site-preview-pr-$PR.zip -d cairn-preview
+          python3 -m http.server -d cairn-preview 8000
+          \`\`\`
+
+          Then open http://127.0.0.1:8000/. Opening the HTML files straight from disk breaks the links and search."
+          existing=$(gh api "repos/$REPO/issues/$PR/comments" --paginate \
+            --jq ".[] | select(.user.login == \"github-actions[bot]\" and (.body | startswith(\"$marker\"))) | .id" | head -n1)
+          if [ -n "$existing" ]; then
+            gh api -X PATCH "repos/$REPO/issues/comments/$existing" -f body="$body" > /dev/null
+          else
+            gh api -X POST "repos/$REPO/issues/$PR/comments" -f body="$body" > /dev/null
+          fi
