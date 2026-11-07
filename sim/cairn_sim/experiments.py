@@ -45,7 +45,8 @@ def run_job(job: dict) -> dict:
     rng = np.random.default_rng(job["seed"])
     kw = dict(width=job["width"], clip_db=job.get("clip_db", params.CLIP_DB_ABOVE_RMS),
               clip=job.get("clip", True), chan=_channel(job.get("profile")), rng=rng,
-              blocks_per_frame=job.get("blocks_per_frame", 16))
+              blocks_per_frame=job.get("blocks_per_frame", 16),
+              cp=params.CP_LONG if job.get("profile") == "repeater" else params.CP_SHORT)
     thr, pts = link_sim.threshold(job["mcs"], start_db=job["start_db"], step_db=job.get("step_db", 1.0),
                                   max_db=job.get("max_db", 40.0), **kw)
     return {**job, "threshold_db": thr, "points": [asdict(p) | {"bler": p.bler} for p in pts],

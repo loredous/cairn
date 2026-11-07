@@ -16,7 +16,7 @@ from dataclasses import dataclass, field
 
 import numpy as np
 
-from . import channel, frame, params
+from . import channel, frame, params, preamble
 
 Channel = Callable[[np.ndarray, float, int, np.random.Generator], np.ndarray]
 
@@ -32,6 +32,7 @@ class Point:
     block_errors: int
     frames: int
     header_errors: int
+    missed_frames: int = 0
 
     @property
     def bler(self) -> float:
@@ -46,17 +47,20 @@ def bler_point(mcs: int, snr_db: float, *, width: int = 24, chan: Channel = awgn
                blocks_per_frame: int = 16, min_blocks: int = 2000, min_errors: int = 100,
                max_blocks: int = 20000, clip_db: float = params.CLIP_DB_ABOVE_RMS,
                clip: bool = True, rng: np.random.Generator | None = None,
-               guard: int = 400, quick_bler: float = 0.3, quick_blocks: int = 480) -> Point:
+               guard: int = 400, quick_bler: float = 0.3, quick_blocks: int = 480,
+               detector: bool = True, cp: int = params.CP_SHORT) -> Point:
     """Run frames until ``min_blocks`` and ``min_errors`` (or ``max_blocks``) are reached.
 
     Points with BLER above ``quick_bler`` after ``quick_blocks`` stop early.
 
-    A frame whose header fails counts all its blocks as errors, as a real
-    receiver could not decode them; the frame is still located by preamble
-    cross-correlation here (the detector is measured separately).
+    The frame is found by the SPEC 6.1 detector (``detector=True``) or, for
+    comparison, by cross-correlation with the known preamble waveform. A
+    missed preamble or a failed header counts every block of the frame as
+    an error, as a real receiver could not decode them.
     """
     rng = rng or np.random.default_rng()
-    cfg = frame.FrameConfig(width=width, mcs=mcs, n_blocks=blocks_per_frame, clip=clip, clip_db=clip_db)
+    cfg = frame.FrameConfig(width=width, mcs=mcs, n_blocks=blocks_per_frame, clip=clip, clip_db=clip_db,
+                            cp=cp)
     pt = Point(snr_db, 0, 0, 0, 0)
     pad = np.zeros(guard)
     while pt.blocks < max_blocks and (pt.blocks < min_blocks or pt.block_errors < min_errors):
@@ -64,7 +68,21 @@ def bler_point(mcs: int, snr_db: float, *, width: int = 24, chan: Channel = awgn
             break                        # far above any target: no need for more
         tx = frame.build(cfg, rng)
         rx = chan(np.concatenate([pad, tx.samples, pad]), snr_db, width, rng)
-        r = frame.receive(rx, cfg, reference=tx.preamble_samples)
+        if detector:
+            # The channel delays the frame by up to a few ms; accept the
+            # strongest detection within one symbol of the true start.
+            dets = sorted((d for d in preamble.detect(rx)
+                           if d.cp == cfg.cp and abs(d.start - guard) < cfg.stride),
+                          key=lambda d: -d.quality)
+            if not dets:
+                pt.frames += 1
+                pt.missed_frames += 1
+                pt.blocks += blocks_per_frame
+                pt.block_errors += blocks_per_frame
+                continue
+            r = frame.receive(rx, cfg, start=dets[0].start)
+        else:
+            r = frame.receive(rx, cfg, reference=tx.preamble_samples)
         good = r.block_ok & np.all(r.block_bits == tx.block_bits, axis=1)
         if not r.header_ok:
             good[:] = False
