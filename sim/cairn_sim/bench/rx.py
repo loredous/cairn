@@ -81,11 +81,6 @@ def match_frames(det_t: np.ndarray, nominal_t: np.ndarray, *, tol_s: float = 0.3
 # --- measurements -----------------------------------------------------------
 
 
-def _effective_snr(h: np.ndarray, noise: np.ndarray, tones) -> float:
-    t = list(tones)
-    return float(10 * np.log10(np.sum(np.abs(h[t]) ** 2) / np.sum(noise[t])))
-
-
 def _tone_powers(x: np.ndarray, start: float, n_sym: int, width: int, cp: int, n_tones: int,
                  shifts=None) -> np.ndarray:
     return ofdm.demodulate(x, start, n_sym, n_tones, cp, active=width, shifts=shifts)
@@ -264,8 +259,9 @@ def analyze(x: np.ndarray, manifest: dict, *, rho: float = preamble.XCORR_THRESH
         gap_hi = d.start - int(0.02 * FS)
         gap = (gap_lo - s0, gap_hi - s0) if gap_hi > gap_lo and gap_lo >= s0 else None
         dist = _distortion(seg, cfg, tx, res, gap)
-        snr = _effective_snr(res.detail["h"], res.detail["noise"], cfg.data_active_tones)
-        snr7 = snr + (cfg.clip_db - 7.0)
+        # ADR 0006: the channel SNR, rebuilt from the decoded frame (frame.channel_snr).
+        snr7 = float(res.detail["snr_db"])
+        snr = snr7 - (cfg.clip_db - 7.0)
         blocks_match = [bool(ok and np.array_equal(b, tb))
                         for ok, b, tb in zip(res.block_ok, res.block_bits, tx.block_bits)]
         bit_err = [int(np.sum(b != tb)) for b, tb in zip(res.block_bits, tx.block_bits)]
@@ -280,7 +276,10 @@ def analyze(x: np.ndarray, manifest: dict, *, rho: float = preamble.XCORR_THRESH
             header_match=bool(res.header_ok and np.array_equal(res.header_bits, tx.header_bits)),
             blocks_ok=int(np.sum(blocks_match)), blocks_total=cfg.n_blocks,
             blocks_crc_ok=int(np.sum(res.block_ok)), block_ok=blocks_match, block_bit_errors=bit_err,
-            snr_db=snr, snr7_db=snr7, snr_per_tone_db=[float(v) for v in res.snr_db],
+            snr_db=snr, snr7_db=snr7, snr_per_tone_db=[float(v) for v in res.detail["snr_per_tone_db"]],
+            snr_fallback=bool(res.detail["snr_fallback"]),
+            snr_known_symbols=int(res.detail["snr_known_symbols"]),
+            snr_total_symbols=int(res.detail["snr_total_symbols"]),
             clock_ppm=ppm_resid + corrected, clock_ppm_residual=ppm_resid,
             distortion=dist, adaptation=adaptation(snr7),
             peak_dbfs=audio.db(float(np.abs(frame_seg).max())) if frame_seg.size else None,
@@ -301,6 +300,7 @@ def analyze(x: np.ndarray, manifest: dict, *, rho: float = preamble.XCORR_THRESH
         "frames_all_blocks_ok": sum(r["blocks_ok"] == r["blocks_total"] and r["header_ok"] for r in ok),
         "blocks_ok": sum(r["blocks_ok"] for r in ok), "blocks_sent": sum(r["n_blocks"] for r in rows),
         "snr7_db": ({"min": min(snrs), "mean": float(np.mean(snrs)), "max": max(snrs)} if snrs else None),
+        "snr_fallback_frames": sum(r["snr_fallback"] for r in ok),
         "clock_ppm_global": ppm_global, "recording_resampled_by_ppm": corrected,
         "clock_ppm_frames": ({"min": min(r["clock_ppm"] for r in ok), "max": max(r["clock_ppm"] for r in ok)}
                              if ok else None),
@@ -340,7 +340,7 @@ def format_report(rep: dict) -> str:
         else:
             L.append("Level tone: not found at the expected time")
     L.append("")
-    L.append(" #  MCS  tones  prefix   time(s)  hdr  blocks  SNR7(dB)  clock(ppm)  EVM(dB)  dist  pick  note")
+    L.append(" #  MCS  tones  prefix   time(s)  hdr  blocks  SNR7(dB)   clock(ppm)  EVM(dB)  dist  pick  note")
     for r in rep["frames"]:
         if r["status"] == "missed":
             L.append(f"{r['index']:2d}  {r['mcs']:3d}  {r['width']:5d}  {r['prefix_expected']:6s}  "
@@ -358,11 +358,13 @@ def format_report(rep: dict) -> str:
             notes.append("input clipped")
         if r["truncated"]:
             notes.append("recording ends inside frame")
+        if r["snr_fallback"]:
+            notes.append("SNR counts the designed clipping (too few known symbols)")
         if r["adaptation"]["first_frame_below_mcs0"]:
             notes.append("below MCS 0 + 3 dB")
         L.append(f"{r['index']:2d}  {r['mcs']:3d}  {r['width']:5d}  {r['prefix_detected']:6s}  {r['time_s']:7.2f}  "
                  f"{'ok' if r['header_ok'] else 'FAIL':>3}  {r['blocks_ok']:3d}/{r['blocks_total']:<3d}  "
-                 f"{r['snr7_db']:8.1f}  {r['clock_ppm']:10.0f}  {d['evm_db']:7.1f}  {d['index']:4d}  "
+                 f"{r['snr7_db']:8.1f}{'*' if r['snr_fallback'] else ' '} {r['clock_ppm']:10.0f}  {d['evm_db']:7.1f}  {d['index']:4d}  "
                  f"{r['adaptation']['first_frame']:4d}  {'; '.join(notes)}")
     L.append("")
     L.append("Distortion detail (indicative): out-of-band = energy on silent tones relative to active tones; "
@@ -389,7 +391,9 @@ def format_report(rep: dict) -> str:
              f"(missed frames count as lost)")
     if s["snr7_db"]:
         v = s["snr7_db"]
-        L.append(f"  SNR (7 dB-equivalent): min {v['min']:.1f}, mean {v['mean']:.1f}, max {v['max']:.1f} dB")
+        L.append(f"  SNR (7 dB-equivalent channel SNR): min {v['min']:.1f}, mean {v['mean']:.1f}, max {v['max']:.1f} dB"
+                 + (f"; {s['snr_fallback_frames']} frame(s) marked * used the fallback that counts the designed "
+                    f"clipping (reads low)" if s["snr_fallback_frames"] else ""))
     if s["clock_ppm_global"] is not None:
         L.append(f"  sound-card clock offset: {s['clock_ppm_global']:+.1f} ppm from frame timing"
                  + (f" (recording resampled to remove it)" if s["recording_resampled_by_ppm"] else ""))
@@ -424,7 +428,7 @@ def plots(rep: dict, collect: dict, directory: str, constellation_frame: int | N
         for r in ok:
             tones = np.arange(len(r["snr_per_tone_db"]))
             ax.plot(params.FIRST_TONE_HZ + params.TONE_SPACING * tones,
-                    np.array(r["snr_per_tone_db"]) + (params.clip_db(r["mcs"]) - 7.0),
+                    np.array(r["snr_per_tone_db"]),
                     lw=1, label=f"#{r['index']} MCS {r['mcs']} x{r['width']}")
         ax.set_xlabel("tone frequency (Hz)")
         ax.set_ylabel("per-tone SNR, 7 dB-equivalent (dB)")

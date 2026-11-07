@@ -88,9 +88,9 @@ def bler_point(mcs: int, snr_db: float, *, width: int = 24, chan: Channel = awgn
                 pt.blocks += blocks_per_frame
                 pt.block_errors += blocks_per_frame
                 continue
-            r = frame.receive(rx, cfg, start=dets[0].start, **(rx_kw or {}))
+            r = frame.receive(rx, cfg, start=dets[0].start, **{"measure_snr": False, **(rx_kw or {})})
         else:
-            r = frame.receive(rx, cfg, reference=tx.preamble_samples, **(rx_kw or {}))
+            r = frame.receive(rx, cfg, reference=tx.preamble_samples, **{"measure_snr": False, **(rx_kw or {})})
         good = r.block_ok & np.all(r.block_bits == tx.block_bits, axis=1)
         if not r.header_ok:
             good[:] = False

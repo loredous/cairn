@@ -189,7 +189,7 @@ fail. One frame at a rung tells you little near its threshold.
 ## Reading the report
 
 ```
- #  MCS  tones  prefix   time(s)  hdr  blocks  SNR7(dB)  clock(ppm)  EVM(dB)  dist  pick  note
+ #  MCS  tones  prefix   time(s)  hdr  blocks  SNR7(dB)   clock(ppm)  EVM(dB)  dist  pick  note
  2    2     24  short     15.61   ok   14/14       25.3           0    -21.3     0     4
 ```
 
@@ -199,7 +199,7 @@ fail. One frame at a rung tells you little near its threshold.
 | prefix | The prefix the detector found. A note appears if it differs from what was sent. |
 | hdr | The header decoded, and (in the JSON) matched what was sent. |
 | blocks | Blocks that passed their CRC *and* matched the transmitted payload, out of the blocks sent. |
-| SNR7 | Effective SNR over the active tones on the **7 dB-equivalent scale** (SPEC §7.1, ADR 0003): the measured SNR plus the frame's clip level minus 7 dB. This is directly comparable with the thresholds of SPEC §6.2, whatever rung the frame used. It includes the modem's own clipping distortion and anything the radio adds, so even a perfect link reads a finite figure (about 20 to 30 dB at MCS 0 to 3 for a clean file). |
+| SNR7 | The **channel SNR** over the active tones on the **7 dB-equivalent scale** (SPEC §7.1, ADR 0003, ADR 0006): signal over everything the channel and radios add, but not the distortion clip-and-filter produces by design, plus the frame's clip level minus 7 dB. It is directly comparable with the thresholds of SPEC §6.2, whatever rung the frame used, and a clean link reads high (60 dB or more is a quantisation-limited file; the field saturates at 63.75 dB). The receiver rebuilds the symbols it knows (preamble, width probe, the header and every data symbol whose blocks passed their CRC) from the decoded bits and measures the error against them. A **\*** after the figure means the **fallback** was used: too few symbols were known (the header and the blocks failed, a weak frame), so the figure counts the modem's own clipping as noise and reads low, never high. Treat a starred figure as "at most about this"; it is also in the JSON as `snr_fallback`, with `snr_known_symbols` out of `snr_total_symbols`. |
 | clock | Sound-card clock offset in ppm, from the pilots of that frame. Positive means the recording is shorter than the transmission (the recording clock is faster). The summary also gives a figure from the frame timing across the whole recording, which is much more accurate; if it exceeds 25 ppm the recording is resampled by it before decoding. |
 | EVM | Error vector magnitude of the data constellation, in dB below the constellation power. |
 | dist | Distortion index, 0 (clean) to 7 (severe), in 3 dB steps. It follows the idea of SPEC Appendix B.2 and is **indicative**: energy on silent tones (above the band, and on masked tones) beyond the clip-and-filter regrowth the waveform has by design, combined with amplitude-dependent constellation error (outer points of 16-QAM and above compressing, and symbols with high peaks having more error than quiet ones, compared with the transmitted waveform's own value). It rises when the radio's limiter or deviation clip is working: lower the drive. |
@@ -207,9 +207,9 @@ fail. One frame at a rung tells you little near its threshold.
 
 Below the table are the per-frame distortion details and a summary: frames sent, detected and
 missed, headers decoded, frames with every block OK, blocks OK over blocks sent (missed frames
-count as lost), the SNR range, and the clock offset. `rx` exits with status 1 if any frame was missed.
+count as lost), the SNR range (with how many frames used the fallback), and the clock offset. `rx` exits with status 1 if any frame was missed.
 
-`--plots DIR` writes `snr_per_tone.png` (per-tone SNR for each frame on the 7 dB-equivalent scale, against
+`--plots DIR` writes `snr_per_tone.png` (per-tone channel SNR for each frame on the 7 dB-equivalent scale, against
 frequency: look for roll-off at the band edges, and for the upward tilt of a flat port's noise and the
 notches of narrow radio filters) and `constellation_N.png` (equalized points of one frame, the highest
 rung decoded unless `--plot-frame N` says otherwise). `--json PATH` (or `-` for stdout) writes everything,
