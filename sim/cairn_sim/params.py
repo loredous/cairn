@@ -46,6 +46,29 @@ def data_tones_for(width: int, mask: frozenset[int] | None = None) -> tuple[int,
     return tuple(k for k in range(width) if k not in pilots and k not in masked)
 
 
+UNMASKABLE_TONES = (3, 20)    # 5.4: pilot tones 3 and 20 cannot be masked
+
+
+def masked_tones(width: int, usable: frozenset[int] | None) -> frozenset[int]:
+    """Tones below ``width`` that a usable-tone mask (5.4) switches off.
+
+    ``usable`` is the mask report's set of usable tones (any of 0-55; tones
+    at or above ``width`` are ignored), or None for every tone usable.
+    Raises if pilot 3 or 20 would be masked or no data tone would remain.
+    """
+    if usable is None:
+        return frozenset()
+    usable = frozenset(int(k) for k in usable)
+    if any(not 0 <= k < MAX_TONES for k in usable):
+        raise ValueError(f"mask tones must be 0-{MAX_TONES - 1}")
+    masked = frozenset(range(width)) - usable
+    if masked & set(UNMASKABLE_TONES):
+        raise ValueError("pilot tones 3 and 20 cannot be masked (SPEC 5.4)")
+    if not data_tones_for(width, masked):
+        raise ValueError("the mask leaves no data tones")
+    return masked
+
+
 def band_high_hz(width: int) -> float:
     return tone_freq(width - 1) + TONE_SPACING / 2
 

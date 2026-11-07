@@ -48,14 +48,16 @@ def bler_point(mcs: int, snr_db: float, *, width: int = 24, chan: Channel = awgn
                max_blocks: int = 20000, clip_db: float | None = None,
                clip: bool = True, rng: np.random.Generator | None = None,
                guard: int = 400, quick_bler: float = 0.3, quick_blocks: int = 480,
-               detector: bool = True, cp: int = params.CP_SHORT) -> Point:
+               detector: bool = True, cp: int = params.CP_SHORT,
+               mask: frozenset[int] | None = None, **frame_kw) -> Point:
     """Run frames until ``min_blocks`` and ``min_errors`` (or ``max_blocks``) are reached.
 
     Points with BLER above ``quick_bler`` after ``quick_blocks`` stop early.
 
     ``clip_db`` defaults to the rung's clip level (``params.clip_db``). The
     SNR axis stays average-referenced: add ``params.clip_offset_db(mcs)``
-    to put a result on the 7 dB-clip (peak-limited) scale.
+    to put a result on the 7 dB-clip (peak-limited) scale. ``mask`` is the
+    usable-tone set (SPEC 5.4); other ``frame_kw`` go to ``FrameConfig``.
 
     The frame is found by the SPEC 6.1 detector (``detector=True``) or, for
     comparison, by cross-correlation with the known preamble waveform. A
@@ -64,7 +66,7 @@ def bler_point(mcs: int, snr_db: float, *, width: int = 24, chan: Channel = awgn
     """
     rng = rng or np.random.default_rng()
     cfg = frame.FrameConfig(width=width, mcs=mcs, n_blocks=blocks_per_frame, clip=clip, clip_db=clip_db,
-                            cp=cp)
+                            cp=cp, mask=mask, **frame_kw)
     pt = Point(snr_db, 0, 0, 0, 0)
     pad = np.zeros(guard)
     while pt.blocks < max_blocks and (pt.blocks < min_blocks or pt.block_errors < min_errors):
@@ -166,11 +168,13 @@ class Budget:
     txtail_s: float = 0.010
     peer_turnaround_s: float = 0.250     # SPEC 7.4: peer turnaround plus its TXDelay
     cp: int = params.CP_SHORT
+    mask: frozenset[int] | None = None   # usable tones (SPEC 5.4); None: all
     blocks_override: int | None = field(default=None, repr=False)
 
     @property
     def coded_bits_per_symbol(self) -> int:
-        return params.RUNGS[self.mcs].bits_per_symbol * len(params.data_tones_for(self.width))
+        tones = params.data_tones_for(self.width, params.masked_tones(self.width, self.mask))
+        return params.RUNGS[self.mcs].bits_per_symbol * len(tones)
 
     @property
     def symbols_per_block(self) -> float:

@@ -7,8 +7,16 @@ per-tone channel and noise from the two S2 symbols on the base tones and
 from the width probe above them, tracks common phase and timing drift with
 the continuous pilots, and decodes the header and every data block.
 
-Not yet modelled: control blocks, tone masks, and decision-directed
-re-estimation.
+Tone mask (SPEC 5.4). ``FrameConfig.mask`` is the set of usable tones. It
+applies to data symbols only: preamble, header and width probe never change,
+so any station can decode the header and the probe measures every tone up to
+the width. In a data symbol a masked tone carries nothing (a masked pilot 37
+or 52 is simply absent), coded bits fill the remaining data tones in order,
+and every active tone is scaled by ``FrameConfig.data_gain`` =
+sqrt(width / active tones) so the symbol's total power is the same as an
+unmasked one. The receiver divides that known factor back out.
+
+Not yet modelled: control blocks.
 """
 
 from __future__ import annotations
@@ -38,6 +46,7 @@ class FrameConfig:
     clip: bool = True
     clip_db: float | None = None  # clip level, dB above RMS; default: the rung's (params.clip_db)
     probe: bool | None = None   # width probe after the header; default: when width > 24
+    mask: frozenset[int] | None = None  # usable tones (SPEC 5.4); None: every tone usable
 
     def __post_init__(self) -> None:
         if not 0 <= self.mcs < len(params.RUNGS):
@@ -51,6 +60,9 @@ class FrameConfig:
             raise ValueError(f"width must be {params.BASE_TONES}-{params.MAX_TONES} tones")
         if self.width > params.BASE_TONES and self.probe is False:
             raise ValueError("tones above the base set need the width probe")
+        if self.mask is not None:
+            object.__setattr__(self, "mask", frozenset(int(k) for k in self.mask))
+        params.masked_tones(self.width, self.mask)          # validates the mask
 
     @property
     def has_probe(self) -> bool:
@@ -73,8 +85,29 @@ class FrameConfig:
         return params.data_tones_for(params.BASE_TONES)
 
     @cached_property
+    def masked(self) -> frozenset[int]:
+        """Tones below the width that data symbols leave silent."""
+        return params.masked_tones(self.width, self.mask)
+
+    @cached_property
     def data_tones(self) -> tuple[int, ...]:
-        return params.data_tones_for(self.width)
+        """Tones carrying coded bits in data symbols, lowest first."""
+        return params.data_tones_for(self.width, self.masked)
+
+    @cached_property
+    def data_pilots(self) -> tuple[int, ...]:
+        """Pilot tones present in data symbols (37 and 52 drop out when masked)."""
+        return tuple(p for p in params.pilots_for(self.width) if p not in self.masked)
+
+    @cached_property
+    def data_active_tones(self) -> tuple[int, ...]:
+        return tuple(sorted(self.data_tones + self.data_pilots))
+
+    @property
+    def data_gain(self) -> float:
+        """Amplitude factor on every active tone of a data symbol: total
+        power stays that of ``width`` unit-power tones whatever the mask."""
+        return float(np.sqrt(self.width / len(self.data_active_tones)))
 
     @property
     def header_symbols(self) -> int:
@@ -110,12 +143,17 @@ def pilot_values(n_symbols: int, n_pilots: int) -> np.ndarray:
     return (1.0 - 2.0 * c.astype(float)).reshape(n_symbols, slots)[:, :n_pilots]
 
 
+def pilots_on(n_symbols: int, pilots: tuple[int, ...]) -> np.ndarray:
+    """Pilot values (n_symbols, len(pilots)) for any subset of the pilot tones."""
+    slots = [params.PILOT_TONES.index(p) for p in pilots]
+    return pilot_values(n_symbols, len(params.PILOT_TONES))[:, slots]
+
+
 def _fill_symbols(points: np.ndarray, n_sym: int, width: int, data_tones: tuple[int, ...],
                   pilots: tuple[int, ...], first_symbol: int) -> np.ndarray:
     g = np.zeros((n_sym, width), dtype=complex)
     g[:, list(data_tones)] = points.reshape(n_sym, len(data_tones))
-    pv = pilot_values(first_symbol + n_sym, len(pilots))[first_symbol:]
-    g[:, list(pilots)] = pv
+    g[:, list(pilots)] = pilots_on(first_symbol + n_sym, pilots)[first_symbol:]
     return g
 
 
@@ -182,16 +220,23 @@ def build(cfg: FrameConfig, rng: np.random.Generator, header_msg: np.ndarray | N
     hgrid = _fill_symbols(hpoints, cfg.header_symbols, cfg.width, cfg.base_data_tones, p_base, first_h)
     first_p = first_h + cfg.header_symbols
     pgrid = probe_grid(cfg.width, first_p) if cfg.has_probe else np.zeros((0, cfg.width), complex)
+    first_d = first_p + cfg.probe_symbols
     dgrid = _fill_symbols(dpoints, cfg.data_symbols, cfg.width, cfg.data_tones,
-                          params.pilots_for(cfg.width), first_p + cfg.probe_symbols)
+                          cfg.data_pilots, first_d) * cfg.data_gain
     grid = np.concatenate([preamble.grid(cfg.width), hgrid, pgrid, dgrid])
 
-    # Every symbol uses the same per-tone scale (SPEC 6.2), set by the link width.
+    # Every symbol uses the same per-tone scale (SPEC 6.2), set by the link
+    # width; a tone mask raises data symbols by the known cfg.data_gain.
+    # Clip-and-filter projects each symbol back onto the tones it uses, so
+    # clipping noise does not refill masked tones.
     scale = cfg.width
     segments = [(grid[:first_p], range(params.BASE_TONES)),
-                (grid[first_p:], range(cfg.width))]
+                (grid[first_p:first_d], range(cfg.width)),
+                (grid[first_d:], cfg.data_active_tones)]
     out = []
     for g, tones in segments:
+        if not len(g):
+            continue
         x = ofdm.modulate(g, cfg.cp, active=scale)
         if cfg.clip:
             x = ofdm.clip_and_filter(x, cfg.width, np.array(list(tones)), cfg.cp,
@@ -278,7 +323,13 @@ def track_drift(pilot_obs: np.ndarray, pilots: tuple[int, ...], width: int, *,
 
 
 def _estimate(tones: np.ndarray, cfg: FrameConfig, smooth_window: int, phase_window: int):
-    """Channel, noise and drift estimates from demodulated tones."""
+    """Channel, noise and drift estimates from demodulated tones.
+
+    ``tones`` has the data symbols already divided by ``cfg.data_gain``.
+    Returns ``noise`` (noise plus distortion per tone, at the preamble's
+    scale) and ``thermal``, its additive-noise part, which a data symbol
+    raised by the mask gain sees reduced by ``data_gain ** 2``.
+    """
 
     b = params.BASE_TONES
     y2, y3 = tones[2, :b], tones[3, :b]
@@ -296,11 +347,12 @@ def _estimate(tones: np.ndarray, cfg: FrameConfig, smooth_window: int, phase_win
         h[b:] = hp[b:]
         noise[b:] = np_[b:]
     noise = np.maximum(noise, 1e-6 * np.mean(np.abs(h) ** 2))
+    thermal = noise.copy()
     snr_db = 10 * np.log10(np.abs(h) ** 2 / noise)
 
     body = tones[first:]
-    pilots = params.pilots_for(cfg.width)
-    pv = pilot_values(tones.shape[0], len(pilots))[first:]
+    pilots = cfg.data_pilots          # masked pilots are absent from data symbols
+    pv = pilots_on(tones.shape[0], pilots)[first:]
     obs = body[:, list(pilots)] / pv
     obs[:hs, [j for j, p in enumerate(pilots) if p >= b]] = np.nan   # header: base pilots only
     corr, drift = track_drift(obs, pilots, cfg.width, s_ref=2.5 - first, window=phase_window)
@@ -314,10 +366,18 @@ def _estimate(tones: np.ndarray, cfg: FrameConfig, smooth_window: int, phase_win
     if body.shape[0] > d0:
         hp = h[list(pilots)]
         resid = obs[d0:] / (hp[None, :] * corr[d0:, list(pilots)]) - 1
-        excess = np.maximum(np.mean(np.abs(resid) ** 2, axis=0) - noise[list(pilots)] / np.abs(hp) ** 2, 0)
+        floor = noise[list(pilots)] / (np.abs(hp) ** 2 * cfg.data_gain ** 2)
+        excess = np.maximum(np.mean(np.abs(resid) ** 2, axis=0) - floor, 0)
         noise = noise + np.interp(np.arange(cfg.width), pilots, excess) * np.abs(h) ** 2
         snr_db = 10 * np.log10(np.abs(h) ** 2 / noise)
-    return h, noise, snr_db, corr, body, drift
+    return h, noise, thermal, snr_db, corr, body, drift
+
+
+def _data_noise(noise: np.ndarray, thermal: np.ndarray, gain: float) -> np.ndarray:
+    """Noise plus distortion on data symbols scaled up by ``gain``: the
+    additive part drops by gain ** 2 once the receiver divides the gain out;
+    distortion scales with the signal and stays."""
+    return np.maximum(noise - thermal * (1 - gain ** -2), noise / gain ** 2)
 
 
 def find_start(rx: np.ndarray, reference: np.ndarray) -> int:
@@ -346,8 +406,10 @@ def receive(rx: np.ndarray, cfg: FrameConfig, *, reference: np.ndarray | None = 
     n_sym = cfg.total_symbols
     first = params.PREAMBLE_SYMBOLS
     window_start = start + cfg.cp - advance
+    d_first = first + cfg.header_symbols + cfg.probe_symbols   # first data symbol
     tones = ofdm.demodulate(rx, window_start, n_sym, cfg.width, cfg.cp, active=cfg.width)
-    h, noise, snr_db, corr, body, drift = _estimate(tones, cfg, smooth_window, phase_window)
+    tones[d_first:] /= cfg.data_gain                           # the mask's known power boost
+    h, noise, thermal, snr_db, corr, body, drift = _estimate(tones, cfg, smooth_window, phase_window)
     # Follow sample-clock drift: if the windows would wander by a sample or
     # more over the frame, move each symbol's window and estimate again.
     pos = np.arange(n_sym) - 2.5                      # symbols from the channel estimate
@@ -361,11 +423,13 @@ def receive(rx: np.ndarray, cfg: FrameConfig, *, reference: np.ndarray | None = 
         # smooth drift; the window move itself keeps the prefix centred.
         f = params.BIN_OFFSET + np.arange(cfg.width)
         tones = tones * np.exp(-2j * np.pi * f[None, :] * shifts[:, None] / params.N_USEFUL)
-        h, noise, snr_db, corr, body, drift = _estimate(tones, cfg, smooth_window, phase_window)
+        tones[d_first:] /= cfg.data_gain
+        h, noise, thermal, snr_db, corr, body, drift = _estimate(tones, cfg, smooth_window, phase_window)
     hs = cfg.header_symbols
     d0 = hs + cfg.probe_symbols
     eq = body / (h[None, :] * corr)
     nv = noise[None, :] / np.abs(h[None, :]) ** 2 * np.ones_like(body.real)
+    nv[d0:] = (_data_noise(noise, thermal, cfg.data_gain) / np.abs(h) ** 2)[None, :]
 
     # Header.
     hcode = ldpc.code_for(params.HEADER_CODE)
@@ -386,7 +450,7 @@ def receive(rx: np.ndarray, cfg: FrameConfig, *, reference: np.ndarray | None = 
         noise[:params.BASE_TONES] = np.maximum(rel * np.abs(h[:params.BASE_TONES]) ** 2,
                                                1e-6 * np.mean(np.abs(h) ** 2))
         snr_db = 10 * np.log10(np.abs(h) ** 2 / noise)
-        nv = noise[None, :] / np.abs(h[None, :]) ** 2 * np.ones_like(body.real)
+        nv[d0:] = (_data_noise(noise, thermal, cfg.data_gain) / np.abs(h) ** 2)[None, :]
 
     # Data blocks.
     dcode = ldpc.code_for(params.DATA_CODE)
