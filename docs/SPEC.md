@@ -176,8 +176,8 @@ The waveform is OFDM on 100 Hz-spaced tones in the FM audio band, with 10 ms sym
 | Base tone set | Tones 0–23 (350–2650 Hz): preamble, header and control blocks at every width |
 | Link width | 24–56 tones, negotiated per direction (5.4); occupied band 300 Hz to the highest active tone + 50 Hz (2700 Hz at 24 tones, 5900 Hz at 56) |
 | Width cap by channel | 30 tones (to 3300 Hz) on 12.5 kHz; 56 tones (to 5900 Hz) on 25 kHz |
-| Pilot tones (continuous) | Tones 3 and 20 (650, 2350 Hz) always; tones 37 and 52 (4050, 5550 Hz) when active |
-| Data tones | Width minus active pilots: 22 at 24 tones, 52 at 56 |
+| Pilot tones (continuous) | Tones 3 and 20 (650, 2350 Hz) always; tones 37 and 52 (4050, 5550 Hz) when active and not masked (5.4) |
+| Data tones | Width minus active pilots: 22 at 24 tones, 52 at 56; fewer when tones are masked (5.4) |
 | Data tone-symbols per second | 1,956 at 24 tones, 4,622 at 56 (1,760 and 4,160 in repeater mode) |
 | Internal FFT | 80 points at 8 kHz (up to 30 tones) or 160 points at 16 kHz (up to 56 tones) |
 
@@ -198,7 +198,8 @@ Tone index k = 0…N−1 sits at 350 + 100·k Hz. Tones are numbered from the lo
 Width is discovered by measurement, not configured. The operator sets only the channel width, which fixes the cap; the link finds how many tones each direction actually passes.
 
 - **Width probe.** Two symbols of known pilots on every tone up to the sender's cap, sent after the header when header flag bit 4 is set: always in CONNECT, CONNECT-ACK and SOUND, and in a DATA frame when the peer has requested a re-probe (ACK flag bit 2). Because headers use the base tones, a probe is never needed to decode the frame that carries it.
-- **Mask report.** The receiver measures which probed tones arrive above threshold and returns a bitmap of usable tones (56 bits, tones 0–55) in its next control block. Pilot tones 3 and 20 cannot be masked. The transmitter sends zero energy on masked tones, reassigns coded bits to the remainder, and keeps total power constant, so a 24-tone link pays no penalty for having probed at 56.
+- **Mask report.** The receiver measures which probed tones arrive above threshold and returns a bitmap of usable tones (56 bits, tones 0–55) in its next control block. Pilot tones 3 and 20 cannot be masked; pilots 37 and 52 can, and tracking then uses the remaining pilots. The transmitter puts no data or pilot on masked tones, reassigns coded bits to the remainder, and keeps total power constant: a data symbol carries the power of `width` unit-power tones, with every active tone, pilots included, scaled by the same factor, so a 24-tone link pays no penalty for having probed at 56. Clip-and-filter (7.1) regrows a little energy on masked tones, as it does above the band; that residue may be no higher than the regrowth just above the highest active tone (about 30 dB below the active tones at a 7 dB clip).
+- **Mask scope.** The mask applies to the symbols carrying data and control blocks. The preamble and header always use every base tone, and the width probe every tone up to the sender's cap, including masked ones, so a frame decodes without knowing the mask and masked tones keep being measured (10.3). The 56-bit mask applies at any width; bits at or above the width are ignored.
 - **Caps.** Neither the probe nor the data ever exceeds the sender's own cap, whatever the far end reports. By Carson's rule, 56 tones through a flat port would not fit a 12.5 kHz channel; the cap is the spectral safety limit and is configuration, not negotiation.
 - **Per direction.** Each direction's width is the product of one station's transmit chain and the other's receive chain, so a station with a flat data port talking to a handheld runs wide one way and narrow the other.
 - **Broadcast.** Broadcast frames do not probe; they use the configured broadcast width (default 24 tones).
