@@ -1,0 +1,2116 @@
+# yaml-language-server: $schema=../../tools/adrsite/schemas/decisions.schema.json
+#
+# Normative rules of docs/SPEC.md (Cairn draft v0.1, revised 2026-11-05),
+# in the specification's section order. Where a change record (SPEC §17-19)
+# or the decisions record (SPEC §20) amends earlier text, the final resolved
+# rule is recorded here, as are the resolutions of 2026-11-06 (see prose.md).
+#
+# Every decision carries exactly one milestone tag (v0.1, v0.2, v0.5, v1.0,
+# v1.x or v2): the earliest SPEC §16.2 roadmap milestone that names it, or
+# v0.1 when the roadmap does not name it.
+
+# --- Regulatory (SPEC §1, §3) --------------------------------------------
+
+- slug: no-encryption
+  title: Nothing is encrypted
+  category: regulatory
+  strength: MUST_NOT
+  statement: >-
+    Cairn MUST NOT encrypt or otherwise obscure the meaning of any
+    transmission. Authentication by signature is permitted because the signed
+    content stays readable. (SPEC §1, §3.3, §12.3)
+  rationale: >-
+    US Part 97 §97.113(a)(4) prohibits messages encoded to obscure their
+    meaning; §97.309(b) requires that unspecified digital codes not obscure
+    meaning.
+  tags: [regulatory, session, v0.1]
+
+- slug: station-identification
+  title: Callsign in every header plus a periodic ASCII ID control block
+  category: regulatory
+  strength: MUST
+  statement: >-
+    The source callsign MUST appear in every frame header in the published
+    address format (Appendix B.1). In addition, an ID control block (control
+    type 5, Appendix B.6) carrying the callsign in 7-bit ASCII MUST be sent in
+    every CONNECT, every DISCONNECT, every BEACON, and at least every 10
+    minutes within a session, piggybacked on whichever frame is next.
+    (SPEC §3.3, §8.3, §8.4, §9.3, B.6; decision §20.7)
+  rationale: >-
+    §97.119 requires identification at the end of each communication and at
+    least every 10 minutes, and permits a data emission using a specified
+    digital code; ASCII is a specified code under §97.309(a)(3). The packed
+    header callsign serves addressing; the ASCII block removes any argument
+    about whether it identifies the station.
+  tags: [regulatory, framing, session, v0.5]
+
+- slug: optional-legacy-id
+  title: Optional CW or 1200-baud AX.25 identification
+  category: regulatory
+  strength: MAY
+  statement: >-
+    A station MAY additionally send a CW or 1200-baud AX.25 identification on
+    a timer. The modem provides this as a configurable option (off, CW, or
+    1200-baud AX.25 beacon, with an interval). (SPEC §3.3, §8.3, §13.4;
+    decision §20.7)
+  tags: [regulatory, host-interface, v1.x]
+
+- slug: sample-clock-tracking-only
+  title: Receivers track sample-clock offset, not carrier frequency
+  category: physical-layer
+  strength: MUST
+  statement: >-
+    The waveform assumes an FM audio channel with no frequency offset. The
+    modem has no carrier-frequency tracking; it tracks only the sample-clock
+    offset between sound cards (tens of ppm), using the continuous pilots and
+    the preamble. (SPEC §3.2, §5.3)
+  rationale: >-
+    FM demodulation returns baseband audio exactly: radio mistuning becomes a
+    DC shift that AC coupling blocks, not a tone shift.
+  tags: [phy, sync, v0.1]
+
+# --- Assumed decisions and architecture (SPEC §2, §4) --------------------
+
+- slug: architectural-defaults-confirmed
+  title: The SPEC §2 architectural defaults are confirmed
+  category: versioning-governance
+  strength: MUST
+  statement: >-
+    The defaults of the SPEC §2 assumed-decisions table (negotiated
+    per-direction width, sessions first, a software modem, AX.25
+    compatibility via KISS, legacy-mode reception, no BPSK rung, 100 Hz tone
+    spacing, rate-compatible LDPC, one frame in flight, optional repeater
+    mode, host level control, zstd dictionaries, optional Ed25519
+    signatures, and the licensing split) are confirmed by the acceptance of
+    this ADR, as the normative sections and the other decisions of this ADR
+    express them. Reversing any of them MUST be done by a superseding ADR.
+    (SPEC §1, §2, §16.2)
+  rationale: >-
+    The v0.1 exit criterion in the roadmap is that the §2 decisions are
+    confirmed. Their parameter values stay nominal; this confirms the
+    architecture, not the numbers.
+  tags: [governance, v0.1]
+
+- slug: optional-features-by-capability
+  title: Optional features are used only when both stations support them
+  category: versioning-governance
+  strength: MUST
+  statement: >-
+    Optional features signaled by capability bits (B.3), such as
+    dictionaries, signatures and level calibration, are negotiated: a
+    session uses only the intersection of what both stations advertise
+    (SPEC §4.1, §15, B.3). A station MUST NOT use a capability its peer has
+    not signaled.
+  tags: [session, versioning, v0.1]
+
+# --- Physical layer: waveform (SPEC §5) ----------------------------------
+
+- slug: audio-sample-format
+  title: The waveform is defined at 48 kHz, 16-bit, mono
+  category: physical-layer
+  strength: MUST
+  statement: >-
+    The waveform is defined at 48,000 samples/s, 16-bit, mono.
+    Implementations MAY process at a lower internal rate (8 kHz for widths up
+    to 30 tones, 16 kHz up to 56 tones) and resample. (SPEC §5.1)
+  tags: [phy, waveform, v0.1]
+
+- slug: no-pre-emphasis
+  title: The modem never applies pre-emphasis
+  category: physical-layer
+  strength: MUST_NOT
+  statement: >-
+    The modem outputs a flat spectrum and MUST NOT apply pre-emphasis.
+    (SPEC §5.1)
+  rationale: >-
+    Through a mic path the radios' pre- and de-emphasis cancel; through a flat
+    port the per-tone channel estimate absorbs the noise tilt.
+  tags: [phy, waveform, levels, v0.1]
+
+- slug: ofdm-parameters
+  title: OFDM tone plan and symbol timing
+  category: physical-layer
+  strength: MUST
+  statement: |
+    The waveform is OFDM with the following parameters (SPEC §5.2):
+
+    | Parameter | Value |
+    | --- | --- |
+    | Tone spacing | 100 Hz |
+    | Useful symbol | 10.0 ms (480 samples at 48 kHz) |
+    | Cyclic prefix | 1.25 ms (60 samples); 2.5 ms (120 samples) in repeater mode |
+    | Symbol period | 11.25 ms, 88.89 symbols/s; 12.5 ms, 80 symbols/s in repeater mode |
+    | Tone centers | 350 + 100·k Hz, k = 0 … 55 |
+    | Base tone set | Tones 0–23 (350–2650 Hz): preamble, header and control blocks at every width |
+    | Link width | 24–56 tones, negotiated per direction; occupied band 300 Hz to the highest active tone + 50 Hz (2700 Hz at 24 tones, 5900 Hz at 56) |
+    | Width cap by channel | 30 tones (to 3300 Hz) on 12.5 kHz; 56 tones (to 5900 Hz) on 25 kHz |
+    | Pilot tones (continuous) | Tones 3 and 20 (650, 2350 Hz) always; tones 37 and 52 (4050, 5550 Hz) when active |
+    | Data tones | Width minus active pilots: 22 at 24 tones, 52 at 56 |
+    | Data tone-symbols per second | 1,956 at 24 tones, 4,622 at 56 (1,760 and 4,160 in repeater mode) |
+    | Internal FFT | 80 points at 8 kHz (up to 30 tones) or 160 points at 16 kHz (up to 56 tones) |
+
+    Tone index k sits at 350 + 100·k Hz, numbered from the low end.
+  rationale: >-
+    The channel has no multipath, so symbol length is set by cyclic-prefix
+    overhead against the audio chain's 1–2 ms dispersion: 10 ms symbols keep
+    that overhead at 12.5% and halve the fixed per-frame overhead of 20 ms
+    symbols. Numbering tones from the low end means a receiver masking upper
+    tones degrades toward the 24-tone base set. Band edges: 300 Hz avoids the
+    DC-blocking and hum region, 2700 Hz is the safe top of a voice-filtered
+    mic path, 5900 Hz the practical limit of a 25 kHz IF filter. (SPEC §5.3;
+    decision §20.5)
+  tags: [phy, waveform, v0.1]
+
+- slug: long-prefix-request
+  title: The receiver requests the long prefix when it measures excess dispersion
+  category: physical-layer
+  strength: MUST
+  statement: >-
+    A receiver measures the audio chain's dispersion from the per-tone phase
+    of the width probe. If the dispersion exceeds about 1.25 ms, it sets the
+    "use long prefix" flag (ACK flag bit 3, B.2), and the sender MUST then
+    transmit with the 2.5 ms cyclic prefix in that direction only. A station
+    in repeater mode uses the long prefix regardless of the flag.
+    (SPEC §5.2, B.2; decision §20.5)
+  rationale: >-
+    The cyclic prefix, detected blind at the receiver, is the dispersion
+    knob; tone spacing stays fixed at 100 Hz. Measuring at the receiver
+    needs no operator configuration and lets each direction use the short
+    prefix whenever its own chain allows.
+  tags: [phy, waveform, v1.x]
+
+- slug: overhead-on-base-tones-at-mcs0
+  title: Preamble, header and control blocks use the base tones at MCS 0
+  category: physical-layer
+  strength: MUST
+  statement: >-
+    The preamble, the header and every control block MUST be sent on the base
+    tone set (tones 0–23) at every link width, and the header and control
+    blocks MUST be coded at MCS 0. (SPEC §5, §5.2, §6.2, §6.3, §8.1)
+  rationale: >-
+    Every frame is self-describing at the base rate: any station can decode
+    any header at any width and learn how to decode the payload. The cost is
+    about 45 ms per wide frame, under 2% of a 4 s frame. (SPEC §1, §17.3)
+  tags: [phy, waveform, framing, v0.1]
+
+- slug: continuous-pilots
+  title: Continuous pilots track phase; the channel estimate comes from the preamble
+  category: physical-layer
+  strength: MUST
+  statement: >-
+    Pilot tones 3 and 20, and tones 37 and 52 when active, carry known values
+    in every symbol and are used to track the slow phase rotation from
+    sample-clock offset and the common phase of the frame. The full per-tone
+    channel estimate comes from the preamble (and the width probe), not from
+    the pilots. (SPEC §3.2, §5.2, §5.3)
+  rationale: >-
+    The channel is static within a frame, so one estimate per transmission
+    suffices.
+  tags: [phy, waveform, sync, v0.1]
+
+- slug: width-cap-never-exceeded
+  title: Transmissions never exceed the configured width cap
+  category: physical-layer
+  strength: MUST_NOT
+  statement: >-
+    The width cap is operator configuration set by the channel width (30
+    tones on 12.5 kHz, 56 tones on 25 kHz), not negotiation. Neither the
+    width probe nor data MUST ever exceed the sender's own cap, whatever the
+    far end reports. (SPEC §3.1, §4.1, §5.2, §5.4)
+  rationale: >-
+    By Carson's rule, 56 tones through a flat port would not fit a 12.5 kHz
+    channel; the cap is the spectral safety limit.
+  tags: [phy, waveform, regulatory, v1.0]
+
+- slug: width-per-direction
+  title: Width is measured and negotiated per direction
+  category: physical-layer
+  strength: MUST
+  statement: >-
+    Link width (24–56 tones) and the tone mask are negotiated independently
+    for each direction, by measurement rather than configuration.
+    (SPEC §3.1, §4.1, §5.4)
+  rationale: >-
+    Each direction's width is the product of one station's transmit chain and
+    the other's receive chain, so a flat-port station talking to a handheld
+    runs wide one way and narrow the other.
+  tags: [phy, waveform, adaptation, v1.0]
+
+- slug: width-probe
+  title: Width probe content and when it is sent
+  category: physical-layer
+  strength: MUST
+  statement: >-
+    A width probe is two symbols of known pilots on every tone up to the
+    sender's cap, sent immediately after the header, before any block, in
+    any frame type whose header flag bit 4 is set. It MUST be sent in every CONNECT, CONNECT-ACK and SOUND frame, and in
+    a DATA frame when the peer has requested a re-probe (ACK flag bit 2).
+    (SPEC §5.4, §8.1, §10.3)
+  tags: [phy, waveform, framing, v1.0]
+
+- slug: tone-mask-report
+  title: Receivers report usable tones as a 56-bit mask
+  category: physical-layer
+  strength: MUST
+  statement: >-
+    The receiver measures which probed tones arrive above threshold and
+    returns a bitmap of usable tones (56 bits, tones 0–55) in its next control
+    block. Pilot tones 3 and 20 cannot be masked. (SPEC §5.4)
+  tags: [phy, adaptation, v1.0]
+
+- slug: masked-tone-power-reassignment
+  title: Masked tones carry no energy and total power stays constant
+  category: physical-layer
+  strength: MUST
+  statement: >-
+    The transmitter sends zero energy on masked tones, reassigns coded bits to
+    the remaining tones, and keeps total transmit power constant. (SPEC §5.4)
+  rationale: >-
+    A 24-tone link then pays no penalty for having probed at 56.
+  tags: [phy, waveform, v1.0]
+
+- slug: broadcast-fixed-width
+  title: Broadcast frames do not probe and use the configured broadcast width
+  category: physical-layer
+  strength: MUST
+  statement: >-
+    Broadcast frames do not carry a width probe and do not negotiate width;
+    they use the configured broadcast width (default 24 tones).
+    (SPEC §5.4, §10.4)
+  tags: [phy, framing, v0.5]
+
+# --- Physical layer: sync, modulation and coding (SPEC §6) ---------------
+
+- slug: preamble-structure
+  title: Four-symbol, 45 ms preamble of S1 twice then S2
+  category: physical-layer
+  strength: MUST
+  statement: |
+    Every transmission starts with a 4-symbol (45 ms) preamble on the base 24
+    tones (SPEC §6.1; decision §20.3):
+
+    | Symbols | Content | Purpose |
+    | --- | --- | --- |
+    | 1–2 | Sequence S1: constant-amplitude, low-PAPR values on the base 24 tones, sent twice | Detection and coarse timing by autocorrelation at the repeat lag; the lag that peaks (11.25 ms or 12.5 ms) identifies the cyclic prefix; confirmed by cross-correlation with S1 |
+    | 3–4 | Sequence S2: BPSK values from a 24-bit PN segment on the base 24 tones, distinct from S1 | Fine timing, per-tone channel estimate (gain and phase) for the base tones, initial SNR estimate, sample-clock offset estimate from the phase slope |
+
+    S1 and S2 are fixed and published as test vectors.
+  rationale: >-
+    The repeated-symbol structure (Schmidl and Cox) gives detection and coarse
+    timing cheaply, and the repeat lag identifies the prefix without
+    configuration.
+  tags: [phy, sync, v0.2]
+
+- slug: preamble-cross-correlation-confirmation
+  title: Preamble detection requires cross-correlation confirmation
+  category: physical-layer
+  strength: MUST
+  statement: >-
+    Preamble detection MUST require both the autocorrelation plateau and a
+    cross-correlation match against the stored sequence. A steady tone (a
+    repeater courtesy tone, a CW identifier, a DTMF digit) produces the
+    plateau on its own and MUST NOT trigger detection. (SPEC §6.1, §7.2)
+  tags: [phy, sync, repeater, v0.1]
+
+- slug: blind-prefix-detection
+  title: Receivers detect the cyclic-prefix length without configuration
+  category: physical-layer
+  strength: MUST
+  statement: >-
+    A receiver MUST detect and decode frames sent with either cyclic-prefix
+    length (1.25 ms or 2.5 ms) without any configuration. How it does so is
+    an implementation choice. (SPEC §2, §6.1, §11.5; decision §20.5)
+  rationale: >-
+    Repeater mode and the long-prefix request (`long-prefix-request`) then
+    change only what a station transmits; nothing has to be configured at
+    the receiving end. It arrives with the first real-time receiver (v0.5)
+    so that no v1.0 decoder can be broken by a v1.x station sending the
+    long prefix (SPEC §15).
+  tags: [phy, sync, repeater, v0.5]
+
+- slug: preamble-detection-performance
+  title: Preamble detection performance requirement
+  category: physical-layer
+  strength: MUST
+  statement: >-
+    Preamble detection MUST achieve at least 99% detection at 6 dB audio SNR
+    and at most one false alarm per 10 minutes on open-squelch noise, measured
+    with the conformance captures (SPEC §14.5). The specification sets this
+    performance requirement rather than a detection-metric threshold.
+    (SPEC §6.1; decision §20.3)
+  tags: [phy, sync, performance, v0.1]
+
+- slug: mcs-ladder
+  title: Seven-rung MCS ladder from QPSK 1/2 to 256-QAM 3/4
+  category: physical-layer
+  strength: MUST
+  statement: |
+    Data blocks are sent at one of seven rungs (SPEC §6.2). Rates scale with
+    width; raw payload rates before overhead are shown at the two extremes.
+
+    | MCS | Modulation | Code rate | Payload bits per data tone-symbol | bps at 24 tones | bps at 56 tones | Nominal SNR |
+    | --- | --- | --- | --- | --- | --- | --- |
+    | 0 (base) | QPSK | 1/2 | 1.0 | 1,956 | 4,622 | 5 dB |
+    | 1 | QPSK | 3/4 | 1.5 | 2,933 | 6,933 | 8 dB |
+    | 2 | 16-QAM | 1/2 | 2.0 | 3,911 | 9,244 | 11 dB |
+    | 3 | 16-QAM | 3/4 | 3.0 | 5,867 | 13,867 | 15 dB |
+    | 4 | 64-QAM | 2/3 | 4.0 | 7,822 | 18,489 | 19 dB |
+    | 5 | 64-QAM | 5/6 | 5.0 | 9,778 | 23,111 | 23 dB |
+    | 6 | 256-QAM | 3/4 | 6.0 | 11,733 | 27,733 | 27 dB |
+
+    Nominal SNR values are textbook AWGN figures for about 1% block error; a
+    real audio chain adds roughly 1–3 dB.
+  rationale: >-
+    The ladder is sized for the 12–40 dB audio-SNR window between the FM
+    threshold and full quieting (SPEC §3.2).
+  tags: [phy, fec, adaptation, v0.1]
+
+- slug: constellation-mapping
+  title: Gray-mapped constellations at unit average power per tone
+  category: physical-layer
+  strength: MUST
+  statement: >-
+    Constellations are Gray-mapped with unit average power per tone. The
+    transmitter scales the whole symbol, never individual tones. (SPEC §6.2)
+  rationale: >-
+    The receiver's per-tone channel estimate then stays valid across rungs.
+  tags: [phy, waveform, v0.1]
+
+- slug: no-bpsk-rung
+  title: No BPSK rung below MCS 0
+  category: physical-layer
+  strength: MUST_NOT
+  statement: >-
+    The ladder MUST NOT include a BPSK rung below MCS 0 (QPSK rate 1/2). If
+    header robustness ever proves short, the remedy is a rate-1/3 header code,
+    not a slower rung. (SPEC §2, §6.2; decision §20.4)
+  rationale: >-
+    Above the FM threshold the audio SNR is already 12 dB or more against MCS
+    0's roughly 8 dB need, and level control removes the under-deviation case
+    that would call for a slower rung. A BPSK rung would roughly double header
+    time per frame.
+  tags: [phy, fec, v0.1]
+
+- slug: rung-ids-never-renumbered
+  title: Rung IDs 7–15 are reserved and existing rungs are never renumbered
+  category: physical-layer
+  strength: MUST_NOT
+  statement: >-
+    Rung IDs 7–15 are reserved. Future rungs MUST NOT renumber existing ones.
+    (SPEC §6.2, §15)
+  tags: [phy, versioning, v0.1]
+
+- slug: ldpc-codes
+  title: Header, control and data blocks use lifted, shortened 5G NR LDPC codes
+  category: physical-layer
+  strength: MUST
+  statement: |
+    All three block codes are 5G NR LDPC base graphs (3GPP TS 38.212 §5.3.2),
+    lifted and shortened (SPEC §6.3; decision §20.2):
+
+    | Block | Information bits | Code | Coded lengths | Used for |
+    | --- | --- | --- | --- | --- |
+    | Header | 144 (incl. CRC-16) | NR BG2, Z = 15 (k = 150, shortened to 144) | 288 (rate 1/2); 432 (rate 1/3) held as contingency | Every frame, always MCS 0 on the base tones |
+    | Control | 256 (incl. CRC-16) | NR BG2, Z = 26 (k = 260, shortened to 256) | 512 (rate 1/2) | ACK/NACK, link setup, sounding and calibration reports, ID, path; always MCS 0 on the base tones |
+    | Data | 1,024 (126 payload bytes + CRC-16) | NR BG1, Z = 48 (k = 1,056, shortened to 1,024); 3,168-bit rate-matching buffer | 2,048 (1/2), 1,536 (2/3), 1,368 (3/4), 1,232 (5/6) | Payload blocks at MCS 0–6 |
+
+    Shortened information bits are zeros known to both ends and are never
+    transmitted. The lifted parity-check matrices and rate-matching tables
+    are published as files.
+  rationale: >-
+    One decoder core for everything, designed-in rate compatibility for
+    incremental-redundancy HARQ, published performance curves, and open
+    implementations to cross-check against. (SPEC §20.2)
+  tags: [phy, fec, v0.2]
+
+- slug: rate-compatible-buffer
+  title: Every coded length is a prefix of one rate-matching buffer
+  category: physical-layer
+  strength: MUST
+  statement: >-
+    Every coded data-block length is a prefix of the same 3,168-bit
+    rate-matching buffer. (SPEC §6.3, A.3)
+  rationale: >-
+    Keeps incremental-redundancy HARQ, which would send the next unsent
+    segment of the buffer down to rate 1/3, possible later without changing
+    the code. HARQ itself is planned work with its own future ADR; its wire
+    identifiers are held by `reserved-identifiers`.
+  tags: [phy, fec, arq, v0.1]
+
+- slug: block-crc
+  title: Each block carries its own CRC-16, which decides success
+  category: physical-layer
+  strength: MUST
+  statement: >-
+    Each header, control and data block carries its own CRC-16 inside its
+    information bits. The CRC decides block success; the decoder's syndrome
+    check MUST NOT be trusted alone. (SPEC §6.3, §8.2, B.4)
+  tags: [phy, fec, v0.1]
+
+- slug: crc-16-ccitt-false
+  title: Block CRCs are CRC-16/CCITT-FALSE over the preceding bits
+  category: physical-layer
+  strength: MUST
+  statement: >-
+    Every CRC-16 field, in header, control and data blocks alike, MUST be
+    CRC-16/CCITT-FALSE: polynomial 0x1021, initial value 0xFFFF, no input or
+    output reflection, no final XOR. It is computed over the preceding bits
+    of its block: the first 128 header bits, the preceding fields of a
+    control block, and the 126 payload bytes of a data block.
+    (SPEC §6.3, §8.2, Appendix B, B.4)
+  rationale: >-
+    "CRC-16 (CCITT)" names several incompatible variants; pinning the
+    parameters now lets independent implementations interoperate before the
+    v0.2 test vectors exist.
+  tags: [phy, fec, framing, v0.1]
+
+- slug: decoder-performance
+  title: Decoders meet the conformance and performance targets by any method
+  category: physical-layer
+  strength: MUST
+  statement: >-
+    An implementation's block decoder MUST decode well enough for the
+    implementation to pass the conformance suite (`conformance-suite`) and
+    meet the performance targets (`v1-performance-targets`). The decoding
+    algorithm is an implementation choice and never changes what is
+    transmitted. (SPEC §6.3, §14.1, §14.5)
+  rationale: >-
+    The air interface fixes the codes, not the decoder. Stating the outcome
+    lets implementations trade compute for sensitivity on their own
+    platforms.
+  tags: [phy, fec, conformance, v0.1]
+
+- slug: iterative-receiver
+  title: Receivers may re-estimate and re-decode iteratively
+  category: physical-layer
+  strength: MAY
+  statement: >-
+    A receiver MAY re-estimate the channel from blocks that decoded and then
+    re-run demapping and decoding on the ones that failed (decision-directed,
+    iterative). This is an implementation choice that never changes what is
+    transmitted. (SPEC §6.3)
+  rationale: >-
+    Worth 0.5–1.5 dB at the high rungs, for 2–3× decode compute. (SPEC §19)
+  tags: [phy, fec, v1.x]
+
+- slug: no-whole-frame-retransmission
+  title: Frames are never retransmitted as a whole
+  category: physical-layer
+  strength: MUST_NOT
+  statement: >-
+    A block that fails its CRC is reported individually in the ACK bitmap; a
+    frame MUST NOT be retransmitted as a whole. (SPEC §1, §6.3)
+  rationale: >-
+    The block, not the frame, is the unit of error recovery (SPEC §1, design
+    principle 5).
+  tags: [fec, arq, v0.5]
+
+- slug: interleaving
+  title: Coded bits are interleaved across tones and symbols
+  category: physical-layer
+  strength: MUST
+  statement: >-
+    Coded bits of each block are spread across all active tones and across
+    the symbols the block occupies. (SPEC §6.4)
+  rationale: >-
+    A dead tone or a short burst (squelch tail, impulse noise) then costs
+    scattered bits rather than a run.
+  tags: [phy, fec, v0.1]
+
+- slug: scrambling
+  title: Coded bits are scrambled with a published PRBS
+  category: physical-layer
+  strength: MUST
+  statement: >-
+    All bits after coding are XORed with a published PRBS seeded from the
+    block's position in the frame. (SPEC §6.4)
+  rationale: >-
+    Removes repeating patterns that would raise the peak-to-average ratio or
+    bias the pilots.
+  tags: [phy, waveform, v0.1]
+
+- slug: block-packing
+  title: Blocks are packed back-to-back and the last symbol is padded
+  category: physical-layer
+  strength: MUST
+  statement: >-
+    Blocks are packed back-to-back across symbols; the last symbol of a frame
+    is padded with scrambled zeros. (SPEC §6.4)
+  tags: [phy, framing, v0.1]
+
+- slug: bit-mapping-adr-before-v0-2
+  title: Scrambler, interleaver and constellation labeling are fixed by ADR before v0.2
+  category: physical-layer
+  strength: MUST
+  statement: >-
+    The exact scrambler PRBS and its seeding, the interleaver permutation
+    (defined for every tone mask), and the constellation Gray labeling and
+    bit-to-tone order MUST be specified in a later ADR, with test vectors,
+    before v0.2. Until then only the properties of `interleaving`,
+    `scrambling` and `constellation-mapping` are normative. (SPEC §6.2,
+    §6.4, §16.2)
+  rationale: >-
+    These details decide bit-exact interoperability but are best chosen
+    alongside the Stage 1 simulation, which also produces the test vectors
+    that pin them down.
+  tags: [phy, waveform, fec, v0.2]
+
+# --- Physical layer: levels, carrier detect and timing (SPEC §7) ---------
+
+- slug: papr-clip-and-filter
+  title: PAPR is bounded to 7 dB by clip-and-filter in the modem
+  category: physical-layer
+  strength: MUST
+  statement: >-
+    Each symbol is clipped at 7 dB above its RMS level, re-filtered to the
+    occupied band, and clipped once more, giving PAPR ≤ 7 dB at the output.
+    The radio's limiter MUST NOT be relied on as the peak-limiting mechanism.
+    (SPEC §3.2, §7.1)
+  rationale: >-
+    Audio peaks above the radio's limiter are clipped and appear as noise at
+    the receiver; the modem controls its own peaks instead.
+  tags: [phy, levels, v0.1]
+
+- slug: transmit-peak-level
+  title: Waveform peaks sit at −3 dBFS
+  category: physical-layer
+  strength: MUST
+  statement: >-
+    The digital output is scaled so that waveform peaks sit at −3 dBFS. The
+    average level (about −10 dBFS) does not change between rungs or widths.
+    (SPEC §5.1, §7.1)
+  tags: [phy, levels, audio-level, v0.1]
+
+- slug: level-setting-tone
+  title: A 1000 Hz level-setting tone with a 70% manual deviation target
+  category: audio-level
+  strength: MUST
+  statement: >-
+    The modem provides a level-setting tone: a single 1000 Hz tone with the
+    same peak amplitude as the data waveform. For manual setup, the operator
+    sets radio drive so this tone produces 70% of the channel's maximum
+    deviation (3.5 kHz on a 25 kHz channel, 1.75 kHz on 12.5 kHz). The 70%
+    target is the manual fallback only; with calibration the target is set by
+    `calibrated-drive-target`. (SPEC §5.1, §7.1; decision §20.6)
+  rationale: >-
+    The 30% margin covers level drift and the residual peaks above the clip
+    point.
+  tags: [levels, audio-level, v0.1]
+
+- slug: receive-agc-range
+  title: Receive AGC range and input-clipping warning
+  category: audio-level
+  strength: MUST
+  statement: >-
+    The receiver's digital AGC accepts input anywhere from −30 to −3 dBFS.
+    The receiver flags input clipping to the operator. (SPEC §7.1)
+  rationale: >-
+    A clipped receive path is the most common cause of a link stuck at low
+    rungs.
+  tags: [levels, audio-level, v0.1]
+
+- slug: distortion-report
+  title: Every acknowledgment reports transmit-side distortion
+  category: audio-level
+  strength: MUST
+  statement: >-
+    The receiver reports the sender's transmit-side distortion in every
+    acknowledgment: a 3-bit distortion index (0 clean to 7 severe; the
+    intermodulation ratio on silent tones and amplitude-dependent
+    constellation error, in 3 dB steps) and an own-ADC-clipped bit
+    (Appendix B.2). The sender responds by lowering its drive or warning the
+    operator (SPEC §13.5) rather than letting link adaptation chase clipping
+    with slower rungs. (SPEC §7.1, §10.1, B.2)
+  rationale: >-
+    Without a report the sender's only symptom of clipping is block errors,
+    which the adaptation loop would otherwise answer with lower rungs instead
+    of lower drive. (SPEC §17.4)
+  tags: [levels, adaptation, audio-level, v1.0]
+
+- slug: carrier-detect
+  title: DCD is the OR of four detectors
+  category: channel-access
+  strength: MUST
+  statement: |
+    Carrier detect (DCD) is the OR of the following detectors, each with a
+    hold time (default 100 ms, see `timing-parameters`) (SPEC §7.2):
+
+    | Detector | How | Catches |
+    | --- | --- | --- |
+    | Quieting | Noise power in a band just above the highest active tone (2700–3100 Hz on a 24-tone link, 6000–7000 Hz at 56 tones; chosen at setup from the channel width and the measured receive roll-off) drops when any carrier is present | Any FM signal |
+    | Preamble correlator | Autocorrelation of the repeated preamble symbol, confirmed by cross-correlation with the stored sequence | This mode, including weak signals near the cliff; never a steady tone |
+    | AFSK detector | Energy at 1200 Hz and 2200 Hz alternating at 1200 baud (Goertzel pair) | Bell 202 packet and APRS |
+    | Radio COS (optional) | Squelch/COS line via the sound interface's GPIO, when wired | Anything the radio's squelch opens for |
+  rationale: >-
+    The radio runs with squelch open in connected mode, so audio energy alone
+    cannot indicate a busy channel.
+  tags: [channel-access, phy, v0.5]
+
+- slug: no-transmit-while-dcd
+  title: No new transmission while DCD is asserted
+  category: channel-access
+  strength: MUST_NOT
+  statement: >-
+    A station MUST NOT start a transmission while DCD is asserted, except the
+    turn-holder of a session replying to its peer under the rules of
+    `turn-holder-reply`. (SPEC §7.2, §11)
+  tags: [channel-access, v0.5]
+
+- slug: repeater-mode-dcd
+  title: Repeater-mode DCD uses a modulation detector
+  category: repeater
+  strength: MUST
+  statement: >-
+    In repeater mode, DCD uses a modulation detector (voice-band energy above
+    the level measured during hang-time silence) together with the preamble
+    and AFSK detectors; quieting only reports whether the repeater is keyed.
+    A session turn-holder treats a keyed repeater with no modulation as
+    clear, and may key during the repeater's hang time. (SPEC §7.2, §11.5)
+  rationale: >-
+    The repeater's carrier is up for the whole session, so the quieting
+    detector always reads busy.
+  tags: [channel-access, repeater, v1.x]
+
+- slug: timing-parameters
+  title: Timing parameters, defaults and ranges
+  category: physical-layer
+  strength: MUST
+  statement: |
+    Timing parameters take these defaults and stay within these ranges
+    (SPEC §7.3):
+
+    | Parameter | Default | Range | Notes |
+    | --- | --- | --- | --- |
+    | TXDelay (PTT to first preamble sample) | 150 ms | 20–500 ms | Radio-dependent; measured per radio, not guessed |
+    | Repeater access delay | 400 ms | 0–1,000 ms | Repeater mode only: PTT, silence for this long, then the preamble; measured by `calibrate` |
+    | TXTail (silence after last symbol before PTT release) | 10 ms | 0–50 ms | Lets the last symbol clear the audio chain |
+    | Receive turnaround (end of peer frame to own PTT) | ≤ 100 ms | — | Processing budget for decode plus ACK assembly |
+    | DCD hold | 100 ms | 50–300 ms | |
+    | Maximum frame on-air time | 4.0 s | 0.5–4.0 s | 4.0 s is a hard ceiling; also the channel-sharing bound (SPEC §11); exchanged in CONNECT (`max-frame-time-negotiation`) |
+  rationale: >-
+    TXDelay and frame length matter more than any rung above MCS 4 on a mic
+    path: every fixed cost is paid per transmission. (SPEC §1, §7.4)
+  tags: [timing, ptt, v0.1]
+
+# --- Link layer: frames, addressing and frame types (SPEC §8) ------------
+
+- slug: frame-layout
+  title: Frame layout
+  category: link-layer
+  strength: MUST
+  statement: |
+    A frame is one transmission (SPEC §8.1):
+
+    ```
+    | Preamble | Header | [Probe] | Block 0 | Block 1 | ... | Block N-1 | pad |
+    | 4 sym    | 7 sym  | 2 sym   | control and/or data blocks at header MCS   |
+    ```
+
+    The header is always 7 symbols. When header flag bit 4 is set, a 2-symbol
+    width probe sits between the header and the first block. Control blocks
+    (0–3), when present, come first and are always coded at MCS 0 on the
+    base tones; data blocks (up to 128) follow at the payload MCS on the
+    negotiated tone set.
+  tags: [framing, v0.1]
+
+- slug: header-fields
+  title: 144-bit header field layout
+  category: link-layer
+  strength: MUST
+  statement: |
+    The header is 144 bits, big-endian, laid out as follows (SPEC §8.2):
+
+    | Field | Bits | Meaning |
+    | --- | --- | --- |
+    | Version | 3 | Protocol version, 1 for this spec |
+    | Frame type | 5 | See `frame-types` |
+    | Flags | 8 | Bit 0: control block present (see `control-block-count-authoritative`). Bit 1: data blocks present. Bit 2: more fragments (broadcast). Bit 3: session frame, set on every frame a station sends as part of a session from CONNECT-ACK onward (including SOUND and CAL-REQUEST sent in a session) and clear otherwise. Abbreviating addresses to the session ID is the planned short-session-headers feature (capability bit 4, `reserved-identifiers`). Bit 4: width probe follows the header. Bit 5: identical repeat of a broadcast frame with the same frame counter. Bits 6–7 reserved, zero. |
+    | Source address | 40 | Callsign + SSID |
+    | Destination address | 40 | Callsign + SSID; all-ones = broadcast |
+    | Sequence | 16 | Block sequence number of the first data block in this frame (sessions); frame counter (broadcast) |
+    | Payload MCS | 4 | Rung of the data blocks |
+    | Control block count | 2 | 0–3 (see `control-block-count-authoritative`) |
+    | Data block count | 7 | Count minus 1 when flag bit 1 set, giving 1–128 (see `data-block-count-encoding`) |
+    | Reserved | 3 | Zero |
+    | CRC-16 | 16 | CRC-16/CCITT-FALSE over the preceding 128 bits |
+  tags: [framing, addressing, v0.1]
+
+- slug: data-block-count-encoding
+  title: The data block count is zero when no data blocks are present
+  category: link-layer
+  strength: MUST
+  statement: >-
+    When header flag bit 1 (data blocks present) is set, the data block
+    count field carries the number of data blocks minus 1 (1–128 blocks).
+    When flag bit 1 is clear, the field MUST be sent as 0 and is ignored on
+    receipt. (SPEC §8.2)
+  tags: [framing, v0.1]
+
+- slug: control-block-count-authoritative
+  title: The control block count is authoritative and must agree with flag bit 0
+  category: link-layer
+  strength: MUST
+  statement: >-
+    The control block count is a plain count, 0–3, and is authoritative.
+    Header flag bit 0 MUST be set if and only if the count is 1–3; a
+    receiver discards a header whose flag bit 0 and control block count
+    disagree. (SPEC §8.2)
+  rationale: >-
+    The disagreement can only come from an undetected header error or a
+    broken sender, so the header is not trusted.
+  tags: [framing, v0.1]
+
+- slug: address-format
+  title: 40-bit packed callsign address
+  category: link-layer
+  strength: MUST
+  statement: |
+    An address is six 6-bit characters (first character in the most
+    significant bits) followed by a 4-bit SSID: 40 bits. All 40 bits set
+    means broadcast. (SPEC §8.3, B.1)
+
+    | Code | Character |
+    | --- | --- |
+    | 0 | padding (trailing positions only) |
+    | 1–26 | A–Z |
+    | 27–36 | 0–9 |
+    | 37 | / |
+    | 38 | - |
+    | 39–63 | reserved (63 in position one marks a long callsign, `long-callsign-hash`) |
+  rationale: >-
+    40 bits per address against AX.25's 56.
+  tags: [addressing, framing, v0.1]
+
+- slug: long-callsign-hash
+  title: Callsigns of seven to ten characters are addressed by hash
+  category: link-layer
+  strength: MUST
+  statement: >-
+    A callsign of seven to ten characters MUST be addressed by setting the
+    reserved code 63 in character position one, carrying a 30-bit hash
+    (`long-callsign-hash-function`) in the remaining five character
+    positions, and the SSID as usual, in the address field of every header.
+    The full callsign text travels in the ID control block (B.6), which
+    holds at most ten characters and is sent in CONNECT. (SPEC §8.3, B.1,
+    B.6)
+  rationale: >-
+    Long callsigns are rare enough that the common case is not taxed for
+    them, and the ID control block already carries the callsign as text.
+  tags: [addressing, v0.1]
+
+- slug: long-callsign-hash-function
+  title: The long-callsign hash is the first 30 bits of SHA-256
+  category: link-layer
+  strength: MUST
+  statement: >-
+    The 30-bit long-callsign hash MUST be the first (most significant) 30
+    bits of the SHA-256 digest of the callsign text exactly as carried in
+    the ID control block: upper-case ASCII, including any '/' indicator,
+    without the SSID and without padding. A result of all ones is replaced
+    by all ones minus one. (SPEC §8.3, B.1)
+  rationale: >-
+    Code 63 followed by an all-ones hash and SSID 15 would be the all-ones
+    broadcast address; the substitution means a hash never collides with
+    broadcast.
+  tags: [addressing, v0.1]
+
+- slug: frame-types
+  title: Frame type assignments
+  category: link-layer
+  strength: MUST
+  statement: |
+    The 5-bit frame type takes these values (SPEC §8.4):
+
+    | Type | Name | Mode | Carries |
+    | --- | --- | --- | --- |
+    | 0 | BEACON | Broadcast | Station presence, capabilities, ID control block, optional position or status PDU, optional path control block (v1.x) |
+    | 1 | UI | Broadcast | Unnumbered data PDUs (APRS-like traffic, AX.25 UI frames via KISS); optional path control block for digipeating (v1.x) |
+    | 2 | CONNECT | Session setup | Width probe, then the connect-parameters control block (B.3: capabilities, dictionary IDs, width cap, requested MCS, maximum frame time), an ID control block, and optionally a second control block with more dictionary IDs. With control-block flag bit 1 (B.3): resume an interrupted session |
+    | 3 | CONNECT-ACK | Session setup | Accepted parameters, peer's measurements, usable tone mask; with a width probe. On resume, a second ACK-type control block with the last acknowledged sequence |
+    | 4 | DATA | Session | ACK control block for the peer's last frame first, then any other control blocks, then data blocks; an ID control block at least every 10 minutes |
+    | 5 | ACK | Session | ACK control block first, optionally followed by other control blocks (ID, CAL-REPORT), never data blocks (`ack-frame-contents`) |
+    | 6 | SOUND | Session or link test | Preamble, header and width probe; re-measures the channel after idle. In a session, leads with the ACK control block. As a PROBE reply, an ACK-type control block with the measurements |
+    | 7 | DISCONNECT | Session | Orderly close: ACK control block first (final acknowledgment), then an ID control block |
+    | 8 | PROBE | Broadcast | Asks a named station for a link-test reply or a BEACON |
+    | 9 | CAL-REQUEST | Any | Calibration parameters (B.5); the tone bursts of SPEC §13.5 follow the frame. In a session, the ACK control block comes first |
+    | 10 | POLL | Polled mode | Reserved for the v2 polled gateway mode (`reserved-identifiers`) |
+    | 11–30 | reserved | | |
+    | 31 | EXTENDED | any | Type carried in the first control block |
+  tags: [framing, v0.1]
+
+- slug: session-frames-lead-with-ack
+  title: Every frame in a session leads with the ACK control block
+  category: link-layer
+  strength: MUST
+  statement: >-
+    In a session, after setup, every frame a station sends (DATA, ACK,
+    SOUND, DISCONNECT, CAL-REQUEST) MUST carry the ACK control block for the
+    peer's last frame as its first control block; other control blocks and
+    data blocks follow if there are any. A station that has data to send
+    therefore never sends a separate ACK frame. (SPEC §3.2, §8.4, §9.3,
+    §9.5)
+  rationale: >-
+    Turnaround (50–300 ms plus squelch settling) is paid once per
+    transmission, so acknowledgments ride on whatever frame is next, and a
+    receiver always finds the acknowledgment in the same place.
+  tags: [framing, arq, session, v0.5]
+
+- slug: ack-frame-contents
+  title: An ACK frame carries control blocks only
+  category: link-layer
+  strength: MUST
+  statement: >-
+    An ACK frame (type 5) MUST carry the ACK control block first, optionally
+    followed by other control blocks (such as an ID or CAL-REPORT block),
+    and MUST NOT carry data blocks. (SPEC §8.4, §20.7, B.5)
+  rationale: >-
+    A station with nothing to send can still meet its identification and
+    calibration-report duties without a separate frame.
+  tags: [framing, arq, session, v0.5]
+
+# --- Link layer: broadcast, sessions and ARQ (SPEC §9) -------------------
+
+- slug: broadcast-rung
+  title: Broadcast frames use a configured rung with no adaptation
+  category: link-layer
+  strength: MUST
+  statement: >-
+    BEACON and UI frames carry PDUs at a configured rung (default MCS 0; MCS
+    1–3 permitted where the operator knows the audience's conditions), with
+    no acknowledgment and no adaptation. A station that also runs sessions
+    MAY use its most recent session measurements with that audience as a
+    hint, never as a rule. (SPEC §9.1, §10.4)
+  tags: [framing, adaptation, v0.5]
+
+- slug: broadcast-fragmentation
+  title: Broadcast PDUs are fragmented with the more-fragments flag
+  category: link-layer
+  strength: MUST
+  statement: >-
+    A broadcast PDU larger than one frame is split across frames with the
+    more-fragments header flag (bit 2). Receivers reassemble by source and
+    frame counter and discard on any gap. Each fragment is independently
+    decodable and, if compressed, independently decompressed. (SPEC §9.1,
+    §12.1)
+  tags: [framing, session, v0.5]
+
+- slug: broadcast-repeat
+  title: Broadcast repeats are bit-identical and flagged
+  category: link-layer
+  strength: MAY
+  statement: >-
+    A station MAY send a broadcast frame again. The repeat MUST be
+    bit-identical to the original, with the same frame counter and header
+    flag bit 5 set. (SPEC §8.2, §9.1)
+  tags: [framing, v1.x]
+
+- slug: broadcast-soft-combining
+  title: Receivers may soft-combine repeated broadcast frames
+  category: link-layer
+  strength: MAY
+  statement: >-
+    A receiver that failed on a broadcast frame MAY keep its soft decisions,
+    add those of a flagged repeat, and decode the sum. Stored decisions are
+    discarded after 10 minutes or 64 frames. A receiver that already passed
+    the frame suppresses the repeat by frame counter. (SPEC §9.1, v1.x per
+    §16.2)
+  rationale: >-
+    Three copies decode about 4.8 dB below where one would, so repeats become
+    useful instead of redundant. (SPEC §19)
+  tags: [phy, fec, v1.x]
+
+- slug: broadcast-digipeating
+  title: Broadcast frames may be digipeated using a path control block
+  category: link-layer
+  strength: MAY
+  statement: >-
+    A BEACON or UI frame MAY carry a path control block (Appendix B.7) naming
+    up to two relay stations or WIDE-style aliases (v1.x). A relay whose
+    callsign or alias matches the first unused entry writes its own callsign
+    into that entry, sets the used flag, decrements hops remaining, and
+    retransmits the frame once after the channel-access rules of SPEC §11.1.
+    A frame with 0 hops remaining is not relayed. Relays suppress duplicates
+    by source and frame counter for 60 s. (SPEC §9.1, B.7; decision §20.11)
+  tags: [framing, addressing, v1.x]
+
+- slug: no-session-digipeating
+  title: Sessions are never digipeated
+  category: link-layer
+  strength: MUST_NOT
+  statement: >-
+    Session frames MUST NOT be digipeated. Relay for sessions is a host
+    application running two native sessions (v2), and store-and-forward
+    belongs to the BBS, not the modem. (SPEC §1, §9.1; decision §20.11)
+  tags: [session, arq, v1.x]
+
+- slug: ax25-as-ui-frames
+  title: AX.25 frames from KISS are tunneled as UI frames
+  category: link-layer
+  strength: MUST
+  statement: >-
+    Each AX.25 frame from a KISS host becomes one AX25 PDU (type 0) in a UI
+    frame at the configured broadcast rung. Received UI frames carrying AX25
+    PDUs are returned to the host unchanged. (SPEC §2, §9.1, §13.1)
+  rationale: >-
+    AX.25's own link layer keeps working on top; it simply gets a faster,
+    error-corrected channel.
+  tags: [host-interface, framing, v0.5]
+
+- slug: session-establishment
+  title: Three-step session establishment
+  category: link-layer
+  strength: MUST
+  statement: >-
+    (1) The initiator sends CONNECT: the header, a width probe, the
+    connect-parameters control block (B.3) with its capabilities, supported
+    dictionary IDs, width cap, initial MCS, maximum frame time and a 16-bit
+    session ID, an ID control block, and optionally a second control block
+    with more dictionary IDs. (2) The responder measures the CONNECT's
+    preamble and probe and replies CONNECT-ACK with its own capabilities, the
+    usable tone mask for the initiator-to-responder direction, the MCS it
+    wants to receive at, and its own width probe. (3) The initiator's first
+    DATA frame confirms the session and carries the mask for the
+    responder-to-initiator direction in its acknowledgment block. Either side
+    may abort with DISCONNECT. (SPEC §9.2)
+  tags: [session, arq, v0.5]
+
+- slug: connect-retry-limit
+  title: CONNECT is retried at most three times
+  category: link-layer
+  strength: MUST_NOT
+  statement: >-
+    CONNECT MUST NOT be retried more than 3 times, at increasing random
+    intervals (with the 1–5 s random backoff of `retry-backoff`).
+    (SPEC §9.2, §11.1)
+  tags: [session, channel-access, v0.5]
+
+- slug: session-resume
+  title: Interrupted sessions resume within 10 minutes
+  category: link-layer
+  strength: MUST
+  statement: >-
+    A CONNECT with control-block flag bit 1 (B.3) and a session ID seen
+    within the last 10 minutes continues that session instead of starting
+    one. The responder's CONNECT-ACK adds a second, ACK-type control block
+    whose base sequence is its last acknowledged sequence; the initiator's
+    first DATA frame does the same for the other direction; both continue
+    from there with the negotiated dictionaries, width and signing counters
+    intact. A responder without state answers as a new session. (SPEC §9.2,
+    B.3)
+  tags: [session, arq, v0.5]
+
+- slug: session-state-retention
+  title: Session state is kept for 10 minutes after link loss
+  category: link-layer
+  strength: MUST
+  statement: >-
+    Session state is kept for 10 minutes after link loss (for resume) and
+    discarded on DISCONNECT. (SPEC §9.2, §9.3)
+  tags: [session, v0.5]
+
+- slug: block-sequence-numbering
+  title: Data blocks carry a 16-bit per-direction sequence
+  category: link-layer
+  strength: MUST
+  statement: >-
+    Each direction numbers its data blocks with a 16-bit sequence. A frame
+    carries up to 128 consecutive blocks starting at the header's sequence
+    number. (SPEC §9.3)
+  tags: [arq, framing, v0.5]
+
+- slug: ack-bitmap
+  title: Acknowledgments carry a base sequence and a 128-bit bitmap
+  category: link-layer
+  strength: MUST
+  statement: >-
+    The acknowledgment control block carries the base sequence and a 128-bit
+    bitmap with one bit per block of the peer's last frame, set if the
+    block's CRC passed. (SPEC §9.3, B.2)
+  tags: [arq, v0.5]
+
+- slug: selective-repeat
+  title: The next frame retransmits exactly the unacknowledged blocks
+  category: link-layer
+  strength: MUST
+  statement: >-
+    The sender's next frame retransmits exactly the unacknowledged blocks
+    (lowest sequence first) followed by new blocks up to the frame limit.
+    (SPEC §9.3)
+  tags: [arq, v0.5]
+
+- slug: one-frame-in-flight
+  title: One frame in flight per direction
+  category: link-layer
+  strength: MUST
+  statement: >-
+    A session has one frame in flight per direction: a strict ping-pong
+    between two stations. (SPEC §2, §9, §9.3)
+  rationale: >-
+    Keeps the state machine small; on a half-duplex ping-pong link a deeper
+    window gains almost nothing and adds sequence state and bigger ACK
+    bitmaps.
+  tags: [arq, session, v0.5]
+
+- slug: ack-timer-and-link-loss
+  title: ACK timer, SOUND after 3 expirations, link loss after 8 failures
+  category: link-layer
+  strength: MUST
+  statement: >-
+    A station transmits when it has received a frame from its peer or when
+    its ACK timer expires. ACK timer = expected peer frame time + 1.0 s.
+    After 3 expirations the station sends SOUND at MCS 0; after 8
+    consecutive failures it declares the link lost, keeps the session state
+    for 10 minutes for resume, and reports the loss to the host. (SPEC §9.3)
+  tags: [arq, timing, session, v0.5]
+
+- slug: idle-session
+  title: Nothing to send means an ACK; both idle means silence up to 60 s
+  category: link-layer
+  strength: MUST
+  statement: >-
+    A station with nothing to send replies with an ACK frame
+    (`ack-frame-contents`). If both sides have nothing to send, the session idles
+    with no transmission for up to 60 s, after which either side MAY send
+    SOUND or DISCONNECT. (SPEC §9.3)
+  tags: [arq, session, v0.5]
+
+- slug: in-order-delivery-hold-limit
+  title: In-order delivery with a 256-block hold limit
+  category: link-layer
+  strength: MUST
+  statement: >-
+    Delivered blocks are passed to the session layer in order; blocks behind
+    a missing one are held. The hold limit is 256 blocks, after which the
+    receiver NACKs everything beyond the gap to force resynchronization.
+    (SPEC §9.3)
+  tags: [arq, session, v0.5]
+
+- slug: disconnect
+  title: Orderly disconnect
+  category: link-layer
+  strength: MUST
+  statement: >-
+    DISCONNECT carries the final acknowledgment. The peer replies DISCONNECT
+    once; there is no further exchange. (SPEC §9.5)
+  tags: [session, v0.5]
+
+- slug: undelivered-reported
+  title: Undelivered data is reported, never silently dropped
+  category: link-layer
+  strength: MUST_NOT
+  statement: >-
+    Blocks unacknowledged at disconnect are reported to the host as
+    undelivered and MUST NOT be silently dropped. (SPEC §9.5, §12.4)
+  tags: [session, host-interface, v0.5]
+
+- slug: link-test
+  title: PROBE and SOUND link test
+  category: link-layer
+  strength: MUST
+  statement: >-
+    A PROBE naming a station asks for a two-way measurement without opening a
+    session. The target replies with a SOUND frame carrying an ACK-type
+    control block with its measurements of the PROBE (SNR, usable tone mask,
+    suggested rung, distortion index) and a width probe; the initiator
+    measures the reply for the reverse direction. The exchange is two
+    transmissions (the PROBE and the SOUND reply) and takes under 3 s of air
+    time. The host presents the result as expected net kbps in each
+    direction. A PROBE that gets no
+    answer within 5 s is reported as unreachable and may be repeated after
+    the backoff of SPEC §11.1. (SPEC §9.6)
+  tags: [session, adaptation, host-interface, v0.5]
+
+# --- Link adaptation (SPEC §10) ------------------------------------------
+
+- slug: receiver-driven-adaptation
+  title: The receiver chooses the rung, per direction
+  category: link-adaptation
+  strength: MUST
+  statement: >-
+    The receiving station measures the channel, chooses the rung it wants to
+    receive at, and tells the sender in every acknowledgment (requested MCS,
+    measured SNR, error count, distortion, and tone mask when it changed).
+    The sender codes its next frame at the requested rung. Each direction
+    runs its own loop. (SPEC §1, §10, B.2)
+  rationale: >-
+    The receiver knows the channel, and the two radios, antennas and
+    deviation settings rarely match.
+  tags: [adaptation, v0.5]
+
+- slug: adaptation-rules
+  title: Rung step-down, step-up and hold rules
+  category: link-adaptation
+  strength: MUST
+  statement: |
+    The receiver applies these rules once per received frame (SPEC §10.1):
+
+    | Trigger | Action |
+    | --- | --- |
+    | Header of a frame not decoded, or more than 20% of its blocks failed | Request one rung lower immediately (two lower if more than 50% failed) |
+    | 3 consecutive frames with zero block errors and measured SNR at least 2 dB above the next rung's threshold | Request one rung higher |
+    | Anything else | Hold |
+    | First frame after CONNECT or SOUND | Request the highest rung whose threshold is 3 dB below the measured SNR |
+    | No frame from the peer for 30 s | Send SOUND; the reply's preamble and probe refresh the estimate |
+    | Receive-side clipping detected | Hold the current rung and warn the operator |
+    | Frames reported at distortion index 3 or higher (B.2) | Excluded from the step-down count; the sender lowers its drive or warns the operator |
+  rationale: >-
+    Steps down are immediate and steps up deliberate, which keeps the loop
+    from oscillating. The 5–10% target block error rate is deliberate:
+    throughput is rate × (1 − error rate), and the maximum sits above zero
+    errors.
+  tags: [adaptation, v0.5]
+
+- slug: default-rung-thresholds
+  title: Default rung thresholds are the nominal SNRs plus a measured margin
+  category: link-adaptation
+  strength: MUST
+  statement: >-
+    Rung thresholds default to the nominal SNR values of `mcs-ladder` plus a
+    margin measured in Stage 2 testing. (SPEC §10.1)
+  tags: [adaptation, v0.2]
+
+- slug: per-link-thresholds
+  title: Receivers may compute per-link thresholds at connect
+  category: link-adaptation
+  strength: MAY
+  statement: >-
+    A receiver MAY instead compute per-link rung thresholds at connect by
+    simulating each rung over the measured per-tone channel (a one-second
+    Monte Carlo on the probe's estimate). (SPEC §10.1)
+  rationale: >-
+    Recovers the 1–2 dB a blanket margin wastes on good radios.
+  tags: [adaptation, v1.x]
+
+- slug: frame-length-by-rung
+  title: Maximum frame time by rung
+  category: link-adaptation
+  strength: MUST
+  statement: |
+    A frame's on-air time MUST NOT exceed (SPEC §10.2):
+
+    | Rung | Maximum frame time |
+    | --- | --- |
+    | 0–1 | 2.0 s |
+    | 2–6 | 4.0 s (or the configured maximum, whichever is lower) |
+  rationale: >-
+    Higher rungs shrink payload time while preamble, header and turnaround
+    stay fixed, so they earn longer frames; lower rungs are used where a lost
+    frame costs more.
+  tags: [adaptation, timing, v0.5]
+
+- slug: max-frame-time-negotiation
+  title: A session's frames stay within the lower of both stations' maximum frame times
+  category: link-adaptation
+  strength: MUST_NOT
+  statement: >-
+    Each station advertises its configured maximum frame time (0.5–4.0 s)
+    in the Max frame time field of its connect-parameters control block
+    (B.3, units of 0.1 s, 5–40). A frame in the session MUST NOT exceed the
+    lower of the two advertised values, nor the per-rung limit of
+    `frame-length-by-rung`. (SPEC §7.3, §10.2, B.3)
+  rationale: >-
+    The station with the stricter channel-sharing setting sets the bound
+    for both directions.
+  tags: [adaptation, timing, session, v0.5]
+
+- slug: tone-mask-updates
+  title: Tones are dropped on low SNR and restored only after a re-probe
+  category: link-adaptation
+  strength: MUST
+  statement: >-
+    The receiver drops a tone from the mask when its estimated SNR falls more
+    than 6 dB below the active-tone average for two consecutive frames. A
+    dropped tone is restored only after a width probe shows it recovered: the
+    receiver sets the re-probe flag in an ACK, and the sender includes a probe
+    in its next frame (SOUND frames always carry one). Mask changes travel in
+    the ACK with the mask-present flag; the sender applies them to its next
+    frame. (SPEC §10.3)
+  tags: [adaptation, phy, v1.0]
+
+# --- Channel access and coexistence (SPEC §11) ---------------------------
+
+- slug: p-persistent-csma
+  title: New transmissions use p-persistent carrier sense
+  category: channel-access
+  strength: MUST
+  statement: >-
+    To start a new transmission the channel MUST show DCD clear for at least
+    250 ms; then in each 100 ms slot the station transmits with probability p
+    (default 0.25) if still clear, otherwise waits a slot. The operator MAY
+    raise p for lightly used channels. (SPEC §11.1)
+  tags: [channel-access, v0.5]
+
+- slug: retry-backoff
+  title: Retries and broadcast repeats add a 1–5 s random backoff
+  category: channel-access
+  strength: MUST
+  statement: >-
+    CONNECT retries and broadcast repeats use a random backoff of 1–5 s on
+    top of p-persistence. (SPEC §11.1)
+  tags: [channel-access, v0.5]
+
+- slug: turn-holder-reply
+  title: The session turn-holder replies without p-persistence but checks DCD
+  category: channel-access
+  strength: MUST
+  statement: >-
+    The turn-holder (the station whose peer just finished a frame) replies
+    after its turnaround without p-persistence, but first checks DCD for
+    50 ms and waits if a third signal is present. (SPEC §11.2)
+  rationale: >-
+    A session therefore never talks over a transmission that was already in
+    progress.
+  tags: [channel-access, session, v0.5]
+
+- slug: yield-window
+  title: Sessions open a yield window every 30 s
+  category: channel-access
+  strength: MUST
+  statement: >-
+    Every 30 s of session time, the next turn-holder waits a yield window
+    (1.0 s; 2 s in repeater mode) before transmitting. Other stations wanting
+    the channel may start in that window; the session then defers as for a
+    new transmission (`p-persistent-csma`). (SPEC §11, §11.2, §11.5)
+  rationale: >-
+    The yield windows and the frame limit keep a session a neighbor rather
+    than an owner of the channel.
+  tags: [channel-access, session, v0.5]
+
+- slug: max-frame-on-air-time
+  title: No single frame exceeds the maximum on-air time
+  category: channel-access
+  strength: MUST_NOT
+  statement: >-
+    A single frame MUST NOT exceed the configured maximum on-air time
+    (default 4.0 s, configurable 0.5–4.0 s; 4.0 s is a hard ceiling, see
+    `timing-parameters`). A session may run as long as it has traffic.
+    (SPEC §7.3, §11.2)
+  rationale: >-
+    Frames longer than 4.0 s would weaken the channel-sharing bound on
+    shared channels. Longer frames on dedicated channels would need a
+    future ADR.
+  tags: [channel-access, timing, v0.1]
+
+- slug: legacy-active-policy
+  title: Shorter frames and halved p when legacy stations are active
+  category: channel-access
+  strength: MUST
+  statement: >-
+    When legacy (1200-baud) packet stations have been active on the channel
+    within the last 10 minutes, the modem caps frames at 2 s and halves p.
+    Activity means the AFSK detector of `carrier-detect` has asserted or, in
+    a modem that implements `multi-mode-receiver`, a legacy frame was
+    decoded. (SPEC §11.3; decision §20.8)
+  rationale: >-
+    Every implementation has the AFSK detector, so every implementation can
+    apply the policy without decoding legacy frames. The detector recognizes
+    Bell 202 only; a G3RUH-aware trigger may come with the multi-mode
+    receiver.
+  tags: [channel-access, v0.5]
+
+- slug: no-courtesy-preamble
+  title: No 1200-baud HDLC courtesy preamble
+  category: channel-access
+  strength: MUST_NOT
+  statement: >-
+    Transmissions MUST NOT be prefixed with a 1200-baud HDLC courtesy
+    preamble. (SPEC §11.3; decision §20.8)
+  rationale: >-
+    A tone-based legacy DCD drops within its 100–300 ms hold once OFDM
+    starts, so a courtesy preamble would protect at most the first 300 ms of
+    a 4 s frame; stations using COS defer already.
+  tags: [channel-access, v0.5]
+
+- slug: multi-mode-receiver
+  title: A modem may also receive legacy packet modes on the same audio input
+  category: host-interface
+  strength: MAY
+  statement: >-
+    A modem MAY decode legacy packet modes (1200 AFSK (Bell 202), G3RUH 9600
+    and IL2P) from the same audio input as this mode (v1.x). Decoded legacy
+    frames go to the KISS host and the heard list records each station's
+    mode. (SPEC §1, §2, §11.3, §13.7)
+  rationale: >-
+    One installation talks to every station on the channel, so a channel can
+    migrate one station at a time.
+  tags: [front-end, host-interface, v1.x]
+
+- slug: answer-in-legacy-mode
+  title: Stations last heard in a legacy mode are answered in that mode
+  category: host-interface
+  strength: MUST
+  statement: >-
+    In a modem that implements the legacy modes (`multi-mode-receiver`), a
+    frame addressed to a station last heard in a legacy mode is transmitted
+    in that mode. The per-destination policy lives in the host configuration
+    and can be overridden per callsign. (SPEC §11.3, §13.1, §13.7)
+  tags: [front-end, host-interface, v1.x]
+
+- slug: channel-planning
+  title: Prefer dedicated simplex frequencies for session traffic
+  category: channel-access
+  strength: SHOULD
+  statement: >-
+    Operators SHOULD coordinate a dedicated simplex frequency for session
+    traffic where the band plan allows, and use shared packet channels for
+    broadcast frames and short sessions. (SPEC §11.4)
+  tags: [channel-access, v0.1]
+
+- slug: repeater-mode-required-for-sessions
+  title: Both stations of a session through a voice repeater use repeater mode
+  category: repeater
+  strength: MUST
+  statement: >-
+    Both stations of a session through a voice repeater MUST be in repeater
+    mode, an operator-selected mode, because each of them transmits through
+    the repeater. Repeater mode selects only what a station transmits;
+    receiving needs no configuration (`blind-prefix-detection`). A session
+    in which only one station is in repeater mode fails. (SPEC §4.1, §11.4,
+    §11.5)
+  rationale: >-
+    A station not in repeater mode omits the access delay and the long
+    prefix, so the repeater cuts off the start of its frames and its
+    turnaround budget breaks. Having a responder mirror the initiator's
+    repeater mode automatically is a candidate for v1.x (see prose.md,
+    Consequences).
+  tags: [repeater, session, v1.x]
+
+- slug: repeater-mode-transmission
+  title: Repeater-mode transmissions use the access delay and long prefix
+  category: repeater
+  strength: MUST
+  statement: >-
+    A station configured for repeater mode keys PTT, waits TXDelay plus the
+    repeater access delay in silence, then sends the preamble, and transmits
+    with the 2.5 ms cyclic prefix. Width stays at the 24-tone base set.
+    (SPEC §5.2, §7.3, §11.5)
+  rationale: >-
+    Repeater squelch and CTCSS decode plus controller delay lose the first
+    100–300 ms of every input; two cascaded audio chains plus controller
+    filters add time dispersion.
+  tags: [repeater, timing, waveform, v1.x]
+
+- slug: repeater-mode-etiquette
+  title: Repeater-mode etiquette is mandatory
+  category: repeater
+  strength: MUST
+  statement: >-
+    In repeater mode, session segments are capped at 120 s, followed by a
+    10 s pause that lets the repeater drop, and a 2 s yield window is opened
+    every 30 s. These etiquette rules are part of the mode, not optional, and
+    the operator's periodic identification setting still applies.
+    (SPEC §11.5)
+  rationale: >-
+    Repeater time-out timers and other users; the 2 s window is longer than
+    typical hang time.
+  tags: [repeater, channel-access, v1.x]
+
+- slug: repeater-broadcast-without-mode
+  title: Broadcast frames may use a repeater without repeater mode
+  category: repeater
+  strength: MAY
+  statement: >-
+    Broadcast frames at MCS 0–1 MAY be sent through a voice repeater without
+    the full repeater mode; they need only the repeater access delay and the
+    tone-rejecting preamble detector. (SPEC §11.4, §17.2)
+  tags: [repeater, framing, v1.x]
+
+# --- Session layer (SPEC §12) --------------------------------------------
+
+- slug: pdu-framing
+  title: PDU field layout
+  category: session-layer
+  strength: MUST
+  statement: |
+    Session-layer PDUs have this layout (SPEC §12.1):
+
+    | Field | Size | Meaning |
+    | --- | --- | --- |
+    | Length | 2 bytes | PDU length after this field, 1–65,535 |
+    | Type | 1 byte | 0 AX25 (a raw AX.25 frame from KISS), 1 MESSAGE (opaque bytes for the native API), 2 FILE-CHUNK, 3 SIGNATURE, 4 CONTROL, 5 RATELESS (reserved for v2), 6 AX25-CONNECTED (proxied connected-mode payload, v1.x), 7–255 reserved |
+    | Stream | 1 byte | Bits 7–6: priority, 0 highest. Bits 5–0: stream number, 0 = default |
+    | Encoding | 1 byte | 0 raw, 1 zstd without dictionary, 2 zstd with dictionary, 3 schema-encoded form (v2) |
+    | Dictionary ID | 4 bytes, only when encoding = 2 | First 4 bytes of the SHA-256 of the dictionary file |
+    | Body | variable | |
+    | CRC-32 | 4 bytes | Over the decoded body |
+  rationale: >-
+    A CRC over the decoded body makes a dictionary mismatch fail loudly
+    rather than yield plausible garbage.
+  tags: [session, framing, v0.1]
+
+- slug: pdu-packing
+  title: PDUs pack back-to-back; broadcast frames are self-contained
+  category: session-layer
+  strength: MUST
+  statement: >-
+    PDUs are packed back-to-back into the block stream and may span blocks.
+    In broadcast mode each frame's PDUs are complete within that frame and
+    compressed independently, so a lost frame cannot corrupt the next.
+    (SPEC §12.1, B.4)
+  tags: [session, framing, v0.1]
+
+- slug: zstd-only-codec
+  title: zstd is the only codec, negotiated by dictionary intersection
+  category: session-layer
+  strength: MUST
+  statement: >-
+    zstd is the only codec in v1. A session negotiates the intersection of
+    both stations' dictionary ID lists in CONNECT/CONNECT-ACK; with no common
+    dictionary, PDUs use encoding 0 (raw) or 1 (zstd without dictionary).
+    (SPEC §12.2)
+  rationale: >-
+    Open, deterministic, decoders in every language, and dictionary training
+    is built in.
+  tags: [session, v1.0]
+
+- slug: dictionaries-never-withdrawn
+  title: Published dictionaries are never withdrawn
+  category: versioning-governance
+  strength: MUST_NOT
+  statement: >-
+    A dictionary, once published, MUST NOT be withdrawn or deleted, and
+    dictionaries are versioned and kept available for archived traffic.
+    (SPEC §3.3, §12.2, §15; decision §20.9)
+  rationale: >-
+    Keeps any logged transmission convertible to its original content, which
+    §97.309(b) can require.
+  tags: [governance, regulatory, session, v1.0]
+
+- slug: dictionary-corpora-public
+  title: Dictionary training corpora contain only public material
+  category: versioning-governance
+  strength: MUST_NOT
+  statement: >-
+    Dictionary training corpora contain public material (bulletins, form
+    templates, sample traffic) and MUST NOT contain private messages. Of
+    captured on-air traffic, only beacons, bulletins and other broadcast
+    traffic meant for redistribution may be used. (SPEC §12.2;
+    decision §20.9)
+  rationale: >-
+    A dictionary contains literal fragments of its training data.
+  tags: [governance, v1.0]
+
+- slug: dictionary-corpus-licensing
+  title: Dictionary training material is public domain or CC0
+  category: versioning-governance
+  strength: MUST
+  statement: >-
+    Every source of dictionary training material MUST be in the public
+    domain, licensed CC0, or covered by a CC0 waiver from its rights holder.
+    `REGISTRY.md` records each source and its license, and the pull request
+    that adds the dictionary is where they are reviewed. (SPEC §12.2, §15;
+    decision §20.9)
+  rationale: >-
+    A dictionary contains literal fragments of its training data, so its
+    CC0 license (`dictionary-registry`) is only sound if every source
+    allows it.
+  tags: [governance, v1.0]
+
+- slug: dictionary-registry
+  title: Dictionary registry, signing and licensing
+  category: versioning-governance
+  strength: MUST
+  statement: >-
+    Dictionaries live in `dictionaries/` in the specification repository with
+    a `REGISTRY.md` listing ID, version, SHA-256, corpus description,
+    reproducible training command (zstd version, parameters, seed) and
+    license. Releases are signed by at least two keyholders (minisign or
+    ssh-sig) with published keys. New dictionaries arrive by pull request
+    with held-out measurements. The dictionary license is CC0.
+    (SPEC §12.2, §15; decision §20.9)
+  rationale: >-
+    Two signers mean no single maintainer can become the bottleneck.
+  tags: [governance, v1.0]
+
+- slug: reference-dictionary-set
+  title: The v1 reference dictionary set
+  category: session-layer
+  strength: MUST
+  statement: >-
+    The reference dictionary set at v1 is a general English-text dictionary,
+    a forms dictionary trained on ICS/emergency-message templates, and an
+    AX.25/APRS dictionary. (SPEC §12.2)
+  tags: [governance, session, v1.0]
+
+- slug: send-precompressed-raw
+  title: Already-compressed payloads are sent raw
+  category: session-layer
+  strength: SHOULD
+  statement: >-
+    Payloads that arrive already compressed, such as Winlink B2F traffic,
+    SHOULD be sent with encoding 0 (raw). (SPEC §12.2)
+  rationale: >-
+    Compression gains nothing on already-compressed payloads.
+  tags: [session, v1.0]
+
+- slug: dictionary-fetch
+  title: Missing dictionaries may be fetched over the air
+  category: session-layer
+  strength: MAY
+  statement: >-
+    A station missing a dictionary its peer offers MAY request it with a
+    CONTROL PDU (subtype 0, dictionary ID) (v1.x, capability bit 7). The peer
+    answers with an offer (subtype 1: ID, size, SHA-256) and sends the file
+    as FILE-CHUNK PDUs on a low-priority stream. The session runs at encoding
+    0 or 1 until the file arrives and its hash verifies. (SPEC §12.2, B.3)
+  tags: [session, v1.x]
+
+- slug: pdu-signatures
+  title: Optional Ed25519 PDU signatures
+  category: session-layer
+  strength: MAY
+  statement: >-
+    A station MAY sign PDUs (capability bit 2). A SIGNATURE PDU carries an
+    Ed25519 signature over the concatenation of source address, destination
+    address, a 32-bit monotonic counter, and the preceding PDU's decoded
+    body. Public keys are distributed outside the protocol. (SPEC §2, §12.3,
+    B.3)
+  rationale: >-
+    The counter prevents replay. The signature is over readable content,
+    which keeps it inside §97.113(a)(4).
+  tags: [session, regulatory, v1.0]
+
+- slug: no-dropping-unverified
+  title: The modem never drops unsigned or unverifiable traffic itself
+  category: session-layer
+  strength: MUST_NOT
+  statement: >-
+    The modem exposes signature verify results to the host and MUST NOT drop
+    unsigned or unverifiable traffic on its own. (SPEC §12.3)
+  tags: [session, host-interface, v1.0]
+
+- slug: session-delivery-semantics
+  title: Session PDUs are delivered in order, exactly once, per stream
+  category: session-layer
+  strength: MUST
+  statement: >-
+    Session PDUs are delivered to the host in order within their stream,
+    exactly once, or reported as undelivered at disconnect. Streams are
+    independent ordered channels within a session. (SPEC §12.1, §12.4)
+  tags: [session, host-interface, v0.5]
+
+- slug: stream-priority-interleaving
+  title: Streams are interleaved at block boundaries, highest priority first
+  category: session-layer
+  strength: MUST
+  statement: >-
+    The sender interleaves streams at block boundaries, highest priority
+    first, so a short PDU on a high-priority stream waits at most one block
+    behind a bulk transfer on another (stream multiplexing, capability bit 6,
+    v1.x). (SPEC §12.4, B.3)
+  tags: [session, v1.x]
+
+- slug: file-chunk-offsets
+  title: FILE-CHUNK bodies start with object ID and byte offset
+  category: session-layer
+  strength: MUST
+  statement: >-
+    FILE-CHUNK PDU bodies begin with a 32-bit object ID and a 32-bit byte
+    offset, so an interrupted transfer, resumed or restarted later, continues
+    from the last delivered offset. (SPEC §12.4)
+  tags: [session, v0.5]
+
+- slug: broadcast-duplicate-suppression
+  title: Broadcast duplicates are suppressed for 60 s
+  category: session-layer
+  strength: MUST
+  statement: >-
+    Broadcast PDUs are delivered to the host as received; duplicates from
+    repeats are suppressed within a 60 s window by source and frame counter.
+    (SPEC §12.4)
+  tags: [session, host-interface, v0.5]
+
+# --- Host interface (SPEC §13) -------------------------------------------
+
+- slug: kiss-interface
+  title: The modem presents a KISS TNC
+  category: host-interface
+  strength: MUST
+  statement: >-
+    The modem presents a KISS TNC over serial and over TCP (default port
+    8001), with standard framing including the TXDelay, persistence and
+    slot-time commands, which map onto the parameters of SPEC §7 and §11.
+    (SPEC §1, §13.1; decision §20.1)
+  rationale: >-
+    Port 8001 is Dire Wolf's default, so existing AX.25 clients connect
+    unchanged.
+  tags: [host-interface, v0.5]
+
+- slug: ax25-connected-mode-proxy
+  title: AX.25 connected-mode proxy over native sessions (v1.x)
+  category: host-interface
+  strength: MAY
+  statement: >-
+    The modem MAY proxy AX.25 connected mode (v1.x): it completes the AX.25
+    handshake with its host (SABM/UA), opens a native session to the far
+    modem, carries I-frame payloads as AX25-CONNECTED PDUs (type 6) and
+    acknowledges locally; the far modem re-originates AX.25 to its host.
+    End-to-end reliability comes from the native ARQ, disconnects propagate
+    both ways, and a far station last heard in a legacy mode gets
+    pass-through in that mode instead. (SPEC §13.1; decision §20.10)
+  rationale: >-
+    The satellite performance-enhancing-proxy pattern; gives Winlink RMS
+    Packet, BPQ32 and JNOS native speed with no changes.
+  tags: [host-interface, session, v1.x]
+
+- slug: native-api
+  title: Native line-oriented JSON API
+  category: host-interface
+  strength: MUST
+  statement: >-
+    The modem presents a native API as a line-oriented JSON protocol over TCP
+    (default port 8002) and a Unix socket (`cairn.sock` in the runtime
+    directory), with the commands `connect` (with optional resume),
+    `disconnect`, `send`, `beacon`, `probe`, `heard`, `status`, `config`,
+    `calibrate`, `capture`, and the events `rx`, `session`, `link`, `heard`,
+    `channel`, `dcd`, `error`, as described in SPEC §13.2. The schema is
+    published with the reference implementation; a second implementation
+    MUST speak the same schema to count toward v1.0. Every implementation
+    accepts the full command set; `capture` and `calibrate` MAY instead
+    return the schema's defined `unsupported` error, which the API schema
+    tests accept. All other commands, including `heard`, are required.
+    (SPEC §13.2, §13.6; decision §20.1)
+  tags: [host-interface, v1.0]
+
+- slug: ptt-by-modem
+  title: The modem drives PTT by CAT, serial, GPIO or CM108
+  category: host-interface
+  strength: MUST
+  statement: >-
+    The modem drives PTT itself through one of: CAT via Hamlib/rigctld
+    (preferred where supported; its latency is measured into TXDelay),
+    serial RTS or DTR, GPIO, or CM108/CM119 HID GPIO. (SPEC §13, §13.3)
+  tags: [ptt, host-interface, v0.1]
+
+- slug: no-vox-for-sessions
+  title: VOX is not used for sessions
+  category: host-interface
+  strength: MUST_NOT
+  statement: >-
+    VOX MUST NOT be used for sessions; it is supported for broadcast mode
+    only. (SPEC §13, §13.3)
+  rationale: >-
+    VOX's added delay breaks session turnaround.
+  tags: [ptt, v0.1]
+
+- slug: calibrate-command
+  title: The calibrate command measures turnaround and drive
+  category: audio-level
+  strength: MUST
+  statement: >-
+    A `calibrate` command plays the level-setting tone and, with a
+    cooperating peer, measures round-trip turnaround to recommend a TXDelay
+    (and the repeater access delay in repeater mode), then runs the
+    stepped-tone drive calibration (`drive-calibration`). (SPEC §13.4)
+  tags: [host-interface, audio-level, timing, v0.5]
+
+- slug: receive-gain-control
+  title: The modem sets receive gain automatically where the host allows
+  category: audio-level
+  strength: MUST
+  statement: >-
+    Where the OS exposes the input gain of the device it opened, the modem
+    owns it and adjusts it automatically: target open-squelch noise near
+    −20 dBFS RMS and signal peaks never above −3 dBFS, in 3 dB steps, between
+    frames only. Where the interface has a physical pot or the OS exposes no
+    control, the modem falls back to a meter and instructions.
+    (SPEC §2, §13.5)
+  rationale: >-
+    A gain change mid-frame invalidates the channel estimate. Mis-set levels
+    are the top real-world failure of sound-card modes.
+  tags: [audio-level, v0.5]
+
+- slug: drive-calibration
+  title: Stepped-tone transmit drive calibration with a peer
+  category: audio-level
+  strength: MUST
+  statement: >-
+    Transmit drive is calibrated with a cooperating station (capability bit
+    5): (1) the initiator sends CAL-REQUEST (frame type 9) with a B.5 control
+    block naming the tone (1000 Hz), step count (8), step length (400 ms with
+    100 ms gaps), start level and step size (3 dB); (2) it transmits the tone
+    bursts, raising its output level each step across a 24 dB span; (3) the
+    peer measures each burst's received amplitude and harmonic distortion
+    (energy at 2 kHz and 3 kHz relative to 1 kHz) and returns a CAL-REPORT
+    control block; (4) the initiator finds the knee, the first step where
+    amplitude rises less than 0.5 dB per dB of drive or distortion exceeds
+    5%, sets its output accordingly and stores the result per radio; (5) if
+    no knee is found within the span the modem tells the operator to raise
+    the radio's mic or data-port gain and repeats, and a step during which
+    the peer reports its own ADC clipping is discarded and the sweep repeated
+    from a lower start. (SPEC §13.5)
+  rationale: >-
+    Looking for the limiter's knee rather than an absolute deviation needs no
+    calibrated equipment at the far end; about 6 s of air time.
+  tags: [audio-level, levels, v1.0]
+
+- slug: calibrated-drive-target
+  title: Calibrated drive puts data peaks 3 dB below the knee
+  category: audio-level
+  strength: MUST
+  statement: >-
+    After calibration, the modem sets its output so that data-waveform peaks
+    sit 3 dB below the measured limiter knee. (SPEC §13.5; decision §20.6)
+  rationale: >-
+    Adapts to each radio, unlike a fixed deviation percentage.
+  tags: [audio-level, levels, v1.0]
+
+- slug: in-session-drive-trim
+  title: In-session drive trim from the distortion report
+  category: audio-level
+  strength: MUST
+  statement: >-
+    When the far end reports a distortion index of 2 or higher for two
+    consecutive frames, the modem lowers its output 1 dB per frame until the
+    index clears, then holds. Without host level control it shows a "reduce
+    drive" warning instead. The index is logged per frame. (SPEC §13.5)
+  tags: [audio-level, levels, adaptation, v1.0]
+
+- slug: sdr-receive-front-end
+  title: Optional SDR receive front end (v1.x)
+  category: host-interface
+  strength: MAY
+  statement: >-
+    An RTL-SDR-class receiver MAY replace or supplement the sound-card input
+    (v1.x): the modem channelizes a 2 MHz span into a dozen FM channels and
+    demodulates each in software, giving a flat 56-tone receive path and
+    RF-level carrier-to-noise for DCD and adaptation. Transmit still goes
+    through the transceiver, so width stays per direction. (SPEC §1, §3.1,
+    §13.7)
+  tags: [front-end, v1.x]
+
+# --- Performance, conformance and governance (SPEC §14, §15) -------------
+
+- slug: v1-performance-targets
+  title: Performance targets v1.0 must demonstrate on real radios
+  category: performance-conformance
+  strength: MUST
+  statement: |
+    v1.0 must demonstrate these targets on real radios (SPEC §14.1):
+
+    | Target | 24 tones | 56 tones |
+    | --- | --- | --- |
+    | Net payload throughput, one direction, 4 s frames, TXDelay 150 ms | ≥ 5.0 kbps at 25 dB audio SNR | ≥ 16 kbps at 30 dB audio SNR |
+    | Minimum usable link | ≥ 1.2 kbps net at 8 dB audio SNR (MCS 0) | same |
+    | Rate adaptation | Correct rung within 2 frames of a 6 dB SNR change; no oscillation over 60 s at constant SNR | same |
+    | Width negotiation | Usable width settled within one round trip; a masked tone restored within one re-probe after the impairment clears | same |
+    | Block error rate at each rung's switching point | ≤ 10% | same |
+    | Transmit drive calibration | Finds the limiter knee within ±1.5 dB on three radio makes; sets drive within 10% of the level-setting-tone target | same |
+    | Distortion report | Index rises to 3 or more within two frames of a 6 dB overdrive, and returns to 0 within two frames of its removal | same |
+    | Repeater mode | A 10-minute session sustained through a repeater with hang time and courtesy tone; net ≥ 60% of the simplex figure at the same SNR | same |
+    | Session resume | A transfer interrupted by 60 s of link loss completes with no delivered block re-sent | same |
+    | Link test | Both directions' expected net kbps reported within 3 s of air time and within 20% of what a following session achieves | same |
+    | Soft combining | Three identical repeats decode a bulletin at an SNR 4 dB below the single-copy threshold | same |
+    | Multi-mode receiver | Decodes 1200 AFSK and G3RUH captures with sensitivity at least equal to the reference software TNC on the same captures | same |
+    | False carrier-detect rate with squelch open, no signal | ≤ 1 per 10 minutes | same |
+    | Deference to AFSK packet | No transmission starts within 100 ms of a detected Bell 202 frame | same |
+    | Sample-clock tolerance | ±100 ppm between stations with no block-error penalty | same |
+    | Interoperability | Two independent implementations pass the conformance suite and exchange 1 MB error-free in each direction | same |
+  tags: [performance, conformance, v1.0]
+
+- slug: conformance-suite
+  title: Conformance suite contents and definition of conformance
+  category: performance-conformance
+  strength: MUST
+  statement: >-
+    The conformance suite is published with the specification: preamble
+    waveforms; header, control and data block encodings as known-answer files
+    (input bytes → coded bits → samples); recorded off-air captures in every
+    mode the receiver supports with expected decoded output; API schema
+    tests; and a dictionary round-trip set. A new implementation is
+    conformant when it decodes every capture and its own transmissions decode
+    in the reference implementation. (SPEC §14.5)
+  tags: [conformance, v1.0]
+
+- slug: on-air-version
+  title: The header version changes only for incompatible changes
+  category: versioning-governance
+  strength: MUST
+  statement: >-
+    The 3-bit header version (1 for this specification) is bumped only for
+    incompatible waveform or header changes; changing the tone spacing,
+    symbol timing, preamble, header format or block codes bumps it.
+    Everything else is negotiated through capability bits in CONNECT (16 bits
+    in v1, 8 reserved) and through reserved rung and type IDs.
+    (SPEC §4.1, §8.2, §15)
+  tags: [versioning, v0.1]
+
+- slug: reserved-fields
+  title: Reserved fields are sent as zero and ignored on receipt
+  category: versioning-governance
+  strength: MUST
+  statement: >-
+    Reserved fields and bits are sent as zero and ignored on receipt.
+    (SPEC §8.2, §15, Appendix B)
+  tags: [versioning, framing, v0.1]
+
+- slug: reserved-identifiers
+  title: Identifiers held for planned features are used for nothing else
+  category: versioning-governance
+  strength: MUST
+  statement: |
+    The identifiers below are held for the planned features named and MUST
+    NOT be used for anything else. Until an ADR specifies the feature,
+    senders send them as zero or not at all and receivers ignore them
+    (`reserved-fields`). (SPEC §15)
+
+    | Identifier | Held for | SPEC |
+    | --- | --- | --- |
+    | Capability bit 1 and ACK flag bit 1 | Incremental-redundancy HARQ | §9.4, B.2, B.3 |
+    | Capability bit 4 (header flag bit 3 stays the live session-frame flag) | Short session headers | §8.2, B.3 |
+    | Capability bit 8 | Full-duplex session mode | §20.13 |
+    | Frame type 10 (POLL) | Polled gateway mode | §8.4, §20.14 |
+    | PDU type 5 (RATELESS) | Rateless broadcast | §12.1, §20.12 |
+    | Capability bit 3 and content encoding 3 | Schema-encoded forms | §12.1, §12.2, B.3 |
+    | Path control block (type 6) in CONNECT | Session relay with via addressing | B.7, §20.11 |
+  rationale: >-
+    Holding the identifiers now means the v2 designs (see prose.md,
+    Consequences) can arrive by superseding ADRs without renumbering
+    anything already on the air.
+  tags: [versioning, framing, v2]
+
+- slug: big-endian-fields
+  title: Fields are big-endian
+  category: link-layer
+  strength: MUST
+  statement: >-
+    All header and control-block fields are big-endian. (SPEC Appendix B)
+  tags: [framing, v0.1]
+
+- slug: reserved-control-types
+  title: Control types 2 and 7–15 are reserved
+  category: link-layer
+  strength: MUST_NOT
+  statement: >-
+    Control types 2 and 7–15 are reserved; senders MUST NOT use them.
+    (SPEC §15, Appendix B)
+  tags: [framing, versioning, v0.1]
+
+- slug: skip-unknown-control-types
+  title: Receivers skip control blocks of unknown type
+  category: link-layer
+  strength: MUST
+  statement: >-
+    A receiver MUST skip a control block whose type it does not recognize
+    and process the rest of the frame. (SPEC §15, Appendix B)
+  rationale: >-
+    Every control block is 256 bits, so the next block starts at a known
+    position, and a later version can add control types without breaking
+    older receivers.
+  tags: [framing, versioning, v0.1]
+
+- slug: spec-versioning
+  title: Major.minor specification versions; v1.0 needs two implementations
+  category: versioning-governance
+  strength: MUST
+  statement: >-
+    The specification is versioned major.minor. Minor versions add rungs, PDU
+    types, dictionaries or capabilities without breaking v1 decoders. v1.0 is
+    declared when two independent implementations pass the conformance suite.
+    (SPEC §1, §15)
+  tags: [versioning, governance, v0.1]
+
+- slug: licensing
+  title: Specification CC BY 4.0; reference code MIT or Apache-2.0
+  category: versioning-governance
+  strength: MUST
+  statement: >-
+    The specification and test vectors are licensed CC BY 4.0; the reference
+    implementation carries a permissive license, MIT or Apache-2.0.
+    Dictionary licensing is set by `dictionary-registry`. (SPEC §1, §2, §15)
+  rationale: >-
+    A permissive license lets anyone embed the implementation.
+  tags: [governance, v0.1]
+
+- slug: open-publication
+  title: Every decoder artifact is published and archived off-host
+  category: versioning-governance
+  strength: MUST
+  statement: >-
+    A single public repository holds the specification, parity-check
+    matrices, preamble sequences, dictionaries with hashes, test vectors and
+    the conformance runner, so the complete waveform, framing, codes and
+    dictionaries are published and a reference decoder is freely available.
+    Releases are tagged and archived outside the repository host (for example
+    Software Heritage and a club- or group-maintained archive). (SPEC §1,
+    §3.3, §15)
+  rationale: >-
+    §97.309(b) requires that the FCC can obtain records convertible to the
+    original, and a lost account or abandoned project must not take the
+    decoder with it.
+  tags: [governance, regulatory, v0.1]
+
+- slug: change-process
+  title: On-air changes need two implementations before merge
+  category: versioning-governance
+  strength: MUST
+  statement: >-
+    Proposed changes are issues against the specification with a test-vector
+    update. A change that alters on-air behavior needs an implementation in
+    two code bases before merge. (SPEC §15)
+  tags: [governance, v0.1]
+
+# --- Appendices A and B: fixed costs and field layouts -------------------
+
+- slug: fixed-per-frame-costs
+  title: Fixed per-frame costs
+  category: physical-layer
+  strength: MUST
+  statement: |
+    Fixed per-frame costs are identical at every width (SPEC Appendix A.1):
+
+    | Item | 24 tones | 56 tones |
+    | --- | --- | --- |
+    | Preamble | 4 symbols, 45 ms | 4 symbols, 45 ms |
+    | Header (288 coded bits at MCS 0, base tones) | 7 symbols, 79 ms | 7 symbols, 79 ms |
+    | Control block (512 coded bits at MCS 0, base tones) | 12 symbols, 135 ms | 12 symbols, 135 ms |
+    | Width probe (CONNECT, CONNECT-ACK, SOUND, re-probe) | 2 symbols, 22.5 ms | 2 symbols, 22.5 ms |
+    | ACK frame on air (preamble + header + 1 control block) | 259 ms | 259 ms |
+    | Block symbols available in a 4 s frame | 330 | 330 |
+  tags: [framing, timing, performance, v0.1]
+
+- slug: ack-control-block
+  title: ACK control block layout
+  category: link-layer
+  strength: MUST
+  statement: |
+    The ACK control block (control type 0) is 256 bits (SPEC Appendix B.2):
+
+    | Field | Bits | Meaning |
+    | --- | --- | --- |
+    | Control type | 4 | 0 = ACK |
+    | Flags | 4 | Bit 0: tone mask present. Bit 1: held for HARQ parity-only retransmission (`reserved-identifiers`). Bit 2: re-probe requested (send a width probe in your next frame). Bit 3: use long prefix (`long-prefix-request`). |
+    | Acknowledged base sequence | 16 | Sequence number of the peer's last frame |
+    | Block bitmap | 128 | Bit i set = block base+i passed its CRC |
+    | Requested MCS | 4 | Rung the sender should use next |
+    | Measured SNR | 8 | 0.25 dB steps, 0–63.75 dB, effective SNR over active tones |
+    | Block errors in last frame | 8 | Count, for the peer's hysteresis logic |
+    | Tone mask | 56 | Usable tones 0–55; valid when flag bit 0 set |
+    | Distortion index | 3 | 0 clean to 7 severe: transmit-side clipping or over-deviation as seen at this receiver, in 3 dB steps |
+    | Own ADC clipped | 1 | This receiver's input clipped during the frame: its measurements are unreliable and its own receive gain is wrong, not the sender's drive |
+    | Reserved | 8 | |
+    | CRC-16 | 16 | |
+  tags: [framing, arq, adaptation, v0.1]
+
+- slug: connect-control-block
+  title: CONNECT / CONNECT-ACK control block layout and capability bits
+  category: link-layer
+  strength: MUST
+  statement: |
+    The connect-parameters control block (control type 1) is 256 bits
+    (SPEC Appendix B.3):
+
+    | Field | Bits | Meaning |
+    | --- | --- | --- |
+    | Control type | 4 | 1 = connect parameters |
+    | Flags | 4 | Bit 0: a second control block with more dictionary IDs follows. Bit 1: resume the session named by the session ID. Bits 2–3 reserved. |
+    | Session ID | 16 | Chosen by initiator; echoed by responder; on resume, the ID of the interrupted session |
+    | Capabilities | 16 | Bit 0 widths above 24 tones, bit 1 held for HARQ, bit 2 signatures, bit 3 held for schema encoding, bit 4 held for short session headers, bit 5 level calibration (accepts CAL-REQUEST), bit 6 stream multiplexing, bit 7 dictionary fetch, bits 8–15 reserved (bit 8 held for full duplex); held bits per `reserved-identifiers` |
+    | Width cap | 6 | Highest tone index this station will transmit (23–55), set by its channel width |
+    | Requested MCS | 4 | Rung the sender wants to receive at |
+    | Max frame time | 6 | Units of 0.1 s, 5–40: this station's configured maximum (`max-frame-time-negotiation`) |
+    | Tone mask | 56 | In CONNECT-ACK, usable tones for the initiator-to-responder direction; in CONNECT, all ones |
+    | Dictionary IDs | 128 | Up to four 32-bit IDs; zero = empty slot |
+    | CRC-16 | 16 | |
+  tags: [framing, session, versioning, v0.1]
+
+- slug: data-block-format
+  title: Data block format
+  category: link-layer
+  strength: MUST
+  statement: >-
+    A data block's 1,024 information bits are 126 payload bytes followed by a
+    CRC-16 over those bytes (`crc-16-ccitt-false`). Payload bytes are
+    a slice of the session's PDU stream; block boundaries carry no meaning of
+    their own. (SPEC Appendix B.4)
+  tags: [framing, fec, v0.1]
+
+- slug: cal-request-control-block
+  title: CAL-REQUEST control block layout
+  category: audio-level
+  strength: MUST
+  statement: |
+    The CAL-REQUEST control block (control type 3) is 256 bits, carried in a
+    CAL-REQUEST frame; the tone bursts follow the frame (SPEC Appendix B.5):
+
+    | Field | Bits | Meaning |
+    | --- | --- | --- |
+    | Control type | 4 | 3 |
+    | Flags | 4 | Reserved |
+    | Tone frequency | 8 | Units of 10 Hz; default 100 (1000 Hz) |
+    | Step count | 4 | Default 8 |
+    | Step length | 8 | Units of 10 ms; default 40 (400 ms) |
+    | Gap length | 8 | Units of 10 ms; default 10 (100 ms) |
+    | Start level | 8 | dB below the modem's nominal output, 0.25 dB steps; default 96 (24 dB down) |
+    | Step size | 4 | dB per step; default 3 |
+    | Reserved | 192 | |
+    | CRC-16 | 16 | |
+  tags: [framing, audio-level, v1.0]
+
+- slug: cal-report-control-block
+  title: CAL-REPORT control block layout
+  category: audio-level
+  strength: MUST
+  statement: |
+    The CAL-REPORT control block (control type 4) is 256 bits, returned by the
+    peer as set out in `cal-report-carriage` (SPEC Appendix B.5):
+
+    | Field | Bits | Meaning |
+    | --- | --- | --- |
+    | Control type | 4 | 4 |
+    | Flags | 4 | Bit 0: sweep valid (every step heard). Bits 1–3 reserved. |
+    | Received amplitude, steps 1–8 | 64 | 8 × 8 bits, dB below full scale in 0.25 dB steps |
+    | Harmonic distortion, steps 1–8 | 32 | 8 × 4 bits, percent: energy at 2× and 3× the tone frequency relative to the tone |
+    | Receiver clipped, steps 1–8 | 8 | 1 bit per step |
+    | Reserved | 128 | |
+    | CRC-16 | 16 | |
+  tags: [framing, audio-level, v1.0]
+
+- slug: cal-report-carriage
+  title: Where the CAL-REPORT control block travels
+  category: audio-level
+  strength: MUST
+  statement: >-
+    In a session, the peer MUST return the CAL-REPORT control block in its
+    next ACK or DATA frame, after the ACK control block. Outside a session,
+    it returns the CAL-REPORT in a UI frame addressed to the initiator.
+    (SPEC §8.4, §13.5, B.5)
+  tags: [framing, audio-level, session, v1.0]
+
+- slug: id-control-block
+  title: ID control block layout
+  category: link-layer
+  strength: MUST
+  statement: |
+    The ID control block (control type 5) is 256 bits (SPEC Appendix B.6):
+
+    | Field | Bits | Meaning |
+    | --- | --- | --- |
+    | Control type | 4 | 5 |
+    | Flags | 4 | Bit 0: grid locator present. Bits 1–3 reserved. |
+    | Callsign | 80 | Ten 8-bit characters, 7-bit ASCII with the high bit zero, upper case, space-padded; includes any indicator the operator must send (for example a /7 or a self-assigned suffix) |
+    | SSID | 4 | As in the header address |
+    | Grid locator | 48 | Six 8-bit ASCII characters (Maidenhead), valid when flag bit 0 set |
+    | Reserved | 100 | |
+    | CRC-16 | 16 | |
+  tags: [framing, regulatory, v0.5]
+
+- slug: path-control-block
+  title: Path control block layout (v1.x)
+  category: link-layer
+  strength: MUST
+  statement: |
+    The path control block (control type 6, v1.x) is 256 bits, carried by
+    BEACON and UI frames that request digipeating (SPEC Appendix B.7):
+
+    | Field | Bits | Meaning |
+    | --- | --- | --- |
+    | Control type | 4 | 6 |
+    | Flags | 4 | Bit 0: entry 1 has been used. Bit 1: entry 2 has been used. Bit 2: via (session relay, v2). Bit 3 reserved. |
+    | Hops remaining | 2 | Decremented by each relay; a frame with 0 is not relayed |
+    | Entry count | 2 | 0–2 |
+    | Entry 1 | 40 | Relay callsign and SSID in the B.1 format, or a WIDE-style alias (for example WIDE1 with SSID 1) |
+    | Entry 2 | 40 | As entry 1 |
+    | Reserved | 148 | |
+    | CRC-16 | 16 | |
+  tags: [framing, addressing, v1.x]
