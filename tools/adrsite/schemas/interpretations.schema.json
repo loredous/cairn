@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cairn.invalid/schemas/interpretations.schema.json",
+  "title": "ADR interpretations",
+  "description": "Clarifications and errata for decisions in the same ADR.",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "slug",
+      "decision",
+      "question",
+      "interpretation"
+    ],
+    "properties": {
+      "slug": {
+        "description": "Stable identifier, unique among this ADR's interpretations.",
+        "type": "string",
+        "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+      },
+      "decision": {
+        "description": "Slug of the decision (in the same ADR) being interpreted.",
+        "type": "string",
+        "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+      },
+      "question": {
+        "description": "The situation or ambiguity being resolved; for errata, the error being corrected. Markdown allowed.",
+        "type": "string",
+        "minLength": 1
+      },
+      "interpretation": {
+        "description": "How the decision applies; for errata, the corrected reading. Markdown allowed.",
+        "type": "string",
+        "minLength": 1
+      },
+      "date": {
+        "description": "When the interpretation was made (YYYY-MM-DD).",
+        "type": "string",
+        "format": "date"
+      },
+      "errata": {
+        "description": "True marks this as an erratum: a correction of a typo or editorial error that does not change the decision's meaning.",
+        "type": "boolean"
+      }
+    }
+  }
+}

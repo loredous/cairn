@@ -1,0 +1,107 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cairn.invalid/schemas/decisions.schema.json",
+  "title": "ADR decisions",
+  "description": "The normative decisions made by a single ADR.",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "slug",
+      "title",
+      "category",
+      "statement"
+    ],
+    "properties": {
+      "slug": {
+        "description": "Stable identifier, unique within the ADR. Never reuse or rename once accepted.",
+        "type": "string",
+        "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+      },
+      "title": {
+        "description": "Short human-readable name for the decision.",
+        "type": "string",
+        "minLength": 1
+      },
+      "category": {
+        "description": "The single broad area this decision belongs to; the handbook is organized by category.",
+        "type": "string",
+        "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+      },
+      "strength": {
+        "description": "RFC 2119 requirement level. Required unless this is a rescission record.",
+        "enum": [
+          "MUST",
+          "MUST_NOT",
+          "SHOULD",
+          "SHOULD_NOT",
+          "MAY"
+        ]
+      },
+      "statement": {
+        "description": "The normative decision text, or for a rescission record, why the target is withdrawn. Markdown allowed.",
+        "type": "string",
+        "minLength": 1
+      },
+      "rationale": {
+        "description": "Optional short justification specific to this decision. Markdown allowed.",
+        "type": "string"
+      },
+      "supersedes": {
+        "description": "The decision (in an earlier ADR) this one replaces or, with rescinded: true, withdraws. Takes effect once this decision's ADR is accepted.",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "adr",
+          "decision"
+        ],
+        "properties": {
+          "adr": {
+            "description": "Folder name of the ADR holding the superseded decision.",
+            "type": "string",
+            "pattern": "^\\d{4}-[a-z0-9]+(-[a-z0-9]+)*$"
+          },
+          "decision": {
+            "description": "Slug of the superseded decision.",
+            "type": "string",
+            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+          }
+        }
+      },
+      "rescinded": {
+        "description": "True marks this entry as a rescission record: the decision named in 'supersedes' is withdrawn with no replacement.",
+        "type": "boolean"
+      },
+      "tags": {
+        "description": "Free-form labels for grouping and search: lower case, with hyphens or dots between parts (e.g. 'link-layer', 'v1.x').",
+        "type": "array",
+        "items": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+([.-][a-z0-9]+)*$"
+        },
+        "uniqueItems": true
+      }
+    },
+    "if": {
+      "properties": {
+        "rescinded": {
+          "const": true
+        }
+      },
+      "required": [
+        "rescinded"
+      ]
+    },
+    "then": {
+      "required": [
+        "supersedes"
+      ]
+    },
+    "else": {
+      "required": [
+        "strength"
+      ]
+    }
+  }
+}

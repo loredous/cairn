@@ -1,0 +1,112 @@
+/* Badges for ADR pages. Uses theme variables so light and dark modes both work. */
+:root {
+  --adr-must: #b42318;
+  --adr-must-not: #7a2e8f;
+  --adr-should: #b54708;
+  --adr-should-not: #5b5bd6;
+  --adr-may: #1d7a55;
+}
+[data-md-color-scheme="slate"] {
+  --adr-must: #ff8a80;
+  --adr-must-not: #e1a6f0;
+  --adr-should: #ffb74d;
+  --adr-should-not: #a5a8ff;
+  --adr-may: #6fd3a6;
+}
+.md-typeset .adr-badge {
+  display: inline-block;
+  padding: 0 0.55em;
+  border: 1px solid var(--md-default-fg-color--lighter);
+  border-radius: 1em;
+  font-size: 0.72rem;
+  line-height: 1.6;
+  white-space: nowrap;
+  vertical-align: middle;
+  color: var(--md-default-fg-color--light);
+}
+.md-typeset .adr-strength { font-weight: 700; letter-spacing: 0.03em; border-width: 1.5px; }
+.md-typeset .adr-strength-must { color: var(--adr-must); border-color: var(--adr-must); }
+.md-typeset .adr-strength-must-not { color: var(--adr-must-not); border-color: var(--adr-must-not); }
+.md-typeset .adr-strength-should { color: var(--adr-should); border-color: var(--adr-should); }
+.md-typeset .adr-strength-should-not { color: var(--adr-should-not); border-color: var(--adr-should-not); }
+.md-typeset .adr-strength-may { color: var(--adr-may); border-color: var(--adr-may); }
+.md-typeset .adr-state { text-transform: uppercase; font-size: 0.65rem; }
+.md-typeset .adr-state-active { color: var(--adr-may); border-color: var(--adr-may); }
+.md-typeset .adr-state-superseded,
+.md-typeset .adr-state-rescinded { color: var(--adr-must); border-color: var(--adr-must); }
+.md-typeset .adr-state-proposed { color: var(--adr-should); border-color: var(--adr-should); }
+.md-typeset .adr-status-superseded { color: var(--md-default-fg-color--light); }
+.md-typeset .adr-status-accepted { color: var(--adr-may); border-color: var(--adr-may); }
+.md-typeset .adr-status-proposed { color: var(--adr-should); border-color: var(--adr-should); }
+.md-typeset .adr-commit-meta { margin-top: -0.6em; color: var(--md-default-fg-color--light); font-size: 0.8rem; }
+
+/* Categories and handbook filters */
+.md-typeset .adr-category-badge { font-style: italic; }
+.md-typeset .adr-tag { font-family: var(--md-code-font-family); }
+.md-typeset .adr-entry[hidden],
+.md-typeset .adr-category[hidden],
+.md-typeset .adr-filter[hidden],
+.md-typeset .adr-tag-clear[hidden],
+.md-nav__item[hidden] { display: none !important; }
+.md-typeset .adr-filter {
+  position: sticky;
+  top: 2.4rem;
+  z-index: 1;
+  margin: 1em 0;
+  padding: 0.6em 0.8em;
+  border: 1px solid var(--md-default-fg-color--lightest);
+  border-radius: 0.4em;
+  background: var(--md-default-bg-color);
+}
+.md-typeset .adr-filter-inforce { font-weight: 600; cursor: pointer; }
+.md-typeset .adr-filter-tags { display: flex; flex-wrap: wrap; gap: 0.35em; margin-top: 0.5em; }
+.md-typeset .adr-tag-chip,
+.md-typeset .adr-tag-clear {
+  padding: 0.1em 0.6em;
+  border: 1px solid var(--md-default-fg-color--lighter);
+  border-radius: 1em;
+  background: transparent;
+  color: var(--md-default-fg-color--light);
+  font: 0.7rem var(--md-code-font-family);
+  cursor: pointer;
+}
+.md-typeset .adr-tag-chip[aria-pressed="true"] {
+  border-color: var(--md-accent-fg-color);
+  background: var(--md-accent-fg-color);
+  color: var(--md-accent-bg-color);
+}
+.md-typeset .adr-tag-clear { font-family: inherit; border-style: dashed; }
+.md-typeset .adr-filter-count { margin: 0.5em 0 0; font-size: 0.75rem; color: var(--md-default-fg-color--light); }
+.md-typeset .adr-entry { border-top: 1px solid var(--md-default-fg-color--lightest); }
+
+/* Decision titles: hover shows the full reference, click copies it (adr.js). */
+.md-content .adr-ref {
+  position: relative;
+  cursor: copy;
+  border-bottom: 1px dotted transparent;
+}
+.md-content .adr-ref:hover,
+.md-content .adr-ref:focus-visible { border-bottom-color: var(--md-default-fg-color--lighter); outline: none; }
+.md-content .adr-ref::after {
+  content: attr(data-ref);
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 0.35em);
+  z-index: 3;
+  padding: 0.2em 0.55em;
+  border-radius: 0.25em;
+  background: var(--md-default-fg-color);
+  color: var(--md-default-bg-color);
+  font: 400 0.65rem/1.5 var(--md-code-font-family);
+  letter-spacing: 0;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(0.2em);
+  transition: opacity 0.12s, transform 0.12s;
+}
+.md-content .adr-ref:hover::after,
+.md-content .adr-ref:focus-visible::after,
+.md-content .adr-ref[data-copy-state]::after { opacity: 1; transform: none; }
+.md-content .adr-ref[data-copy-state="copied"]::after { content: "Copied " attr(data-ref); }
+.md-content .adr-ref[data-copy-state="failed"]::after { content: "Copy failed"; }

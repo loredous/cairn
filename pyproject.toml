@@ -1,0 +1,25 @@
+[project]
+name = "cairn-adrsite"
+version = "0.1.0"
+description = "Validation, scaffolding, and static-site tooling for Cairn's ADRs"
+requires-python = ">=3.11"
+dependencies = [
+    "jsonschema>=4.21",
+    "pyyaml>=6.0",
+    "tomli-w>=1.2.0",
+    "zensical>=0.1.0",
+]
+
+[dependency-groups]
+dev = ["pytest>=8"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["tools/adrsite"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["tests"]

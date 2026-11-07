@@ -1,0 +1,54 @@
+# Base Zensical config for the Cairn site. scripts/build_site.py reads this,
+# fills in docs_dir, site_dir, nav, and the build stamp (appended to
+# `copyright`), and writes the effective config to build/zensical.toml.
+
+[project]
+site_name = "Cairn"
+site_description = "Documentation and architecture decisions for the Cairn amateur radio digital protocol"
+site_url = "https://loredous.github.io/cairn/"
+repo_url = "https://github.com/loredous/cairn"
+repo_name = "loredous/cairn"
+copyright = "Cairn contributors"
+
+[project.theme]
+features = [
+  "navigation.tabs",
+  "navigation.sections",
+  "navigation.indexes",
+  "navigation.top",
+  "search.highlight",
+  "toc.follow",
+]
+
+# Light/dark mode selector
+[[project.theme.palette]]
+media = "(prefers-color-scheme: light)"
+scheme = "default"
+toggle.icon = "lucide/sun"
+toggle.name = "Switch to dark mode"
+
+[[project.theme.palette]]
+media = "(prefers-color-scheme: dark)"
+scheme = "slate"
+toggle.icon = "lucide/moon"
+toggle.name = "Switch to light mode"
+
+# Setting this replaces Zensical's defaults, so list everything we use.
+[project.markdown_extensions]
+abbr = {}
+admonition = {}
+attr_list = {}
+def_list = {}
+footnotes = {}
+md_in_html = {}
+tables = {}
+toc = { permalink = true }
+"pymdownx.betterem" = {}
+"pymdownx.details" = {}
+"pymdownx.highlight" = { anchor_linenums = true, line_spans = "__span", pygments_lang_class = true }
+"pymdownx.inlinehilite" = {}
+"pymdownx.mark" = {}
+"pymdownx.superfences" = {}
+"pymdownx.tabbed" = { alternate_style = true }
+"pymdownx.tasklist" = { custom_checkbox = true }
+"pymdownx.tilde" = {}

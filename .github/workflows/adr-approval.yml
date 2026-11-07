@@ -1,0 +1,36 @@
+name: ADR approval
+
+# Implements 0001-record-architecture-decisions/ci-checks-maintainer-majority.
+# Make "maintainer-majority" a required status check on main.
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  pull_request_review:
+    types: [submitted, edited, dismissed]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  maintainer-majority:
+    runs-on: ubuntu-latest
+    steps:
+      # Run the check from the base branch, so a pull request cannot change the
+      # check that judges it.
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Check maintainer majority
+        env:
+          # Listing collaborators and their roles may need a token with more
+          # access than the default; set MAINTAINER_CHECK_TOKEN if it fails.
+          GITHUB_TOKEN: ${{ secrets.MAINTAINER_CHECK_TOKEN || github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+        run: uv run --locked scripts/adr.py check-approval --repo "$REPO" --pr "$PR"

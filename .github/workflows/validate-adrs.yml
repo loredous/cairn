@@ -1,0 +1,64 @@
+name: Validate ADRs
+
+# Implements 0001-record-architecture-decisions/ci-validates-adrs
+on:
+  push:
+    paths:
+      - "adrs/**"
+      - "tools/adrsite/**"
+      - "scripts/adr.py"
+      - "tests/**"
+      - "pyproject.toml"
+      - "uv.lock"
+      - ".github/workflows/validate-adrs.yml"
+  pull_request:
+    paths:
+      - "adrs/**"
+      - "tools/adrsite/**"
+      - "scripts/adr.py"
+      - "tests/**"
+      - "pyproject.toml"
+      - "uv.lock"
+      - ".github/workflows/validate-adrs.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # needed to compare against the base revision
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Validate ADRs
+        run: uv run --locked scripts/adr.py validate
+
+      # Implements 0001-record-architecture-decisions/ci-enforces-immutability
+      - name: Check committed decisions are unchanged
+        env:
+          EVENT: ${{ github.event_name }}
+          REF: ${{ github.ref }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          BEFORE: ${{ github.event.before }}
+        run: |
+          if [ "$EVENT" = "pull_request" ]; then
+            BASE="$PR_BASE"
+          elif [ "$REF" = "refs/heads/main" ]; then
+            BASE="$BEFORE"
+          else
+            BASE="$(git merge-base origin/main HEAD 2>/dev/null || true)"
+          fi
+          if [ -z "$BASE" ] || [ "$BASE" = "0000000000000000000000000000000000000000" ]; then
+            echo "No base revision to compare against; skipping."
+            exit 0
+          fi
+          uv run --locked scripts/adr.py check-immutable --base "$BASE"
+
+      - name: Test ADR tooling
+        run: uv run --locked pytest -q

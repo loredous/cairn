@@ -1,0 +1,347 @@
+# yaml-language-server: $schema=../../tools/adrsite/schemas/decisions.schema.json
+
+# --- Process -------------------------------------------------------------
+
+- slug: use-adrs
+  title: Significant decisions are recorded as ADRs
+  category: process
+  strength: MUST
+  statement: >-
+    Any decision that affects interoperability, on-air behavior, or the
+    long-term structure of the protocol or this repository MUST be recorded as
+    an ADR in `adrs/`.
+  tags: [process]
+
+- slug: approval-by-maintainer-majority
+  title: ADRs are approved by a majority of maintainers and merged to main
+  category: process
+  strength: MUST
+  statement: >-
+    An ADR, or a change to one, is approved when a majority of the maintainers
+    agree to it and it is merged into `main` of the GitHub repository. The
+    maintainers are the repository collaborators with the Maintain or Admin
+    role. A maintainer agrees by approving the pull request; a maintainer who
+    authored the pull request agrees by opening it. A pull request that changes
+    an ADR MUST NOT be merged without that majority.
+  rationale: >-
+    A majority keeps any single maintainer from changing the protocol alone,
+    while letting the project move without unanimous agreement.
+  tags: [process, governance]
+
+- slug: scaffold-with-script
+  title: New ADRs are scaffolded with the ADR script
+  category: process
+  strength: SHOULD
+  statement: >-
+    New ADRs SHOULD be created with `scripts/adr.py new "Title"`, which assigns
+    the next number and copies `adrs/_template/`.
+  tags: [process, tooling]
+
+# --- Format --------------------------------------------------------------
+
+- slug: folder-per-adr
+  title: Each ADR is a numbered folder
+  category: adr-format
+  strength: MUST
+  statement: >-
+    Each ADR MUST be a folder in `adrs/` named `NNNN-short-kebab-title`, where
+    `NNNN` is a zero-padded number not used by any other ADR. Folders whose
+    names start with `_` (such as `_template`) are not ADRs.
+  tags: [format]
+
+- slug: prose-file
+  title: Narrative lives in prose.md
+  category: adr-format
+  strength: MUST
+  statement: >-
+    Each ADR MUST contain a `prose.md` file whose YAML frontmatter has a
+    `title`, and MAY have a `date` and `authors`.
+  tags: [format]
+
+- slug: prose-sections
+  title: Prose follows the standard ADR sections
+  category: adr-format
+  strength: SHOULD
+  statement: >-
+    The body of `prose.md` SHOULD contain the sections Context, Decision,
+    Consequences, and Alternatives Considered, in that order.
+  tags: [format]
+
+- slug: status-derived-from-main
+  title: ADR status is derived from main, not stored
+  category: adr-format
+  strength: MUST
+  statement: >-
+    An ADR's status MUST NOT be recorded in its files. An ADR is **accepted**
+    if it is present on `main` of the GitHub repository, and **proposed**
+    otherwise. Tools MAY display an accepted ADR none of whose decisions remain
+    in force as **superseded**.
+  rationale: >-
+    Merging is the act of approval, so a stored status could only duplicate
+    that fact or contradict it.
+  tags: [format, lifecycle]
+
+- slug: decisions-file
+  title: Normative rules live in decisions.yaml
+  category: adr-format
+  strength: MUST
+  statement: >-
+    Each ADR MUST contain a `decisions.yaml` file holding a list of decisions.
+    Every decision MUST have a `slug`, `title`, `category`, and `statement`,
+    MUST have a `strength` unless it is a rescission record, and MAY have a
+    `rationale`, `supersedes`, `rescinded`, and `tags`.
+  tags: [format]
+
+- slug: strength-levels
+  title: Decision strength uses RFC 2119 levels
+  category: adr-format
+  strength: MUST
+  statement: >-
+    A decision's `strength` MUST be one of `MUST`, `MUST_NOT`, `SHOULD`,
+    `SHOULD_NOT`, or `MAY`, interpreted as described in RFC 2119 (with `_` in
+    place of a space).
+  tags: [format]
+
+- slug: categories-and-tags
+  title: Each decision has one category and optional tags
+  category: adr-format
+  strength: MUST
+  statement: >-
+    Each decision MUST have exactly one `category`: a lower-kebab-case name
+    for the broad area it belongs to, by which the handbook is organized.
+    `tags` are optional lower-case labels for cross-cutting concerns, with
+    hyphens or dots between parts (for example `framing` or `v1.x`), by
+    which the handbook can be filtered. Authors SHOULD reuse existing
+    categories and tags rather than coining near-duplicates.
+  tags: [format]
+
+- slug: one-rule-per-decision
+  title: One normative rule per decision
+  category: adr-format
+  strength: SHOULD
+  statement: >-
+    Each decision SHOULD state a single rule that can be cited, tested,
+    superseded, or rescinded on its own.
+  tags: [format]
+
+- slug: decision-identifiers
+  title: Decisions are cited as folder/slug
+  category: adr-format
+  strength: MUST
+  statement: >-
+    Decision slugs MUST be lower-kebab-case and unique within their ADR. A
+    decision is identified across the collection as `<adr-folder>/<slug>`.
+  tags: [format]
+
+- slug: stable-slugs
+  title: ADR folders are never renamed or removed
+  category: adr-format
+  strength: MUST_NOT
+  statement: >-
+    Once an ADR has been merged into `main`, its folder MUST NOT be renamed or
+    removed.
+  rationale: >-
+    Code, tests, and discussions cite decisions as `<adr-folder>/<slug>`.
+    Renaming a folder breaks every one of those references.
+  tags: [format]
+
+- slug: interpretations-file
+  title: Clarifications live in interpretations.yaml
+  category: adr-format
+  strength: MUST
+  statement: >-
+    An ADR MAY contain an `interpretations.yaml` file holding a list of
+    interpretations. Each interpretation MUST have a `slug`, the `decision`
+    slug it interprets (in the same ADR), a `question`, and an
+    `interpretation`, and MAY have a `date` and `errata`.
+  tags: [format]
+
+- slug: interpretations-do-not-amend
+  title: Interpretations do not change a decision's meaning
+  category: adr-format
+  strength: MUST_NOT
+  statement: >-
+    An interpretation MUST NOT add, remove, or contradict requirements of the
+    decision it interprets. A change in meaning requires a superseding
+    decision.
+  tags: [format]
+
+- slug: errata-for-editorial-fixes
+  title: Meaning-neutral corrections are recorded as errata
+  category: adr-format
+  strength: SHOULD
+  statement: >-
+    A typo or other editorial error in a frozen decision that does not change
+    its meaning SHOULD be corrected by adding an interpretation with
+    `errata: true` to the same ADR. Its `question` identifies the error and its
+    `interpretation` gives the corrected reading. An error whose correction
+    would change the decision's meaning MUST instead be fixed by a superseding
+    decision in a new ADR.
+  rationale: >-
+    Errata keep `decisions.yaml` frozen while giving readers the correct text
+    right next to the decision, without the overhead of a new ADR for a
+    spelling mistake.
+  tags: [format, lifecycle]
+
+- slug: schemas-are-authoritative
+  title: JSON Schemas define the file formats
+  category: adr-format
+  strength: MUST
+  statement: >-
+    The JSON Schemas in `tools/adrsite/schemas/` are the authoritative
+    definition of the `prose.md` frontmatter, `decisions.yaml`, and
+    `interpretations.yaml` formats. Changes to those formats MUST be made in
+    the schemas and recorded in an ADR.
+  tags: [format, tooling]
+
+# --- Changing decisions --------------------------------------------------
+
+- slug: decisions-immutable
+  title: decisions.yaml is frozen once merged
+  category: decision-lifecycle
+  strength: MUST_NOT
+  statement: >-
+    Once an ADR's `decisions.yaml` has been merged into `main`, it MUST NOT be
+    changed in any way, including editorial fixes. Every change to the
+    decisions, including superseding or rescinding one, MUST be made in a new
+    ADR.
+  rationale: >-
+    A decision's identifier then always means exactly what it meant when it
+    was first published, and the full history of every rule is visible as a
+    sequence of ADRs rather than hidden in file diffs.
+  tags: [lifecycle]
+
+- slug: supersession
+  title: A superseding decision names the decision it replaces
+  category: decision-lifecycle
+  strength: MUST
+  statement: >-
+    A decision that replaces another MUST name it in `supersedes` by ADR
+    folder and decision slug. A decision MUST NOT be superseded or rescinded
+    more than once, and supersession chains MUST NOT form cycles.
+    Supersession takes effect only once the superseding decision's ADR is
+    accepted.
+  tags: [lifecycle]
+
+- slug: rescinding
+  title: Decisions are rescinded by a rescission record in a new ADR
+  category: decision-lifecycle
+  strength: MUST
+  statement: >-
+    To withdraw a decision with no replacement, a new ADR MUST add a
+    *rescission record*: an entry with `rescinded: true` and `supersedes`
+    naming the withdrawn decision. Its `statement` explains the withdrawal,
+    and it MAY omit `strength`. A rescission record is never itself in force,
+    and it MUST NOT be superseded; a withdrawn rule is reinstated by adding it
+    again as a new decision.
+  tags: [lifecycle]
+
+- slug: in-force-definition
+  title: Definition of a decision in force
+  category: decision-lifecycle
+  strength: MUST
+  statement: >-
+    A decision is in force if and only if its ADR is accepted (merged into
+    `main`), it is not a rescission record, and no decision in an accepted ADR
+    supersedes or rescinds it.
+    Implementations MUST follow the decisions in force.
+  tags: [lifecycle]
+
+# --- Validation ----------------------------------------------------------
+
+- slug: reference-validator
+  title: scripts/adr.py validate is the reference validator
+  category: validation
+  strength: MUST
+  statement: >-
+    `scripts/adr.py validate` is the reference validator. A collection of ADRs
+    is valid only if it passes. Authors SHOULD run it before committing ADR
+    changes.
+  tags: [validation, tooling]
+
+- slug: ci-validates-adrs
+  title: CI validates every ADR change
+  category: validation
+  strength: MUST
+  statement: >-
+    A GitHub Actions workflow MUST run the reference validator on every push
+    and pull request that changes `adrs/`, the ADR tooling, or the schemas.
+  tags: [validation, ci]
+
+- slug: ci-enforces-immutability
+  title: CI rejects changes to frozen decisions
+  category: validation
+  strength: MUST
+  statement: >-
+    The ADR workflow MUST fail when a change modifies, moves, or deletes any
+    `decisions.yaml` that already exists on `main` (for pull requests, on the
+    base revision; for pushes to `main`, on the previous head).
+  tags: [validation, ci]
+
+- slug: ci-checks-maintainer-majority
+  title: CI checks for a maintainer majority
+  category: validation
+  strength: MUST
+  statement: >-
+    A GitHub Actions check MUST pass only when a pull request that changes an
+    ADR has the agreement of a majority of the maintainers, and it MUST be a
+    required status check for merging into `main`. The check MUST run from the
+    base branch's code, so that a pull request cannot alter its own check.
+  tags: [validation, ci, governance]
+
+- slug: no-merging-invalid-adrs
+  title: Invalid ADRs are not merged
+  category: validation
+  strength: MUST_NOT
+  statement: >-
+    A change that fails ADR validation or the immutability check MUST NOT be
+    merged into `main`.
+  tags: [validation, ci]
+
+# --- Publishing ----------------------------------------------------------
+
+- slug: publish-on-main
+  title: The site is published on every push to main
+  category: publishing
+  strength: MUST
+  statement: >-
+    A GitHub Actions workflow MUST build the static site from `docs/` and
+    `adrs/` on every push to `main` and publish it to GitHub Pages.
+  tags: [publishing, ci]
+
+- slug: publish-only-valid
+  title: Invalid ADRs are never published
+  category: publishing
+  strength: MUST
+  statement: >-
+    The site build MUST fail, and nothing MUST be published, if the ADRs do
+    not pass validation.
+  tags: [publishing, ci]
+
+- slug: site-contents
+  title: The site has records, a handbook, and a changelog
+  category: publishing
+  strength: MUST
+  statement: >-
+    The published site MUST include a page for every ADR, a handbook of
+    decisions organized by category that can be filtered to only the
+    decisions in force and by tag, a changelog showing what each commit
+    changed in the decision record, and the rendered `docs/`.
+  tags: [publishing]
+
+- slug: changelog-from-git
+  title: The changelog is generated from git history
+  category: publishing
+  strength: MUST
+  statement: >-
+    The changelog MUST be generated from git history by comparing the decision
+    record before and after each commit. It MUST NOT be maintained by hand.
+  tags: [publishing]
+
+- slug: no-committed-build-output
+  title: Generated site output is not committed
+  category: publishing
+  strength: MUST_NOT
+  statement: >-
+    The generated site (`_site/`) MUST NOT be committed to the repository.
+  tags: [publishing]

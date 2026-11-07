@@ -1,0 +1,32 @@
+# yaml-language-server: $schema=../../tools/adrsite/schemas/interpretations.schema.json
+
+- slug: editable-until-merged
+  decision: decisions-immutable
+  question: >-
+    Can `decisions.yaml` be edited while its pull request is still under
+    review?
+  interpretation: >-
+    Yes. The file is frozen once it is merged into `main`, not on the first
+    commit to a feature branch. Iterate freely during review.
+  date: 2026-11-05
+
+- slug: other-files-stay-editable
+  decision: decisions-immutable
+  question: >-
+    Does the freeze apply to `prose.md` and `interpretations.yaml`?
+  interpretation: >-
+    No. `prose.md` stays editable, so its narrative can be corrected, and
+    interpretations may be added or revised at any time, within the limits of
+    `interpretations-do-not-amend`. Like any change to an ADR, these edits
+    need a maintainer majority (`approval-by-maintainer-majority`).
+  date: 2026-11-05
+
+- slug: no-typo-fixes
+  decision: decisions-immutable
+  question: >-
+    Can a typo in a merged decision be fixed in place?
+  interpretation: >-
+    No. If the correction does not change the meaning, record it as an
+    erratum (see `errata-for-editorial-fixes`). If it does, supersede the
+    decision in a new ADR with corrected text.
+  date: 2026-11-05

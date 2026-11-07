@@ -1,0 +1,24 @@
+# yaml-language-server: $schema=../../tools/adrsite/schemas/decisions.schema.json
+#
+# Each entry is one normative decision. Fields:
+#   slug        (required) stable kebab-case id, unique within this ADR
+#   title       (required) short name
+#   category    (required) one broad kebab-case area; the handbook groups by it
+#   strength    (required) MUST | MUST_NOT | SHOULD | SHOULD_NOT | MAY
+#   statement   (required) the decision text (markdown)
+#   rationale   (optional) why, specific to this decision (markdown)
+#   supersedes  (optional) {adr: <folder name>, decision: <slug>} of an earlier decision
+#   rescinded   (optional) true = this entry withdraws `supersedes` with no
+#               replacement (a "rescission record"; strength may be omitted)
+#   tags        (optional) list of kebab-case labels
+#
+# Once merged into main this file is frozen. Change decisions via a new ADR.
+
+- slug: example-decision
+  title: Replace this example
+  category: example-category
+  strength: MUST
+  statement: >-
+    Implementations MUST do the thing this decision describes.
+  rationale: >-
+    Why this matters.
