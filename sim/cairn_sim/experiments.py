@@ -68,6 +68,8 @@ def run_job(job: dict) -> dict:
               blocks_per_frame=job.get("blocks_per_frame", 16),
               cp=params.CP_LONG if job.get("profile") == "repeater" else params.CP_SHORT,
               rx_kw=job.get("rx_kw"))
+    if "mask" in job:
+        kw["mask"] = frozenset(job["mask"])
     if "snrs" in job:
         kw.update({k: job[k] for k in ("min_blocks", "max_blocks", "min_errors", "quick_bler") if k in job})
         pts = [link_sim.bler_point(job["mcs"], s, **kw) for s in job["snrs"]]
@@ -122,6 +124,15 @@ def jobs_for(name: str) -> list[dict]:
                                  "rx_kw": {"burst_aware": imp == "burst"},
                                  "min_blocks": 3000, "max_blocks": 6000, "min_errors": 100,
                                  "quick_bler": 0.95, "seed": 4000 + 100 * mcs + width + i})
+    elif name == "repeater_masked":
+        # The repeater's ~5 ms spread leaves tones 0-2 near -10 dB SINR. SPEC 10.3
+        # would drop them from the mask (more than 6 dB below the active-tone
+        # average), so the top rungs are run with tones 0-2 masked.
+        mask = sorted(set(range(24)) - {0, 1, 2})
+        for mcs in (3, 4, 5, 6):
+            jobs.append({"experiment": name, "mcs": mcs, "width": 24, "profile": "repeater",
+                         "clip_db": params.clip_db(mcs), "mask": mask,
+                         "start_db": per_rung[mcs], "seed": 6000 + mcs})
     elif name == "header":
         # Header loss at MCS 0 (SPEC 6.3): 1000 short frames per point, so
         # only the header and detector matter, before and after the
@@ -138,7 +149,7 @@ def jobs_for(name: str) -> list[dict]:
     return jobs
 
 
-EXPERIMENTS = ("awgn", "clip", "channels", "interleaver", "header")
+EXPERIMENTS = ("awgn", "clip", "channels", "interleaver", "header", "repeater_masked")
 
 
 def _key(job: dict) -> str:

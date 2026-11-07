@@ -44,12 +44,23 @@ def _floor(row: dict) -> bool:
     return knee is not None and row["threshold_db"] - knee > 4.0
 
 
+def _clip(row: dict) -> float:
+    """Clip level a row ran at; rows from before per-rung clipping ran at 7 dB."""
+    return row.get("clip_db", 7.0)
+
+
 def _thresholds(rows: list[dict], **match) -> dict[int, float | None]:
+    """1% thresholds as 7 dB-equivalent SNR (SPEC 6.2, ADR 0003): the
+    average-power threshold plus the row's clip level minus 7 dB."""
     out = {}
     for r in rows:
-        if all(r.get(k, 7.0 if k == "clip_db" else None) == v for k, v in match.items()):
-            out[r["mcs"]] = None if _floor(r) else r["threshold_db"]
+        if all(r.get(k) == v for k, v in match.items()):
+            out[r["mcs"]] = None if _floor(r) else r["threshold_db"] + _clip(r) - 7.0
     return out
+
+
+def _round_up_half(x: float) -> float:
+    return float(np.ceil(x * 2 - 1e-9) / 2)
 
 
 def _floors(rows: list[dict], **match) -> dict[int, float]:
@@ -64,14 +75,14 @@ def bler_plot(rows: list[dict], title: str, fname: str, **match) -> str:
     for r in sorted((r for r in rows if all(r.get(k) == v for k, v in match.items())),
                     key=lambda r: r["mcs"]):
         pts = sorted(r["points"], key=lambda p: p["snr_db"])
-        x = [p["snr_db"] for p in pts]
+        x = [p["snr_db"] + _clip(r) - 7.0 for p in pts]
         y = [max(p["bler"], 0.5 / max(p["blocks"], 1)) for p in pts]
         ax.semilogy(x, y, "o-", label=f"MCS {r['mcs']} ({params.RUNGS[r['mcs']].modulation} "
                     f"{params.RUNGS[r['mcs']].code_rate})")
         ax.axvline(params.RUNGS[r["mcs"]].nominal_snr_db, color=ax.lines[-1].get_color(),
                    ls=":", lw=0.8)
     ax.axhline(0.01, color="k", lw=0.6)
-    ax.set_xlabel("audio SNR (dB)")
+    ax.set_xlabel("7 dB-equivalent audio SNR (dB)")
     ax.set_ylabel("block error rate")
     ax.set_title(title + " (dotted: SPEC 6.2 nominal)")
     ax.set_ylim(1e-4, 1.05)
@@ -163,8 +174,9 @@ def thresholds_section() -> list[str]:
         for prof, w in (("mic", 24), ("flat12", 30), ("flat25", 56), ("repeater", 24)):
             if any(r["profile"] == prof for r in chans):
                 cols.append((f"{prof} ({w})", chans, {"profile": prof}))
-    head = "| MCS | Rung | SPEC 6.2 nominal | " + " | ".join(c for c, _, _ in cols) + " | Worst Δ vs nominal |"
-    lines += [head, "|" + " --- |" * (4 + len(cols))]
+    head = ("| MCS | Rung | Clip (dB) | SPEC 6.2 nominal | " + " | ".join(c for c, _, _ in cols)
+            + " | Worst Δ vs nominal | Table value |")
+    lines += [head, "|" + " --- |" * (6 + len(cols))]
     for r in params.RUNGS:
         cells, deltas = [], []
         for _, rows, match in cols:
@@ -178,12 +190,18 @@ def thresholds_section() -> list[str]:
             else:
                 cells.append("—")
         worst = max(deltas, key=abs) if deltas else None
-        lines.append(f"| {r.mcs} | {r.modulation} {r.code_rate} | {r.nominal_snr_db:.0f} | "
-                     + " | ".join(cells) + f" | {_fmt(worst, 1) if worst is not None else '—'} |")
-    lines += ["", "All at the SPEC 7.1 clip level of 7 dB. \"floor x%\" means BLER stopped "
-              "falling well above 1%; x is the lowest BLER seen up to 40 dB. \"fails\" means "
-              "BLER stayed above 50%. The clip section "
-              "shows what removes it. Worst Δ is over the measured thresholds only.", "",
+        a24 = _thresholds(awgn, width=24).get(r.mcs)
+        lines.append(f"| {r.mcs} | {r.modulation} {r.code_rate} | {params.clip_db(r.mcs):.0f} | "
+                     f"{r.nominal_snr_db:.0f} | " + " | ".join(cells)
+                     + f" | {_fmt(worst, 1) if worst is not None else '—'} | "
+                     + (f"{_round_up_half(a24):.1f}" if a24 is not None else "—") + " |")
+    lines += ["", "Each rung runs at its own clip level (ADR 0003: 7 dB at MCS 0–3, then 8, 9 "
+              "and 10 dB), and every threshold is the 7 dB-equivalent SNR: the average-power "
+              "threshold plus the clip level minus 7 dB, so rungs compare at equal peak level. "
+              "\"Table value\" is the AWGN 24-tone threshold rounded up to the next 0.5 dB, "
+              "the figure for the SPEC 6.2 Threshold column. \"floor x%\" means BLER stopped "
+              "falling well above 1%; x is the lowest BLER seen. \"fails\" means BLER stayed "
+              "above 50%. Worst Δ is over the measured thresholds only.", "",
               f"![AWGN, 24 tones]({bler_plot(awgn, 'AWGN, 24 tones', 'bler_awgn_24.png', width=24)})", ""]
     if chans:
         for prof in ("mic", "flat12", "flat25", "repeater"):
@@ -241,6 +259,65 @@ def clip_section() -> list[str]:
     return lines
 
 
+def interleaver_section() -> list[str]:
+    rows = _load("interleaver")
+    lines = ["## Interleaver against a random permutation (SPEC 6.4)", ""]
+    if rows is None:
+        return lines + ["Interleaver comparison not yet run.", ""]
+    lines += ["AWGN, 2 blocks per frame, BLER at each SNR (dB). \"Dead tone\" is one data tone "
+              "lost in the channel without being masked; \"burst\" is 10 ms at +20 dB, received "
+              "with `receive(burst_aware=True)`. Structural metrics are in "
+              "`cairn_sim/interleaver_eval.py`.", "",
+              "| Impairment | MCS | Tones | SNR (dB) | Linear (SPEC 6.4) | Random | Unimpaired |",
+              "| --- | --- | --- | --- | --- | --- | --- |"]
+
+    def find(imp, mcs, w, kind):
+        return next((r for r in rows if (r["impairment"], r["mcs"], r["width"], r["interleaver"])
+                     == (imp, mcs, w, kind)), None)
+
+    def fmt(r, snrs):
+        if r is None:
+            return ""
+        by = {p["snr_db"]: p["bler"] for p in r["points"]}
+        return " / ".join(f"{100 * by[s]:.2f}%" if s in by else "—" for s in snrs)
+
+    for imp in ("dead_tone", "burst"):
+        for mcs in (2, 4):
+            for w in (24, 56):
+                lin = find(imp, mcs, w, "linear")
+                if lin is None:
+                    continue
+                snrs = [p["snr_db"] for p in sorted(lin["points"], key=lambda p: p["snr_db"])]
+                base = find("none", mcs, w, "linear") if imp == "dead_tone" else None
+                lines.append(f"| {imp.replace('_', ' ')} | {mcs} | {w} | "
+                             f"{' / '.join(f'{s:g}' for s in snrs)} | {fmt(lin, snrs)} | "
+                             f"{fmt(find(imp, mcs, w, 'random'), snrs)} | {fmt(base, snrs)} |")
+    return lines + [""]
+
+
+def header_section() -> list[str]:
+    rows = _load("header")
+    lines = ["## Header frame loss at MCS 0 (SPEC 6.3)", ""]
+    if rows is None:
+        return lines + ["Header comparison not yet run.", ""]
+    lines += ["Fraction of frames lost at the header (preamble missed or header CRC failed), "
+              "24 tones, 2 data blocks per frame, the same frames for both estimates. \"s2\" "
+              "is the earlier per-tone noise estimate from the S2 pair; \"measured\" (the "
+              "default) adds S1 and the header symbols' own error.", "",
+              "| Channel | Header noise | " , "| --- | --- |"]
+    snr_cols = {}
+    for r in rows:
+        snr_cols.setdefault(r["profile"], sorted(p["snr_db"] for p in r["points"]))
+    width = max(len(v) for v in snr_cols.values())
+    lines[-2] += " | ".join(f"SNR {i + 1}" for i in range(width)) + " |"
+    lines[-1] += " --- |" * width
+    for r in rows:
+        pts = sorted(r["points"], key=lambda p: p["snr_db"])
+        lines.append(f"| {r['profile']} | {r['rx_kw']['header_noise']} | "
+                     + " | ".join(f"{p['header_fer'] * 100:.2f}% at {p['snr_db']:g} dB" for p in pts) + " |")
+    return lines + [""]
+
+
 def main() -> int:
     parts = ["# Stage 1 simulation report", "",
              "Generated by `python -m cairn_sim.report` from `sim/results/`. Audio SNR is "
@@ -248,7 +325,8 @@ def main() -> int:
     findings = SIM / "findings.md"
     if findings.exists():
         parts += [findings.read_text().strip(), ""]
-    parts += thresholds_section() + clip_section() + papr_section() + budget_section()
+    parts += (thresholds_section() + clip_section() + header_section() + interleaver_section()
+              + papr_section() + budget_section())
     for extra in ("ldpc", "preamble", "channel"):
         f = RESULTS / f"{extra}.md"
         if f.exists():
