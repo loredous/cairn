@@ -107,10 +107,15 @@
   strength: MUST
   statement: >-
     In probe symbol r (r = 0, 1), tone k (k = 0 … W_p − 1) carries
-    1 − 2c(r·W_p + k), where c is the sequence of `scrambler-sequence` with
-    c_init = 0x0D0E (3342) and W_p is the number of probed tones, except that
-    every pilot tone below W_p, masked or not, carries its pilot value
-    (`pilot-sequence`). (SPEC §5.4)
+    1 − 2c(56·r + k), where c is the sequence of `scrambler-sequence` with
+    c_init = 0x0D0E (3342) and W_p is the number of probed tones (the
+    sender's cap), except that every pilot tone below W_p, masked or not,
+    carries its pilot value (`pilot-sequence`). (SPEC §5.4)
+  rationale: >-
+    Indexing by 56·r + k, not by the probe width, gives each tone the same
+    value whatever the sender's cap, as pilot values do not depend on how
+    many pilots are active. A receiver can therefore use the probe, and see
+    where the probed tones stop, without first knowing the cap.
   tags: [phy, sync, v0.2]
 
 - slug: scrambler-sequence

@@ -154,7 +154,7 @@ def test_vector_follows_the_rules(name):
     if "probe" in seg:
         p = seg["probe"]
         first = p["first_symbol"]
-        c = 1 - 2 * gold(0x0D0E, 2 * w).reshape(2, w).astype(complex)
+        c = (1 - 2 * gold(0x0D0E, 2 * 56).reshape(2, 56)[:, :w]).astype(complex)
         pt = [t for t in PILOTS if t < w]
         c[:, pt] = pv[first:first + 2, :len(pt)]
         assert np.allclose(grid[first:first + 2], c)

@@ -69,7 +69,9 @@ implementation reproduces the simulator bit for bit.
   `probe-sequence`). S1 is 24 phases in units of 2π/256. S2, the pilots and
   the probe are segments of one generator, the 3GPP Gold sequence, with
   seeds 5237, 0x0B1D and 0x0D0E. A pilot's value depends only on the symbol
-  index and which of the four pilot tones it is on.
+  index and which of the four pilot tones it is on. A probe tone's value
+  depends only on the probe symbol and the tone index, not on the sender's
+  cap.
 - **Scrambler** (`scrambler-sequence`). It uses the same Gold sequence,
   with c_init = 1 + position. The header has position 0, and the frame's
   blocks take positions 1, 2, … in transmission order, control blocks
@@ -130,12 +132,13 @@ two non-normative receiver notes.
   channel smoother would avoid the roughly 2 dB that the 7-tone smoother
   loses at MCS 4 when one dead, not-yet-masked tone spreads into its
   neighbours. Neither changes what is transmitted.
-- **The width probe's values depend on the probe width.** Tone k of the
-  probe takes element r·W_p + k of its sequence. A receiver must know the
-  sender's cap W_p before it can use the probe. In CONNECT and CONNECT-ACK
-  it reads W_p from the width-cap field of the control block (B.3), which
-  decodes without the probe. For SOUND frames and re-probes inside a
-  session, W_p is already known from setup.
+- **The width probe does not need the sender's cap.** In the Stage 1
+  simulation, tone k of probe symbol r took element r·W_p + k of the probe
+  sequence, so its value depended on the cap W_p. This ADR indexes it as
+  56·r + k instead, so a receiver can use the probe, and see where the
+  probed tones stop, before it knows the cap. At a 56-tone cap the two
+  are identical. The simulation was changed to match, and its 56-tone
+  results are unaffected.
 - **Control blocks have no vectors yet.** The Stage 1 simulation does not
   build control blocks, so the control rows of `frame-symbol-content` and
   the control positions of `scrambler-sequence` are specified but not yet

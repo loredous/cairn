@@ -161,9 +161,14 @@ def _fill_symbols(points: np.ndarray, n_sym: int, width: int, data_tones: tuple[
 
 
 def probe_grid(width: int, first_symbol: int) -> np.ndarray:
-    """Width-probe symbols (SPEC 5.4): known BPSK on every tone, pilots on the pilot tones."""
-    c = mapping.gold_sequence(PROBE_C_INIT, params.PROBE_SYMBOLS * width)
-    g = (1.0 - 2.0 * c.astype(float)).reshape(params.PROBE_SYMBOLS, width).astype(complex)
+    """Width-probe symbols (SPEC 5.4): known BPSK on every tone, pilots on the pilot tones.
+
+    Tone k of probe symbol r is 1 - 2 c(56 r + k) (ADR 0005 probe-sequence),
+    so a tone's value does not depend on the probe width.
+    """
+    c = mapping.gold_sequence(PROBE_C_INIT, params.PROBE_SYMBOLS * params.MAX_TONES)
+    g = (1.0 - 2.0 * c.astype(float)).reshape(params.PROBE_SYMBOLS, params.MAX_TONES)[:, :width]
+    g = g.astype(complex)
     pilots = params.pilots_for(width)
     g[:, list(pilots)] = pilot_values(first_symbol + params.PROBE_SYMBOLS, len(pilots))[first_symbol:]
     return g
