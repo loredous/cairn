@@ -1,0 +1,16 @@
+# yaml-language-server: $schema=../../tools/adrsite/schemas/interpretations.schema.json
+#
+# Each entry restates or clarifies a decision of this ADR without amending it.
+
+- slug: reassembled-message-crc
+  decision: broadcast-message-fragments
+  question: >-
+    Each slice is a complete PDU with its own CRC-32. Which CRC does the
+    reassembled message, delivered "as one PDU", carry?
+  interpretation: >-
+    Each slice's CRC-32 is checked when that frame's PDU is parsed, and a
+    slice that fails it is a gap: the partial message is discarded. The
+    delivered PDU's CRC-32, wherever the host interface shows one, is
+    computed afresh over the concatenated bodies (`pdu-crc32`); it
+    is never sent on the air. Found in the PHY field work (PR #21).
+  date: 2026-11-07

@@ -1,0 +1,21 @@
+# yaml-language-server: $schema=../../tools/adrsite/schemas/interpretations.schema.json
+#
+# Each entry restates or clarifies a decision of this ADR without amending it.
+
+- slug: step-up-run-conditions
+  decision: adaptation-rules-multi-rung
+  question: >-
+    Must every frame of the three-frame run meet the SNR condition, or only
+    the last? And do frames flagged own-ADC-clipped, or measured at
+    distortion index 3 or higher, count toward the run?
+  interpretation: >-
+    Every frame of the run must be clean and measure at least 2 dB above
+    the next rung's threshold; a frame with data blocks that misses either
+    condition restarts the run, and so does a step up. A frame whose data
+    blocks this receiver measured with its ADC clipped, or at distortion
+    index 3 or higher, neither steps down nor counts toward a step up, and
+    restarts the run: its measurements are unreliable, or the peer is
+    expected to change its drive. Frames without data blocks still neither
+    count nor break the run. This is how the link-layer implementation
+    (PR #22) reads the rule.
+  date: 2026-11-07

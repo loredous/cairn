@@ -1,0 +1,57 @@
+# yaml-language-server: $schema=../../tools/adrsite/schemas/interpretations.schema.json
+#
+# Each entry restates or clarifies a decision of this ADR without amending it.
+
+# --- Findings of the PHY field work (PR #21), settled with ADR 0013 --------
+
+- slug: resume-ack-carries-setup-mask
+  decision: mask-in-every-session-ack
+  question: >-
+    A resume CONNECT-ACK carries an ACK block after its B.3 and ID blocks
+    (ADR 0008 `session-resume-rules`). Does that ACK block set flag bit 0,
+    and with which mask and mask ID?
+  interpretation: >-
+    It does, as every session ACK block does. It carries the same tone mask
+    as the CONNECT-ACK's B.3 block, with mask ID 0, the setup ID
+    (`mask-id`), and the same requested MCS; its SNR, distortion and
+    clipping fields are the responder's measurements of the CONNECT, and
+    its block errors are 0.
+  date: 2026-11-07
+
+- slug: connect-ack-probe-width
+  decision: width-probe-extent
+  question: >-
+    CONNECT-ACK's probe covers the responder's session width, but the
+    initiator learns the responder's width cap from the B.3 block, which
+    comes after the probe. How does it know the probe's extent?
+  interpretation: >-
+    Either way works. It may keep the probe symbols and process them once
+    the B.3 block (on the base tones) has decoded, or detect the probe's
+    extent directly, as a broadcast listener does (ADR 0007
+    `broadcast-width-detection-method`). The decision fixes only what the
+    responder sends: tones 0 … W − 1 of its session width. The PHY field
+    work (PR #21) uses detection.
+  date: 2026-11-07
+
+- slug: connect-ack-decoded-unmasked
+  decision: mask-id
+  question: >-
+    CONNECT-ACK sets the session-frame flag and carries Mask ID 0, and the
+    setup mask also has ID 0. Does a receiver demap CONNECT-ACK with the
+    setup mask?
+  interpretation: >-
+    No. CONNECT-ACK is unmasked whatever its Mask ID, and a receiver picks
+    that by frame type. The Mask ID selects a mask only in session frames
+    other than CONNECT-ACK, starting with the initiator's first frame.
+  date: 2026-11-07
+
+- slug: mask-id-outside-session
+  decision: mask-id
+  question: >-
+    What does a receiver do with a nonzero Mask ID in CONNECT, CONNECT-ACK
+    or a frame sent outside a session?
+  interpretation: >-
+    It ignores the field and demaps the frame unmasked, as for any field
+    that is absent for the frame (ADR 0007 `absent-and-reserved-fields`). A
+    sender never builds such a frame.
+  date: 2026-11-07
