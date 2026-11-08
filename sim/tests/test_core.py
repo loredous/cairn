@@ -214,3 +214,17 @@ def test_whole_frame_clipped_at_the_rung_level():
     low = ofdm.papr_db(frame.build(frame.FrameConfig(mcs=3, n_blocks=6),
                                    np.random.default_rng(12)).samples)
     assert low.max() <= 7.0 + 1e-3
+
+
+def test_symbol_distortion_raises_only_a_symbol_far_above_the_assumed_noise():
+    pilots = (3, 20, 37, 52)
+    known = np.ones((3, 4))
+    nv = np.full((3, 56), 1e-4)
+    eq = np.ones((3, 56), dtype=complex)
+    eq[1, list(pilots)] += 0.1                     # symbol 1: pilot error 1e-2, 100 times the assumed noise
+    eq[2, list(pilots)] += 1.5e-2                  # symbol 2: 2.25e-4, scatter within a factor of 6
+    out = frame.symbol_distortion(eq, nv, pilots, known, list(range(56)))
+    assert np.allclose(out[0], 1e-4) and np.allclose(out[2], 1e-4)
+    assert np.allclose(out[1], 1e-2)
+    # two pilots (24 tones) scatter too much: left alone
+    assert np.allclose(frame.symbol_distortion(eq, nv, (3, 20), known[:, :2], list(range(56)))[1], 1e-4)

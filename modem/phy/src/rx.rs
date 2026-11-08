@@ -269,6 +269,13 @@ fn track_drift(
     (corr, -beta * N_USEFUL as f64 / (2.0 * PI))
 }
 
+/// A data symbol whose pilots' error is this many times the assumed noise carries
+/// distortion of its own (mirrors `PILOT_EXCESS_RATIO` in the Python sim).
+const PILOT_EXCESS_RATIO: f64 = 6.0;
+
+/// Fewer data pilots (24 tones have two) scatter too much to single out a symbol.
+const MIN_PILOTS: usize = 3;
+
 /// Noise plus distortion on data symbols raised by `gain`: the additive part
 /// drops by gain^2 once the gain is divided out; distortion stays.
 fn data_noise(noise: &[f64], thermal: &[f64], gain: f64) -> Vec<f64> {
@@ -578,6 +585,28 @@ impl Receiver {
 
         // Data blocks.
         let act = &cfg.data_active_tones;
+        if n_body > d0 && cfg.data_pilots.len() >= MIN_PILOTS {
+            // Clip-and-filter distortion is concentrated in the few symbols
+            // whose peaks were clipped (-15 to -25 dB, flat across the
+            // symbol); the frame-average noise estimate would have the LLRs
+            // trust them. A symbol's own pilots measure its distortion.
+            let table = gold::pilot_table(n_sym);
+            let np = cfg.data_pilots.len() as f64;
+            for s in d0..n_body {
+                let perr = cfg
+                    .data_pilots
+                    .iter()
+                    .map(|&p| (eq.at(s, p) - gold::pilot_value(&table, first + s, p)).norm_sqr())
+                    .sum::<f64>()
+                    / np;
+                let assumed = cfg.data_pilots.iter().map(|&p| nv[s * w + p]).sum::<f64>() / np;
+                if perr > PILOT_EXCESS_RATIO * assumed {
+                    for &k in act {
+                        nv[s * w + k] = nv[s * w + k].max(perr);
+                    }
+                }
+            }
+        }
         if opts.burst_aware && n_body > d0 {
             let inv: Vec<f64> = act.iter().map(|&k| 1.0 / h2[k]).collect();
             let inv_mean = dsp::mean(&inv);
