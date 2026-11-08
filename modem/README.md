@@ -2,17 +2,21 @@
 
 The real-time modem of SPEC §21.3. Done so far: the physical layer, ported
 from the Stage 1 simulator (`sim/cairn_sim/`) and checked bit for bit
-against the published vectors, and the real-time layer around it (steps
-1-4 without the link layer): audio I/O at 48 kHz, PTT backends with
-measured TXDelay and TXTail, a transmitter that sends frames with real
-headers and control blocks, and a continuous receiver that decodes each
-frame header first within the 100 ms turnaround of SPEC 7.3, in the
-`cairn-modem` command. That is enough for a one-way broadcast test between
-two radios (below). The link layer and the host interfaces come next.
+against the published vectors; the real-time layer around it (steps 1-4):
+audio I/O at 48 kHz, PTT backends with measured TXDelay and TXTail, a
+transmitter that sends frames with real headers and control blocks, and a
+continuous receiver that decodes each frame header first within the
+100 ms turnaround of SPEC 7.3; carrier detect (SPEC 7.2); and steps 5-6:
+the link layer (`link/`, sessions, ARQ, adaptation, resume, link test,
+broadcast) wired to the PHY in one runtime with a KISS server and a
+control interface (`cairn-modem run`). Two complete modems hold sessions
+over a simulated FM channel (`cli/tests/two_station.rs`); an on-air
+two-radio session is the next step ([docs/bench-testing.md](../docs/bench-testing.md#two-station-session-with-cairn-modem-run)).
+The native JSON API (SPEC 13.2) is not built yet.
 
 ```sh
 cd modem
-cargo test                                   # vectors, fixtures, loopback, spec tables, mock audio/PTT
+cargo test --release                         # vectors, fixtures, loopback, spec tables, mock audio/PTT, link, two-station sims
 cargo clippy --all-targets -- -D warnings
 cargo run --release --example bench          # single-core timing of 4 s frames
 cargo build --release -p cairn-modem         # target/release/cairn-modem
@@ -28,7 +32,8 @@ Building needs the ALSA headers (`libasound2-dev` on Debian/Ubuntu,
 | `cairn-phy` | `phy/` | Waveform, codes, bit mapping, preamble detector, receiver (below) |
 | `cairn-audio` | `audio/` | cpal streams at 48 kHz chosen by name, lock-free rings, xrun counters, timing of every output sample, input level meter |
 | `cairn-ptt` | `ptt/` | PTT trait and backends: serial RTS/DTR, CM108 HID, Hamlib `rigctld`, VOX/none; a drop guard and a shared handle for signal handlers |
-| `cairn-modem` | `cli/` | Transmit sequencing, the listener, test frames and the level-setting tone (library), and the `cairn-modem` binary |
+| `cairn-link` | `link/` | The link layer, sans-IO (SPEC 8-12, ADRs 0008-0013); see [link/README.md](link/README.md) |
+| `cairn-modem` | `cli/` | Transmit sequencing, the listener, test frames and the level-setting tone; the modem runtime (link layer + PHY + carrier detect), KISS, the control interface, the two-station simulator (library), and the `cairn-modem` binary |
 
 ## The `cairn-modem` command
 
@@ -40,6 +45,7 @@ $M ptt-test --ptt serial:All-In-One-Cable --seconds 1      # refuses more than 5
 $M tone -d All-In-One-Cable --ptt serial:All-In-One-Cable --seconds 3   # SPEC 7.1 level-setting tone
 $M tx -d All-In-One-Cable --ptt serial:All-In-One-Cable --callsign N0CALL-1 --mcs 2 --blocks 3
 $M listen -d All-In-One-Cable                               # header first; Ctrl-C to stop
+$M run -d All-In-One-Cable --ptt serial:All-In-One-Cable --callsign N0CALL-1   # the modem (below)
 ```
 
 - **Devices** are chosen by a substring of the ALSA name or its
@@ -258,6 +264,164 @@ CAIRN_TEST_DEVICE=All-In-One-Cable CAIRN_TEST_PTT=serial:All-In-One-Cable \
 # simulator's FmChannel (modem/tools/fm_channel_wav.py) -> listen; cairn-bench rx on the WAV
 bash modem/tools/e2e_wav.sh
 ```
+
+## The modem runtime (`cairn-modem run`)
+
+SPEC 21.3 steps 5-6: the link layer (`cairn-link`) wired to the PHY with
+carrier detect, a KISS server and a control interface. The procedure for a
+two-station session on the air is in
+[docs/bench-testing.md](../docs/bench-testing.md#two-station-session-with-cairn-modem-run).
+
+```sh
+M=target/release/cairn-modem
+$M run -d All-In-One-Cable --ptt serial:All-In-One-Cable --callsign N0CALL-1 --grid FN31
+#   --kiss 127.0.0.1:8001 (default; "off")    --control 127.0.0.1:8003 (the stdin protocol on TCP)
+#   --txdelay/--txtail (ms)  --persistence 0.25  --slot-ms 100  --max-frame 4.0  --broadcast-mcs 0
+#   --quieting 2700-3100 (Hz)  --refuse  --status 30  -v (every header and DCD change)
+#   --seconds N  --tx-budget S (never key more than S seconds in total: bench safety)
+```
+
+Control commands (stdin, or the `--control` port; one line each, every
+line out carries the seconds since start):
+
+```text
+connect CALL[-SSID] [new]   open a session; resumes retained state unless "new"
+send TEXT | send @PATH      a MESSAGE PDU, or a file as FILE-CHUNK PDUs (object ID, offset, data)
+disconnect [now]            graceful by default (after everything queued is acknowledged)
+probe CALL [beacon]         link test (ADR 0012), or a BEACON request
+beacon [TEXT]  |  ui TEXT   broadcasts
+status  |  quit
+```
+
+Host events print as they happen: connecting, connected (initiator or
+responder, resumed), connect failed (refused, no answer after three
+retries), refused an incoming CONNECT, link lost (state kept 10 minutes),
+disconnected, rx (text, or file chunks with object and offset), delivered
+(when every PDU of a send is acknowledged), undelivered, link-test result
+(both directions' SNR, rung and expected kbps), beacons heard, warnings
+(receive clipping, the peer's distortion report), and each transmission
+with the measured TXDelay and TXTail.
+
+KISS (SPEC 13.1, ADR 0010 `kiss-ui-frames`): each data frame from a host
+is one AX25 PDU in a UI frame to the broadcast address (several per frame
+when they fit, fragmented when one does not); every AX25 PDU received in a
+UI frame goes to every connected host unchanged. TXDELAY, persistence and
+slot time map onto the modem (p = (P + 1)/256, 10 ms units).
+
+### How it works
+
+- **One core, two clocks** (`runtime::Modem`): a sans-IO core owns the
+  `Station`. Audio comes in 10 ms chunks stamped with the time of their
+  first sample; every call carries `now`. Live (`driver`), `now` is the
+  monotonic clock and capture times come from the earliest arrival of
+  each chunk over the last 5 s; in the simulator both are the medium's
+  sample clock.
+- **Receive.** Each chunk goes to carrier detect and to the streaming
+  preamble detector. A detection is decoded header first: the header asks
+  the station how to decode the rest (`Station::rx_link`: a session frame
+  from the peer at the session width with the mask its Mask ID names; a
+  mask ID it does not hold leaves every block failed, ADR 0011; CONNECT,
+  CONNECT-ACK and frames outside a session take their width from their
+  probe). The frame goes to the station with the ADR 0006 channel SNR,
+  per-tone SNR, the probe flag, input clipping during the frame and the
+  time of its last symbol. A preamble whose header fails is
+  `Event::HeaderFailed`.
+- **Carrier detect.** Raw edges of the OR of quieting, the preamble
+  correlator, the Bell 202 detector and COS go to the station without hold
+  (it applies the hold, ADR 0010); a Bell 202 detection is also legacy
+  activity (2 s frames and half p for 10 minutes, SPEC 11.3). The
+  preamble correlator is up from the detector's early confirmation
+  (`Detector::take_early`, the gated plateau and S1 correlation over
+  threshold) to the end of the frame its header describes.
+- **Transmit.** `Action::Transmit` is converted (`PhyCodec`), built with
+  `Transmitter::build_frame` and scaled to -3 dBFS peak; a transmit thread
+  keys, plays TXDelay later, releases TXTail after the last sample has
+  played (`txseq::transmit`) and reports the release time, which is the
+  station's `TxDone`. From keying to release plus 5 ms the receiver ignores
+  its input (half duplex): the detector sees silence and carrier detect
+  neither asserts nor learns.
+- **Frame model** (`phymodel::PhyFrameModel`): on-air time from
+  `cairn_phy::FrameConfig` geometry (TXDelay + samples + TXTail); it gives
+  Appendix A.2's blocks per frame on every rung at 24-56 tones. (With
+  three control blocks the PHY packs them one symbol shorter than A.1's
+  3 x 12.)
+
+### Two-station simulation (`cli/tests/two_station.rs`)
+
+`twosim::Sim` runs complete `Modem`s (real PHY TX and RX, the real link
+layer, real carrier detect) on one simulated audio channel, on a virtual
+clock: about 2.5 s of wall time per minute of two-station session (one
+core per test). The medium sums each receiver's audible transmitters (resampled for
+their sample-clock offset), adds that receiver's noise and models FM
+quieting: open-squelch noise as loud in the band as the reference signal
+until a carrier it hears is keyed (from PTT on, so during TXDelay too),
+then noise at that link's SNR (the 7 dB-equivalent in-band SNR of SPEC 7.1).
+The noise is white, band-limited 150 Hz-4 kHz. Outages, SNR steps and
+foreign transmitters (a Bell 202 station) can be scheduled. AWGN only: the
+FM mic, flat and repeater models of `sim/cairn_sim/channel.py` are not
+ported yet (the PHY's fixtures cover them frame by frame). Results, 24
+tones, TXDelay 150 ms, TXTail 10 ms, decoded frames reaching the station
+20 ms after their completing chunk:
+
+| Scenario | Result |
+| --- | --- |
+| Connect, 50 kB each way at once, disconnect; 25 dB, clocks +60/-40 ppm | Every byte delivered once and in order both ways in 105 s; 3.86 + 4.16 = 8.0 kbps together (both at MCS 5; A.2 one way 7.61); no delivered block resent; both ends `Disconnected`, nothing undelivered |
+| 50 kB one way (15 kB at 8 dB) | 8 dB: MCS 0, 1.11 kbps (A.2 1.21, 92%); 14 dB: MCS 2, 2.81 (3.02, 93%); 20 dB: MCS 3, 4.27 (4.55, 94%); 25 dB: MCS 5, 6.87 (7.61, 90%); 32 dB: MCS 6, 8.51 (9.11, 93%); no block lost. The shortfall is start-up (CONNECT, the first frames) and the last short frame |
+| SNR 25 -> 19 -> 25 dB during a transfer | MCS 5, then MCS 3 from the 2nd frame after the drop, then MCS 5 again on the 4th frame after the rise (one step, ADR 0013) |
+| A Bell 202 station (300 ms of flags, 60 bytes, 734 ms) keys mid-session at 20 dB | Both stations' AFSK detectors assert; no transmission starts while it is keyed or within 100 ms after (the next one 156 ms after its release); frames capped at 2 s afterwards (SPEC 11.3); the transfer completes |
+| 120 s outage mid-transfer, A reconnects 1 s after its link loss | Link lost at 80 s (A) and 115 s (B), resumed at 137/141 s, transfer complete with no delivered block resent and nothing undelivered |
+| Link test, then a session | 0.86 s of air; 14 dB: forward SNR 14.2 dB, MCS 2, 3.02 kbps predicted, session 2.82 (-6%); 25 dB: 25.2 dB, MCS 5, 7.59 predicted, session 7.00 (-8%) |
+| Two AX.25 frames from KISS (one of 920 bytes, fragmented) | Both back at B's KISS side unchanged, in order, from UI frames to the broadcast address |
+| BEACON with a status text | Heard with its ID block; text delivered |
+| Idle, open squelch, 2 x 10 min x 3 seeds (`--ignored`) | No carrier-detect rise from any detector, no detection |
+
+**Turnaround** (peer's last audio sample to own PTT, every turn-holder
+reply): p50 73.8 ms, max 77.5 ms over 23 replies with the 20 ms decode
+model; with decoded frames reaching the station after the measured decode
+time (`DecodeTime::Measured`, 4 block threads; decode p50 8.6 ms, max
+9.3 ms) p50 73.8, max 81.2 ms. The time is TXTail (10 ms), the quieting
+detector's release (about 12 ms after the carrier drops), the 10 ms chunk
+and the 50 ms raw-DCD window of ADR 0010 `turn-holder-reply-check`; the
+decode runs in parallel with the window. Live, the event loop adds its
+2 ms poll and the decode's wake-up (the loop runs under the utilisation
+clamp, see "Full speed on wake-up").
+
+### Carrier detect (`cairn_phy::dcd`, SPEC 7.2)
+
+| Detector | How | Measured |
+| --- | --- | --- |
+| Quieting | 8th-order Butterworth band power above the highest tone (2700-3100 Hz at 24 tones, 6000-7000 at 56; `--quieting`) per 10 ms; the open-squelch floor learnt from the 200 ms mean (rises with 0.4 s, falls with 2 s, frozen while asserted, re-learnt after 60 s); asserts when the 50 ms mean is 6 dB below the floor, releases when the 20 ms mean is back above the lower of floor -3 dB and the midpoint between floor and carrier level; unarmed while the floor is below -60 dB (squelch closed, or no radio) | Up 33-58 ms after a carrier keys; down 5-15 ms after the noise returns (20 dB quieting), 7-31 ms (10 dB) |
+| Preamble correlator | The streaming detector's early confirmation (`Detector::take_early`: plateau and S1 correlation over threshold), held to the end of the frame its header describes | Fires 48-54 ms after a frame starts (final detection 88-94 ms), down to 2 dB SNR |
+| Bell 202 | Sliding one-bit DFTs at 1200 and 2200 Hz: tone dominance, tone purity within a bit, transitions on the 1200-baud grid (rising and falling separately, for twist), over 60 ms | Up 50-80 ms after the burst starts at 10-30 dB with up to 6 dB twist (up to 130 ms at 10 dB with 9 dB twist); down 6-31 ms after it ends |
+| COS | `Modem::set_cos` (no sound-interface GPIO reader yet) | |
+
+False asserts (the §14.1 target is at most one per 10 minutes): none from
+any detector on 80 minutes of synthetic open-squelch noise (white and
+f²-tilted, 300-3000 and 200-4000 Hz), and none in the runtime on 60
+station-minutes of the simulator's noise. No Bell 202 detection on 20
+minutes of voice-like audio, Cairn frames at every rung, 1000/1750 Hz
+tones, DTMF, CW or steady 1200/2200 Hz tones. Limits: a sudden 3 dB or
+larger drop in the noise level reads as a carrier about one time in four
+(slow drift does not); bright speech gives 100-180 ms quieting dropouts
+during a voice carrier; a squelch that closes reads as a carrier until the
+60 s re-learn. A Cairn frame's own spectrum leaks into 2700-3100 Hz about
+19 dB below its mean, so quieting holds through the peer's frame only when
+the open-squelch noise is well above that (20 dB of quieting); the
+preamble correlator covers the frame in any case. `phy/tests/dcd.rs` has
+the tests (13 in the default run, three 10-minute runs `--ignored`).
+
+### Testbed notes for the runtime (AIOC, no radio attached)
+
+Before the interfaces went to live radios: `run` started on the AIOC
+(i16 mono, 48 kHz, 25 ms output latency) and idled with the quieting
+detector unarmed (no open-squelch noise at -71 dBFS) and no carrier-detect
+rise; `connect N0NONE-2` to a fictitious callsign sent CONNECT (576 ms
+keyed, TXDelay 150.0 ms, TXTail 10.2 ms at the DAC) four times (the
+attempt and three retries, ADR 0010 `connect-retry-schedule`), 2.3 s keyed
+in all, then reported "no answer after three retries" and stayed unkeyed;
+a KISS client on port 8001 sent an AX.25 frame and the modem sent it as a
+UI frame (813 ms keyed). The planned 60 s idle check with PTT wired was not
+run (the cable was moved to live radios).
 
 ## Physical layer
 

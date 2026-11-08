@@ -129,6 +129,7 @@ name = "cairn-modem"
 version = "0.1.0"
 dependencies = [
  "cairn-audio",
+ "cairn-link",
  "cairn-phy",
  "cairn-ptt",
  "clap",

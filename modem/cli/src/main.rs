@@ -51,6 +51,8 @@ enum Cmd {
     Tx(TxArgs),
     /// Capture continuously (or read a WAV), detect and decode every frame
     Listen(ListenArgs),
+    /// Run the modem: link layer, carrier detect, KISS server and control interface (SPEC 21.3 steps 5-6)
+    Run(RunArgs),
 }
 
 #[derive(Args, Clone)]
@@ -312,6 +314,133 @@ struct ListenArgs {
     expect: Option<u64>,
 }
 
+#[derive(Args)]
+struct RunArgs {
+    #[command(flatten)]
+    audio: AudioOpts,
+    #[command(flatten)]
+    ptt: PttOpts,
+    #[command(flatten)]
+    timing: TimingOpts,
+    /// This station's callsign, CALL[-SSID]
+    #[arg(long, env = "CAIRN_CALLSIGN")]
+    callsign: String,
+    /// Maidenhead locator for the ID block (4 or 6 characters)
+    #[arg(long)]
+    grid: Option<String>,
+    /// KISS TCP address (SPEC 13.1; port 8001), or "off"
+    #[arg(long, default_value = "127.0.0.1:8001")]
+    kiss: String,
+    /// Control interface on a TCP address too (the same line protocol as stdin), e.g. 127.0.0.1:8003
+    #[arg(long)]
+    control: Option<String>,
+    /// Do not read control commands from stdin
+    #[arg(long)]
+    no_stdin: bool,
+    /// Stop after this many seconds (default: until quit or Ctrl-C)
+    #[arg(long)]
+    seconds: Option<f64>,
+    /// Never key for more than this many seconds in total (a safety budget for bench tests)
+    #[arg(long)]
+    tx_budget: Option<f64>,
+    /// p-persistence (SPEC 11.1)
+    #[arg(long, default_value_t = 0.25)]
+    persistence: f64,
+    /// Slot time, ms (SPEC 11.1)
+    #[arg(long, default_value_t = 100)]
+    slot_ms: u64,
+    /// Maximum frame on-air time, s (0.5-4.0, SPEC 7.3)
+    #[arg(long, default_value_t = 4.0)]
+    max_frame: f64,
+    /// Broadcast rung, MCS 0-3 (UI and BEACON frames)
+    #[arg(long, default_value_t = 0)]
+    broadcast_mcs: u8,
+    /// Refuse incoming CONNECTs
+    #[arg(long)]
+    refuse: bool,
+    /// Quieting band for carrier detect, Hz (default from the 24-tone width: 2700-3100)
+    #[arg(long)]
+    quieting: Option<String>,
+    /// Decoder threads for data blocks
+    #[arg(long, default_value_t = 4)]
+    threads: usize,
+    /// Status line every this many seconds (0: none)
+    #[arg(long, default_value_t = 0.0)]
+    status: f64,
+    /// Print every decoded header and every carrier-detect change
+    #[arg(short, long)]
+    verbose: bool,
+}
+
+fn run_cmd(a: RunArgs) -> Result<(), String> {
+    use cairn_modem::runtime::ModemConfig;
+    let addr = cairn_modem::control::parse_call(&a.callsign)?;
+    let (call, ssid) = match a.callsign.rsplit_once('-') {
+        Some((c, n)) if n.chars().all(|c| c.is_ascii_digit()) && !n.is_empty() => {
+            (c.to_ascii_uppercase(), n.parse::<u8>().map_err(|_| "bad SSID")?)
+        }
+        _ => (a.callsign.to_ascii_uppercase(), 0),
+    };
+    let grid = match &a.grid {
+        None => None,
+        Some(g) if g.len() == 4 || g.len() == 6 => {
+            let mut b = [b' '; 6];
+            b[..g.len()].copy_from_slice(g.to_ascii_uppercase().as_bytes());
+            Some(b)
+        }
+        Some(_) => return Err("--grid takes 4 or 6 characters".into()),
+    };
+    let id = cairn_link::IdBlock::new(&call, ssid, grid).map_err(|e| format!("callsign: {e:?}"))?;
+    let mut st = cairn_link::Config::new(addr, id);
+    st.seed = std::time::SystemTime::now().duration_since(UNIX_EPOCH).map_or(1, |d| d.as_nanos() as u64);
+    if !(0.0..=1.0).contains(&a.persistence) || a.persistence == 0.0 {
+        return Err("--persistence must be in (0, 1]".into());
+    }
+    st.persistence = a.persistence;
+    st.slot_time = Duration::from_millis(a.slot_ms);
+    if !(0.5..=4.0).contains(&a.max_frame) {
+        return Err("--max-frame must be 0.5-4.0 s".into());
+    }
+    st.max_frame_time = Duration::from_secs_f64(a.max_frame);
+    if a.broadcast_mcs > 3 {
+        return Err("--broadcast-mcs must be 0-3".into());
+    }
+    st.broadcast_mcs = a.broadcast_mcs;
+    st.accept_connects = !a.refuse;
+    let timing = a.timing.timing()?;
+    let mut cfg = ModemConfig::new(st);
+    cfg.txdelay = Duration::from_secs_f64(timing.txdelay_s);
+    cfg.txtail = Duration::from_secs_f64(timing.txtail_s);
+    cfg.rx.threads = a.threads.clamp(1, 4);
+    if let Some(q) = &a.quieting {
+        let (lo, hi) = q.split_once('-').ok_or("--quieting LO-HI (Hz)")?;
+        let lo: f64 = lo.trim().parse().map_err(|_| "--quieting LO-HI (Hz)")?;
+        let hi: f64 = hi.trim().parse().map_err(|_| "--quieting LO-HI (Hz)")?;
+        cfg.dcd.quieting_band_hz = (lo, hi);
+    }
+    let ptt = a.ptt.open()?;
+    if ptt.is_null() {
+        println!("note: no PTT line (--ptt); the audio plays unkeyed");
+    }
+    if let Err(e) = cairn_modem::boost::boost_current_thread() {
+        eprintln!("note: event loop runs without a utilisation clamp ({e}); turnaround may suffer");
+    }
+    let opts = cairn_modem::driver::RunOptions {
+        device: a.audio.device.clone(),
+        stream: a.audio.stream(),
+        kiss: (a.kiss != "off").then(|| a.kiss.clone()),
+        control: a.control.clone(),
+        stdin: !a.no_stdin,
+        seconds: a.seconds,
+        tx_budget: a.tx_budget.map(Duration::from_secs_f64),
+        verbose: a.verbose,
+        status_every: (a.status > 0.0).then(|| Duration::from_secs_f64(a.status)),
+    };
+    let summary = cairn_modem::driver::run(cfg, &opts, ptt, &signals::STOP)?;
+    println!("{summary}");
+    Ok(())
+}
+
 fn main() -> ExitCode {
     let cli = Cli::parse();
     signals::install();
@@ -322,6 +451,7 @@ fn main() -> ExitCode {
         Cmd::Tone(a) => tone(a),
         Cmd::Tx(a) => tx(a),
         Cmd::Listen(a) => listen_cmd(a),
+        Cmd::Run(a) => run_cmd(a),
     };
     match r {
         Ok(()) => ExitCode::SUCCESS,

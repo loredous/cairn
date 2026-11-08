@@ -13,6 +13,7 @@ path = "src/main.rs"
 
 [dependencies]
 cairn-phy = { path = "../phy" }
+cairn-link = { path = "../link" }
 cairn-audio = { path = "../audio" }
 cairn-ptt = { path = "../ptt" }
 clap = { version = "4.5", features = ["derive", "env"] }
