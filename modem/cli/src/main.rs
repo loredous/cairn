@@ -9,14 +9,18 @@ use clap::{Args, Parser, Subcommand};
 
 use cairn_audio::{InputStats, InputStream, LevelMeter, Levels, OutputPort, OutputStream, StreamOptions};
 use cairn_modem::frames::{
-    FrameSpec, PlacedFrame, PlacedTone, build_frame, level_tone, manifest_json, parse_prefix, parse_tones,
-    peak_rms_dbfs,
+    FrameSpec, PlacedFrame, PlacedHeader, PlacedTone, bits_hex, build_frame, level_tone, manifest_json, parse_prefix,
+    parse_tones, peak_rms_dbfs,
 };
-use cairn_modem::listen::{self, BufferSource, CHUNK, ChunkSource, FixedConfig, ListenOptions, Output};
+use cairn_modem::headers::{self, HeaderSpec};
+use cairn_modem::listen::{
+    self, BufferSource, CHUNK, ChunkSource, ConfigSource, FixedConfig, HeaderFirst, ListenOptions, Output, PacedSource,
+};
 use cairn_modem::txseq::{self, TxTiming};
 use cairn_phy::detector::DetectorConfig;
+use cairn_phy::fields::{Address, frame_type};
 use cairn_phy::params::{CP_LONG, CP_SHORT, FS};
-use cairn_phy::{RxOptions, Transmitter};
+use cairn_phy::{LinkState, RxOptions, Transmitter};
 use cairn_ptt::{PttGuard, PttSpec, SerialLineSpec, SharedPtt};
 
 mod signals;
@@ -124,7 +128,7 @@ struct FrameOpts {
     /// Prefix: short (60 samples) or long (120); listen: force it instead of using the detector's
     #[arg(long)]
     prefix: Option<String>,
-    /// Tones silenced in data symbols, e.g. 8-11,30 (never 3 or 20)
+    /// Tones silenced in data symbols, e.g. 8-11,30 (never 3 or 20); session frames only
     #[arg(long)]
     mask: Option<String>,
     /// Data blocks per frame (default: as many as fit --frame-s)
@@ -220,6 +224,33 @@ struct TxArgs {
     /// Payload seed; frame i uses seed * 1000 + i, as cairn-bench tx
     #[arg(long, default_value_t = 1)]
     seed: u64,
+    /// This station's callsign and SSID, e.g. N0CALL-1: the header's source (SPEC 8.3, station ID)
+    #[arg(long, env = "CAIRN_CALLSIGN")]
+    callsign: Option<String>,
+    /// Destination callsign (default: broadcast)
+    #[arg(long)]
+    to: Option<String>,
+    /// Frame type: ui (broadcast data, the default), beacon, data (a session frame, with an ACK block), probe
+    #[arg(long = "type", default_value = "ui")]
+    frame_type: String,
+    /// First sequence number: the frame counter of a broadcast (+1 per frame), the first block's in a session
+    #[arg(long, default_value_t = 0)]
+    seq: u16,
+    /// Send the ID control block (B.6) in every frame (always in a BEACON)
+    #[arg(long)]
+    id: bool,
+    /// Grid locator for the ID block, 4 or 6 characters
+    #[arg(long)]
+    grid: Option<String>,
+    /// Session frames: this station's cap in tones, the width probe's extent (default: the width)
+    #[arg(long)]
+    cap: Option<usize>,
+    /// Text to send as the payload (zero-padded); default: random payloads for the seed
+    #[arg(long)]
+    message: Option<String>,
+    /// Random header bits as cairn-bench tx (no callsign; not decodable header first)
+    #[arg(long)]
+    random_header: bool,
     /// Write a WAV (and a cairn-bench/1 manifest next to it) instead of playing
     #[arg(long)]
     wav: Option<PathBuf>,
@@ -237,6 +268,21 @@ struct ListenArgs {
     audio: AudioOpts,
     #[command(flatten)]
     frame: FrameOpts,
+    /// Take the whole configuration from --mcs/--width/--blocks/--mask instead of the header
+    #[arg(long)]
+    fixed: bool,
+    /// Session link: the peer's cap in tones, the extent of its width probe (default: --width)
+    #[arg(long)]
+    peer_cap: Option<usize>,
+    /// Play the WAV at real-time pace, as a sound card would deliver it, and report the receive turnaround
+    #[arg(long)]
+    realtime: bool,
+    /// Print the payload of each decoded frame as text
+    #[arg(long)]
+    text: bool,
+    /// Data-block decoder threads
+    #[arg(long, default_value_t = 4)]
+    threads: usize,
     /// Read this WAV (48 kHz mono 16-bit) instead of the sound card, as fast as possible
     #[arg(long)]
     wav: Option<PathBuf>,
@@ -416,7 +462,7 @@ fn check_keyed(seconds: f64, force: bool) -> Result<(), String> {
 struct Item {
     label: String,
     samples: Vec<f64>,
-    frame: Option<(FrameSpec, cairn_phy::FrameConfig, u64)>,
+    frame: Option<(FrameSpec, cairn_phy::FrameConfig, u64, Option<PlacedHeader>)>,
 }
 
 fn play(items: &[Item], a: &AudioOpts, p: &PttOpts, timing: &TxTiming, gap_s: f64) -> Result<(), String> {
@@ -470,7 +516,7 @@ fn write_wav(path: &Path, items: &[Item], lead_s: f64, gap_s: f64, seed: u64, to
     let mut tone = None;
     for (i, it) in items.iter().enumerate() {
         let start = x.len();
-        if let Some((spec, cfg, fseed)) = &it.frame {
+        if let Some((spec, cfg, fseed, header)) = &it.frame {
             let (peak_dbfs, rms_dbfs) = peak_rms_dbfs(&it.samples);
             placed.push(PlacedFrame {
                 index: placed.len(),
@@ -481,6 +527,7 @@ fn write_wav(path: &Path, items: &[Item], lead_s: f64, gap_s: f64, seed: u64, to
                 n_samples: it.samples.len(),
                 peak_dbfs,
                 rms_dbfs,
+                header: header.clone(),
             });
         } else if i == 0 && tone_first {
             tone = Some(PlacedTone { start, seconds: it.samples.len() as f64 / FS as f64 });
@@ -518,10 +565,61 @@ fn tone(a: ToneArgs) -> Result<(), String> {
     play(&[item], &a.audio, &a.ptt, &timing, 0.0)
 }
 
+/// The header spec for frame `i` of a `tx` run with real headers.
+fn header_spec(a: &TxArgs, spec: &FrameSpec, i: usize) -> Result<HeaderSpec, String> {
+    let Some(call) = &a.callsign else {
+        return Err("give --callsign (the header's source, SPEC 8.3 station ID) or --random-header".into());
+    };
+    let (source, text) = headers::parse_station(call)?;
+    if source == Address::Broadcast {
+        return Err("--callsign cannot be the broadcast address".into());
+    }
+    let destination = match &a.to {
+        Some(t) => headers::parse_station(t)?.0,
+        None => Address::Broadcast,
+    };
+    let ft = headers::parse_type(&a.frame_type)?;
+    let mut h = HeaderSpec::broadcast(source, ft, 0, spec.width, spec.mcs, 0);
+    h.callsign = text;
+    h.destination = destination;
+    h.cp = spec.cp;
+    h.id = a.id || ft == frame_type::BEACON;
+    h.grid = a.grid.clone();
+    h.message = a.message.as_ref().map(|m| m.as_bytes().to_vec());
+    if h.is_session() {
+        h.usable = headers::usable_from_silenced(spec.width, &spec.silenced);
+        h.cap = a.cap;
+    } else if !spec.silenced.is_empty() || a.cap.is_some() {
+        return Err("--mask and --cap apply to session frames; a broadcast uses its width, unmasked (ADR 0007)".into());
+    }
+    // Data blocks: --blocks, else what fits the frame time after the control
+    // blocks; none in a BEACON or PROBE unless asked.
+    let n_control = h.controls()?.len();
+    let ctrl_symbols = cairn_phy::FrameConfig::new(24, 0, 0)
+        .and_then(|c| c.with_controls(n_control))
+        .and_then(|c| c.with_mask(h.usable.clone()))
+        .map(|c| c.control_symbols())
+        .map_err(|e| e.to_string())?;
+    h.n_data = match (ft, spec.blocks) {
+        (_, Some(b)) => b,
+        (frame_type::BEACON | frame_type::PROBE | frame_type::ACK, None) => 0,
+        _ => spec.n_blocks_with(ctrl_symbols)?,
+    };
+    if let Some(m) = &h.message {
+        if spec.blocks.is_none() {
+            // Just enough blocks for the message.
+            h.n_data = h.n_data.min(m.len().div_ceil(126).max(1));
+        }
+    }
+    // A broadcast counts frames; a session numbers blocks.
+    let step = if h.is_session() { h.n_data.max(1) } else { 1 };
+    h.sequence = a.seq.wrapping_add((i * step) as u16);
+    Ok(h)
+}
+
 fn tx(a: TxArgs) -> Result<(), String> {
     let timing = a.timing.timing()?;
     let spec = a.frame.spec()?;
-    let cfg = spec.config()?;
     if a.count == 0 {
         return Err("--count must be at least 1".into());
     }
@@ -532,17 +630,51 @@ fn tx(a: TxArgs) -> Result<(), String> {
     let mut transmitter = Transmitter::new();
     for i in 0..a.count {
         let seed = a.seed * 1000 + i as u64;
-        let f = build_frame(&mut transmitter, &cfg, seed);
+        if a.random_header {
+            let cfg = spec.config()?;
+            let f = build_frame(&mut transmitter, &cfg, seed);
+            let samples = f.output();
+            let label = format!(
+                "random header, MCS {} x{} {} prefix, {} blocks, {:.3} s",
+                cfg.mcs,
+                cfg.width,
+                spec.prefix_name(),
+                cfg.n_blocks,
+                samples.len() as f64 / FS as f64
+            );
+            items.push(Item { label, samples, frame: Some((spec.clone(), cfg.clone(), seed, None)) });
+            continue;
+        }
+        let hs = header_spec(&a, &spec, i)?;
+        let (f, payloads) = headers::build_header_frame(&mut transmitter, &hs, seed)?;
+        let h = f.header.clone().expect("built from a header");
         let samples = f.output();
+        let cfg = f.config.clone();
         let label = format!(
-            "MCS {} x{} {} prefix, {} blocks, {:.3} s",
+            "{} > {} {}{} seq {}, MCS {} x{} {} prefix, {} blocks, {} control, {:.3} s",
+            h.source,
+            h.destination,
+            headers::type_name(h.frame_type),
+            headers::flag_text(&h),
+            h.sequence,
             cfg.mcs,
             cfg.width,
             spec.prefix_name(),
             cfg.n_blocks,
+            cfg.n_control,
             samples.len() as f64 / FS as f64
         );
-        items.push(Item { label, samples, frame: Some((spec.clone(), cfg.clone(), seed)) });
+        let placed = PlacedHeader {
+            header_hex: bits_hex(&f.header_bits[..cairn_phy::params::HEADER_INFO_BITS - cairn_phy::params::CRC_BITS]),
+            control_hex: f.control_bits.iter().map(|b| bits_hex(&b[..b.len() - cairn_phy::params::CRC_BITS])).collect(),
+            payload_hex: hs.message.as_ref().map(|_| payloads.iter().map(|p| bits_hex(p)).collect()),
+            source: h.source.to_string(),
+            destination: h.destination.to_string(),
+            frame_type: headers::type_name(h.frame_type),
+            sequence: h.sequence,
+        };
+        let fspec = FrameSpec { blocks: Some(cfg.n_blocks), ..spec.clone() };
+        items.push(Item { label, samples, frame: Some((fspec, cfg, seed, Some(placed))) });
     }
     if let Some(path) = &a.wav {
         return write_wav(path, &items, a.lead, a.gap, a.seed, a.tone.is_some());
@@ -604,37 +736,64 @@ impl ChunkSource for AudioSource {
 fn listen_cmd(a: ListenArgs) -> Result<(), String> {
     let spec = a.frame.spec()?;
     let force_cp = a.frame.prefix.as_ref().map(|_| spec.cp);
-    let n_blocks = spec.n_blocks()?;
-    let config = FixedConfig::new(spec.width, spec.mcs, n_blocks, &spec.silenced, force_cp)?;
+    let prefix = match force_cp {
+        Some(CP_LONG) => "long",
+        Some(_) => "short",
+        None => "from the detector",
+    };
+    let rx_opts = RxOptions { threads: a.threads.clamp(1, 4), ..Default::default() };
+    let config: Box<dyn ConfigSource> = if a.fixed {
+        let n_blocks = spec.n_blocks()?;
+        println!(
+            "config (fixed): MCS {} x{}, {} blocks, prefix {prefix}{}",
+            spec.mcs,
+            spec.width,
+            n_blocks,
+            if spec.silenced.is_empty() { String::new() } else { format!(", tones {:?} silenced", spec.silenced) }
+        );
+        Box::new(FixedConfig::new(spec.width, spec.mcs, n_blocks, &spec.silenced, force_cp)?)
+    } else {
+        let link = LinkState {
+            width: spec.width,
+            usable: headers::usable_from_silenced(spec.width, &spec.silenced),
+            cp: force_cp,
+            cap: a.peer_cap,
+        };
+        // Validate the link state once.
+        cairn_phy::FrameConfig::new(link.width, 0, 1)
+            .and_then(|c| c.with_mask(link.usable.clone()))
+            .and_then(|c| c.with_cap(link.probe_extent()))
+            .map_err(|e| format!("link state: {e}"))?;
+        println!(
+            "config: from each header; session frames at x{}{} probe to {} tones; broadcasts at the width of their probe (ADR 0007); prefix {prefix}",
+            link.width,
+            if spec.silenced.is_empty() { String::new() } else { format!(" (tones {:?} masked)", spec.silenced) },
+            link.probe_extent(),
+        );
+        Box::new(HeaderFirst::new(link, rx_opts.clone()))
+    };
     let detector = DetectorConfig { xcorr_threshold: a.rho, ..Default::default() };
-    let opts =
-        ListenOptions { detector, rx: RxOptions::default(), stats_every: (a.stats * FS as f64).round() as usize };
+    let opts = ListenOptions { detector, rx: rx_opts, stats_every: (a.stats * FS as f64).round() as usize };
     let limit = (a.seconds > 0.0).then_some((a.seconds * FS as f64) as usize);
-    println!(
-        "config: MCS {} x{}, {} blocks, prefix {}{} (until the header names it)",
-        spec.mcs,
-        spec.width,
-        n_blocks,
-        match force_cp {
-            Some(CP_LONG) => "long",
-            Some(_) => "short",
-            None => "from the detector",
-        },
-        if spec.silenced.is_empty() { String::new() } else { format!(", tones {:?} silenced", spec.silenced) }
-    );
 
     let live = a.wav.is_none();
     let t_open = SystemTime::now();
     let mut audio_src: Option<AudioSource> = None;
     let mut file_src: Option<BufferSource> = None;
+    let mut paced_src: Option<PacedSource> = None;
     let source: &mut dyn ChunkSource = match &a.wav {
         Some(p) => {
             let mut x = cairn_phy::wav::read(p).map_err(|e| format!("{}: {e}", p.display()))?;
             if let Some(l) = limit {
                 x.truncate(l);
             }
-            println!("reading {} ({:.2} s)", p.display(), x.len() as f64 / FS as f64);
-            file_src.insert(BufferSource::new(x))
+            println!(
+                "reading {} ({:.2} s){}",
+                p.display(),
+                x.len() as f64 / FS as f64,
+                if a.realtime { " at real-time pace" } else { "" }
+            );
+            if a.realtime { paced_src.insert(PacedSource::new(x)) } else { file_src.insert(BufferSource::new(x)) }
         }
         None => {
             let input = InputStream::open(&a.audio.device, &a.audio.stream()).map_err(|e| e.to_string())?;
@@ -653,10 +812,24 @@ fn listen_cmd(a: ListenArgs) -> Result<(), String> {
         }
     };
     let mut max_latency = 0.0f64;
-    let totals = listen::run(source, Box::new(config), opts, &mut |o| match o {
+    let mut turnarounds: Vec<f64> = Vec::new();
+    let totals = listen::run(source, config, opts, &mut |o| match o {
         Output::Frame(f) => {
             max_latency = max_latency.max(f.latency_ms);
+            if let Some(t) = f.turnaround_ms {
+                turnarounds.push(t);
+            }
             println!("{} {}", stamp(f.det.start), f.line());
+            for l in f.control_lines() {
+                println!("    {l}");
+            }
+            if a.text && f.blocks_ok() > 0 {
+                let bytes = headers::payload_bytes(&f.rx.block_bits);
+                let end = bytes.iter().rposition(|&b| b != 0).map_or(0, |i| i + 1);
+                let text: String =
+                    bytes[..end].iter().map(|&b| if (32..127).contains(&b) { b as char } else { '.' }).collect();
+                println!("    text: {text:?}{}", if f.complete() { "" } else { " (blocks missing)" });
+            }
         }
         Output::Unresolved(d, why) => {
             println!("{} detection (rho {:.2}) not decoded: {why}", stamp(d.start), d.quality)
@@ -689,6 +862,17 @@ fn listen_cmd(a: ListenArgs) -> Result<(), String> {
         totals.blocks,
         max_latency
     );
+    if !turnarounds.is_empty() {
+        turnarounds.sort_by(f64::total_cmp);
+        let pct = |p: f64| turnarounds[((turnarounds.len() - 1) as f64 * p).round() as usize];
+        println!(
+            "receive turnaround (last sample to result, SPEC 7.3 budget 100 ms): p50 {:.1} ms, p99 {:.1} ms, max {:.1} ms over {} frames",
+            pct(0.5),
+            pct(0.99),
+            turnarounds[turnarounds.len() - 1],
+            turnarounds.len()
+        );
+    }
     if let Some(src) = audio_src.as_mut() {
         println!("input: {}", stats_text(&src.input.stats()));
         if let (Some(path), Some(r)) = (&a.record, &src.record) {

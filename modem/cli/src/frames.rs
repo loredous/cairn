@@ -156,6 +156,32 @@ pub struct PlacedFrame {
     pub peak_dbfs: f64,
     /// RMS, dBFS.
     pub rms_dbfs: f64,
+    /// A real header (SPEC 8.2), else None (the simulator's random header bits).
+    pub header: Option<PlacedHeader>,
+}
+
+/// What `cairn-bench rx` needs to rebuild a frame with a real header.
+#[derive(Clone, Debug)]
+pub struct PlacedHeader {
+    /// The header's 128 message bits (before the CRC), hex.
+    pub header_hex: String,
+    /// Each control block's 240 message bits, hex.
+    pub control_hex: Vec<String>,
+    /// Each data block's 1008 payload bits, hex, when not the seed's random ones.
+    pub payload_hex: Option<Vec<String>>,
+    /// Source and destination, as text.
+    pub source: String,
+    /// Destination.
+    pub destination: String,
+    /// Frame type name.
+    pub frame_type: String,
+    /// Sequence field.
+    pub sequence: u16,
+}
+
+/// Bits (0/1, a multiple of 8) as hex, MSB first.
+pub fn bits_hex(bits: &[u8]) -> String {
+    bits.chunks(8).map(|c| format!("{:02x}", c.iter().fold(0u8, |a, &b| (a << 1) | b))).collect()
 }
 
 /// A level tone placed in a WAV.
@@ -207,7 +233,8 @@ pub fn manifest_json(
             s,
             "  {{\"index\": {}, \"mcs\": {}, \"width\": {}, \"prefix\": \"{}\", \"cp\": {}, \"silenced\": [{}], \
              \"n_blocks\": {}, \"seed\": {}, \"start_s\": {}, \"start_sample\": {}, \"n_samples\": {}, \
-             \"duration_s\": {}, \"clip_db\": {}, \"peak_dbfs\": {}, \"rms_dbfs\": {}}}",
+             \"duration_s\": {}, \"clip_db\": {}, \"peak_dbfs\": {}, \"rms_dbfs\": {}, \"n_control\": {}, \
+             \"probe\": {}, \"cap\": {}, \"header\": {}}}",
             f.index,
             f.spec.mcs,
             f.spec.width,
@@ -223,11 +250,31 @@ pub fn manifest_json(
             num(f.cfg.clip_db),
             num(f.peak_dbfs),
             num(f.rms_dbfs),
+            f.cfg.n_control,
+            f.cfg.has_probe,
+            f.cfg.cap,
+            header_json(f.header.as_ref()),
         );
         s.push_str(if i + 1 < frames.len() { ",\n" } else { "\n" });
     }
     s.push_str(" ]\n}\n");
     s
+}
+
+fn header_json(h: Option<&PlacedHeader>) -> String {
+    let Some(h) = h else { return "null".into() };
+    let list = |v: &[String]| v.iter().map(|s| format!("\"{s}\"")).collect::<Vec<_>>().join(", ");
+    format!(
+        "{{\"message_hex\": \"{}\", \"control_hex\": [{}], \"payload_hex\": {}, \"source\": \"{}\", \
+         \"destination\": \"{}\", \"type\": \"{}\", \"sequence\": {}}}",
+        h.header_hex,
+        list(&h.control_hex),
+        h.payload_hex.as_ref().map_or("null".into(), |p| format!("[{}]", list(p))),
+        h.source,
+        h.destination,
+        h.frame_type,
+        h.sequence
+    )
 }
 
 /// Peak and RMS of `x`, dBFS.

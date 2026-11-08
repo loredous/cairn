@@ -35,18 +35,34 @@ fn streaming_detector_matches_one_shot() {
         x.extend(vec![0.0; 30_000]);
         x.extend_from_slice(&samples);
         let whole = detector::detect(&x, &DetectorConfig::default());
-        let mut det = detector::Detector::new(DetectorConfig::default());
+        assert_eq!(whole.len(), 2, "{name}");
+        // The incremental detector at any chunk size, a sample at a time included.
+        for size in [1, 480, 2400, 4800, 1 << 20] {
+            let mut det = detector::Detector::new(DetectorConfig::default());
+            let mut streamed = Vec::new();
+            for chunk in x.chunks(size) {
+                for d in det.process(chunk) {
+                    // Final within the detector's stated latency of the frame start.
+                    assert!(det.position() <= d.start + det.latency() + size, "{name}: late detection");
+                    streamed.push(d);
+                }
+            }
+            streamed.extend(det.flush());
+            assert_eq!(streamed.len(), whole.len(), "{name} chunks of {size}");
+            for (a, b) in streamed.iter().zip(&whole) {
+                assert_eq!((a.start, a.cp, a.ppm), (b.start, b.cp, b.ppm), "{name}");
+                assert!((a.quality - b.quality).abs() < 1e-6, "{name}: rho {} vs {}", a.quality, b.quality);
+                assert!((a.coarse_start - b.coarse_start).abs() < 1e-3, "{name}");
+            }
+        }
+        // The rescanning streamer still agrees too.
+        let mut det = detector::RescanDetector::new(DetectorConfig::default());
         let mut streamed = Vec::new();
         for chunk in x.chunks(4800) {
             streamed.extend(det.process(chunk));
         }
         streamed.extend(det.flush());
-        assert_eq!(whole.len(), 2, "{name}");
         assert_eq!(streamed.len(), whole.len(), "{name}");
-        for (a, b) in streamed.iter().zip(&whole) {
-            assert_eq!((a.start, a.cp), (b.start, b.cp), "{name}");
-            assert!((a.quality - b.quality).abs() < 1e-6, "{name}");
-        }
     }
 }
 

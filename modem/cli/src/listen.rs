@@ -1,48 +1,83 @@
-//! The continuous receiver (SPEC 21.3 step 3): the streaming preamble
-//! detector runs across chunk boundaries on the processing thread, each
-//! detection waits until its whole frame has arrived, and a worker thread
-//! decodes it. Live audio and WAV files go through the same code; only the
-//! [`ChunkSource`] differs.
+//! The continuous receiver (SPEC 21.3 step 3): the incremental preamble
+//! detector runs on the processing thread as each 10 ms chunk arrives, each
+//! detection's configuration is resolved as soon as enough of the frame has
+//! arrived, the frame goes to the decoder the moment its last sample is in,
+//! and a worker thread decodes it (data blocks on several threads). Live
+//! audio and WAV files go through the same code; only the [`ChunkSource`]
+//! differs.
 //!
-//! Where the frame configuration comes from is pluggable
-//! ([`ConfigSource`]): today a fixed configuration from the command line
-//! ([`FixedConfig`]); once the header carries the frame's fields, a source
-//! that decodes the header first and returns the configuration it names.
+//! Where the frame configuration comes from is pluggable ([`ConfigSource`]):
+//! [`HeaderFirst`] decodes the header once the preamble and header are in
+//! and takes the frame's geometry from it (SPEC 8.2), with the width, mask
+//! and peer cap of the link for session frames and, for a broadcast wider
+//! than 24 tones, the width from its probe (ADR 0007); [`FixedConfig`]
+//! takes everything from the command line.
 
-use std::collections::VecDeque;
+use std::collections::{HashMap, VecDeque};
 use std::sync::mpsc::{Receiver as ChanRx, Sender, channel};
 use std::thread::JoinHandle;
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
 use cairn_audio::{InputStats, LevelMeter, Levels};
 use cairn_phy::detector::{Detection, Detector, DetectorConfig};
-use cairn_phy::params::{CP_LONG, FS};
-use cairn_phy::{FrameConfig, Receiver, RxOptions, RxResult};
+use cairn_phy::fields::Header;
+use cairn_phy::params::{CP_LONG, FS, PREAMBLE_SYMBOLS};
+use cairn_phy::rx::{extent_samples, frame_link};
+use cairn_phy::{FrameConfig, LinkState, ProbeExtent, Receiver, RxOptions, RxResult};
 
-/// Samples per processing chunk (50 ms), live or from a file: the
-/// granularity at which a finished frame reaches the decoder.
-pub const CHUNK: usize = 2400;
+use crate::headers;
+
+/// Samples per processing chunk (10 ms, the sound card's period), live or
+/// from a file: the granularity at which a finished frame reaches the decoder.
+pub const CHUNK: usize = 480;
 /// Samples kept before a frame's start for the receiver.
 const PRE: usize = 64;
-/// Samples kept after a frame's nominal end (clock drift, the last window).
-const POST: usize = 1200;
 /// History kept beyond what pending frames need.
 const KEEP: usize = FS as usize;
 
-/// Where a detected frame's configuration comes from.
-pub trait ConfigSource: Send {
-    /// Samples after the detected start needed before [`ConfigSource::resolve`]
-    /// can run (0 for a fixed configuration; preamble plus header for a
-    /// header-first source).
-    fn lookahead(&self, det: &Detection) -> usize;
-
-    /// The frame's configuration, given the audio from its start onward
-    /// (at least `lookahead` samples), or why there is none.
-    fn resolve(&mut self, det: &Detection, from_start: &[f64]) -> Result<FrameConfig, String>;
+/// Samples after a frame's nominal end the decoder waits for: the receiver's
+/// last window ends a quarter prefix before the end, and a sample-clock offset
+/// of up to 100 ppm (SPEC 6.1's grid) stretches the frame by 1e-4 of its length.
+pub fn post_samples(n_samples: usize) -> usize {
+    n_samples.div_ceil(10_000) + 8
 }
 
-/// A configuration fixed on the command line; the prefix comes from the
-/// detector unless forced.
+/// How to decode a resolved frame.
+#[derive(Clone, Debug)]
+pub struct Plan {
+    /// The configuration, which fixes the frame's length.
+    pub cfg: FrameConfig,
+    /// The decoded header (header-first), else None (decode `cfg` as given).
+    pub header: Option<Header>,
+    /// The link state for session frames.
+    pub link: LinkState,
+    /// For a broadcast with a probe: its extent (ADR 0007).
+    pub extent: Option<ProbeExtent>,
+}
+
+/// What a [`ConfigSource`] says about a detection.
+pub enum Resolution {
+    /// The frame's plan.
+    Ready(Box<Plan>),
+    /// Call again once this many samples from the start have arrived.
+    More(usize),
+    /// No frame can be decoded here, and why.
+    Fail(String),
+}
+
+/// Where a detected frame's configuration comes from.
+pub trait ConfigSource: Send {
+    /// Samples after the detected start needed before the first
+    /// [`ConfigSource::resolve`] (0 for a fixed configuration).
+    fn lookahead(&self, det: &Detection) -> usize;
+
+    /// Resolve with the audio from the frame's start onward (at least the
+    /// samples last asked for).
+    fn resolve(&mut self, det: &Detection, from_start: &[f64]) -> Resolution;
+}
+
+/// A configuration fixed on the command line (`listen --fixed`); the prefix
+/// comes from the detector unless forced.
 pub struct FixedConfig {
     width: usize,
     mcs: u8,
@@ -60,8 +95,7 @@ impl FixedConfig {
         silenced: &[usize],
         force_cp: Option<usize>,
     ) -> Result<Self, String> {
-        let usable =
-            if silenced.is_empty() { None } else { Some((0..width).filter(|k| !silenced.contains(k)).collect()) };
+        let usable = headers::usable_from_silenced(width, silenced);
         let f = FixedConfig { width, mcs, n_blocks, usable, force_cp };
         f.build(force_cp.unwrap_or(cairn_phy::params::CP_SHORT))?;
         Ok(f)
@@ -79,8 +113,83 @@ impl ConfigSource for FixedConfig {
     fn lookahead(&self, _det: &Detection) -> usize {
         0
     }
-    fn resolve(&mut self, det: &Detection, _from_start: &[f64]) -> Result<FrameConfig, String> {
-        self.build(self.force_cp.unwrap_or(det.cp))
+    fn resolve(&mut self, det: &Detection, _from_start: &[f64]) -> Resolution {
+        match self.build(self.force_cp.unwrap_or(det.cp)) {
+            Ok(cfg) => {
+                let link = LinkState { width: cfg.width, usable: cfg.usable.clone(), cp: Some(cfg.cp), cap: None };
+                Resolution::Ready(Box::new(Plan { cfg, header: None, link, extent: None }))
+            }
+            Err(e) => Resolution::Fail(e),
+        }
+    }
+}
+
+/// Header-first configuration (SPEC 8.2): decode the header once the
+/// preamble and header have arrived; a session frame (flag bit 3) is decoded
+/// at the link's width, mask and peer cap; a frame outside a session at the
+/// width of its probe (ADR 0007), measured once the data symbols every width
+/// has are in, or at 24 tones without a probe.
+pub struct HeaderFirst {
+    link: LinkState,
+    rx: Receiver,
+    opts: RxOptions,
+    /// Headers decoded while waiting for a probe's data symbols, by start.
+    waiting: HashMap<usize, Header>,
+}
+
+impl HeaderFirst {
+    /// A source for a link of `link`'s width, mask and peer cap (`link.cp`
+    /// forces the prefix; None takes the detector's).
+    pub fn new(link: LinkState, opts: RxOptions) -> Self {
+        HeaderFirst {
+            link,
+            rx: Receiver::new(),
+            opts: RxOptions { rebuild_snr: false, threads: 1, ..opts },
+            waiting: HashMap::new(),
+        }
+    }
+}
+
+/// Samples from a frame's start through its header, with a little margin.
+pub fn header_samples(cp: usize) -> usize {
+    (PREAMBLE_SYMBOLS + cairn_phy::params::header_symbols()) * (cairn_phy::params::N_USEFUL + cp) + 64
+}
+
+impl ConfigSource for HeaderFirst {
+    fn lookahead(&self, det: &Detection) -> usize {
+        header_samples(self.link.cp.unwrap_or(det.cp))
+    }
+
+    fn resolve(&mut self, det: &Detection, from_start: &[f64]) -> Resolution {
+        let cp = self.link.cp.unwrap_or(det.cp);
+        let header = match self.waiting.remove(&det.start) {
+            Some(h) => h,
+            None => {
+                let head = self.rx.receive_header(from_start, 0, cp, &self.opts);
+                match head.header {
+                    Some(h) => h,
+                    None => {
+                        return Resolution::Fail(
+                            head.header_error.map_or("header did not decode".into(), |e| e.to_string()),
+                        );
+                    }
+                }
+            }
+        };
+        let extent = if !header.session && header.probe {
+            let need = extent_samples(&header, cp) + 64;
+            if from_start.len() < need {
+                self.waiting.insert(det.start, header);
+                return Resolution::More(need);
+            }
+            Some(self.rx.probe_extent(from_start, 0, cp, &header, &self.opts))
+        } else {
+            None
+        };
+        match FrameConfig::from_header(&header, &frame_link(&header, &self.link, extent.as_ref()), cp) {
+            Ok(cfg) => Resolution::Ready(Box::new(Plan { cfg, header: Some(header), link: self.link.clone(), extent })),
+            Err(e) => Resolution::Fail(format!("header describes no decodable frame: {e}")),
+        }
     }
 }
 
@@ -88,13 +197,13 @@ impl ConfigSource for FixedConfig {
 pub struct Job {
     /// The detection.
     pub det: Detection,
-    /// Its configuration.
-    pub cfg: FrameConfig,
+    /// How to decode it.
+    pub plan: Plan,
     /// Audio from `det.start - offset`.
     pub samples: Vec<f64>,
     /// Index of the frame start in `samples`.
     pub offset: usize,
-    /// When the last sample arrived.
+    /// When the last sample reached the processing thread.
     pub ready_at: Instant,
 }
 
@@ -102,20 +211,30 @@ pub struct Job {
 pub struct FrameReport {
     /// The detection.
     pub det: Detection,
-    /// The configuration used.
+    /// The configuration decoded (after any width retry).
     pub cfg: FrameConfig,
     /// The receiver's result.
     pub rx: RxResult,
     /// Decode time, ms.
     pub decode_ms: f64,
-    /// From the frame's last sample arriving to the result, ms.
+    /// From the frame's last sample reaching the processing thread to the result, ms.
     pub latency_ms: f64,
+    /// When the result was ready.
+    pub done_at: Instant,
+    /// From the frame's last sample at the input (where the source knows its
+    /// time) to the result, ms: the receive turnaround of SPEC 7.3.
+    pub turnaround_ms: Option<f64>,
 }
 
 impl FrameReport {
     /// Blocks whose CRC passed.
     pub fn blocks_ok(&self) -> usize {
         self.rx.block_ok.iter().filter(|&&b| b).count()
+    }
+
+    /// The frame decoded completely: header, every control and data block.
+    pub fn complete(&self) -> bool {
+        self.rx.header_ok && self.blocks_ok() == self.cfg.n_blocks && self.rx.control_ok.iter().all(|&b| b)
     }
 
     /// Sample clock offset, ppm, as `cairn-bench rx` reports it.
@@ -125,30 +244,64 @@ impl FrameReport {
 
     /// The protocol's SNR (7 dB-equivalent channel SNR, ADR 0006), dB.
     pub fn snr_db(&self) -> f64 {
-        self.rx.snr_7db_equivalent(&self.cfg)
+        self.rx.snr_7db_equivalent(&self.cfg).min(63.75)
     }
 
-    /// One line for the console.
+    /// One line for the console: source and destination, frame type,
+    /// sequence, rung and width, blocks, SNR, clock, detector rho, timing.
     pub fn line(&self) -> String {
+        let who = match &self.rx.header {
+            Some(h) => format!(
+                "{} > {}  {}{}  seq {}",
+                h.source,
+                h.destination,
+                headers::type_name(h.frame_type),
+                headers::flag_text(h),
+                h.sequence
+            ),
+            None => format!("header {}", if self.rx.header_ok { "OK (fixed)" } else { "FAIL" }),
+        };
+        let width = match &self.rx.probe_extent {
+            Some(e) if e.width != self.cfg.width => format!("x{} (probe said {})", self.cfg.width, e.width),
+            Some(_) => format!("x{} from probe", self.cfg.width),
+            None => format!("x{}", self.cfg.width),
+        };
+        let turnaround = self.turnaround_ms.map(|t| format!("  turnaround {t:.0} ms")).unwrap_or_default();
         format!(
-            "frame  {} prefix  MCS {} x{}  header {}  blocks {}/{}  SNR {:5.1} dB  clock {:+6.1} ppm  rho {:.2}  decode {:.0} ms",
-            if self.det.cp == CP_LONG { "long " } else { "short" },
+            "{who}  MCS {} {width} {} prefix  blocks {}/{}  ctrl {}/{}  SNR {:5.1} dB  clock {:+6.1} ppm  rho {:.2}  decode {:.0} ms{turnaround}",
             self.cfg.mcs,
-            self.cfg.width,
-            if self.rx.header_ok { "OK  " } else { "FAIL" },
+            if self.det.cp == CP_LONG { "long" } else { "short" },
             self.blocks_ok(),
             self.cfg.n_blocks,
+            self.rx.control_ok.iter().filter(|&&b| b).count(),
+            self.cfg.n_control,
             self.snr_db(),
             self.clock_ppm(),
             self.det.quality,
             self.decode_ms,
         )
     }
+
+    /// One line per control block: its summary, or why it is missing.
+    pub fn control_lines(&self) -> Vec<String> {
+        self.rx
+            .controls
+            .iter()
+            .zip(&self.rx.control_ok)
+            .enumerate()
+            .map(|(i, (c, &ok))| match c {
+                Some(c) => format!("ctrl {}: {}", i + 1, headers::control_summary(c)),
+                None if ok => format!("ctrl {}: malformed fields", i + 1),
+                None => format!("ctrl {}: did not decode", i + 1),
+            })
+            .collect()
+    }
 }
 
 enum Phase {
-    Config,
-    Frame(Box<FrameConfig>),
+    /// Waiting for this many samples from the start, then resolve.
+    Config(usize),
+    Frame(Box<Plan>),
 }
 
 struct Pending {
@@ -221,8 +374,8 @@ impl Listener {
     pub fn finish(&mut self) -> Vec<Event> {
         let dets = self.detector.flush();
         let mut ev = self.take(dets);
-        // A resolved configuration may need more audio than the lookahead, hence rounds.
-        for _ in 0..3 {
+        // A resolution may ask for more audio, hence rounds.
+        for _ in 0..4 {
             let Some(need) = self.pending.iter().map(|p| self.needed_end(p)).max() else { break };
             if need > self.end() {
                 let more = need - self.end();
@@ -235,15 +388,16 @@ impl Listener {
 
     fn needed_end(&self, p: &Pending) -> usize {
         match &p.phase {
-            Phase::Config => p.det.start + self.config.lookahead(&p.det),
-            Phase::Frame(c) => p.det.start + c.n_samples() + POST,
+            Phase::Config(need) => p.det.start + need,
+            Phase::Frame(plan) => p.det.start + plan.cfg.n_samples() + post_samples(plan.cfg.n_samples()),
         }
     }
 
     fn take(&mut self, dets: Vec<Detection>) -> Vec<Event> {
         for d in dets {
             self.detections += 1;
-            self.pending.push_back(Pending { det: d, phase: Phase::Config });
+            let need = self.config.lookahead(&d);
+            self.pending.push_back(Pending { det: d, phase: Phase::Config(need) });
         }
         let ev = self.advance();
         self.trim();
@@ -254,33 +408,34 @@ impl Listener {
         let mut ev = Vec::new();
         let end = self.end();
         let mut keep = VecDeque::new();
-        while let Some(mut p) = self.pending.pop_front() {
-            if let Phase::Config = p.phase {
-                let need = self.config.lookahead(&p.det);
+        'next: while let Some(mut p) = self.pending.pop_front() {
+            while let Phase::Config(need) = p.phase {
                 if end < p.det.start + need {
                     keep.push_back(p);
-                    continue;
+                    continue 'next;
                 }
-                let (seg, off) = self.slice_from(p.det.start, need);
-                match self.config.resolve(&p.det, &seg[off..]) {
-                    Ok(cfg) => p.phase = Phase::Frame(Box::new(cfg)),
-                    Err(e) => {
+                let (seg, off) = self.slice_from(p.det.start, end - p.det.start);
+                p.phase = match self.config.resolve(&p.det, &seg[off..]) {
+                    Resolution::Ready(plan) => Phase::Frame(plan),
+                    Resolution::More(n) => Phase::Config(n.max(need + 1)),
+                    Resolution::Fail(e) => {
                         ev.push(Event::Unresolved(p.det.clone(), e));
-                        continue;
+                        continue 'next;
                     }
-                }
+                };
             }
-            let Phase::Frame(cfg) = &p.phase else { unreachable!() };
-            let len = cfg.n_samples() + POST;
+            let Phase::Frame(plan) = &p.phase else { unreachable!() };
+            let n = plan.cfg.n_samples();
+            let len = n + post_samples(n);
             if end < p.det.start + len {
                 keep.push_back(p);
                 continue;
             }
             let (samples, offset) = self.slice_from(p.det.start, len);
-            let Phase::Frame(cfg) = p.phase else { unreachable!() };
+            let Phase::Frame(plan) = p.phase else { unreachable!() };
             ev.push(Event::Queued(p.det.clone()));
             // A closed decoder only happens at shutdown; dropping the job is fine then.
-            let _ = self.jobs.send(Job { det: p.det, cfg: *cfg, samples, offset, ready_at: Instant::now() });
+            let _ = self.jobs.send(Job { det: p.det, plan: *plan, samples, offset, ready_at: Instant::now() });
         }
         self.pending = keep;
         ev
@@ -298,6 +453,17 @@ impl Listener {
     }
 }
 
+/// Decode one job (the worker's work).
+pub fn decode_job(rx: &mut Receiver, job: &Job, opts: &RxOptions) -> RxResult {
+    let plan = &job.plan;
+    match &plan.header {
+        Some(h) => rx
+            .receive_frame(&job.samples, h, &plan.link, plan.extent.clone(), job.offset, plan.cfg.cp, opts)
+            .unwrap_or_else(|_| rx.receive(&job.samples, &plan.cfg, job.offset, opts)),
+        None => rx.receive(&job.samples, &plan.cfg, job.offset, opts),
+    }
+}
+
 /// Start the decoder thread: one [`Receiver`] decoding jobs in order.
 pub fn spawn_decoder(jobs: ChanRx<Job>, reports: Sender<FrameReport>, opts: RxOptions) -> JoinHandle<()> {
     std::thread::Builder::new()
@@ -306,10 +472,13 @@ pub fn spawn_decoder(jobs: ChanRx<Job>, reports: Sender<FrameReport>, opts: RxOp
             let mut rx = Receiver::new();
             for job in jobs {
                 let t0 = Instant::now();
-                let res = rx.receive(&job.samples, &job.cfg, job.offset, &opts);
-                let decode_ms = t0.elapsed().as_secs_f64() * 1e3;
-                let latency_ms = job.ready_at.elapsed().as_secs_f64() * 1e3;
-                let report = FrameReport { det: job.det, cfg: job.cfg, rx: res, decode_ms, latency_ms };
+                let res = decode_job(&mut rx, &job, &opts);
+                let done_at = Instant::now();
+                let decode_ms = (done_at - t0).as_secs_f64() * 1e3;
+                let latency_ms = (done_at - job.ready_at).as_secs_f64() * 1e3;
+                let cfg = res.config.clone().unwrap_or(job.plan.cfg);
+                let report =
+                    FrameReport { det: job.det, cfg, rx: res, decode_ms, latency_ms, done_at, turnaround_ms: None };
                 if reports.send(report).is_err() {
                     break;
                 }
@@ -330,6 +499,10 @@ pub trait ChunkSource {
     /// Samples waiting to be processed (live input), for the queue depth.
     fn backlog(&self) -> usize {
         0
+    }
+    /// When sample `index` was at the input, if the source knows.
+    fn sample_time(&self, _index: usize) -> Option<Instant> {
+        None
     }
 }
 
@@ -356,6 +529,48 @@ impl ChunkSource for BufferSource {
         out.extend_from_slice(&self.x[self.pos..end]);
         self.pos = end;
         Some(())
+    }
+}
+
+/// A buffer played at real-time pace, as a sound card delivers it: each
+/// [`CHUNK`] becomes available when its last sample would have arrived, so
+/// the time of every sample is known and the receive turnaround (last sample
+/// of a frame to its decoded result, SPEC 7.3) can be measured.
+pub struct PacedSource {
+    x: Vec<f64>,
+    pos: usize,
+    t0: Option<Instant>,
+}
+
+impl PacedSource {
+    /// Play `x` from the first call on.
+    pub fn new(x: Vec<f64>) -> Self {
+        PacedSource { x, pos: 0, t0: None }
+    }
+}
+
+impl ChunkSource for PacedSource {
+    fn next_chunk(&mut self, out: &mut Vec<f64>) -> Option<()> {
+        out.clear();
+        if self.pos >= self.x.len() {
+            return None;
+        }
+        let t0 = *self.t0.get_or_insert_with(Instant::now);
+        let end = (self.pos + CHUNK).min(self.x.len());
+        let due = t0 + Duration::from_secs_f64(end as f64 / FS as f64);
+        let now = Instant::now();
+        if due > now {
+            std::thread::sleep(due - now);
+        }
+        out.extend_from_slice(&self.x[self.pos..end]);
+        self.pos = end;
+        Some(())
+    }
+    fn sample_time(&self, index: usize) -> Option<Instant> {
+        self.t0.map(|t0| t0 + Duration::from_secs_f64(index as f64 / FS as f64))
+    }
+    fn backlog(&self) -> usize {
+        0
     }
 }
 
@@ -432,12 +647,14 @@ pub fn run(
     let mut chunk = Vec::with_capacity(CHUNK);
     let mut next_stats = opts.stats_every;
 
-    let deliver = |r: FrameReport, totals: &mut Totals, out: &mut dyn FnMut(Output)| {
+    let deliver = |mut r: FrameReport, src: &dyn ChunkSource, totals: &mut Totals, out: &mut dyn FnMut(Output)| {
+        let last = r.det.start + r.cfg.n_samples();
+        r.turnaround_ms = src.sample_time(last).map(|t| r.done_at.saturating_duration_since(t).as_secs_f64() * 1e3);
         totals.frames += 1;
         totals.headers_ok += r.rx.header_ok as u64;
         totals.blocks_ok += r.blocks_ok() as u64;
         totals.blocks += r.cfg.n_blocks as u64;
-        totals.complete += (r.rx.header_ok && r.blocks_ok() == r.cfg.n_blocks) as u64;
+        totals.complete += r.complete() as u64;
         out(Output::Frame(Box::new(r)));
     };
 
@@ -449,7 +666,7 @@ pub fn run(
             }
         }
         while let Ok(r) = rep_rx.try_recv() {
-            deliver(r, &mut totals, out);
+            deliver(r, source, &mut totals, out);
         }
         if opts.stats_every > 0 && listener.position() >= next_stats {
             next_stats += opts.stats_every;
@@ -474,7 +691,7 @@ pub fn run(
     drop(listener); // closes the job channel
     worker.join().expect("decoder thread");
     for r in rep_rx.try_iter() {
-        deliver(r, &mut totals, out);
+        deliver(r, source, &mut totals, out);
     }
     totals
 }
@@ -483,14 +700,14 @@ pub fn run(
 mod tests {
     use super::*;
     use crate::frames::{FrameSpec, build_frame};
-    use cairn_phy::Transmitter;
+    use crate::headers::{HeaderSpec, build_header_frame};
+    use cairn_phy::fields::{Address, frame_type};
     use cairn_phy::params::CP_SHORT;
+    use cairn_phy::{Transmitter, TxFrame};
 
-    fn signal(specs: &[FrameSpec], lead: usize, gap: usize) -> Vec<f64> {
-        let mut tx = Transmitter::new();
+    fn noisy(frames: &[TxFrame], lead: usize, gap: usize) -> Vec<f64> {
         let mut x = vec![0.0; lead];
-        for (i, s) in specs.iter().enumerate() {
-            let f = build_frame(&mut tx, &s.config().unwrap(), 1000 + i as u64);
+        for f in frames {
             x.extend(f.output());
             x.extend(std::iter::repeat_n(0.0, gap));
         }
@@ -502,11 +719,15 @@ mod tests {
         x
     }
 
-    fn decode_all(x: Vec<f64>, cfg: FixedConfig) -> (Vec<FrameReport>, Totals) {
+    fn decode_all(x: Vec<f64>, cfg: Box<dyn ConfigSource>) -> (Vec<FrameReport>, Totals) {
         let mut src = BufferSource::new(x);
         let mut frames = Vec::new();
-        let opts = ListenOptions { detector: DetectorConfig::default(), rx: RxOptions::default(), stats_every: 0 };
-        let t = run(&mut src, Box::new(cfg), opts, &mut |o| {
+        let opts = ListenOptions {
+            detector: DetectorConfig::default(),
+            rx: RxOptions { threads: 2, ..Default::default() },
+            stats_every: 0,
+        };
+        let t = run(&mut src, cfg, opts, &mut |o| {
             if let Output::Frame(f) = o {
                 frames.push(*f)
             }
@@ -515,13 +736,16 @@ mod tests {
     }
 
     #[test]
-    fn decodes_frames_across_chunk_boundaries() {
+    fn decodes_fixed_frames_across_chunk_boundaries() {
         let spec = FrameSpec { mcs: 2, width: 24, cp: CP_SHORT, silenced: vec![], blocks: Some(3), frame_s: None };
+        let mut tx = Transmitter::new();
+        let frames: Vec<TxFrame> =
+            (0..3).map(|i| build_frame(&mut tx, &spec.config().unwrap(), 1000 + i as u64)).collect();
         // Odd lead and gap so frames straddle chunks at different phases;
         // the last frame ends 100 samples before the end of the input.
-        let x = signal(&[spec.clone(), spec.clone(), spec.clone()], 12_345, 7_777);
+        let x = noisy(&frames, 12_345, 7_777);
         let x = x[..x.len() - 7_677].to_vec();
-        let (frames, t) = decode_all(x, FixedConfig::new(24, 2, 3, &[], None).unwrap());
+        let (frames, t) = decode_all(x, Box::new(FixedConfig::new(24, 2, 3, &[], None).unwrap()));
         assert_eq!(frames.len(), 3, "every frame decoded");
         for f in &frames {
             assert!(f.rx.header_ok);
@@ -533,10 +757,46 @@ mod tests {
     }
 
     #[test]
+    fn decodes_real_headers_first() {
+        // Broadcasts at 24 and 40 tones (width from the probe), a BEACON with
+        // the ID block, and a session DATA frame at the link's 30 tones with a mask.
+        let me = Address::new("N0CALL", 3).unwrap();
+        let peer = Address::new("N1CALL", 0).unwrap();
+        let usable: Vec<usize> = (0..30).filter(|&k| k != 11).collect();
+        let link = LinkState { width: 30, usable: Some(usable.clone()), cp: None, cap: None };
+        let mut tx = Transmitter::new();
+        let mut specs = vec![
+            HeaderSpec::broadcast(me.clone(), frame_type::UI, 0, 24, 2, 3),
+            HeaderSpec::broadcast(me.clone(), frame_type::UI, 1, 40, 1, 4),
+            HeaderSpec::broadcast(me.clone(), frame_type::BEACON, 2, 24, 0, 0),
+        ];
+        specs[1].id = true;
+        let mut data = HeaderSpec::broadcast(me.clone(), frame_type::DATA, 100, 30, 3, 5);
+        data.destination = peer;
+        data.usable = Some(usable);
+        specs.push(data);
+        let frames: Vec<TxFrame> =
+            specs.iter().enumerate().map(|(i, s)| build_header_frame(&mut tx, s, 7 + i as u64).unwrap().0).collect();
+        let x = noisy(&frames, 9_999, 5_321);
+        let (got, t) = decode_all(x, Box::new(HeaderFirst::new(link, RxOptions::default())));
+        assert_eq!(got.len(), 4);
+        assert_eq!(t.complete, 4, "every frame and block decoded");
+        for (r, f) in got.iter().zip(&frames) {
+            assert_eq!(r.rx.header, f.header, "header fields");
+            assert_eq!(r.cfg, f.config, "geometry from the header (and the probe)");
+            assert!(r.rx.block_bits.iter().zip(&f.block_bits).all(|(a, b)| a == b));
+        }
+        assert_eq!(got[1].rx.probe_extent.as_ref().unwrap().width, 40);
+        assert!(got[2].control_lines()[0].contains("ID N0CALL-3"), "{:?}", got[2].control_lines());
+        assert!(got[3].control_lines()[0].starts_with("ctrl 1: ACK"), "{:?}", got[3].control_lines());
+        assert!(got[0].line().contains("N0CALL-3 > *  UI"), "{}", got[0].line());
+    }
+
+    #[test]
     fn silence_and_noise_give_nothing() {
         let mut rng = cairn_phy::channel::Rng::new(9);
         let x: Vec<f64> = (0..10 * FS as usize).map(|_| 0.005 * rng.normal()).collect();
-        let (frames, t) = decode_all(x, FixedConfig::new(24, 2, 3, &[], None).unwrap());
+        let (frames, t) = decode_all(x, Box::new(HeaderFirst::new(LinkState::default(), RxOptions::default())));
         assert!(frames.is_empty());
         assert_eq!(t.detections, 0);
     }

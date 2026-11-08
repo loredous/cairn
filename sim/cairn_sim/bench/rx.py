@@ -16,6 +16,7 @@ import json
 import numpy as np
 
 from .. import frame, ofdm, params, preamble
+from ..crc import append_crc
 from ..channel import resample as fractional_resample
 from . import audio
 
@@ -81,6 +82,37 @@ def match_frames(det_t: np.ndarray, nominal_t: np.ndarray, *, tol_s: float = 0.3
 # --- measurements -----------------------------------------------------------
 
 
+def _hex_bits(text: str, n: int) -> np.ndarray:
+    return np.unpackbits(np.frombuffer(bytes.fromhex(text), dtype=np.uint8))[:n]
+
+
+def sent_frame(fm: dict) -> tuple[frame.FrameConfig, frame.TxFrame]:
+    """The frame a manifest entry describes, rebuilt bit for bit: the seed's
+    random header and payloads (``cairn-bench tx``), or, for a frame with a
+    real header (``cairn-modem tx``: ``header`` present), its header and
+    control blocks with the seed's payloads (the header's random draw
+    skipped) or the payloads given."""
+    mask = (frozenset(range(fm["width"])) - frozenset(fm["silenced"])) if fm["silenced"] else None
+    real = fm.get("header")
+    if not real:
+        cfg = frame.FrameConfig(width=fm["width"], mcs=fm["mcs"], n_blocks=fm["n_blocks"], cp=fm["cp"], mask=mask)
+        return cfg, frame.build(cfg, np.random.default_rng(fm["seed"]))
+    cfg = frame.FrameConfig(width=fm["width"], mcs=fm["mcs"], n_blocks=fm["n_blocks"], cp=fm["cp"], mask=mask,
+                            n_control=fm["n_control"], probe=fm["probe"], cap=fm["cap"])
+    header_bits = append_crc(_hex_bits(real["message_hex"], params.HEADER_INFO_BITS - 16)[None])[0]
+    controls = np.array([_hex_bits(h, params.CONTROL_INFO_BITS - 16) for h in real["control_hex"]],
+                        dtype=np.uint8).reshape(-1, params.CONTROL_INFO_BITS - 16)
+    if real.get("payload_hex"):
+        payloads = np.array([_hex_bits(h, params.DATA_PAYLOAD_BITS) for h in real["payload_hex"]], dtype=np.uint8)
+    else:
+        rng = np.random.default_rng(fm["seed"])
+        rng.integers(0, 2, params.HEADER_INFO_BITS - 16, dtype=np.uint8)
+        payloads = rng.integers(0, 2, (cfg.n_blocks, params.DATA_PAYLOAD_BITS), dtype=np.uint8)
+    payloads = payloads.reshape(cfg.n_blocks, params.DATA_PAYLOAD_BITS)
+    return cfg, frame.rebuild(cfg, header_bits, append_crc(payloads),
+                              append_crc(controls) if len(controls) else None)
+
+
 def _tone_powers(x: np.ndarray, start: float, n_sym: int, width: int, cp: int, n_tones: int,
                  shifts=None) -> np.ndarray:
     return ofdm.demodulate(x, start, n_sym, n_tones, cp, active=width, shifts=shifts)
@@ -91,8 +123,7 @@ def _distortion(x: np.ndarray, cfg: frame.FrameConfig, tx: frame.TxFrame, res: f
     """Distortion indicators (SPEC 7.1, B.2): energy on silent tones and
     amplitude-dependent constellation error. See docs/bench-testing.md."""
     det = res.detail
-    first = params.PREAMBLE_SYMBOLS
-    d_first = first + cfg.header_symbols + cfg.probe_symbols
+    d_first = cfg.first_data          # after the probe and any control blocks
     n_sym = cfg.total_symbols
     w = cfg.width
     n_wide = w + 8
@@ -240,10 +271,7 @@ def analyze(x: np.ndarray, manifest: dict, *, rho: float = preamble.XCORR_THRESH
             rows.append(row)
             continue
         d = dets[claimed[j]]
-        cfg = frame.FrameConfig(width=fm["width"], mcs=fm["mcs"], n_blocks=fm["n_blocks"], cp=fm["cp"],
-                                mask=(frozenset(range(fm["width"])) - frozenset(fm["silenced"]))
-                                if fm["silenced"] else None)
-        tx = frame.build(cfg, np.random.default_rng(fm["seed"]))
+        cfg, tx = sent_frame(fm)
         s0 = max(0, d.start - int(0.45 * FS))
         end = d.start + cfg.n_samples + 2000
         seg = x[s0:end]
@@ -258,7 +286,10 @@ def analyze(x: np.ndarray, manifest: dict, *, rho: float = preamble.XCORR_THRESH
         gap_lo = max(prev_end + int(0.05 * FS), d.start - int(0.4 * FS))
         gap_hi = d.start - int(0.02 * FS)
         gap = (gap_lo - s0, gap_hi - s0) if gap_hi > gap_lo and gap_lo >= s0 else None
-        dist = _distortion(seg, cfg, tx, res, gap)
+        # A frame without data blocks (a BEACON, a PROBE) has no data symbols to measure.
+        dist = _distortion(seg, cfg, tx, res, gap) if cfg.data_symbols else dict(
+            oob_rel_db=float("nan"), noise_rel_db=None, oob_excess_db=None, evm_db=float("nan"),
+            compression_db=None, peaky_db=None, peaky_design_db=None, peaky_excess_db=None, index=0)
         # ADR 0006: the channel SNR, rebuilt from the decoded frame (frame.channel_snr).
         snr7 = float(res.detail["snr_db"])
         snr = snr7 - (cfg.clip_db - 7.0)
@@ -450,7 +481,7 @@ def plots(rep: dict, collect: dict, directory: str, constellation_frame: int | N
             eq = d["eq"][d["d0"]:, dt].ravel()
             fig, ax = plt.subplots(figsize=(5.5, 5.5))
             ax.plot(eq.real, eq.imag, ".", ms=1.5, alpha=0.4)
-            ideal = (tx.grid[params.PREAMBLE_SYMBOLS + cfg.header_symbols + cfg.probe_symbols:, dt]
+            ideal = (tx.grid[cfg.first_data:, dt]
                      / cfg.data_gain).ravel()
             ax.plot(np.unique(np.round(ideal, 6)).real, np.unique(np.round(ideal, 6)).imag, "r+", ms=6)
             ax.set_aspect("equal")

@@ -7,6 +7,7 @@
 #![warn(missing_docs)]
 
 pub mod frames;
+pub mod headers;
 pub mod listen;
 pub mod nprng;
 pub mod txseq;
