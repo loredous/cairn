@@ -473,7 +473,7 @@ struct RunArgs {
     /// Save received files (FILE-CHUNK objects) and text messages in this directory
     #[arg(long)]
     rx_dir: Option<PathBuf>,
-    /// Quieting band for carrier detect, Hz (default just above the cap: 2700-3100 at 24 tones, 3600-4150 at 32)
+    /// Quieting band for carrier detect, Hz (default just above the cap: 2800-3200 at 24 tones, 3600-4150 at 32)
     #[arg(long)]
     quieting: Option<String>,
     /// Carrier detect as first built (no quieting hysteresis or recovery after own PTT), for comparisons

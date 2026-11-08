@@ -79,9 +79,10 @@
 //! The measured counts are in `tests/dcd.rs`.
 //!
 //! Limits. Quieting sees whatever the carrier carries in its band: a Cairn
-//! frame's own spectrum in 2700-3100 Hz is only about 19 dB below its mean
-//! power, so on its own frames quieting asserts only where the open-squelch
-//! band floor is well above that (the preamble correlator covers them), and
+//! frame's own spectrum just above its band edge is about 19 dB below its
+//! mean power (about 5 dB less in the default band, which starts 100 Hz
+//! above the edge), so on its own frames quieting asserts only where the
+//! open-squelch band floor is well above that (the preamble correlator covers them), and
 //! bright speech releases it briefly. Release is by the band power coming
 //! back, so a squelch that closes (silence) reads as a carrier until
 //! [`DcdConfig::relearn_s`]; quieting needs squelch open, as SPEC 7.2 says.
@@ -247,6 +248,9 @@ pub struct DcdConfig {
     pub recovery_max_s: f64,
 }
 
+/// Guard between the highest active tone's edge and the quieting band (ADR 0014).
+pub const QUIETING_GUARD_HZ: f64 = 100.0;
+
 impl Default for DcdConfig {
     fn default() -> Self {
         Self::for_width(BASE_TONES)
@@ -254,14 +258,14 @@ impl Default for DcdConfig {
 }
 
 impl DcdConfig {
-    /// Defaults for a link of `width` tones: the quieting band starts at the
-    /// band edge (highest tone + 50 Hz; 100 Hz above it beyond 24 tones) and
-    /// is 400 Hz wide at 24 tones, 1000 Hz at 56: 2700-3100 Hz at 24 tones,
-    /// 6000-7000 Hz at 56 (SPEC 7.2).
+    /// Defaults for a link of `width` tones: the quieting band starts 100 Hz
+    /// above the band edge (highest tone + 50 Hz) and is 400 Hz wide at 24
+    /// tones, 1000 Hz at 56: 2800-3200 Hz at 24 tones, 6000-7000 Hz at 56
+    /// (SPEC 7.2, ADR 0014).
     pub fn for_width(width: usize) -> Self {
         let w = width.max(BASE_TONES);
         let extra = (w - BASE_TONES) as f64;
-        let lo = band_high_hz(w) + if w > BASE_TONES { 100.0 } else { 0.0 };
+        let lo = band_high_hz(w) + QUIETING_GUARD_HZ;
         let hi = lo + 400.0 + extra * 600.0 / 32.0;
         DcdConfig {
             quieting_band_hz: (lo, hi),

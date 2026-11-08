@@ -557,7 +557,7 @@ clamp, see "Full speed on wake-up").
 
 | Detector | How | Measured |
 | --- | --- | --- |
-| Quieting | 8th-order Butterworth band power above the highest tone (2700-3100 Hz at 24 tones, 3600-4150 at 32, 6000-7000 at 56; from `--cap`, or `--quieting`) per 10 ms; the open-squelch floor learnt from the 200 ms mean (rises with 0.4 s, falls with 2 s, frozen while asserted, re-learnt after 60 s); asserts when the 50 ms mean is 6 dB below the floor, releases when the 20 ms mean is back above the lower of floor -3 dB and the midpoint between floor and carrier level; unarmed while the floor is below -60 dB (squelch closed, or no radio). Hysteresis: after a release it decides on hops after it only (50 ms at least) and for 250 ms needs a 3 dB deeper drop; once up it stays up 30 ms at least. After own PTT it neither learns nor asserts until the open-squelch noise is back (at most 1.5 s) | Up 33-58 ms after a carrier keys; down 5-15 ms after the noise returns (20 dB quieting), 7-31 ms (10 dB) |
+| Quieting | 8th-order Butterworth band power above the highest tone (2800-3200 Hz at 24 tones, 3600-4150 at 32, 6000-7000 at 56; from `--cap`, or `--quieting`) per 10 ms; the open-squelch floor learnt from the 200 ms mean (rises with 0.4 s, falls with 2 s, frozen while asserted, re-learnt after 60 s); asserts when the 50 ms mean is 6 dB below the floor, releases when the 20 ms mean is back above the lower of floor -3 dB and the midpoint between floor and carrier level; unarmed while the floor is below -60 dB (squelch closed, or no radio). Hysteresis: after a release it decides on hops after it only (50 ms at least) and for 250 ms needs a 3 dB deeper drop; once up it stays up 30 ms at least. After own PTT it neither learns nor asserts until the open-squelch noise is back (at most 1.5 s) | Up 33-58 ms after a carrier keys; down 5-15 ms after the noise returns (20 dB quieting), 7-31 ms (10 dB) |
 | Preamble correlator | The streaming detector's early confirmation (`Detector::take_early`: plateau and S1 correlation over threshold), held to the end of the frame its header describes | Fires 48-54 ms after a frame starts (final detection 88-94 ms), down to 2 dB SNR |
 | Bell 202 | Sliding one-bit DFTs at 1200 and 2200 Hz: tone dominance, tone purity within a bit, transitions on the 1200-baud grid (rising and falling separately, for twist), over 60 ms | Up 50-80 ms after the burst starts at 10-30 dB with up to 6 dB twist (up to 130 ms at 10 dB with 9 dB twist); down 6-31 ms after it ends |
 | COS | `Modem::set_cos` (no sound-interface GPIO reader yet) | |
@@ -589,9 +589,10 @@ tones, DTMF, CW or steady 1200/2200 Hz tones. Limits: a sudden 3 dB or
 larger drop in the noise level reads as a carrier about one time in four
 (slow drift does not); bright speech gives 100-180 ms quieting dropouts
 during a voice carrier; a squelch that closes reads as a carrier until the
-60 s re-learn. A Cairn frame's own spectrum leaks into 2700-3100 Hz about
-19 dB below its mean, so quieting holds through the peer's frame only when
-the open-squelch noise is well above that (20 dB of quieting); the
+60 s re-learn. A Cairn frame's own spectrum leaks into the quieting band
+about 14 dB below its mean (19 dB just at its edge, which the band now
+clears by 100 Hz), so quieting holds through the peer's frame only when
+the open-squelch noise is well above that; the
 preamble correlator covers the frame in any case. `phy/tests/dcd.rs` has
 the tests (13 in the default run, three 10-minute runs `--ignored`).
 

@@ -41,7 +41,7 @@ pub struct OpenSquelchNoise {
 
 impl OpenSquelchNoise {
     /// Receive band of a typical FM radio (the simulator's `RX_BAND_HZ`). The
-    /// 2700-3100 Hz quieting band then sits on the filter's upper skirt.
+    /// 2800-3200 Hz quieting band then sits on the filter's upper skirt.
     pub const RX_BAND_HZ: (f64, f64) = (300.0, 3000.0);
     /// A wider receive band, with the quieting band well inside it.
     pub const WIDE_BAND_HZ: (f64, f64) = (200.0, 4000.0);
