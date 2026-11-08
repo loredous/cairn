@@ -326,6 +326,22 @@ ADR 0007 in both implementations (`frame.py`, `frame.rs`):
   If no data block decodes at that width, the neighbouring widths (+1, -1,
   +2, -2, +3, -3) are tried and the first at which a block decodes is kept,
   so a weak edge tone on a rolled-off path costs a retry, not the frame.
+- **Detection margin** (`uv run --package cairn-sim python -m
+  cairn_sim.extent_eval --trials 200 --decode`, UI broadcasts at MCS 0
+  with 3 blocks). AWGN, widths 25-56: no width error in 200 frames per
+  point from 2 dB (widths 32-56) or 3.5 dB (all widths); at 1 dB 0.5-4%,
+  at 0 dB 8-24%, while the data's block error rate at the true width is
+  still 44-96% at 1 dB and reaches 1% near 3 dB. So the extent alone is
+  reliable about 1-1.5 dB below the data's 1% point; with the decode retry,
+  header-first decoding loses no frame to the width at or above 3.5 dB
+  (its losses there are header failures: 2-7 of 150 frames at 3.5 dB,
+  none to the width). Noise-free, the edge decisions clear their
+  thresholds by 12-18 dB inside and 13-15 dB outside. Through the mic
+  path (FmChannel, whose 3 kHz filters put tone 29 about 10 dB down):
+  errors persist at 25-26 tones up to 10 dB (2-7%, the edge tone against
+  limiter and filter leakage) and at 29-30 tones up to 3.5-6 dB (the
+  rolled-off edge tones), but with the retry header-first block loss
+  equals the true-width loss from 6 dB up (0-1%).
 - **SNR with a mask** counts the mask's power boost as signal (ADR 0006
   interpretation); the two receivers agree within 0.07 dB on every
   fixture (`tests/rx_fixtures.rs`).
