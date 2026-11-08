@@ -132,7 +132,7 @@ def test_offair_level_tracking(direction, long, f):
         assert 0.75 < predicted / raw < 1.33, (raw, predicted)
     # Untracked, the data symbols sit at the ramp's offset.
     off = frame.receive(read_wav(DIR / f["wav"])[1][:, 0], link=frame.LinkState(width=24, cap=24),
-                        track_levels=False)
+                        track_levels=False, header_channel=False)
     assert _gain_db(*_data_symbols(off, f)[:2]) > RAMP_DB
     assert int(off.block_ok.sum()) == f["blocks_ok_untracked"]
 
@@ -145,6 +145,12 @@ def test_offair_level_tracking_decodes_the_long_frame():
     r = _decode(f["wav"])
     assert r.block_ok.all()
     _check_content(f, r)
+    # The header's channel estimate alone, untracked, sits at the header's
+    # level rather than S2's, near enough the data's: all 13 decode.
+    x = read_wav(DIR / f["wav"])[1][:, 0]
+    link = frame.LinkState(width=24, cap=24)
+    assert frame.receive(x, link=link, track_levels=False).block_ok.all()
+    assert frame.receive(x, link=link, header_channel=False).block_ok.all()
 
 
 @pytest.mark.parametrize("direction,long,f", FRAMES, ids=[f["wav"] for _, _, f in FRAMES])

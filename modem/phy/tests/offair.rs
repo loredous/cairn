@@ -161,18 +161,25 @@ fn offair_level_tracking() {
 
 #[test]
 fn offair_level_tracking_decodes_the_long_frame() {
-    // B to A: the 4 s frame's data sat 6.2 dB above the S2 level. Untracked,
-    // two of its 13 MCS 2 (16-QAM) blocks fail; tracked, all decode.
+    // B to A: the 4 s frame's data sat 6.2 dB above the S2 level. Untracked
+    // (the S2 estimate alone), two of its 13 MCS 2 (16-QAM) blocks fail;
+    // tracked, all decode.
     let index = read_json(&dir().join("offair.json"));
     let f = index["directions"]["BtoA"]["frames"].as_array().unwrap().iter().find(|f| f["kind"] == "4s").unwrap();
     let name = f["wav"].as_str().unwrap();
     let r = decode(name, &RxOptions::default());
     check_content(name, f, &r, true);
-    let off = decode(name, &RxOptions { level_tracking: false, ..Default::default() });
+    let off = decode(name, &RxOptions { level_tracking: false, header_channel: false, ..Default::default() });
     let ok = off.block_ok.iter().filter(|&&b| b).count();
     assert_eq!(ok as u64, f["blocks_ok_untracked"].as_u64().unwrap());
     assert_eq!(ok, 11);
     assert!(!off.level.applied);
+    // The header's channel estimate alone, untracked, sits at the header's
+    // level rather than S2's, near enough the data's: all 13 decode.
+    let hdr = decode(name, &RxOptions { level_tracking: false, ..Default::default() });
+    assert!(hdr.block_ok.iter().all(|&b| b));
+    let s2 = decode(name, &RxOptions { header_channel: false, ..Default::default() });
+    assert!(s2.block_ok.iter().all(|&b| b));
 }
 
 #[test]

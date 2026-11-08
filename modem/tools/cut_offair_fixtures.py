@@ -144,7 +144,7 @@ def main() -> None:
             # and without level tracking.
             _, xf = mono16(a.out / name)
             on = frame.receive(xf, link=LINK)
-            off = frame.receive(xf, link=LINK, track_levels=False)
+            off = frame.receive(xf, link=LINK, track_levels=False, header_channel=False)
             entry["frames"].append({
                 "wav": name, "manifest": ref_json.name, "kind": NAMES[i], "type": man["header"]["type"],
                 "data_decodable": gap is None,

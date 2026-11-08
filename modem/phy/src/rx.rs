@@ -83,6 +83,11 @@ pub struct RxOptions {
     /// transmission, a preamble a limiter leaves louder than the data) and
     /// divide it out before the noise is estimated and the blocks demapped.
     pub level_tracking: bool,
+    /// Once the header decodes, estimate the base tones' channel again from
+    /// the S2 pair and the header's symbols (and the probe's), each row at
+    /// its tracked level, and equalise every row by it (nine known symbols
+    /// per tone instead of two).
+    pub header_channel: bool,
 }
 
 impl Default for RxOptions {
@@ -99,6 +104,7 @@ impl Default for RxOptions {
             threads: 1,
             clock_prior: ClockPrior::default(),
             level_tracking: true,
+            header_channel: true,
         }
     }
 }
@@ -262,16 +268,99 @@ fn estimate_channel(
     window: usize,
 ) -> Vec<Complex64> {
     let raw: Vec<Complex64> = (0..y2.len()).map(|k| (y2[k] / s2[k] + y3[k] / second[k]) / 2.0).collect();
-    if window < 3 {
-        return raw;
-    }
+    smooth_channel(&raw, window, channel_phase_step(&raw))
+}
+
+/// The mean phase step from tone to tone of a channel estimate (the delay).
+fn channel_phase_step(raw: &[Complex64]) -> f64 {
     let acc: Complex64 = raw.windows(2).map(|w| w[1] * w[0].conj()).sum();
-    let step = acc.arg();
+    acc.arg()
+}
+
+/// A raw per-tone channel estimate de-rotated by `step` per tone, smoothed
+/// by a quadratic Savitzky-Golay fit over `window` tones (< 3: the raw
+/// estimate) and rotated back, as [`estimate_channel`] does.
+fn smooth_channel(raw: &[Complex64], window: usize, step: f64) -> Vec<Complex64> {
+    if window < 3 {
+        return raw.to_vec();
+    }
     let flat: Vec<Complex64> =
         raw.iter().enumerate().map(|(k, v)| v * Complex64::from_polar(1.0, -step * k as f64)).collect();
     let re = dsp::savgol_interp(&flat.iter().map(|v| v.re).collect::<Vec<_>>(), window, 2);
     let im = dsp::savgol_interp(&flat.iter().map(|v| v.im).collect::<Vec<_>>(), window, 2);
     (0..raw.len()).map(|k| Complex64::new(re[k], im[k]) * Complex64::from_polar(1.0, step * k as f64)).collect()
+}
+
+/// The base tones' channel re-estimated from the decoded header
+/// ([`header_channel_estimate`]).
+struct HeaderChannel {
+    /// The combined estimate, smoothed (24 tones).
+    h: Vec<Complex64>,
+    /// Per header row: the estimate without that row's symbols (24 tones).
+    loo: Vec<Vec<Complex64>>,
+}
+
+/// Each base tone's channel from the S2 pair and every fully known row after
+/// it (the decoded header, and the width probe), weighted by their noise
+/// (the simulator's `frame.header_channel_estimate`).
+///
+/// The S2 pair alone leaves about a sixth of the S2 noise in each tone's
+/// estimate ([`FALLBACK_H_BIAS`]); once the header has decoded, its seven
+/// symbols are known on every base tone. A known row r measures tone k as
+/// g = y / (corr level x): the channel at the S2 pair's level and phase
+/// reference, each row at its own tracked level (`level`, the rows after the
+/// preamble). The rows' noise per tone is their scatter about their mean,
+/// pooled over 7 tones as the S2 noise `thermal` is; the S2 average
+/// (variance thermal / 2) and the rows' mean (variance v / n) are combined
+/// by inverse variance and smoothed across tones as the S2 estimate is.
+/// `loo` repeats the combination without each header row in turn, for
+/// measuring the header's error on an estimate that does not contain it.
+#[allow(clippy::too_many_arguments)]
+fn header_channel_estimate(
+    tones: &Grid,
+    thermal: &[f64],
+    corr: &Grid,
+    level: &[f64],
+    x: &Grid,
+    full: &[bool],
+    hs: usize,
+    window: usize,
+    floor: f64,
+) -> HeaderChannel {
+    let b = BASE_TONES;
+    let first = PREAMBLE_SYMBOLS;
+    let s2 = preamble::s2();
+    let raw_s2: Vec<Complex64> = (0..b).map(|k| (tones.at(2, k) + tones.at(3, k)) / s2[k] / 2.0).collect();
+    let rows: Vec<usize> = (0..full.len()).filter(|&r| full[r]).collect();
+    let n = rows.len();
+    let g: Vec<Vec<Complex64>> = rows
+        .iter()
+        .map(|&r| (0..b).map(|k| tones.at(first + r, k) / (corr.at(r, k) * level[r] * x.at(r, k))).collect())
+        .collect();
+    let g_mean: Vec<Complex64> = (0..b).map(|k| g.iter().map(|gr| gr[k]).sum::<Complex64>() / n as f64).collect();
+    let scatter: Vec<f64> = (0..b)
+        .map(|k| g.iter().map(|gr| (gr[k] - g_mean[k]).norm_sqr()).sum::<f64>() / n.saturating_sub(1).max(1) as f64)
+        .collect();
+    let v: Vec<f64> = dsp::box_average(&scatter, 7).into_iter().map(|e| e.max(floor)).collect();
+    let w_s2: Vec<f64> = (0..b).map(|k| 2.0 / thermal[k].max(floor)).collect();
+    let combine = |mean: &[Complex64], count: usize| -> Vec<Complex64> {
+        (0..b)
+            .map(|k| {
+                let w_rows = count as f64 / v[k];
+                (raw_s2[k] * w_s2[k] + mean[k] * w_rows) / (w_s2[k] + w_rows)
+            })
+            .collect()
+    };
+    let raw = combine(&g_mean, n);
+    let step = channel_phase_step(&raw);
+    let mut loo = vec![vec![Complex64::new(0.0, 0.0); b]; hs];
+    for (i, &r) in rows.iter().enumerate() {
+        if r < hs {
+            let mean: Vec<Complex64> = (0..b).map(|k| (g_mean[k] * n as f64 - g[i][k]) / (n - 1) as f64).collect();
+            loo[r] = smooth_channel(&combine(&mean, n - 1), window, step);
+        }
+    }
+    HeaderChannel { h: smooth_channel(&raw, window, step), loo }
 }
 
 /// Per-tone noise variance from the difference of two repeated symbols.
@@ -1038,7 +1127,7 @@ impl Receiver {
             tones = self.demodulate(rx, window_start, cfg, Some(&shifts));
             est = self.estimate(&tones, cfg, opts);
         }
-        let Estimate { h, thermal, corr, drift, drift_sd, obs } = est;
+        let Estimate { mut h, thermal, corr, drift, drift_sd, obs } = est;
         let corr_kept = corr.clone();
         let w = cfg.n_tones();
         let hs = cfg.header_symbols();
@@ -1047,7 +1136,7 @@ impl Receiver {
         let n_body = n_sym - first;
         let gain = cfg.data_gain();
         let cgain = cfg.control_gain();
-        let h2: Vec<f64> = h.iter().map(|v| v.norm_sqr()).collect();
+        let mut h2: Vec<f64> = h.iter().map(|v| v.norm_sqr()).collect();
         let mean_h2 = dsp::mean(&h2);
         let b = BASE_TONES;
         let nv_s2: Vec<f64> = (0..b).map(|k| thermal[k] / h2[k]).collect();
@@ -1059,10 +1148,10 @@ impl Receiver {
             }
         }
         // Equalised symbols, the pilots' excess, the noise with it and the
-        // noise variances, for a level fit.
-        let equalise = |lev: &LevelFit| -> (Grid, Vec<f64>, Vec<f64>, Vec<f64>) {
+        // noise variances, for a level fit and a channel estimate.
+        let equalise = |lev: &LevelFit, h: &[Complex64], h2: &[f64]| -> (Grid, Vec<f64>, Vec<f64>, Vec<f64>) {
             let lm = level_matrix(lev, w);
-            let (excess, noise) = pilot_excess(&obs, cfg, &h, &corr, &lm, &thermal);
+            let (excess, noise) = pilot_excess(&obs, cfg, h, &corr, &lm, &thermal);
             let mut eq = Grid::zeros(n_body, w);
             for (s, lrow) in lm.iter().enumerate() {
                 for (k, hk) in h.iter().enumerate() {
@@ -1094,7 +1183,7 @@ impl Receiver {
             let (x, full) = level_cells(cfg, None);
             level = track_level(&eq_s2, &x, &full, &nv_s2, cfg);
         }
-        let (mut eq, excess, mut noise, mut nv) = equalise(&level);
+        let (mut eq, excess, mut noise, mut nv) = equalise(&level, &h, &h2);
         let mut snr_db = snr_of(&h, &noise);
 
         // Header.
@@ -1145,20 +1234,57 @@ impl Receiver {
             // again, with it.
             let (x, full) = level_cells(cfg, Some(known));
             level = track_level(&eq_s2, &x, &full, &nv_s2, cfg);
-            (eq, _, noise, nv) = equalise(&level);
+            (eq, _, noise, nv) = equalise(&level, &h, &h2);
             snr_db = snr_of(&h, &noise);
+        }
+        let h_s2 = h.clone();
+        let mut hch = None;
+        if let (Some(known), true) = (&known, opts.header_channel) {
+            // The decoded header is known on every base tone: nine known
+            // symbols per tone (eleven with the probe) instead of S2's two.
+            let (x, full) = level_cells(cfg, Some(known));
+            let c = header_channel_estimate(
+                &tones,
+                &thermal,
+                &corr,
+                &level.level,
+                &x,
+                &full,
+                hs,
+                opts.smooth_window,
+                1e-9 * mean_h2,
+            );
+            h[..b].copy_from_slice(&c.h);
+            h2 = h.iter().map(|v| v.norm_sqr()).collect();
+            (eq, _, noise, nv) = equalise(&level, &h, &h2);
+            snr_db = snr_of(&h, &noise);
+            hch = Some(c);
         }
         if let (Some(known), true) = (&known, opts.decision_directed) {
             // The decoded header is a known signal on every base data tone.
+            // Equalised by an estimate that contains the header, each row is
+            // measured on the estimate without it, as the data's estimate is
+            // without theirs.
             let d = btones.len();
             let err: Vec<f64> = (0..d)
                 .map(|slot| {
-                    (0..hs).map(|s| (eq.at(s, btones[slot]) - known[s * d + slot]).norm_sqr()).sum::<f64>() / hs as f64
+                    let k = btones[slot];
+                    (0..hs)
+                        .map(|s| {
+                            let e = match &hch {
+                                Some(c) => tones.at(first + s, k) / (c.loo[s][k] * corr.at(s, k) * level.level[s]),
+                                None => eq.at(s, k),
+                            };
+                            (e - known[s * d + slot]).norm_sqr()
+                        })
+                        .sum::<f64>()
+                        / hs as f64
                 })
                 .collect();
             let bt: Vec<f64> = btones.iter().map(|&k| k as f64).collect();
             let rel: Vec<f64> = (0..b).map(|k| dsp::interp(k as f64, &bt, &err)).collect();
             let rel = dsp::box_average(&rel, 3);
+            let mean_h2 = dsp::mean(&h2);
             for k in 0..b {
                 noise[k] = (rel[k] * h2[k]).max(1e-6 * mean_h2);
             }
@@ -1256,7 +1382,8 @@ impl Receiver {
             block_ok: &block_ok,
             block_bits: &block_bits,
         };
-        let est = DecoderEstimate { h: &h, noise: &noise, thermal: &thermal };
+        // The fallback SNR takes the S2 estimate's own noise bias out of |h|^2.
+        let est = DecoderEstimate { h: &h_s2, noise: &noise, thermal: &thermal };
         let channel_snr = opts.rebuild_snr.then(|| rebuild_snr(&tones, &corr_kept, cfg, advance, &decoded, &est));
         let (header, header_error) = parse_header(hres.ok, &hres.bits);
         let controls: Vec<Option<ControlBlock>> = control_ok
