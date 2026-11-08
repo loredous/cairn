@@ -227,3 +227,21 @@
     net, 78% of the 5,867 bps raw rate. SPEC §7.4 and Appendix A carry these
     corrected figures.
   date: 2026-11-07
+
+# --- Findings of the link-layer implementation (PR #22), settled with
+# ADR 0013 (2026-11-07) -------------------------------------------------
+
+- slug: rung-limit-covers-broadcasts
+  decision: frame-length-by-rung
+  question: >-
+    SPEC §10.2 sits under link adaptation. Does the per-rung limit also
+    bind broadcast frames, so that a BEACON or UI frame at MCS 0 or 1 stays
+    within 2.0 s?
+  interpretation: >-
+    Yes. The decision limits every frame's on-air time, broadcasts
+    included: a broadcast at MCS 0–1 stays within 2.0 s, and at MCS 2–3
+    within 4.0 s or the configured maximum. A frame without data blocks
+    counts at MCS 0, the rung its header names, and is far shorter than
+    2 s anyway. A CAL-REQUEST and its bursts follow ADR 0010
+    `calibration-transmission-limit` instead.
+  date: 2026-11-07

@@ -1,0 +1,215 @@
+# yaml-language-server: $schema=../../tools/adrsite/schemas/decisions.schema.json
+#
+# Once merged into main this file is frozen. Change decisions via a new ADR.
+
+# --- Link adaptation and targets ------------------------------------------
+
+- slug: adaptation-rules-multi-rung
+  title: Rung rules with a step up to the highest rung the SNR supports
+  category: link-adaptation
+  strength: MUST
+  statement: |
+    The receiver applies these rules once per received frame (SPEC §10.1):
+
+    | Trigger | Action |
+    | --- | --- |
+    | A lost header (a preamble detected while awaiting the peer, then a header that fails), or more than 20% of the frame's data blocks failed | Request one rung lower immediately (two lower if more than 50% failed), never below MCS 0 |
+    | 3 consecutive frames with data blocks and zero block errors, and measured SNR at least 2 dB above the next rung's threshold | Request the highest rung whose threshold is at least 2 dB below the lowest SNR measured on the three frames, which may be more than one rung higher. Frames without data blocks neither count toward the run nor break it |
+    | Anything else | Hold |
+    | A frame that replies to a CONNECT, CONNECT-ACK or SOUND | Request the highest rung whose threshold is at least 3 dB below the SNR measured on the frame being answered |
+    | Session idle | Keepalive SOUND every 30 s (ADR 0010 `idle-keepalive`); the reply refreshes the estimate |
+    | Receive-side clipping detected | Hold the current rung and warn the operator |
+    | Frames this receiver measures at distortion index 3 or higher | Excluded from the step-down count; the peer, which sees the index in the ACK, lowers its drive or warns its operator |
+  rationale: >-
+    Stepping one rung per three clean frames took 6–7 frames to follow a
+    6 dB rise in the link-layer simulation (PR #22), so the §14.1 target
+    could not be met upward. Jumping to the rung the SNR supports gets
+    there in 4 frames. The clean run, the 2 dB margin and the lowest of the
+    three readings keep one optimistic measurement from overshooting; the
+    step-down rules are unchanged.
+  supersedes:
+    adr: 0010-run-sessions-on-a-defined-state-machine-and-channel-access-timing
+    decision: adaptation-rules-revised
+  tags: [adaptation, v0.5]
+
+- slug: v1-performance-targets-revised
+  title: Performance targets v1.0 must demonstrate, with adaptation and resume made testable
+  category: performance-conformance
+  strength: MUST
+  statement: |
+    v1.0 must demonstrate these targets on real radios (SPEC §14.1):
+
+    | Target | 24 tones | 56 tones |
+    | --- | --- | --- |
+    | Net payload throughput, one direction, 4 s frames, TXDelay 150 ms | ≥ 5.0 kbps at 25 dB audio SNR | ≥ 16 kbps at 30 dB audio SNR |
+    | Minimum usable link | ≥ 1.2 kbps net at 8 dB audio SNR (MCS 0) | same |
+    | Rate adaptation | Correct rung within 2 frames after a 6 dB SNR drop and within 4 frames after a 6 dB rise; no oscillation over 60 s at constant SNR | same |
+    | Width negotiation | Usable width settled within one round trip; a masked tone restored within one re-probe after the impairment clears | same |
+    | Block error rate at each rung's switching point | ≤ 10% | same |
+    | Transmit drive calibration | Finds the limiter knee within ±1.5 dB on three radio makes; sets drive within 10% of the level-setting-tone target | same |
+    | Distortion report | Index rises to 3 or more within two frames of a 6 dB overdrive, and returns to 0 within two frames of its removal | same |
+    | Repeater mode | A 10-minute session sustained through a repeater with hang time and courtesy tone; net ≥ 60% of the simplex figure at the same SNR | same |
+    | Session resume | A transfer interrupted by a 60 s outage recovers with no block lost or delivered twice; one interrupted by a 120 s outage (past link loss) resumes with no acknowledged block resent | same |
+    | Link test | Both directions' expected net kbps reported within 3 s of air time and within 20% of what a following session achieves | same |
+    | Soft combining | Three identical repeats decode a bulletin at an SNR 4 dB below the single-copy threshold | same |
+    | Multi-mode receiver | Decodes 1200 AFSK and G3RUH captures with sensitivity at least equal to the reference software TNC on the same captures | same |
+    | False carrier-detect rate with squelch open, no signal | ≤ 1 per 10 minutes | same |
+    | Deference to AFSK packet | No transmission starts within 100 ms of a detected Bell 202 frame | same |
+    | Sample-clock tolerance | ±100 ppm between stations with no block-error penalty | same |
+    | Interoperability | Two independent implementations pass the conformance suite and exchange 1 MB error-free in each direction | same |
+  rationale: >-
+    Only the rate-adaptation and session-resume rows change. A step up
+    needs three clean frames and then one more frame at the new rung, so 2
+    frames could hold only downward. Link loss is declared after eight ACK
+    timer expirations, about 55–90 s, so a 60 s outage tests recovery
+    inside a live session, and a separate 120 s outage is needed to test
+    resume itself.
+  supersedes:
+    adr: 0002-adopt-the-cairn-v0-1-protocol-specification
+    decision: v1-performance-targets
+  tags: [performance, conformance, v1.0]
+
+- slug: reprobe-request-cadence
+  title: A receiver with dropped tones asks for a width probe every 10 s
+  category: link-adaptation
+  strength: SHOULD
+  statement: >-
+    A receiver that has dropped a tone from its mask for its direction
+    (ADR 0011 `mask-in-every-session-ack`) SHOULD set the re-probe flag
+    (ACK flag bit 2) once 10 s have passed since it last received a width
+    probe from its peer, and keep setting it in each ACK block it sends
+    until a frame from the peer with a width probe decodes. With no tone
+    dropped it has nothing to restore and does not need to request one.
+    (SPEC §10.3, B.2)
+  rationale: >-
+    SOUNDs and frames with data above tone 23 carry a probe anyway, so the
+    request matters mostly for tones below 24 on a busy link. 10 s bounds
+    how long a recovered tone stays unused, at a cost of one 22.5 ms probe
+    per 10 s.
+  tags: [adaptation, phy, v0.5]
+
+# --- Setup, resume and teardown ---------------------------------------------
+
+- slug: duplicate-connect-and-half-open-retention
+  title: Repeated CONNECTs are answered again, and a half-open session is kept for resume
+  category: link-layer
+  strength: MUST
+  statement: >-
+    A responder that has answered a CONNECT and receives the same
+    initiator's CONNECT again with the same session ID, before the
+    initiator's first frame, answers with CONNECT-ACK again, re-measured.
+    After sending CONNECT-ACK the responder runs its ACK timer (ADR 0010
+    `ack-timer-rules`) and resends CONNECT-ACK on each expiry, at most
+    three times. With no frame from the initiator after the third, it
+    reports a failed connection attempt to its host, not a link loss, and
+    keeps the session's state for resume as after a link loss (ADR 0002
+    `session-state-retention`, 10 minutes from that moment): the session
+    ID, the negotiated parameters and both directions' sequence state as
+    set up (or as resumed). A later resume CONNECT naming the session is
+    answered as a resume (ADR 0008 `session-resume-rules`); a CONNECT for a
+    new session from that peer discards the kept state. An initiator that
+    receives CONNECT-ACK again after sending its first frame sends that
+    frame again. A CONNECT for a new session (resume flag clear) from the
+    peer of a live session ends that session, reported to the host as a
+    link loss with its undelivered data, and is answered as a new session.
+    (SPEC §9.2)
+  rationale: >-
+    A responder that gives up cannot tell whether the initiator's first
+    frame was sent and lost or never sent. When it was sent, the initiator
+    holds an open session, declares the link lost and resumes; answered as
+    a new session, that resume made the initiator report its whole first
+    transfer undelivered (PR #22). Nothing can have been delivered while
+    the session was half-open, so resuming it is safe, and the state is
+    already in hand.
+  supersedes:
+    adr: 0010-run-sessions-on-a-defined-state-machine-and-channel-access-timing
+    decision: duplicate-connect-handling
+  tags: [session, v0.5]
+
+- slug: crossing-new-connects
+  title: A station already connecting refuses its peer's crossing CONNECT
+  category: link-layer
+  strength: MUST
+  statement: >-
+    A station with a CONNECT attempt open to a peer (waiting for an answer,
+    in a retry backoff, or in carrier sense before sending) that receives
+    from that peer a CONNECT not covered by ADR 0008
+    `resume-by-either-station` refuses it (ADR 0010 `connect-refusal`) and
+    continues its own attempt. The refused station reports the refusal to
+    its host and does not retry; the other attempt then reaches a station
+    that is no longer connecting and is answered normally. (SPEC §9.2)
+  rationale: >-
+    Neither station is "in another session", so without a rule two
+    implementations could both answer, building two half-open sessions
+    with different session IDs, or both refuse. Refusing keeps exactly one
+    attempt alive and adds no state; a refused attempt is answered at once,
+    so it never costs the three retries.
+  tags: [session, v0.5]
+
+- slug: resume-keeps-roles
+  title: A resumed session keeps the roles of its original setup
+  category: link-layer
+  strength: MUST
+  statement: >-
+    The roles set when a session was first set up survive every resume,
+    whichever station sends the resume CONNECT. The original initiator
+    keeps the keepalive duty and the original responder the 35 s fallback
+    (ADR 0010 `idle-keepalive`), and the original responder adds the 0.5 s
+    offset to every ACK timer it runs for the session, the resume handshake
+    included (ADR 0010 `ack-timer-rules`). (SPEC §9.2, §9.3)
+  rationale: >-
+    Both duties exist to keep the two stations apart: one keepalive sender,
+    and timers that do not expire together. If one implementation swapped
+    roles on resume and the other kept them, both could become the
+    initiator and lose both protections.
+  tags: [session, timing, v0.5]
+
+- slug: disconnect-handshake-linger
+  title: DISCONNECT is retried, and the reply's linger covers every resend
+  category: link-layer
+  strength: MUST
+  statement: >-
+    DISCONNECT carries the ACK control block first (final acknowledgment),
+    then the sender's ID block, with the sender's next unsent sequence in
+    the header. The peer replies with one DISCONNECT (ACK block, then ID
+    block) as a turn-holder reply, and both stations close: blocks not
+    acknowledged are reported to the host as undelivered (ADR 0002
+    `undelivered-reported`), and blocks held behind a gap are discarded.
+    The closing station runs its ACK timer and resends DISCONNECT on each
+    expiry, at most three times, then closes anyway. After replying, the
+    peer answers each repeated DISCONNECT of the same session with another
+    DISCONNECT, as a turn-holder reply, until a linger time L has passed
+    since the end of its latest DISCONNECT, then forgets the session.
+    L = T + 0.5 s + 0.25 s + 0.1 s + A, where T is the ACK-timer period
+    without offset or jitter, 0.1 s + D + Y + F + 1.0 s (ADR 0010
+    `ack-timer-rules`) with F the lower of the two stations' maximum frame
+    times, and A is the on-air time of its DISCONNECT. (SPEC §7.3, §9.5)
+  rationale: >-
+    The closer's timer may carry the responder offset and the full jitter,
+    and its resend needs the turn-holder check and its own air time, so
+    "one ACK-timer period" counted from the reply ended before the first
+    resend arrived (PR #22). The 0.5 s, 0.25 s and 0.1 s terms are the
+    offset, the jitter and the carrier-gone deadline. Restarting L at each
+    reply covers all three resends, not only the first.
+  supersedes:
+    adr: 0010-run-sessions-on-a-defined-state-machine-and-channel-access-timing
+    decision: disconnect-handshake
+  tags: [session, timing, v0.5]
+
+# --- Broadcast framing ------------------------------------------------------
+
+- slug: broadcast-control-block-order
+  title: BEACON and UI control blocks go ID, then path, then others
+  category: link-layer
+  strength: MUST
+  statement: >-
+    In a BEACON or UI frame the control blocks are, in order: the ID block
+    when present (always, in a BEACON; B.6), the path block when present
+    (B.7), then any others, such as a CAL-REPORT sent outside a session
+    (B.5). (SPEC §8.4, §9.1, B.5, B.6, B.7)
+  rationale: >-
+    A receiver identifies control blocks by type, but a fixed order gives
+    every implementation the same frames and vectors, as ADR 0010
+    `control-block-order` does for session frames. The ID block leads
+    because a BEACON always carries one.
+  tags: [framing, broadcast, v0.5]

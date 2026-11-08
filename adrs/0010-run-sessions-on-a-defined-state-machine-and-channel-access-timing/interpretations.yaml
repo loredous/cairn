@@ -1,0 +1,85 @@
+# yaml-language-server: $schema=../../tools/adrsite/schemas/interpretations.schema.json
+#
+# Each entry restates or clarifies a decision of this ADR without amending it.
+
+# --- Findings of the link-layer implementation (PR #22) and the PHY field
+# work (PR #21), settled with ADR 0013 (2026-11-07) ----------------------
+
+- slug: yield-window-fails-on-raw-dcd
+  decision: yield-window-clock
+  question: >-
+    When does a yield window start, and does a brief raw-detector blip
+    during it count as "DCD asserts"?
+  interpretation: >-
+    The window starts once DCD with its hold is clear, so watching DCD with
+    hold during it is the same as failing the window on any rising edge of
+    a raw detector; a blip counts. A failed window defers as a new
+    transmission does (SPEC §11.1).
+  date: 2026-11-07
+
+- slug: yield-then-carrier-sense
+  decision: transmission-from-idle
+  question: >-
+    When a transmission from idle is due a yield window, does the window
+    replace the carrier sense of SPEC §11.1?
+  interpretation: >-
+    No. The station takes the yield window first and then runs the full
+    procedure: 250 ms of clear DCD, then p-persistence. Only a turn-holder
+    reply transmits at the end of a clear yield window without carrier
+    sense (`yield-window-clock`).
+  date: 2026-11-07
+
+- slug: keepalive-takes-a-yield
+  decision: idle-keepalive
+  question: >-
+    A keepalive comes 30 s after the last frame, by when the yield clock
+    has nearly always passed 30 s. Is the keepalive interval then really
+    30 s?
+  interpretation: >-
+    No; about 31–33 s in simplex. The keepalive takes its yield window and
+    then the carrier sense of a transmission from idle, so it keys 1.25 s
+    or more after the 30 s mark. The responder's 35 s fallback still comes
+    later: its idle clock pauses as soon as the initiator's keepalive
+    raises DCD. The link-layer simulation (PR #22) ran long idle sessions
+    with no keepalive collisions.
+  date: 2026-11-07
+
+- slug: empty-resend-after-data-is-sound
+  decision: ack-timer-rules
+  question: >-
+    On the 1st or 2nd expiry the station sends its frame again, and "a
+    frame without data repeats its type". What if the frame was DATA and,
+    rebuilt, it has no data blocks left?
+  interpretation: >-
+    It is sent as SOUND. A DATA frame cannot be empty, and an ACK frame
+    requires no reply, while the frame being resent did; SOUND requires a
+    reply and leads with the same ACK block (ADR 0008
+    `ack-after-lost-header`).
+  date: 2026-11-07
+
+- slug: csma-draws-start-now
+  decision: csma-procedure-details
+  question: >-
+    A transmission is queued when DCD has already been clear for longer
+    than 250 ms. Do the probability draws count from slot boundaries since
+    DCD cleared?
+  interpretation: >-
+    No. The first draw is at the moment the transmission is queued (or its
+    backoff ends), and slot boundaries count from there; no draws are
+    imagined for slots that have already passed.
+  date: 2026-11-07
+
+- slug: dictionary-only-b3-marker
+  decision: session-establishment-steps
+  question: >-
+    How does a receiver tell the dictionary-only second B.3 block from a
+    malformed one, since its width cap and maximum frame time are 0, outside
+    their ranges?
+  interpretation: >-
+    A B.3 block whose width cap and maximum frame time are both 0 is the
+    dictionary-only block, as this decision's "every other field zero"
+    sends it. Any other B.3 block with a width cap outside 23–55 or a
+    maximum frame time outside 5–40 is malformed and discarded. This is the
+    reading of the published vectors (`vectors/control/connect_dictionaries`,
+    `reject_width_cap`).
+  date: 2026-11-07

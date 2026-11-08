@@ -1,0 +1,16 @@
+# yaml-language-server: $schema=../../tools/adrsite/schemas/interpretations.schema.json
+#
+# Each entry restates or clarifies a decision of this ADR without amending it.
+
+- slug: block-map-only-second
+  decision: block-map-control-block
+  question: >-
+    Does a receiver accept a block map found in another position, such as
+    the third control block?
+  interpretation: >-
+    No. A block map counts only as the second control block of a session
+    frame whose header sets flag bit 7. One found elsewhere is ignored,
+    and if flag bit 7 is set and the second block is not a valid block map,
+    every data block of the frame is treated as not received. Found in the
+    PHY field work (PR #21).
+  date: 2026-11-07
