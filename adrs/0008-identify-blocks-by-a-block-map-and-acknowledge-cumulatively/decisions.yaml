@@ -1,0 +1,207 @@
+# yaml-language-server: $schema=../../tools/adrsite/schemas/decisions.schema.json
+#
+# Once merged into main this file is frozen. Change decisions via a new ADR.
+
+- slug: block-sequence-rules
+  title: Blocks are numbered from 0 per direction and sent in ascending order
+  category: link-layer
+  strength: MUST
+  statement: >-
+    Each direction of a session numbers its data blocks with a 16-bit
+    sequence that starts at 0 when a new session is set up and continues
+    across a resume. Sequence numbers are compared with serial-number
+    arithmetic (RFC 1982, SERIAL_BITS = 16), so they wrap from 65,535 to 0.
+    A frame carries up to 128 data blocks in ascending sequence order, and
+    the header's Sequence field holds the sequence of its first (lowest)
+    block. The blocks are consecutive (Sequence, Sequence + 1, …) unless the
+    frame carries a block map (`block-map-control-block`). A session frame
+    without data blocks carries the sender's next unsent sequence in its
+    header. (SPEC §8.2, §9.3)
+  rationale: >-
+    A fixed start and wraparound rule let both ends agree on every number
+    without exchanging one; the send window (`send-window`) keeps the live
+    range far below half the sequence space, where RFC 1982 comparisons
+    are unambiguous.
+  supersedes:
+    adr: 0002-adopt-the-cairn-v0-1-protocol-specification
+    decision: block-sequence-numbering
+  tags: [arq, framing, v0.5]
+
+- slug: block-map-control-block
+  title: A block map names the blocks of a frame that are not consecutive
+  category: link-layer
+  strength: MUST
+  statement: |
+    A session frame whose data blocks are not exactly the consecutive run
+    Sequence, Sequence + 1, …, Sequence + n − 1 MUST carry a block map as its
+    second control block, immediately after the ACK control block, and set
+    header flag bit 7 (block map present). A frame whose blocks are
+    consecutive MUST NOT carry one and sends flag bit 7 clear. The block map
+    is control type 7, 256 bits (SPEC Appendix B.8):
+
+    | Field | Bits | Meaning |
+    | --- | --- | --- |
+    | Control type | 4 | 7 = block map |
+    | Flags | 4 | Reserved |
+    | Base sequence | 16 | Equal to the header's Sequence field |
+    | Block bitmap | 128 | Bit i set = block base + i is carried in this frame |
+    | Reserved | 88 | |
+    | CRC-16 | 16 | |
+
+    The frame's k-th data block (k = 0, 1, …) is the block named by the
+    k-th set bit counted from bit 0. Bit 0 MUST be set, and the number of
+    set bits MUST equal the header's data block count. A receiver that
+    finds flag bit 7 set but cannot decode the block map, or finds a map
+    that breaks these rules, treats every data block of the frame as not
+    received. (SPEC §8.4, §9.3, B.8)
+  rationale: >-
+    Selective repeat sends the blocks the peer missed, which are rarely
+    consecutive, and a data block carries no sequence number of its own;
+    its CRC does not cover one, so a block placed at the wrong sequence
+    would be delivered silently. The map makes every frame describe its own
+    blocks at MCS 0 (design principle 4), costs one control block (135 ms)
+    only in frames that need it, and the header flag tells a receiver
+    whether to expect it even when it fails to decode.
+  tags: [arq, framing, v0.5]
+
+- slug: reserved-control-types-after-block-map
+  title: Control types 2 and 8–15 are reserved
+  category: link-layer
+  strength: MUST_NOT
+  statement: >-
+    Control type 7 is the block map (`block-map-control-block`). Control
+    types 2 and 8–15 are reserved; senders MUST NOT use them, and receivers
+    skip them (`skip-unknown-control-types`). (SPEC §15, Appendix B)
+  supersedes:
+    adr: 0002-adopt-the-cairn-v0-1-protocol-specification
+    decision: reserved-control-types
+  tags: [framing, versioning, v0.5]
+
+- slug: cumulative-ack
+  title: The ACK names the next in-order block and the blocks held beyond it
+  category: link-layer
+  strength: MUST
+  statement: >-
+    The acknowledged base sequence of an ACK control block is the
+    receiver's next in-order sequence: the lowest sequence it has not
+    received, every lower block having been received. Bitmap bit i is set
+    if and only if the receiver holds block base + i, received with a good
+    CRC; bit 0 is therefore always clear, and bits for blocks the peer has
+    not sent are clear. Every block below the base and every block whose
+    bit is set is acknowledged, whichever frame carried it. The Block
+    errors field still counts the failed data blocks of the peer's last
+    decoded frame. (SPEC §9.3, B.2)
+  rationale: >-
+    An acknowledgment that states what the receiver holds, rather than what
+    happened to one frame, is true whenever it arrives: a stale, repeated
+    or crossed ACK can only understate what is held, which costs a
+    duplicate block, never a lost or misplaced one. No frame counter or
+    toggle bit is needed, and resume reuses the same block.
+  supersedes:
+    adr: 0002-adopt-the-cairn-v0-1-protocol-specification
+    decision: ack-bitmap
+  tags: [arq, v0.5]
+
+- slug: send-window
+  title: A sender stays within 128 blocks of its lowest unacknowledged block
+  category: link-layer
+  strength: MUST_NOT
+  statement: >-
+    A sender MUST NOT transmit a data block whose sequence is at or beyond
+    its lowest unacknowledged sequence plus 128 (serial arithmetic). The
+    lowest unacknowledged sequence is the lowest block sent and not yet
+    acknowledged (`cumulative-ack`), or the next unsent sequence when every
+    sent block is acknowledged. (SPEC §9.3)
+  rationale: >-
+    The window keeps every block of a frame inside the 128-block span of
+    one block map and every outstanding block inside the 128-bit span of
+    one ACK bitmap, and bounds the receiver's out-of-order hold to 127
+    blocks.
+  tags: [arq, v0.5]
+
+- slug: ack-after-lost-header
+  title: After a lost header the next ACK repeats the previous one
+  category: link-layer
+  strength: MUST
+  statement: >-
+    When a station transmits without having decoded a new frame from its
+    peer since its previous ACK control block (after a header it could not
+    decode, or on its ACK timer), its leading ACK control block repeats the
+    previous one: the fields describing the peer's last frame (measured
+    SNR, block errors, distortion index, own ADC clipped) keep their values,
+    the base sequence and bitmap are unchanged because nothing new was
+    received, and the tone mask and mask ID stay as they were. Only the
+    requested MCS follows the adaptation rules. (SPEC §9.3, §10.1)
+  tags: [arq, adaptation, v0.5]
+
+- slug: in-order-delivery
+  title: Blocks are delivered in order and held behind a gap
+  category: link-layer
+  strength: MUST
+  statement: >-
+    Received blocks are passed to the session layer in sequence order;
+    blocks behind a missing one are held until it arrives. There is no
+    separate hold limit: the send window (`send-window`) bounds the hold to
+    127 blocks. (SPEC §9.3)
+  rationale: >-
+    The former 256-block limit, after which the receiver was to NACK
+    everything beyond the gap, could not be expressed in a 128-bit bitmap
+    and can no longer be reached.
+  supersedes:
+    adr: 0002-adopt-the-cairn-v0-1-protocol-specification
+    decision: in-order-delivery-hold-limit
+  tags: [arq, session, v0.5]
+
+- slug: session-resume-rules
+  title: What a resume keeps, what it re-measures, and how it acknowledges
+  category: link-layer
+  strength: MUST
+  statement: >-
+    A CONNECT with B.3 flag bit 1 and the session ID of a session the
+    responder still holds with that peer (kept per
+    `session-state-retention`, or still live) resumes it. The resume CONNECT
+    carries the B.3 block and the ID block; the responder ignores its B.3
+    fields other than the flags and the session ID. The responder answers
+    CONNECT-ACK with B.3 flag bit 1 set, its ID block, and then an ACK
+    control block (`cumulative-ack`) for the initiator-to-responder
+    direction; the initiator's first frame acknowledges the other direction
+    with its ordinary leading ACK block, and no further ACK-type block is
+    added. Kept: the session ID, both directions' sequence state (held and
+    unacknowledged blocks included), the negotiated capabilities,
+    dictionaries, maximum frame time and signing counters. Measured afresh
+    from the handshake: the tone masks (mask IDs restart at 0, ADR 0011),
+    the requested rungs and the prefix. (SPEC §9.2, B.3)
+  rationale: >-
+    Configuration and negotiated state survive a link loss; the channel
+    measurements do not, because the loss itself may mean the channel
+    changed.
+  supersedes:
+    adr: 0002-adopt-the-cairn-v0-1-protocol-specification
+    decision: session-resume
+  tags: [session, arq, v0.5]
+
+- slug: resume-by-either-station
+  title: Either station may resume; the original initiator wins a crossing
+  category: link-layer
+  strength: MUST
+  statement: >-
+    Either station of an interrupted session MAY send the resume CONNECT.
+    A station that receives a resume CONNECT for its session while its own
+    resume CONNECT is outstanding answers it if it was the original
+    responder, abandoning its own attempt, and ignores it if it was the
+    original initiator. A station that still considers the session live
+    (it has not declared link loss) accepts a resume CONNECT for it.
+    (SPEC §9.2)
+  tags: [session, v0.5]
+
+- slug: resume-flag-echo
+  title: CONNECT-ACK says whether it resumed
+  category: link-layer
+  strength: MUST
+  statement: >-
+    A CONNECT-ACK sets B.3 flag bit 1 if and only if it resumes the named
+    session. An initiator that asked to resume and receives CONNECT-ACK
+    with flag bit 1 clear has a new session: it resets both directions'
+    sequences to 0 and reports every unacknowledged block of the old
+    session to its host as undelivered. (SPEC §9.2)
+  tags: [session, host-interface, v0.5]

@@ -1,0 +1,146 @@
+# yaml-language-server: $schema=../../tools/adrsite/schemas/decisions.schema.json
+#
+# Once merged into main this file is frozen. Change decisions via a new ADR.
+
+- slug: pdu-filler
+  title: A zero Length field fills the rest of the block
+  category: session-layer
+  strength: MUST
+  statement: >-
+    Where a PDU would start, a Length field of 0x0000 marks the rest of the
+    current data block as filler: the sender sets the remaining bytes of the
+    block to zero, and a parser skips to the start of the next block, where
+    the next PDU (or more filler) begins. A sender uses filler whenever it
+    sends a block before it has PDU bytes to fill it. This applies to the
+    session block stream and to the PDUs of a broadcast frame. (SPEC §12.1,
+    B.4)
+  rationale: >-
+    A block is fixed once sent and a session stream is continuous, so
+    padding must be recognizable; real PDUs have a Length of 1–65,535, which
+    leaves 0 free.
+  tags: [session, framing, interop, v0.5]
+
+- slug: pdu-length-within-block
+  title: A PDU's Length field never straddles a block boundary
+  category: session-layer
+  strength: MUST
+  statement: >-
+    When exactly one byte remains in a data block at a PDU boundary, the
+    sender writes 0x00 there as filler and starts the next PDU at the next
+    block; a parser at a PDU boundary with one byte left in the block skips
+    that byte. The rest of a PDU (its other fields and body) may span
+    blocks as before. (SPEC §12.1, B.4)
+  rationale: >-
+    Without the rule, a filler marker could not be told from the first byte
+    of a Length field that continues in the next block.
+  tags: [session, framing, interop, v0.5]
+
+- slug: pdu-byte-order
+  title: PDU fields are big-endian
+  category: session-layer
+  strength: MUST
+  statement: >-
+    Every multi-byte PDU field is sent most significant byte first: the
+    Length, the CRC-32, the 32-bit object ID and byte offset at the start of
+    a FILE-CHUNK body, and the 32-bit signature counter wherever it appears.
+    The Dictionary ID is the first four bytes of the dictionary's SHA-256
+    digest, in digest order. (SPEC §12.1, §12.3, §12.4)
+  tags: [session, framing, interop, v0.5]
+
+- slug: pdu-crc32
+  title: The PDU CRC is CRC-32/ISO-HDLC
+  category: session-layer
+  strength: MUST
+  statement: >-
+    The PDU's CRC-32 is CRC-32/ISO-HDLC (the zlib CRC): polynomial
+    0x04C11DB7, initial value 0xFFFFFFFF, input and output reflected, final
+    XOR 0xFFFFFFFF; its check value over the ASCII string "123456789" is
+    0xCBF43926. It is computed over the decoded body (after any
+    decompression) and sent most significant byte first. The Length field
+    counts every byte after itself, the CRC-32 included. (SPEC §12.1)
+  rationale: >-
+    The variant every language's standard library already provides.
+  tags: [session, framing, interop, v0.5]
+
+- slug: data-block-byte-order
+  title: Data-block bytes go first byte first, most significant bit first
+  category: link-layer
+  strength: MUST
+  statement: >-
+    The 126 payload bytes of a data block become its first 1,008
+    information bits in byte order, each byte most significant bit first;
+    the CRC-16 is computed over those bits in that order and follows them,
+    most significant bit first. (SPEC B.4)
+  rationale: >-
+    The order the published vectors (`vectors/`) and both implementations
+    already use.
+  tags: [framing, interop, v0.5]
+
+- slug: broadcast-message-fragments
+  title: A broadcast message larger than a frame is sent as one PDU per frame
+  category: link-layer
+  strength: MUST
+  statement: >-
+    A host message too large for one broadcast frame is split into slices.
+    Each slice travels as one complete PDU (its own Length, Type, Stream,
+    Encoding, optional Dictionary ID and CRC-32, compressed independently),
+    and that PDU is the only one in its frame. The frames take consecutive
+    frame counters, with no other counter-numbered frame between them; the
+    first sets header flag bit 6 (`first-fragment-flag`), and every frame but
+    the last sets header flag bit 2 (more fragments). Every slice has the
+    same Type and Stream. A receiver reassembles by source and frame
+    counter: it starts at a frame with flag bit 6 and bit 2 set, appends
+    the decoded body of each frame whose counter is one higher, and finishes
+    at the frame with bit 2 clear, delivering the bodies, concatenated, as
+    one PDU of that Type and Stream. It discards a partial message at any
+    gap (a missing counter, or a new first fragment before completion), and
+    discards a continuation frame that does not follow a first fragment it
+    holds. Identical repeats (flag bit 5) are resolved before reassembly.
+    A receiver MAY discard a partial message after 60 s. (SPEC §8.2, §9.1,
+    §12.1)
+  rationale: >-
+    Every broadcast frame stays self-contained, as `pdu-packing` requires,
+    so a lost frame can never corrupt the next; the flag tells a late
+    listener which frames start a message.
+  supersedes:
+    adr: 0002-adopt-the-cairn-v0-1-protocol-specification
+    decision: broadcast-fragmentation
+  tags: [framing, broadcast, v0.5]
+
+- slug: first-fragment-flag
+  title: Header flag bit 6 marks a frame that starts a message
+  category: link-layer
+  strength: MUST
+  statement: >-
+    Header flag bit 6 (first fragment) is set on every BEACON and UI frame
+    except the second and later frames of a fragmented message
+    (`broadcast-message-fragments`), and clear on every other frame type.
+    With flag bit 2 it gives each broadcast frame one of four roles: bit 6
+    set and bit 2 clear, a complete message; both set, the first fragment;
+    bit 6 clear and bit 2 set, a middle fragment; both clear, the last
+    fragment. (SPEC §8.2)
+  rationale: >-
+    Marking only the first fragment would leave a last fragment
+    indistinguishable from a single-frame message, and a listener that
+    missed the start would deliver the last slice as if it were complete.
+  tags: [framing, broadcast, v0.5]
+
+- slug: stream-interleaving-at-pdu-boundaries
+  title: Streams are interleaved at PDU boundaries, highest priority first
+  category: session-layer
+  strength: MUST
+  statement: >-
+    A sender completes a PDU before it starts another. Among queued PDUs it
+    starts the one of highest priority first, first in first out within a
+    priority. Interleaving streams inside a PDU, at block boundaries, needs
+    a per-block stream tag and is left to the stream-multiplexing ADR;
+    until that ADR, senders send capability bit 6 (stream multiplexing) as
+    zero. (SPEC §12.1, §12.4, B.3)
+  rationale: >-
+    PDUs are packed back-to-back and may span blocks, so switching streams
+    at a block boundary inside a PDU would leave the receiver unable to
+    parse the stream.
+  supersedes:
+    adr: 0002-adopt-the-cairn-v0-1-protocol-specification
+    decision: stream-priority-interleaving
+  tags: [session, v0.5]

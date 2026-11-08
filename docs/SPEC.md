@@ -89,7 +89,7 @@ No particular audio path is assumed. Width is measured per direction at connect 
 | §97.307(f): on 2 m, symbol rate ≤ 19.6 kbaud and bandwidth ≤ 20 kHz; on 70 cm, ≤ 56 kbaud and ≤ 100 kHz | The waveform occupies at most 5.6 kHz of audio inside one FM channel; per-tone symbol rate is 88.9 baud. The FCC removed HF symbol-rate limits in 2023 and has proposed removing the VHF/UHF limits; status to be re-checked at each revision. |
 | §97.309(b): unspecified digital codes are permitted but must not obscure meaning, and the FCC may require records convertible to the original | The complete waveform, framing, codes and compression dictionaries are published; a reference decoder is freely available; dictionaries are versioned and kept available for archived traffic. |
 | §97.113(a)(4): no messages encoded to obscure meaning | No encryption. Signatures are permitted because content stays readable. |
-| §97.119: station identification at the end of each communication and at least every 10 minutes, by a permitted method including a data emission using a specified digital code | Source callsign in every frame header in the published format, plus an ID control block (B.6) carrying the callsign in 7-bit ASCII, a specified code under §97.309(a)(3), sent in CONNECT, DISCONNECT, every BEACON and at least every 10 minutes within a session (decision 20.7). A configurable CW or 1200-baud AX.25 ID remains available. |
+| §97.119: station identification at the end of each communication and at least every 10 minutes, by a permitted method including a data emission using a specified digital code | Source callsign in every frame header in the published format, plus an ID control block (B.6) carrying the callsign in 7-bit ASCII, a specified code under §97.309(a)(3), sent in CONNECT, CONNECT-ACK, DISCONNECT, every BEACON and at least every 10 minutes within a session (decision 20.7; ADR 0010). A configurable CW or 1200-baud AX.25 ID remains available. |
 | §97.221: automatically controlled digital stations | Unattended gateways and relays must observe the sub-band and control rules; out of scope for the modem itself. |
 
 ## 4. Architecture overview
@@ -199,11 +199,13 @@ Tone index k = 0…N−1 sits at 350 + 100·k Hz. Tones are numbered from the lo
 
 Width is discovered by measurement, not configured. The operator sets only the channel width, which fixes the cap; the link finds how many tones each direction actually passes.
 
-- **Width probe.** Two symbols of known pilots on every tone up to the sender's cap, sent after the header when header flag bit 4 is set: always in CONNECT, CONNECT-ACK and SOUND, in a DATA frame when the peer has requested a re-probe (ACK flag bit 2), and in every frame whose data blocks use tones above 23 (ADR 0007). The preamble measures only the base tones, so the receiver estimates tones above 23 from the probe of the same frame; headers and control blocks use the base tones and never need it. The probe extends to the sender's cap, which a receiver in a session knows from CONNECT or CONNECT-ACK (B.3), not to the link width.
+- **Width probe.** Two symbols of known pilots on every tone of the frame's width, sent after the header when header flag bit 4 is set: always in CONNECT, CONNECT-ACK and SOUND, in a frame that follows a re-probe request (ACK flag bit 2), in the reply to a SOUND above 24 tones, and in every frame whose data blocks use tones above 23 (ADR 0007, ADR 0011). The preamble measures only the base tones, so the receiver estimates tones above 23 from the probe of the same frame; headers and control blocks use the base tones and never need it. The probe covers tones 0 … W − 1: the session width W (below) in a session frame and in CONNECT-ACK, the sender's cap + 1 in CONNECT and in the link test (9.6), the broadcast width in a broadcast. Because the frame's peak is set once for the whole frame (7.1), a probe wider than the data would cost the data up to 3.7 dB; with the probe at the transmit width, it costs nothing.
 - **Mask report.** The receiver measures which probed tones arrive above threshold and returns a bitmap of usable tones (56 bits, tones 0–55) in its next control block. Pilot tones 3 and 20 cannot be masked; pilots 37 and 52 can, and tracking then uses the remaining pilots. The transmitter puts no data or pilot on masked tones, reassigns coded bits to the remainder, and keeps total power constant: a data symbol carries the power of `width` unit-power tones, with every active tone, pilots included, scaled by the same factor, so a 24-tone link pays no penalty for having probed at 56. Clip-and-filter (7.1) regrows a little energy on masked tones, as it does above the band; that residue may be no higher than the regrowth just above the highest active tone (about 30 dB below the active tones at a 7 dB clip).
-- **Mask scope.** The mask applies to the symbols carrying data and control blocks. The preamble and header always use every base tone, and the width probe every tone up to the sender's cap, including masked ones, so a frame decodes without knowing the mask and masked tones keep being measured (10.3). The 56-bit mask applies at any width; bits at or above the width are ignored.
-- **Caps.** Neither the probe nor the data ever exceeds the sender's own cap, whatever the far end reports. By Carson's rule, 56 tones through a flat port would not fit a 12.5 kHz channel; the cap is the spectral safety limit and is configuration, not negotiation.
+- **Mask scope.** The mask applies to the symbols carrying data and control blocks. The preamble and header always use every base tone, and the width probe every tone of its extent (W, see Width probe above), including masked ones, so a frame decodes without knowing the mask and masked tones keep being measured (10.3). The 56-bit mask applies at any width; bits at or above the width are ignored.
+- **Caps.** The width cap (B.3) is the highest tone index a station transmits, 23–55; its width is cap + 1 tones. Neither the probe nor the data ever exceeds the sender's own cap, whatever the far end reports. By Carson's rule, 56 tones through a flat port would not fit a 12.5 kHz channel; the cap is the spectral safety limit and is configuration, not negotiation.
 - **Per direction.** Each direction's width is the product of one station's transmit chain and the other's receive chain, so a station with a flat data port talking to a handheld runs wide one way and narrow the other.
+- **Session width.** In a session a station transmits at W = its cap + 1 when its peer advertised capability bit 0 (widths above 24 tones), and W = 24 otherwise; a station without capability bit 0 advertises cap 23. Tones of 0 … W − 1 that the peer's mask marks unusable are masked, so W is fixed for the session and both ends know it from setup (ADR 0011).
+- **Mask synchronization.** Every mask a receiver reports has a 2-bit mask ID; the sender names the mask it applied in the header's Mask ID field, so a lost ACK can never leave the two ends decoding with different masks (10.3, ADR 0011).
 - **Broadcast.** Broadcast frames do not negotiate width; they use the configured broadcast width (default 24 tones). A broadcast wider than 24 tones carries the probe with its cap at the broadcast width and no mask, and a listener takes the frame's width from the probe: the highest tone carrying the probe sequence, plus one (ADR 0007).
 
 ## 6. Physical layer: synchronization, modulation and coding
@@ -271,7 +273,7 @@ Each block (header, control or data) goes through the same chain: information bi
 - **Labeling.** Each group of Q bits b(0) … b(Q−1) is one point, labeled as in 3GPP TS 38.211 §5.1: b(0), b(2), … form the in-phase level and b(1), b(3), … the quadrature level, each axis level built from its Q/2 bits c0, c1, … as 1−2c0 (QPSK), (1−2c0)(2 − (1−2c1)) (16-QAM), (1−2c0)(4 − (1−2c1)(2 − (1−2c2))) (64-QAM) or (1−2c0)(8 − (1−2c1)(4 − (1−2c2)(2 − (1−2c3)))) (256-QAM); the point is then scaled to unit average power (by 1/√2, 1/√10, 1/√42, 1/√170 for QPSK to 256-QAM).
 - **Bit-to-tone order.** The header, the control blocks and the data blocks each fill their own run of symbols, in that order (the width probe, when present, sits between header and control). A run's bit stream is its blocks back to back, then padding to the end of its last symbol. Point m of the run goes to symbol ⌊m/D⌋ of the run, on its (m mod D)-th data tone counted from the lowest, where D is the run's number of data tones: 22 for the header (tones 0–23 except pilots 3 and 20); for control, those 22 less masked tones; for data, tones 0 … W−1 less the pilots below W and less masked tones (5.4). A block therefore usually starts mid-symbol; each run starts on a new symbol.
 - **Scale.** Preamble, header and probe values have unit power. Data symbols are scaled as 5.4 requires. A control symbol scales every active tone, pilots included, by √(24 / active tones), so a masked control symbol keeps the power of 24 unit-power tones.
-- **Width probe.** Probe symbol r (r = 0, 1) carries 1 − 2c(56·r + k) on tone k = 0 … W_p − 1, with c_init = 0x0D0E and W_p the number of probed tones (the sender's cap, 5.4), so a tone's value does not depend on the cap, except that every pilot tone below W_p, masked or not, carries its pilot value (5.2).
+- **Width probe.** Probe symbol r (r = 0, 1) carries 1 − 2c(56·r + k) on tone k = 0 … W_p − 1, with c_init = 0x0D0E and W_p the number of probed tones (the probe's extent, 5.4; the sender's cap + 1 at most), so a tone's value does not depend on the cap, except that every pilot tone below W_p, masked or not, carries its pilot value (5.2).
 - **Burst limit.** At MCS 4 and above on wide links a block spans only about 5 symbols, so a 10 ms burst can take two of them; such links rely on ARQ for burst errors. Interleaving across blocks would spread the burst further, but it would break the per-block decoding and acknowledgement that selective retransmission (9.3) and planned HARQ (9.4) depend on, so blocks are interleaved only within themselves.
 
 ### 6.5 Receiver implementation notes (non-normative)
@@ -283,7 +285,7 @@ These notes are guidance from Stage 1 simulation, not requirements. They change 
 
 ## 7. Physical layer: levels, carrier detect and timing
 
-The modem bounds its own peak-to-average ratio to 7–10 dB depending on the rung, sets deviation once with a reference tone, detects the channel from FM quieting rather than audio energy, and budgets fixed overhead so that 4 s frames run above 80% efficiency.
+The modem bounds its own peak-to-average ratio to 7–10 dB depending on the rung, sets deviation once with a reference tone, detects the channel from FM quieting rather than audio energy, and budgets fixed overhead so that 4 s frames run near 80% efficiency.
 
 ### 7.1 Transmit level and PAPR
 
@@ -326,9 +328,14 @@ In repeater mode (11.5) the repeater's carrier is up for the whole session, so q
 | TXDelay (PTT to first preamble sample) | 150 ms | 20–500 ms | Radio-dependent; the biggest avoidable overhead. Measured per radio, not guessed. |
 | Repeater access delay | 400 ms | 0–1,000 ms | Repeater mode only: PTT, silence for this long, then the preamble; measured by `calibrate` |
 | TXTail (silence after last symbol before PTT release) | 10 ms | 0–50 ms | Lets the last symbol clear the audio chain |
-| Receive turnaround (end of peer frame to own PTT) | ≤ 100 ms | — | Processing budget for decode plus ACK assembly |
+| Receive turnaround (end of peer frame to own PTT) | ≤ 100 ms | — | Processing budget for decode plus ACK assembly; the turn-holder's 50 ms DCD check starts when the peer's carrier drops (11.2) |
 | DCD hold | 100 ms | 50–300 ms |  |
-| Maximum frame on-air time | 4.0 s | 0.5–4.0 s | 4.0 s is a hard ceiling. Also the channel-sharing bound (Section 11); stations exchange their configured maximum in CONNECT (B.3) |
+| Maximum frame on-air time | 4.0 s | 0.5–4.0 s | 4.0 s is a hard ceiling. Also the channel-sharing bound (Section 11); stations exchange their configured maximum in CONNECT (B.3). On-air time is PTT-on time: TXDelay, access delay, every symbol and TXTail (ADR 0010) |
+| ACK timer | 0.1 s + D + Y + F + 1.0 s | — | D = 0.5 s (+1.0 s in repeater mode), Y = yield window, F = longest frame the peer may send next; +0.5 s at the responder, + 0–0.25 s random; paused while DCD is asserted (9.3) |
+| CONNECT-ACK wait | 3.0 s | — | 4.0 s in repeater mode; then retry k after 1–5 s × k (9.2) |
+| Keepalive (idle session) | 30 s | — | Sent by the original initiator; the responder only after 35 s + 0–1 s (9.3) |
+| Yield window | 1.0 s | — | Every 30 s of each station's own clock; 2.0 s in repeater mode (11.2) |
+| Identification in a session | 9 min | — | ID control block on the next frame; never more than 10 minutes apart (9.3) |
 
 ### 7.4 Worked budget: 24 tones, MCS 3, one direction
 
@@ -339,13 +346,14 @@ At MCS 3 (16-QAM 3/4) a symbol carries 88 coded bits and a data block takes 15.5
 | TXDelay | 150 ms |
 | Preamble | 45 ms |
 | Header (7 symbols at MCS 0) | 79 ms |
-| 21 data blocks (2,646 payload bytes) | 3,665 ms |
+| ACK control block for the peer's last frame (12 symbols at MCS 0) | 135 ms |
+| 20 data blocks (2,520 payload bytes, 311 symbols) | 3,499 ms |
 | TXTail | 10 ms |
 | Peer turnaround + its TXDelay | 250 ms |
 | Peer ACK: preamble + header + control block | 259 ms |
-| **Cycle** | **4.46 s for 21,168 payload bits: 4.75 kbps net, 81% of the 5,867 bps raw rate** |
+| **Cycle** | **4.43 s for 20,160 payload bits: 4.55 kbps net, 78% of the 5,867 bps raw rate** |
 
-With 2 s frames the same link nets about 4.1 kbps (70%). With a 300 ms TXDelay radio and 2 s frames it nets about 3.6 kbps. TXDelay and frame length matter more than any rung above MCS 4 on a mic path.
+Every DATA frame carries the ACK control block (8.4), so of the 330 block symbols a 4 s frame allows (A.1), 318 carry data: 20 blocks. A frame with retransmissions also carries a block map (B.8), another 135 ms. With 2 s frames the same link nets about 3.6 kbps (62%). With 300 ms TXDelay at both ends and 2 s frames it nets about 3.1 kbps. TXDelay and frame length matter more than any rung above MCS 4 on a mic path.
 
 ## 8. Link layer: frames, addressing and frame types
 
@@ -366,20 +374,21 @@ Preamble, header and control blocks use the base 24 tones at every width, so the
 | --- | --- | --- |
 | Version | 3 | Protocol version, 1 for this spec |
 | Frame type | 5 | See 8.4 |
-| Flags | 8 | Bit 0: control block present (set if and only if the control block count is 1–3). Bit 1: data blocks present. Bit 2: more fragments (broadcast). Bit 3: session frame: set on every frame a station sends as part of a session, from CONNECT-ACK onward (including SOUND and CAL-REQUEST sent in a session), clear otherwise; it tells a receiver or monitor how to read a SOUND or CAL-REQUEST without tracking session state. Abbreviating session-frame addresses to the session ID is the planned short-session-headers feature (capability bit 4, v2), used only in sessions that negotiate it. Bit 4: width probe follows the header. Bit 5: identical repeat of a broadcast frame with the same frame counter (soft combining, 9.1). Bits 6–7 reserved, zero. |
+| Flags | 8 | Bit 0: control block present (set if and only if the control block count is 1–3). Bit 1: data blocks present. Bit 2: more fragments (broadcast). Bit 3: session frame: set on every frame a station sends as part of a session, from CONNECT-ACK onward (including SOUND and CAL-REQUEST sent in a session), clear otherwise; it tells a receiver or monitor how to read a SOUND or CAL-REQUEST without tracking session state. Abbreviating session-frame addresses to the session ID is the planned short-session-headers feature (capability bit 4, v2), used only in sessions that negotiate it. Bit 4: width probe follows the header. Bit 5: identical repeat of a broadcast frame with the same frame counter (soft combining, 9.1). Bit 6: first fragment, set on every BEACON and UI frame except the second and later frames of a fragmented message, clear on every other frame type (9.1, ADR 0009). Bit 7: block map present: the frame's second control block is a block map (B.8, 9.3, ADR 0008). |
 | Source address | 40 | Callsign + SSID (8.3) |
 | Destination address | 40 | Callsign + SSID; all-ones = broadcast |
-| Sequence | 16 | Block sequence number of the first data block in this frame (sessions); frame counter (broadcast) |
-| Payload MCS | 4 | Rung of the data blocks |
+| Sequence | 16 | Session frame: sequence number of its first (lowest) data block, or the sender's next unsent sequence when it carries none (9.3). BEACON, UI and PROBE: the station's frame counter (9.1). CONNECT: the initiator's next unsent sequence. A SOUND answering a PROBE, and a refusal DISCONNECT: 0 |
+| Payload MCS | 4 | Rung of the data blocks; 0 when there are none (ADR 0007) |
 | Control block count | 2 | 0–3, authoritative; a receiver discards a header whose flag bit 0 disagrees with it |
 | Data block count | 7 | Count minus 1 (giving 1–128 blocks) when flag bit 1 is set; sent as 0 when flag bit 1 is clear and ignored on receipt |
-| Reserved | 3 | Zero |
+| Mask ID | 2 | Session frame: ID of the tone mask applied to its control and data blocks (10.3, ADR 0011); 0 in CONNECT, CONNECT-ACK and outside sessions |
+| Reserved | 1 | Zero |
 | CRC-16 | 16 | CRC-16/CCITT-FALSE (6.3) over the preceding 128 bits |
 
 ### 8.3 Addressing
 
 - A callsign is up to 6 characters from a 6-bit alphabet (A–Z, 0–9, '/', '-', and padding), packed into 36 bits, plus a 4-bit SSID: 40 bits per address against AX.25's 56. The alphabet and padding rules are in Appendix B.
-- Callsigns longer than 6 characters (up to 10) set code 63 in the first character position and carry a 30-bit hash, plus the SSID, in the address field of every header; the full text travels in the ID control block (B.6) sent in CONNECT. The hash is the first 30 bits of SHA-256 over the callsign text as in B.6 (upper-case ASCII including any '/' indicator, no SSID, no padding); an all-ones result is replaced by all-ones minus one so a hash never collides with broadcast. Rare enough that the common case is not taxed for it.
+- Callsigns longer than 6 characters (up to 10) set code 63 in the first character position and carry a 30-bit hash, plus the SSID, in the address field of every header; the full text travels in the ID control block (B.6) sent in CONNECT and CONNECT-ACK. The hash is the first 30 bits of SHA-256 over the callsign text as in B.6 (upper-case ASCII including any '/' indicator, no SSID, no padding); an all-ones result is replaced by all-ones minus one so a hash never collides with broadcast. Rare enough that the common case is not taxed for it.
 - Station identification: the source callsign is present in every header in this published format. A station may additionally send a CW or 1200-baud AX.25 identification on a timer; the modem provides this as a configurable option (Section 13).
 
 ### 8.4 Frame types
@@ -388,19 +397,21 @@ Preamble, header and control blocks use the base 24 tones at every width, so the
 | --- | --- | --- | --- |
 | 0 | BEACON | Broadcast | Station presence, capabilities, ID control block (B.6), optional position or status PDU, optional path control block (B.7, v1.x) |
 | 1 | UI | Broadcast | Unnumbered data PDUs (APRS-like traffic, AX.25 UI frames via KISS); optional path control block for digipeating (B.7, v1.x) |
-| 2 | CONNECT | Session setup | Capabilities, dictionary IDs, width cap, requested MCS, and an ID control block; the width probe follows the header. With flag bit 1 (B.3): resume an interrupted session |
-| 3 | CONNECT-ACK | Session setup | Accepted parameters, peer's measurements, usable tone mask; the width probe follows the header. On resume, a second ACK-type control block with the last acknowledged sequence |
-| 4 | DATA | Session | Acknowledgment control block for the peer's last frame plus data blocks; an ID control block at least every 10 minutes |
+| 2 | CONNECT | Session setup | Control blocks: B.3 (capabilities, dictionary IDs, width cap, max frame time), an ID control block, and optionally a second B.3 block of dictionary IDs; the width probe follows the header. With B.3 flag bit 1: resume an interrupted session |
+| 3 | CONNECT-ACK | Session setup | Control blocks: B.3 (accepted parameters, requested MCS, usable tone mask), an ID control block, then optionally a second B.3 block of dictionary IDs or, on resume, an ACK control block for the initiator-to-responder direction; the width probe follows the header |
+| 4 | DATA | Session | ACK control block, a block map (B.8) when its data blocks are not consecutive, an ID control block when due (at least every 10 minutes), then data blocks |
 | 5 | ACK | Session | ACK control block first, optionally followed by other control blocks (ID, CAL-REPORT), never data blocks (nothing to send) |
-| 6 | SOUND | Session or link test | Preamble, header and width probe; re-measures the channel after idle. In a session, leads with the ACK control block (below). As a PROBE reply, an ACK-type control block with the measurements (9.6) |
-| 7 | DISCONNECT | Session | Orderly close: ACK control block first (final acknowledgment), then an ID control block |
-| 8 | PROBE | Broadcast | Asks a named station for a link-test reply (9.6) or a BEACON |
+| 6 | SOUND | Session or link test | Preamble, header and width probe; re-measures the channel. In a session (the keepalive of an idle session, or after ACK-timer expirations), leads with the ACK control block (below). As a PROBE reply, an ACK-type control block with the measurements (9.6) |
+| 7 | DISCONNECT | Session | Orderly close: ACK control block first (final acknowledgment), then an ID control block. Also the refusal of a CONNECT (9.2) |
+| 8 | PROBE | Broadcast | Asks a named station for a link-test reply (with one B.3 block and, above 24 tones, a width probe) or, with no control blocks, for a BEACON (9.6) |
 | 9 | CAL-REQUEST | Any | Calibration parameters (B.5); the tone bursts of 13.5 follow the frame. In a session, the ACK control block comes first |
 | 10 | POLL | Polled mode | Reserved for the v2 polled gateway mode (20.14) |
 | 11–30 | reserved |  |  |
 | 31 | EXTENDED | any | Type carried in the first control block |
 
-In a session, after setup, every frame a station sends (DATA, ACK, SOUND, DISCONNECT, CAL-REQUEST) carries an ACK control block for the peer's last frame as its first control block; other control blocks and data blocks follow if there are any. A station with data never sends a separate ACK frame. An ACK frame is the ACK block alone or followed by other control blocks (ID, CAL-REPORT), never data blocks.
+In a session, after setup, every frame a station sends (DATA, ACK, SOUND, DISCONNECT, CAL-REQUEST) carries an ACK control block as its first control block; other control blocks and data blocks follow if there are any. A station with data never sends a separate ACK frame. An ACK frame is the ACK block alone or followed by other control blocks (ID, CAL-REPORT), never data blocks.
+
+Control blocks go in a fixed order: in a session frame, the ACK block, the block map when present, an ID block when due, then any others such as CAL-REPORT; in CONNECT and CONNECT-ACK, as in the table. A frame carries at most three; a block that does not fit (only a CAL-REPORT can be crowded out) waits for the next frame (ADR 0010).
 
 ## 9. Link layer: broadcast mode, sessions and ARQ
 
@@ -409,28 +420,35 @@ Broadcast frames are one-way and self-contained. Sessions are a strict ping-pong
 ### 9.1 Broadcast mode
 
 - BEACON and UI frames carry PDUs at a configured rung (default MCS 0; MCS 1–3 permitted where the operator knows the audience's conditions) and the configured broadcast width. No acknowledgment, no adaptation.
-- A PDU larger than one frame is split across frames with the more-fragments flag; receivers reassemble by source and frame counter and discard on any gap. Each fragment is independently decodable and, if compressed, independently decompressed (Section 12).
+- Every BEACON, UI and PROBE frame takes the next value of the station's 16-bit frame counter, which starts at a random value when the modem starts, so a restart is not suppressed as a duplicate (ADR 0010).
+- A host message larger than one frame is split into slices, each sent as one complete PDU (12.1), alone in its frame and compressed independently, on consecutive frame counters. The first frame sets header flag bit 6 (first fragment) and every frame but the last sets flag bit 2 (more fragments); flag bit 6 is also set on every unfragmented BEACON and UI frame, so the two flags show whether a frame is a complete message, a first, a middle or a last fragment. Receivers reassemble by source and frame counter from a first fragment, deliver the concatenated bodies as one PDU, and discard on any gap (ADR 0009).
 - A frame may be sent again, bit-identical, with the same frame counter and header flag bit 5 set. A receiver that failed on the original keeps its soft decisions, adds the repeat's and decodes the sum, so three copies decode about 4.8 dB below where one would; stored decisions are discarded after 10 minutes or 64 frames. A receiver that already passed the frame suppresses the repeat by frame counter.
 - Digipeating (v1.x, decision 20.11): a BEACON or UI frame may carry a path control block (B.7) naming up to two relay stations or WIDE-style aliases. A relay that matches the next entry retransmits the frame once with its own callsign written into that entry and the hop count decremented, and suppresses duplicates by source and frame counter for 60 s. Sessions are never digipeated; relay for sessions is a host application (20.11).
-- AX.25 frames from a KISS host are sent as UI frames. AX.25's own link layer keeps working on top; it simply gets a faster, error-corrected channel.
+- AX.25 frames from a KISS host are sent as UI frames addressed to the broadcast address; a UI frame may carry several complete AX25 PDUs, each returned to the receiving KISS host as its own frame (ADR 0010). AX.25's own link layer keeps working on top; it simply gets a faster, error-corrected channel.
+- A station in a session sends BEACON, UI and PROBE frames only while the session is idle (9.3), with the carrier sense of 11.1.
 
 ### 9.2 Session establishment
 
-1. Initiator sends CONNECT: header, width probe (8.1), the B.3 control block, an ID control block (B.6), and optionally a second B.3 block of dictionary IDs. The B.3 block carries protocol capabilities, supported dictionary IDs, its width cap, initial MCS, max frame time and a 16-bit session ID.
-2. Responder measures the CONNECT's preamble and probe, and replies CONNECT-ACK with its own capabilities, the usable tone mask for the initiator-to-responder direction, the MCS it wants to receive at, and its own width probe.
-3. Initiator's first DATA frame confirms the session and carries the mask for the responder-to-initiator direction in its acknowledgment block. Either side may abort with DISCONNECT. CONNECT is retried at most 3 times at increasing random intervals.
+1. Initiator sends CONNECT, with the carrier sense of 11.1: header (session-frame flag clear, Sequence its next unsent block, 0 for a new session), width probe (8.1), the B.3 control block, an ID control block (B.6), and, when B.3 flag bit 0 is set, a second B.3 block that carries only dictionary IDs (its other fields zero and ignored). The B.3 block carries protocol capabilities, supported dictionary IDs, its width cap, max frame time and a 16-bit session ID; its requested MCS is sent as 0, since nothing has been measured yet.
+2. Responder measures the CONNECT's preamble and probe, and replies, as a turn-holder reply (11.2), CONNECT-ACK: its own width probe, its B.3 block (capabilities, the usable tone mask for the initiator-to-responder direction, the MCS it wants to receive at, its max frame time), its ID block, and, when needed, a second dictionary-ID B.3 block.
+3. Initiator's first frame, also a turn-holder reply, confirms the session: DATA when it has data, otherwise an ACK frame. Its acknowledgment block carries the mask for the responder-to-initiator direction, with mask ID 0 (10.3). Either side may abort with DISCONNECT.
 
-**Resume.** A CONNECT with flag bit 1 (B.3) and a session ID seen within the last 10 minutes continues that session instead of starting one. The responder's CONNECT-ACK adds a second, ACK-type control block whose base sequence is its last acknowledged sequence; the initiator's first DATA frame does the same for the other direction; both continue from there with the negotiated dictionaries, width and signing counters intact. A responder without state answers as a new session. Session state is kept for 10 minutes after link loss and discarded on DISCONNECT.
+CONNECT and CONNECT-ACK are sent unmasked. An initiator with no CONNECT-ACK within 3.0 s of releasing PTT (4.0 s in repeater mode) retries; retry k (k = 1, 2, 3) waits a uniform random 1–5 s multiplied by k, then runs 11.1. After the third retry goes unanswered the attempt fails and is reported to the host. A responder answers a repeated CONNECT (same initiator and session ID) with CONNECT-ACK again; after sending CONNECT-ACK it runs its ACK timer (9.3) and resends CONNECT-ACK on each expiry, at most three times, then discards the half-open session. An initiator that receives CONNECT-ACK again after its first frame sends that frame again. A CONNECT for a new session from the peer of a live session ends that session (reported as a link loss) and is answered as new. A station has at most one session at a time, identified by the two addresses; it accepts a frame as part of the session only when the source is its peer, the destination is itself and the session-frame flag is set (ADR 0010).
+
+**Refusal.** A station that refuses a CONNECT (it is in another session, the caller is on its deny list, or its host declines) answers with a DISCONNECT as a turn-holder reply: session-frame flag clear, an ACK control block with every field zero, then its ID block. The initiator reports the refusal and does not retry.
+
+**Resume.** A CONNECT with B.3 flag bit 1 and the session ID of a session the responder still holds with that peer (within 10 minutes of link loss, or still live) continues that session instead of starting one. The resume CONNECT carries B.3 and ID blocks; the responder ignores its B.3 fields other than the flags and session ID. The responder's CONNECT-ACK sets B.3 flag bit 1 and carries, after its ID block, an ACK control block for the initiator-to-responder direction (9.3); the initiator's first frame's ordinary leading ACK block covers the other direction. Both continue with the session ID, sequence state, capabilities, dictionaries, max frame time and signing counters intact; tone masks (mask IDs from 0), rungs and prefix are measured afresh from the handshake. Either station may resume; if two resume CONNECTs cross, the original initiator's wins, and a station that has not yet declared the link lost accepts a resume of its live session. A responder without state answers as a new session with B.3 flag bit 1 clear, and the initiator then starts both sequences from 0 and reports the old session's unacknowledged data as undelivered. Session state is kept for 10 minutes after link loss and discarded on DISCONNECT (ADR 0008).
 
 ### 9.3 Selective-repeat ARQ
 
-- Each direction numbers its data blocks with a 16-bit sequence. A frame carries up to 128 consecutive blocks starting at the header's sequence number.
-- Every frame sent in a session after setup leads with the acknowledgment control block (8.4). It carries the base sequence and a 128-bit bitmap: one bit per block of the peer's last frame, set if the block's CRC passed.
-- The sender's next frame retransmits exactly the unacknowledged blocks (lowest sequence first) followed by new blocks up to the frame limit. One frame in flight per direction keeps the state machine small; on a half-duplex ping-pong link a deeper window gains almost nothing.
-- Turn-taking: a station transmits when it has received a frame from its peer or when its ACK timer expires. ACK timer = expected peer frame time + 1.0 s. After 3 expirations the station sends SOUND at MCS 0; after 8 consecutive failures it declares the link lost, keeps the session state for 10 minutes for resume (9.2), and reports the loss to the host.
-- A station with nothing to send replies ACK (header plus control block, about 420 ms including TXDelay at 24 tones). If both sides have nothing to send, the session idles: no transmission for up to 60 s, then either side may SOUND or DISCONNECT.
-- Delivered blocks are passed to the session layer in order; blocks behind a missing one are held. The hold limit is 256 blocks, after which the receiver NACKs everything beyond the gap to force resynchronization.
-- An ID control block (B.6) is sent in CONNECT, in DISCONNECT, and at least every 10 minutes within a session, piggybacked on whichever frame is next (decision 20.7).
+- Each direction numbers its data blocks with a 16-bit sequence, starting at 0 in a new session and compared with serial-number arithmetic (RFC 1982), so it wraps from 65,535 to 0. A frame carries up to 128 blocks in ascending order; the header's sequence number is that of its first block. The blocks are consecutive unless the frame carries a block map (B.8) as its second control block, flagged by header flag bit 7, naming which of the 128 sequences from the header's onward it carries. A session frame without data blocks carries the sender's next unsent sequence (ADR 0008).
+- Every frame sent in a session after setup leads with the acknowledgment control block (8.4). It is cumulative: its base sequence is the receiver's next in-order sequence (every lower block received), and bit i of its 128-bit bitmap is set if the receiver holds block base + i. Bit 0 is therefore always clear, and bits for blocks not yet sent are clear. A stale or repeated ACK can only understate what is held. When a station transmits without having decoded a new frame from its peer, its ACK block repeats the previous one except for the requested MCS.
+- The sender's next frame retransmits exactly the unacknowledged blocks (lowest sequence first) followed by new blocks up to the frame limit, and never sends a block 128 or more beyond its lowest unacknowledged block. One frame in flight per direction keeps the state machine small; on a half-duplex ping-pong link a deeper window gains almost nothing.
+- Replies: DATA, SOUND, DISCONNECT and CAL-REQUEST require a reply; an ACK frame does not, and a station answers one only if it has data blocks to send. The session is idle when neither station owes a reply. A station replies as turn-holder (11.2) when a session frame from its peer requiring a reply ends, or on ACK-timer expiry; a session transmission from idle uses the carrier sense of 11.1.
+- ACK timer: started at PTT release after a frame that requires a reply, it runs 0.1 s + D + Y + F + 1.0 s, where D is 0.5 s (plus 1.0 s in repeater mode), Y is the yield window and F is the longest frame the peer may send next (the lower maximum frame time of B.3 and the 10.2 limit for the rung last requested). The station that answered the CONNECT adds 0.5 s, and each start adds a uniform random 0–0.25 s. The timer pauses while DCD is asserted and stops when a peer header decodes; a preamble whose header fails does not stop it. On the 1st and 2nd expiration the station sends its frame again; on the 3rd to 7th it sends SOUND; on the 8th it declares the link lost, keeps the session state for 10 minutes for resume (9.2), and reports the loss to the host (ADR 0010).
+- A station with nothing to send answers a frame that needs a reply with ACK (header plus control block, about 420 ms including TXDelay at 24 tones). In an idle session the original initiator sends a keepalive SOUND once 30 s have passed since the last frame either station sent; the responder sends one only after 35 s plus a random 0–1 s without a frame from the initiator. Both clocks pause while DCD is asserted. A keepalive is a transmission from idle, its reply is the normal reply to a SOUND, and an unanswered keepalive runs the ACK timer, so a lost link is found within about a minute. Closing an idle session after a host-configured time is optional and off by default; keepalives do not count as activity for it.
+- Delivered blocks are passed to the session layer in order; blocks behind a missing one are held. The send window bounds the hold to 127 blocks.
+- An ID control block (B.6) is sent in CONNECT, CONNECT-ACK, DISCONNECT and the DISCONNECT reply, and in a session on the first frame a station sends once 9 minutes have passed since its last one, whatever the frame type, so never more than 10 minutes apart (decision 20.7, ADR 0010).
 
 ### 9.4 Hybrid ARQ with incremental redundancy (v2)
 
@@ -442,11 +460,11 @@ Planned, not final: this section describes intended behavior and will get its ow
 
 ### 9.5 Disconnect
 
-DISCONNECT carries the final acknowledgment in its first control block (8.4). The peer replies DISCONNECT once; no further exchange. Unacknowledged blocks at disconnect are reported to the host as undelivered, never silently dropped.
+DISCONNECT carries the final acknowledgment in its first control block (8.4), then the sender's ID block, with its next unsent sequence in the header. The peer replies DISCONNECT once, as a turn-holder reply, and both close. The closing station resends DISCONNECT on each ACK-timer expiry, at most three times, then closes anyway; after replying, the peer answers a repeated DISCONNECT with another for one ACK-timer period, then forgets the session. Unacknowledged blocks at disconnect are reported to the host as undelivered, never silently dropped; blocks held behind a gap are discarded (ADR 0010).
 
 ### 9.6 Link test
 
-A PROBE naming a station asks for a two-way measurement without opening a session. The target replies with a SOUND frame that carries an ACK-type control block holding its measurements of the PROBE (SNR, usable tone mask, suggested rung, distortion index) and a width probe; the initiator measures the reply for the reverse direction. Two transmissions, under 3 s of air time. The host presents the result as expected net kbps in each direction rather than raw figures, since that is the question the operator asked. A PROBE to a station that does not answer within 5 s is reported as unreachable; it may be repeated after the backoff of 11.1.
+A PROBE naming a station asks for a two-way measurement without opening a session. A link-test PROBE carries one B.3 control block (flags and session ID 0, the sender's capabilities, width cap and max frame time, requested MCS 0, all-ones mask, no dictionary IDs) and, when its width cap is above 23, a width probe to its cap. The target replies, as a turn-holder reply (11.2), with a SOUND frame that carries a width probe to its own cap and an ACK-type control block holding its measurements of the PROBE: SNR, usable tone mask (flag bit 0 set, mask ID 0), suggested rung as the requested MCS, distortion index, and base sequence, bitmap and block errors 0. The initiator measures the reply for the reverse direction. Two transmissions, under 3 s of air time. The host presents the result as expected net kbps in each direction rather than raw figures, since that is the question the operator asked. A PROBE to a station that does not answer within 5 s is reported as unreachable; it may be repeated after a 1–5 s backoff and the carrier sense of 11.1. A PROBE with no control blocks asks instead for a BEACON, which the target sends as a turn-holder reply. A station in a session answers neither kind (ADR 0012).
 
 ## 10. Link adaptation
 
@@ -458,8 +476,8 @@ The receiving station measures the channel, chooses the rung it wants to receive
 | Per-tone SNR from preamble     |        | Down now: header lost or       |
 |   and pilots                   | -----> |   block errors over 20%        |
 | Block CRC pass/fail per frame  |        | Up: 3 clean frames and SNR     |
-| SOUND re-measures after        |        |   2 dB above the next rung     |
-|   30 s idle                    |        | Otherwise hold; target 5-10%   |
+| Keepalive SOUND every 30 s     |        |   2 dB above the next rung     |
+|   in an idle session           |        | Otherwise hold; target 5-10%   |
 +--------------------------------+        +---------------+----------------+
                ^                                          |
                | next frame received                      | in the next ACK
@@ -468,7 +486,7 @@ The receiving station measures the channel, chooses the rung it wants to receive
 | 4. Apply (sender)              |        | 3. Report (in the ACK)         |
 | Next frame coded at the        |        | Requested MCS, measured SNR,   |
 |   requested rung               | <----- |   error count, distortion      |
-| Frame length scaled to rung    |        | Tone mask when it changed      |
+| Frame length scaled to rung    |        | Tone mask and its mask ID      |
 | Header still at MCS 0, so it   |        | Rides in the control block;    |
 |   always decodes               |        |   no extra frame               |
 +--------------------------------+        +--------------------------------+
@@ -480,13 +498,15 @@ The loop runs once per received frame; steps down are immediate and steps up are
 
 | Trigger | Action |
 | --- | --- |
-| Header of a frame not decoded, or more than 20% of its blocks failed | Request one rung lower immediately (two lower if more than 50% failed) |
-| 3 consecutive frames with zero block errors and measured SNR at least 2 dB above the next rung's threshold | Request one rung higher |
+| A lost header (a preamble detected while awaiting the peer, then a header that fails), or more than 20% of the frame's data blocks failed | Request one rung lower immediately (two lower if more than 50% failed), never below MCS 0 |
+| 3 consecutive frames with data blocks and zero block errors, and measured SNR at least 2 dB above the next rung's threshold | Request one rung higher; frames without data blocks neither count toward the run nor break it |
 | Anything else | Hold |
-| First frame after CONNECT or SOUND | Request the highest rung whose threshold is 3 dB below the measured SNR |
-| No frame from the peer for 30 s | Send SOUND; the reply's preamble and probe refresh the estimate |
+| A frame that replies to a CONNECT, CONNECT-ACK or SOUND | Request the highest rung whose threshold is at least 3 dB below the SNR measured on the frame being answered |
+| Session idle | Keepalive SOUND every 30 s (9.3); the reply's preamble and probe refresh the estimate |
 | Receive-side clipping detected | Hold the current rung and warn the operator; adaptation cannot fix an overdriven path |
-| Frames reported at distortion index 3 or higher (B.2) | Excluded from the step-down count; the sender lowers its drive (13.5) or warns the operator, since a slower rung would only hide clipping |
+| Frames this receiver measures at distortion index 3 or higher (B.2) | Excluded from the step-down count; the peer, which sees the index in the ACK, lowers its drive (13.5) or warns its operator, since a slower rung would only hide clipping |
+
+The sender codes every data block of a frame, retransmissions included, at the rung requested in the latest ACK block it has decoded; the initiator's first frame uses CONNECT-ACK's requested MCS (ADR 0010).
 
 Thresholds default to the Section 6.2 thresholds plus a margin measured in Stage 2 testing, all on the 7 dB-equivalent scale of 7.1. A receiver may instead compute per-link thresholds at connect by simulating each rung over the measured per-tone channel (a one-second Monte Carlo on the probe's estimate), which recovers the 1–2 dB a blanket margin wastes on good radios. The 5–10% target block error rate is deliberate: throughput is rate × (1 − error rate), and the maximum sits above zero errors.
 
@@ -497,11 +517,13 @@ Thresholds default to the Section 6.2 thresholds plus a margin measured in Stage
 | 0–1 | 2.0 s |
 | 2–6 | 4.0 s (or the configured maximum, whichever is lower) |
 
-Higher rungs shrink payload time while preamble, header and turnaround stay fixed, so they earn longer frames; lower rungs are used where conditions are poor and a lost frame costs more.
+Higher rungs shrink payload time while preamble, header and turnaround stay fixed, so they earn longer frames; lower rungs are used where conditions are poor and a lost frame costs more. Frame time here, as everywhere, is PTT-on time, TXDelay and TXTail included (7.3).
 
 ### 10.3 Tone mask updates
 
-The receiver drops a tone from the mask when its estimated SNR falls more than 6 dB below the active-tone average for two consecutive frames. A dropped tone is restored only after a width probe shows it recovered: the receiver sets the re-probe flag in an ACK, the sender includes a probe in its next frame, and SOUND frames always carry one. Mask changes travel in the ACK with the mask-present flag; the sender applies them to its next frame.
+The receiver drops a tone from the mask when its estimated SNR falls more than 6 dB below the active-tone average for two consecutive frames. A dropped tone is restored only after a width probe shows it recovered: the receiver sets the re-probe flag in an ACK and the sender includes a probe in its next frame; SOUND frames and wide frames always carry one. Every ACK block in a session carries the current mask (mask-present flag set) with its 2-bit mask ID; a changed mask takes the next ID (mod 4), and the receiver issues no further change until a header from the sender names it. The sender applies the latest mask it has decoded and names its ID in the header's Mask ID field; the receiver demaps the frame's control and data blocks with the mask that field names. Masks reported during setup have ID 0; CONNECT, CONNECT-ACK and frames outside a session are unmasked (ADR 0011).
+
+A v0.5 station transmits 24 tones only. It applies every mask its peer reports and honours the long-prefix flag, but may report the all-ones mask throughout and never request the long prefix.
 
 ### 10.4 Broadcast mode
 
@@ -514,13 +536,15 @@ New transmissions use p-persistent carrier sense; a session's turn-holder may re
 ### 11.1 Starting a transmission
 
 1. Channel must show DCD clear for at least 250 ms.
-2. p-persistence: each 100 ms slot, transmit with probability p (default 0.25) if still clear; otherwise wait a slot. The operator may raise p for lightly used channels.
-3. CONNECT retries and broadcast repeats use a random backoff of 1–5 s on top.
+2. p-persistence: at the end of that wait and at each slot boundary after it (slot time default 100 ms), transmit with probability p (default 0.25) if still clear; otherwise wait a slot. If DCD asserts at any point, start again from step 1. The operator may raise p for lightly used channels; over KISS, a persistence value P sets p = (P + 1)/256.
+3. Random backoffs are uniform and come before step 1: 1–5 s for broadcast and PROBE repeats, 1–5 s multiplied by k for CONNECT retry k.
+
+This procedure applies to every transmission that is not a turn-holder reply: CONNECT and its retries, PROBE, BEACON, UI, a session transmission from idle (new data, a keepalive), and a deferral after a yield window (ADR 0010).
 
 ### 11.2 Inside a session
 
-- The turn-holder (the station whose peer just finished a frame) replies after its turnaround without p-persistence, but still checks DCD for 50 ms first and waits if a third signal is present. A session therefore never talks over a transmission that was already in progress.
-- Every 30 s of session time, the next turn-holder waits a 1.0 s yield window before transmitting. Other stations wanting the channel may start in that window; the session then defers as in 11.1.
+- The turn-holder (the station whose peer just finished a frame that requires a reply) replies after its turnaround without p-persistence. Turn-holder replies also include CONNECT-ACK, the initiator's first frame, a reply to a PROBE, a DISCONNECT reply and a transmission on ACK-timer expiry. Before keying, the station watches the DCD detectors without their hold time for 50 ms, starting when the quieting detector (or COS) shows that the peer's carrier has gone; if the carrier has not gone 100 ms after the peer's last symbol, the channel counts as busy. If a third signal asserts, the station waits until DCD (with hold) is clear and checks again, still without p-persistence. A session therefore never talks over a transmission that was already in progress.
+- Each station keeps its own 30 s yield clock, started at the end of setup. Before its first transmission once the clock passes 30 s, it waits a 1.0 s yield window, listening, and restarts the clock. Other stations wanting the channel may start in that window; the session then defers as in 11.1. The peer's ACK timer (9.3) allows for a yield at any turn and pauses while a third station transmits (ADR 0010).
 - A single frame never exceeds the maximum on-air time (4.0 s default). A session may run as long as it has traffic; the yield windows and frame limit are what keep it a neighbor rather than an owner.
 
 ### 11.3 Legacy packet on the same channel
@@ -567,9 +591,9 @@ The session layer turns the ordered block stream into PDUs (messages), optionall
 | Encoding | 1 byte | 0 raw, 1 zstd without dictionary, 2 zstd with dictionary, 3 schema-encoded form (v2) |
 | Dictionary ID | 4 bytes, only when encoding = 2 | First 4 bytes of the SHA-256 of the dictionary file |
 | Body | variable |  |
-| CRC-32 | 4 bytes | Over the decoded body; a dictionary mismatch fails here, loudly, rather than yielding plausible garbage |
+| CRC-32 | 4 bytes | CRC-32/ISO-HDLC (the zlib CRC: polynomial 0x04C11DB7, initial value 0xFFFFFFFF, reflected input and output, final XOR 0xFFFFFFFF; check value 0xCBF43926) over the decoded body; a dictionary mismatch fails here, loudly, rather than yielding plausible garbage |
 
-PDUs are packed back-to-back into the block stream and may span blocks. In broadcast mode each frame's PDUs are complete within that frame and compressed independently, so a lost frame cannot corrupt the next.
+PDUs are packed back-to-back into the block stream and may span blocks. Every multi-byte field (Length, CRC-32, and the FILE-CHUNK object ID and offset) is big-endian, and the Length counts every byte after itself, the CRC-32 included; the Dictionary ID is the first four bytes of the SHA-256 digest in digest order. Where a PDU would start, a Length of 0x0000 marks the rest of the block as filler (zero bytes, skipped), and a Length field never straddles a block boundary: a single byte left at a PDU boundary is filler too. In broadcast mode each frame's PDUs are complete within that frame and compressed independently, so a lost frame cannot corrupt the next; a message larger than a frame is sent as one PDU per frame and reassembled from its slices (9.1, ADR 0009).
 
 ### 12.2 Content encoding and dictionaries
 
@@ -588,7 +612,7 @@ PDUs are packed back-to-back into the block stream and may span blocks. In broad
 
 ### 12.4 Delivery semantics to the host
 
-- Session PDUs are delivered in order within their stream, exactly once, or reported as undelivered at disconnect. Streams are independent: the sender interleaves them at block boundaries, highest priority first, so a short PDU on a high-priority stream waits at most one block behind a bulk transfer on another.
+- Session PDUs are delivered in order within their stream, exactly once, or reported as undelivered at disconnect. The sender completes a PDU before starting another, and starts queued PDUs highest priority first, so a short high-priority PDU waits at most for the PDU in progress; bulk senders keep that short by cutting large objects into FILE-CHUNK PDUs. Interleaving streams inside a PDU, at block boundaries, needs a per-block stream tag and waits for the stream-multiplexing ADR (capability bit 6, sent as zero until then; ADR 0009).
 - FILE-CHUNK bodies begin with a 32-bit object ID and a 32-bit byte offset, so a transfer interrupted and resumed (9.2) or restarted later continues from the last delivered offset.
 - Broadcast PDUs are delivered as received; duplicates from repeats are suppressed within a 60 s window by source and frame counter.
 
@@ -598,7 +622,7 @@ The modem presents two interfaces at once: a KISS TNC for existing AX.25 softwar
 
 ### 13.1 KISS compatibility
 
-- KISS over serial and over TCP (default port 8001), standard framing including TXDelay/persistence/slot-time commands, which map onto the parameters in Sections 7 and 11.
+- KISS over serial and over TCP (default port 8001), standard framing including TXDelay/persistence/slot-time commands, which map onto the parameters in Sections 7 and 11: TXDelay and slot time in units of 10 ms, persistence P as p = (P + 1)/256.
 - Each AX.25 frame from the host becomes one AX25 PDU in a UI frame (broadcast mode) at the configured rung. Received UI frames carrying AX25 PDUs are returned to the host unchanged.
 - Frames received in legacy modes by the multi-mode receiver (13.7) are delivered to the KISS host like any other. A frame addressed to a station last heard in a legacy mode is transmitted in that mode; the per-destination policy lives in the host configuration and can be overridden per callsign.
 - AX.25 connected-mode proxy (v1.x, decision 20.10): the modem completes the AX.25 handshake with its host (SABM/UA), opens a native session to the far modem, carries I-frame payloads as AX25-CONNECTED PDUs (type 6) and acknowledges locally so the host's timers are satisfied; the far modem re-originates AX.25 to its host. End-to-end reliability comes from the native ARQ, disconnects propagate both ways, and a far station last heard in a legacy mode gets pass-through in that mode instead. This is what gives Winlink RMS Packet, BPQ32 and JNOS native speed unchanged.
@@ -639,7 +663,7 @@ The modem manages levels itself wherever the host allows: receive gain locally a
 4. Initiator finds the knee: the first step where amplitude rises less than 0.5 dB per dB of drive, or distortion exceeds 5%. It sets its output so data-waveform peaks sit 3 dB (70%) below the knee and stores the result per radio.
 5. Knee not found within the span: the modem tells the operator to raise the radio's mic or data-port gain and repeats. Peer reports its own ADC clipping during a step: that step is discarded and the sweep repeated from a lower start.
 
-The exchange takes about 6 s of air time and needs no calibrated equipment at the far end, because it looks for the limiter's knee rather than an absolute deviation. Stations advertise support with capability bit 5 (B.3).
+The exchange takes about 6 s of air time and needs no calibrated equipment at the far end, because it looks for the limiter's knee rather than an absolute deviation. The CAL-REQUEST frame and its tone bursts are one keyed transmission, exempt from the 4.0 s maximum frame time but limited to 6.0 s; a station does not send a CAL-REQUEST whose B.5 parameters would exceed that (ADR 0010). Stations advertise support with capability bit 5 (B.3).
 
 **In-session trim.** When the far end reports a distortion index of 2 or higher for two consecutive frames, the modem lowers its output 1 dB per frame until the index clears, then holds. Without host level control it shows a "reduce drive" warning instead. The index is logged per frame.
 
@@ -1050,7 +1074,7 @@ On-air tests per 14.4; a second implementation (a Python port of the core is acc
 
 ## Appendix A: profile parameters and rate table
 
-Derived values at the two width extremes, 24 and 56 tones (shown as 24 / 56), assuming 4.0 s frames (2.0 s for rungs 0–1 per Section 10.2), TXDelay 150 ms, and a peer ACK cycle of 0.46 s at either width. Net rates are one-direction payload after all overhead; compare with the raw rates in Section 6.2.
+Derived values at the two width extremes, 24 and 56 tones (shown as 24 / 56), assuming 4.0 s frames (2.0 s for rungs 0–1 per Section 10.2) measured as PTT-on time (7.3), TXDelay 150 ms, TXTail 10 ms, and a peer ACK cycle of 0.51 s at either width (250 ms of peer turnaround and TXDelay plus the 259 ms ACK frame). Net rates are one-direction payload after all overhead; compare with the raw rates in Section 6.2.
 
 ### A.1 Fixed per-frame costs
 
@@ -1059,23 +1083,25 @@ Derived values at the two width extremes, 24 and 56 tones (shown as 24 / 56), as
 | Preamble | 4 symbols, 45 ms | 4 symbols, 45 ms |
 | Header (288 coded bits at MCS 0, base tones) | 7 symbols, 79 ms | 7 symbols, 79 ms |
 | Control block (512 coded bits at MCS 0, base tones) | 12 symbols, 135 ms | 12 symbols, 135 ms |
-| Width probe (CONNECT, CONNECT-ACK, SOUND, re-probe) | 2 symbols, 22.5 ms | 2 symbols, 22.5 ms |
+| Width probe (CONNECT, CONNECT-ACK, SOUND, re-probe, every wide frame) | 2 symbols, 22.5 ms | 2 symbols, 22.5 ms |
 | ACK frame on air (preamble + header + 1 control block) | 259 ms | 259 ms |
 | Block symbols available in a 4 s frame | 330 | 330 |
+| Data-block symbols in a 4 s DATA frame (after the ACK control block, and the probe at 56) | 318 | 316 |
+| Data-block symbols in a 2 s DATA frame | 140 | 138 |
 
 ### A.2 Per-rung block geometry and net throughput
 
 | MCS | Coded bits per symbol 24 / 56 | Symbols per data block 24 / 56 | Data blocks per frame 24 / 56 | Net kbps 24 / 56 |
 | --- | --- | --- | --- | --- |
-| 0 | 44 / 104 | 46.5 / 19.7 | 3 / 7 (2 s frame) | 1.2 / 2.9 |
-| 1 | 44 / 104 | 31.1 / 13.2 | 4 / 11 (2 s frame) | 1.6 / 4.5 |
-| 2 | 88 / 208 | 23.3 / 9.8 | 14 / 33 | 3.2 / 7.5 |
-| 3 | 88 / 208 | 15.5 / 6.6 | 21 / 50 | 4.8 / 11.3 |
-| 4 | 132 / 312 | 11.6 / 4.9 | 28 / 67 | 6.3 / 15.1 |
-| 5 | 132 / 312 | 9.3 / 3.9 | 35 / 83 | 7.9 / 18.8 |
-| 6 | 176 / 416 | 7.8 / 3.3 | 42 / 100 | 9.5 / 22.6 |
+| 0 | 44 / 104 | 46.5 / 19.7 | 3 / 7 (2 s frame) | 1.21 / 2.82 |
+| 1 | 44 / 104 | 31.1 / 13.2 | 4 / 10 (2 s frame) | 1.73 / 4.14 |
+| 2 | 88 / 208 | 23.3 / 9.8 | 13 / 32 | 3.02 / 7.16 |
+| 3 | 88 / 208 | 15.5 / 6.6 | 20 / 48 | 4.55 / 10.74 |
+| 4 | 132 / 312 | 11.6 / 4.9 | 27 / 64 | 6.09 / 14.32 |
+| 5 | 132 / 312 | 9.3 / 3.9 | 34 / 80 | 7.61 / 17.90 |
+| 6 | 176 / 416 | 7.8 / 3.3 | 40 / 96 | 9.11 / 21.48 |
 
-Each data block carries 126 payload bytes (1,008 bits). Net kbps = blocks × 1,008 ÷ cycle time: 4.46 s for 4 s frames and 2.46 s for the 2 s frames of rungs 0–1, at either width, since the header and control block use the base tones. Shorter frames reduce every net figure; Section 7.4 shows the 2 s case.
+Each data block carries 126 payload bytes (1,008 bits). Data blocks per frame = ⌊data-block symbols × coded bits per symbol ÷ coded block length⌋, with the data-block symbols of A.1: every DATA frame carries the ACK control block (8.4), and a 56-tone frame the width probe (ADR 0007). Net kbps = blocks × 1,008 ÷ cycle time, the cycle being the frame (its data run padded to whole symbols, 6.4) plus the 0.51 s peer ACK cycle: 4.34–4.51 s for 4 s frames and 2.33–2.50 s for the 2 s frames of rungs 0–1. A frame that carries a block map (B.8) or an ID block has 12 fewer data-block symbols. Shorter frames reduce every net figure; Section 7.4 shows the 2 s case. (Erratum, 2026-11-07: earlier drafts left out the ACK control block and gave about 5% more.)
 
 ### A.3 Code lengths by rung
 
@@ -1091,7 +1117,7 @@ All four lengths are prefixes of the same 3,168-bit rate-matching buffer of the 
 
 ## Appendix B: field layouts
 
-Bit layouts for the two control blocks and the address format. The header layout is in Section 8.2. All fields are big-endian: "bit n" has weight 2^n and fields go on air most significant bit first, so bit 0 is sent last. A field holding one bit per item (the ACK bitmap, tone masks, CAL-REPORT clip flags) puts item i at bit i; a sequence of multi-bit items puts the first item in the most significant bits. Reserved bits and absent optional fields are sent as zero and ignored on receipt; a header whose version is not 1 is discarded. Malformed addresses (B.1) are refused, the measured SNR is rounded to the nearest 0.25 dB (halves up, saturating), and a 4-character grid locator is space-padded to 6 (ADR 0007). Every CRC-16 field is CRC-16/CCITT-FALSE (6.3) over the preceding bits of its block. Control types 2 and 7–15 are reserved: senders MUST NOT use them, and receivers MUST skip a control block of unknown type and process the rest of the frame (every control block is 256 bits, so the next block starts at a known position).
+Bit layouts for the control blocks, the data block and the address format. The header layout is in Section 8.2. All fields are big-endian: "bit n" has weight 2^n and fields go on air most significant bit first, so bit 0 is sent last. A field holding one bit per item (the ACK bitmap, tone masks, CAL-REPORT clip flags) puts item i at bit i; a sequence of multi-bit items puts the first item in the most significant bits. Reserved bits and absent optional fields are sent as zero and ignored on receipt; a header whose version is not 1 is discarded. Malformed addresses (B.1) are refused, the measured SNR is rounded to the nearest 0.25 dB (halves up, saturating), and a 4-character grid locator is space-padded to 6 (ADR 0007). Every CRC-16 field is CRC-16/CCITT-FALSE (6.3) over the preceding bits of its block. Control type 7 is the block map (B.8). Control types 2 and 8–15 are reserved: senders MUST NOT use them, and receivers MUST skip a control block of unknown type and process the rest of the frame (every control block is 256 bits, so the next block starts at a known position).
 
 ### B.1 Address format (40 bits)
 
@@ -1104,23 +1130,24 @@ Bit layouts for the two control blocks and the address format. The header layout
 | 38 | - |
 | 39–63 | reserved |
 
-Six characters at 6 bits each (first character in the most significant bits) followed by a 4-bit SSID. All 40 bits set = broadcast. A callsign longer than six characters sets the reserved code 63 in position one and carries a 30-bit hash in the remaining bits (first 30 bits of SHA-256 over the upper-case ASCII callsign text of B.6, with no SSID or padding; an all-ones result becomes all-ones minus one); the full text, at most 10 characters, travels in the ID control block (B.6) sent in CONNECT.
+Six characters at 6 bits each (first character in the most significant bits) followed by a 4-bit SSID. All 40 bits set = broadcast. A callsign longer than six characters sets the reserved code 63 in position one and carries a 30-bit hash in the remaining bits (first 30 bits of SHA-256 over the upper-case ASCII callsign text of B.6, with no SSID or padding; an all-ones result becomes all-ones minus one); the full text, at most 10 characters, travels in the ID control block (B.6) sent in CONNECT and CONNECT-ACK.
 
 ### B.2 ACK control block (256 bits)
 
 | Field | Bits | Meaning |
 | --- | --- | --- |
 | Control type | 4 | 0 = ACK |
-| Flags | 4 | Bit 0: tone mask present. Bit 1: reserved for HARQ parity-only retransmission (planned, 9.4; send zero until specified). Bit 2: re-probe requested (send a width probe in your next frame). Bit 3: use long prefix (the receiver measured dispersion above about 1.25 ms from the probe's per-tone phase; the sender switches to the 2.5 ms prefix in this direction only, 5.2). |
-| Acknowledged base sequence | 16 | Sequence number of the peer's last frame |
-| Block bitmap | 128 | Bit i set = block base+i passed its CRC |
+| Flags | 4 | Bit 0: tone mask present; always set in a session (10.3). Bit 1: reserved for HARQ parity-only retransmission (planned, 9.4; send zero until specified). Bit 2: re-probe requested (send a width probe in your next frame). Bit 3: use long prefix (the receiver measured dispersion above about 1.25 ms from the probe's per-tone phase; the sender switches to the 2.5 ms prefix in this direction only, 5.2). |
+| Acknowledged base sequence | 16 | The receiver's next in-order sequence: the lowest block not yet received (9.3, ADR 0008); 0 in a PROBE reply or refusal |
+| Block bitmap | 128 | Bit i set = the receiver holds block base+i (bit 0 is therefore clear); 0 in a PROBE reply or refusal |
 | Requested MCS | 4 | Rung the sender should use next |
 | Measured SNR | 8 | 0.25 dB steps, 0–63.75 dB (saturating), channel SNR over active tones excluding the designed clipping, 7 dB-equivalent (7.1, ADR 0006) |
-| Block errors in last frame | 8 | Count, for the peer's hysteresis logic |
+| Block errors in last frame | 8 | Failed data blocks of the peer's last decoded frame, for its hysteresis logic |
 | Tone mask | 56 | Usable tones 0–55; valid when flag bit 0 set |
 | Distortion index | 3 | 0 clean to 7 severe: transmit-side clipping or over-deviation as seen at this receiver, beyond what clip-and-filter at the frame's rung produces by design (7.1), from intermodulation energy on silent tones and amplitude-dependent constellation error, in 3 dB steps |
 | Own ADC clipped | 1 | This receiver's input clipped during the frame: its measurements are unreliable and its own receive gain is wrong, not the sender's drive |
-| Reserved | 8 |  |
+| Mask ID | 2 | ID of the tone mask in this block (10.3, ADR 0011); 0 outside a session |
+| Reserved | 6 |  |
 | CRC-16 | 16 |  |
 
 ### B.3 CONNECT / CONNECT-ACK control block (256 bits)
@@ -1131,16 +1158,18 @@ Six characters at 6 bits each (first character in the most significant bits) fol
 | Flags | 4 | Bit 0: a second control block with more dictionary IDs follows. Bit 1: resume the session named by the session ID (9.2). Bits 2–3 reserved. |
 | Session ID | 16 | Chosen by initiator; echoed by responder; on resume, the ID of the interrupted session |
 | Capabilities | 16 | Bit 0 widths above 24 tones, bit 1 reserved for HARQ (planned, 9.4), bit 2 signatures, bit 3 reserved for schema encoding (planned, 12.2), bit 4 reserved for short session headers (v2), bit 5 level calibration (accepts CAL-REQUEST), bit 6 stream multiplexing, bit 7 dictionary fetch, bits 8–15 reserved |
-| Width cap | 6 | Highest tone index this station will transmit (23–55), set by its channel width |
-| Requested MCS | 4 | Rung the sender wants to receive at |
+| Width cap | 6 | Highest tone index this station will transmit (23–55), set by its channel width; its width is cap + 1 tones. 23 when capability bit 0 is clear (5.4) |
+| Requested MCS | 4 | Rung the sender wants to receive at; 0 in CONNECT and PROBE |
 | Max frame time | 6 | Units of 0.1 s, 5–40 (0.5–4.0 s). Each station advertises its configured maximum; frames in the session never exceed the lower of the two and the per-rung limit of 10.2 |
 | Tone mask | 56 | As B.2: in CONNECT-ACK, usable tones for the initiator-to-responder direction; in CONNECT, all ones |
 | Dictionary IDs | 128 | Up to four 32-bit IDs; zero = empty slot |
 | CRC-16 | 16 |  |
 
+In a second B.3 block (flag bit 0 of the first), only the dictionary IDs are meaningful; every other field is sent as zero and ignored. A CONNECT-ACK sets flag bit 1 if and only if it resumes the named session (9.2). Capability bit 6 is sent as zero until the stream-multiplexing ADR specifies it (12.4).
+
 ### B.4 Data block (1,024 information bits)
 
-126 payload bytes followed by a CRC-16/CCITT-FALSE (6.3) over those bytes. Payload bytes are a slice of the session's PDU stream; block boundaries carry no meaning of their own.
+126 payload bytes followed by a CRC-16/CCITT-FALSE (6.3) over those bytes. The bytes go in order, each most significant bit first, and the CRC-16 follows them, most significant bit first (ADR 0009). Payload bytes are a slice of the session's PDU stream, or of a broadcast frame's PDUs; block boundaries carry no meaning of their own, except that a PDU's Length field never straddles one and a zero Length marks the rest of a block as filler (12.1).
 
 ### B.5 Calibration control blocks (256 bits)
 
@@ -1173,7 +1202,7 @@ CAL-REPORT (control type 4), returned by the peer: in a session, in its next ACK
 
 ### B.6 ID control block (256 bits)
 
-Control type 5. Sent in CONNECT, DISCONNECT, every BEACON, and at least every 10 minutes within a session (decision 20.7).
+Control type 5. Sent in CONNECT, CONNECT-ACK, DISCONNECT (and the DISCONNECT reply), every BEACON, and within a session on the first frame after 9 minutes without one, so at least every 10 minutes (decision 20.7, ADR 0010).
 
 | Field | Bits | Meaning |
 | --- | --- | --- |
@@ -1201,6 +1230,21 @@ Control type 6. Carried by BEACON and UI frames that request digipeating (9.1), 
 | CRC-16 | 16 |  |
 
 A relay whose callsign or alias matches the first unused entry writes its own callsign into that entry, sets the used flag, decrements hops remaining, and retransmits the frame once after the channel-access rules of 11.1. Duplicates are suppressed by source and frame counter for 60 s.
+
+### B.8 Block map control block (256 bits)
+
+Control type 7. The second control block of a session frame whose data blocks are not consecutive, right after the ACK control block, with header flag bit 7 set (9.3, ADR 0008).
+
+| Field | Bits | Meaning |
+| --- | --- | --- |
+| Control type | 4 | 7 |
+| Flags | 4 | Reserved |
+| Base sequence | 16 | Equal to the header's Sequence field |
+| Block bitmap | 128 | Bit i set = block base+i is carried in this frame |
+| Reserved | 88 |  |
+| CRC-16 | 16 |  |
+
+The frame's k-th data block is the block named by the k-th set bit, counted from bit 0. Bit 0 is always set, and the number of set bits equals the header's data block count. A frame whose blocks are consecutive carries no block map and sends flag bit 7 clear. A receiver that finds flag bit 7 set but cannot decode the map, or finds a map that breaks these rules, counts every data block of the frame as not received.
 
 ## Appendix C: references and prior art
 

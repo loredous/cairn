@@ -1,0 +1,497 @@
+# yaml-language-server: $schema=../../tools/adrsite/schemas/decisions.schema.json
+#
+# Once merged into main this file is frozen. Change decisions via a new ADR.
+
+# --- Setup and teardown -------------------------------------------------
+
+- slug: session-establishment-steps
+  title: Three-step session establishment with fixed control-block contents
+  category: link-layer
+  strength: MUST
+  statement: >-
+    (1) The initiator sends CONNECT, using the carrier sense of SPEC §11.1:
+    session-frame flag clear, Sequence its next unsent block (0 for a new
+    session), a width probe, then its connect-parameters block (B.3), its ID
+    block and, when B.3 flag bit 0 is set, a second B.3 block that carries
+    only dictionary IDs (every other field of the second block zero and
+    ignored). (2) The responder replies with CONNECT-ACK as a turn-holder
+    reply (`turn-holder-reply-check`): session-frame flag set, a width
+    probe, its B.3 block (its capabilities, the usable tone mask for the
+    initiator-to-responder direction, the MCS it wants to receive at, its
+    maximum frame time), its ID block, and then either a second
+    dictionary-ID B.3 block (new session, when needed) or, on resume, an
+    ACK control block (ADR 0008 `session-resume-rules`). (3) The initiator's
+    first frame, also a turn-holder reply, confirms the session: DATA when
+    it has data, otherwise an ACK frame. Its leading ACK block carries the
+    usable tone mask for the responder-to-initiator direction with mask ID
+    0 (ADR 0011). Either side may abort with DISCONNECT. (SPEC §8.4, §9.2,
+    B.3, B.6)
+  rationale: >-
+    The ID block in CONNECT-ACK identifies the responder from its first
+    transmission and gives its full callsign when the header carries only a
+    long-callsign hash. A receiver identifies control blocks by type, but a
+    fixed order gives every implementation the same frames and vectors.
+  supersedes:
+    adr: 0002-adopt-the-cairn-v0-1-protocol-specification
+    decision: session-establishment
+  tags: [session, framing, v0.5]
+
+- slug: connect-requested-mcs-zero
+  title: CONNECT's requested MCS is sent as 0
+  category: link-layer
+  strength: MUST
+  statement: >-
+    The Requested MCS field of the B.3 block in a CONNECT is sent as 0 and
+    ignored on receipt; the initiator has measured nothing yet. The rung
+    requested in CONNECT-ACK governs the initiator's first data frame
+    (`sender-uses-requested-rung`). (SPEC §9.2, B.3)
+  tags: [session, adaptation, v0.5]
+
+- slug: connect-retry-schedule
+  title: CONNECT waits 3 s for an answer, then retries with growing backoff
+  category: link-layer
+  strength: MUST
+  statement: >-
+    An initiator with no CONNECT-ACK (or refusal) within 3.0 s of releasing
+    PTT after a CONNECT (4.0 s in repeater mode) retries. Retry k (k = 1,
+    2, 3) first waits a random backoff drawn uniformly from 1–5 s and
+    multiplied by k, then runs the carrier sense of SPEC §11.1. When the
+    third retry also goes unanswered for 3.0 s (4.0 s), the attempt has
+    failed and is reported to the host. CONNECT is never retried more than
+    three times. (SPEC §9.2, §11.1)
+  rationale: >-
+    3.0 s covers the responder's turnaround, the 500 ms TXDelay ceiling and
+    a CONNECT-ACK with three control blocks, with margin; repeater mode adds
+    the access-delay ceiling.
+  supersedes:
+    adr: 0002-adopt-the-cairn-v0-1-protocol-specification
+    decision: connect-retry-limit
+  tags: [session, channel-access, timing, v0.5]
+
+- slug: duplicate-connect-handling
+  title: Repeated CONNECTs and CONNECT-ACKs are answered again
+  category: link-layer
+  strength: MUST
+  statement: >-
+    A responder that has answered a CONNECT and receives the same
+    initiator's CONNECT again with the same session ID, before the
+    initiator's first frame, answers with CONNECT-ACK again, re-measured.
+    After sending CONNECT-ACK the responder runs its ACK timer
+    (`ack-timer-rules`) and resends CONNECT-ACK on each expiry, at most
+    three times; with no frame from the initiator after the third, it
+    discards the half-open session and reports a failed connection attempt,
+    not a link loss. An initiator that receives CONNECT-ACK again after
+    sending its first frame sends that frame again. A CONNECT for a new
+    session (resume flag clear) from the peer of a live session ends that
+    session, reported to the host as a link loss with its undelivered data,
+    and is answered as a new session. (SPEC §9.2)
+  tags: [session, v0.5]
+
+- slug: connect-refusal
+  title: A refused CONNECT is answered with DISCONNECT
+  category: link-layer
+  strength: MUST
+  statement: >-
+    A station that refuses a CONNECT (it is in another session, the caller
+    is on its deny list, or its host declines) answers with a DISCONNECT as
+    a turn-holder reply: session-frame flag clear, an ACK control block with
+    every field zero, then its ID block. The initiator reports the refusal
+    to its host and does not retry. (SPEC §9.2, §9.5)
+  rationale: >-
+    An explicit answer saves the initiator three retries and up to 30 s of
+    channel time; the ID block meets the identification duty for the
+    transmission.
+  tags: [session, v0.5]
+
+- slug: one-session-at-a-time
+  title: A station has at most one session, identified by the address pair
+  category: link-layer
+  strength: MUST
+  statement: >-
+    A station has at most one session at a time. A session is identified by
+    its two stations' addresses. A station accepts a frame as part of its
+    session only when the source is its peer, the destination is itself and
+    the session-frame flag is set; while connecting it also accepts the
+    peer's refusal DISCONNECT, whose flag is clear. A CONNECT from another
+    station while it is in a session is refused (`connect-refusal`).
+    (SPEC §8.2, §9.2)
+  tags: [session, v0.5]
+
+- slug: disconnect-handshake
+  title: DISCONNECT is retried and answered once
+  category: link-layer
+  strength: MUST
+  statement: >-
+    DISCONNECT carries the ACK control block first (final acknowledgment),
+    then the sender's ID block, with the sender's next unsent sequence in
+    the header. The peer replies with one DISCONNECT (ACK block, then ID
+    block) as a turn-holder reply, and both stations close: blocks not
+    acknowledged are reported to the host as undelivered
+    (`undelivered-reported`), and blocks held behind a gap are discarded.
+    The closing station runs its ACK timer and resends DISCONNECT on each
+    expiry, at most three times, then closes anyway. After replying, the
+    peer answers a repeated DISCONNECT of the same session with another
+    DISCONNECT for one ACK-timer period, then forgets the session.
+    (SPEC §9.5)
+  supersedes:
+    adr: 0002-adopt-the-cairn-v0-1-protocol-specification
+    decision: disconnect
+  tags: [session, v0.5]
+
+# --- Turn-taking, timers and idle ----------------------------------------
+
+- slug: reply-required-frames
+  title: Which frames the peer must answer
+  category: link-layer
+  strength: MUST
+  statement: >-
+    In a session, DATA, SOUND, DISCONNECT (answered by one DISCONNECT) and
+    CAL-REQUEST (answered after its tone bursts) require a reply. During
+    setup, CONNECT requires CONNECT-ACK or a refusal, and CONNECT-ACK
+    requires the initiator's first frame. An ACK frame requires no reply: a
+    station that receives one replies, as turn-holder, only if it has data
+    blocks to send (new or retransmitted); otherwise it stays silent. The
+    session is idle when neither station owes a reply. (SPEC §9.3)
+  rationale: >-
+    Without the rule, two stations with nothing to send would answer each
+    other's ACK frames forever.
+  tags: [session, arq, v0.5]
+
+- slug: ack-timer-rules
+  title: How long a station waits for a reply, and what it does then
+  category: link-layer
+  strength: MUST
+  statement: >-
+    A station starts its ACK timer when it releases PTT after a frame that
+    requires a reply. The timer runs for T = 0.1 s + D + Y + F + 1.0 s,
+    where D is 0.5 s (the TXDelay ceiling of SPEC §7.3) plus 1.0 s (the
+    access-delay ceiling) in repeater mode; Y is the yield window, 1.0 s
+    (2.0 s in repeater mode); and F is the longest frame the peer may send
+    next, the lower of the two stations' maximum frame times (B.3) and the
+    SPEC §10.2 limit for the rung this station last requested. The station
+    that answered the CONNECT adds 0.5 s, and each start adds a random
+    0–0.25 s drawn uniformly. The timer pauses while DCD is asserted, keeps
+    running after a preamble whose header fails, and stops when a session
+    frame from the peer decodes its header. Expirations are counted since
+    the last decoded header from the peer: on the 1st and 2nd the station
+    sends its frame again, rebuilt as a reply would be (its ACK block per
+    ADR 0008 `ack-after-lost-header`, then its unacknowledged blocks, lowest
+    first, then new blocks; a frame without data repeats its type); on the
+    3rd to 7th it sends SOUND; on the 8th it declares the link lost,
+    transmits nothing more, keeps the session state for 10 minutes for
+    resume (`session-state-retention`) and reports the loss to the host. A
+    transmission on timer expiry is a turn-holder reply
+    (`turn-holder-reply-check`). A station waiting after a CONNECT-ACK or a
+    DISCONNECT follows the limits of `duplicate-connect-handling` and
+    `disconnect-handshake` instead. (SPEC §9.3)
+  rationale: >-
+    The timer has to outlast the slowest legal reply: the peer's turnaround,
+    TXDelay, a yield window and its longest frame. The offset and the jitter
+    keep two stations that lost each other from timing out together and
+    colliding again; pausing on DCD keeps a station from timing out while a
+    third station holds the channel.
+  supersedes:
+    adr: 0002-adopt-the-cairn-v0-1-protocol-specification
+    decision: ack-timer-and-link-loss
+  tags: [session, arq, timing, v0.5]
+
+- slug: turn-holder-reply-check
+  title: The turn-holder checks raw DCD for 50 ms once the peer's carrier drops
+  category: channel-access
+  strength: MUST
+  statement: >-
+    These are turn-holder replies: a session station's reply to a peer
+    frame that requires one (`reply-required-frames`), CONNECT-ACK, the
+    initiator's first frame, a reply to a PROBE (ADR 0012), a DISCONNECT
+    reply, and a transmission on ACK-timer expiry. A turn-holder reply is
+    sent without p-persistence. Before keying, the station watches the DCD
+    detectors' outputs without the hold time for 50 ms. The window starts
+    when the quieting detector (or COS, when wired) shows that the peer's
+    carrier has gone, or at the timer expiry. If the peer's carrier has not
+    gone 100 ms after its last symbol, the channel counts as busy. If any
+    detector asserts during the window, the station waits until DCD (with
+    hold) is clear and runs the 50 ms check again, still without
+    p-persistence; otherwise it keys at the end of the window. In repeater
+    mode the modulation detector of SPEC §7.2 takes the place of quieting.
+    (SPEC §7.2, §7.3, §11.2)
+  rationale: >-
+    DCD with its 100–300 ms hold is still asserted by the peer's own frame
+    for the whole turnaround, so a check on held DCD would never pass; the
+    raw detectors after the peer's carrier drops show whether a third
+    station is on the air.
+  supersedes:
+    adr: 0002-adopt-the-cairn-v0-1-protocol-specification
+    decision: turn-holder-reply
+  tags: [channel-access, session, timing, v0.5]
+
+- slug: transmission-from-idle
+  title: A session station starting from idle uses carrier sense
+  category: channel-access
+  strength: MUST
+  statement: >-
+    A station in a session that transmits other than as a turn-holder reply
+    (new data while the session is idle, a keepalive SOUND) runs the carrier
+    sense of SPEC §11.1 (`p-persistent-csma`, `csma-procedure-details`),
+    including the legacy-activity policy, and takes a yield window first
+    when one is due (`yield-window-clock`). (SPEC §9.3, §11.1, §11.2)
+  tags: [channel-access, session, v0.5]
+
+- slug: idle-keepalive
+  title: An idle session exchanges a keepalive SOUND every 30 s
+  category: link-layer
+  strength: MUST
+  statement: >-
+    A station with nothing to send answers a frame that requires a reply
+    with an ACK frame. While the session is idle, the original initiator
+    sends a keepalive SOUND (ACK block first, width probe) when 30 s have
+    passed since the end of the last frame either station sent in the
+    session. The original responder sends one only when 35 s plus a random
+    0–1.0 s (drawn uniformly, once per idle period) have passed since the
+    end of the last frame it received from the initiator. Both idle clocks
+    pause while DCD is asserted. A keepalive is a transmission from idle
+    (`transmission-from-idle`), takes a yield window when one is due, and
+    gets the normal SOUND reply (`sound-reply`). It requires a reply, so a
+    keepalive that goes unanswered runs the ACK timer and leads to link loss
+    like any other frame. Keepalives continue for as long as the session is
+    open. (SPEC §9.3, §10.1)
+  rationale: >-
+    A periodic SOUND keeps both directions' measurements and tone masks
+    fresh and finds a lost link within about a minute instead of at the
+    next transfer. Giving the duty to the initiator, with the responder as
+    a later fallback, keeps both from sounding at once.
+  supersedes:
+    adr: 0002-adopt-the-cairn-v0-1-protocol-specification
+    decision: idle-session
+  tags: [session, adaptation, timing, v0.5]
+
+- slug: idle-disconnect-policy
+  title: Closing an idle session is a host setting, off by default
+  category: link-layer
+  strength: MAY
+  statement: >-
+    A station MAY close an idle session after a host-configured idle time,
+    off by default. The idle time counts from the last frame that carried
+    data blocks in either direction; keepalive SOUNDs and their replies do
+    not restart it. When it expires, the station sends DISCONNECT
+    (`disconnect-handshake`). (SPEC §9.3, §13.4)
+  tags: [session, host-interface, v0.5]
+
+- slug: sound-reply
+  title: A SOUND is answered by the next frame, with a probe on wide links
+  category: link-layer
+  strength: MUST
+  statement: >-
+    A station that receives a SOUND from its peer in a session replies as
+    turn-holder with its next frame: DATA when it has data, otherwise an ACK
+    frame. The reply carries a width probe when the replier's transmit width
+    is above 24 tones, so that the SOUND's sender can re-measure the
+    reverse direction, and its requested MCS follows the rule for a reply
+    to a SOUND (`adaptation-rules-revised`). (SPEC §8.4, §10.1)
+  tags: [session, adaptation, v0.5]
+
+- slug: yield-window-clock
+  title: Each station yields once per 30 s of its own clock
+  category: channel-access
+  strength: MUST
+  statement: >-
+    Each station keeps its own yield clock, started at the end of session
+    setup (when it sends or receives the initiator's first frame) and
+    restarted at each yield window it takes. Before the first transmission
+    it makes once that clock passes 30 s, whether a turn-holder reply or
+    not, it waits a yield window: 1.0 s (2.0 s in repeater mode) of
+    listening, with DCD (and its hold) watched. If DCD stays clear, it then
+    transmits. If DCD asserts, other stations have taken the channel, and the
+    station defers, once DCD clears, as for a new transmission (SPEC §11.1).
+    The peer's ACK timer covers the window (`ack-timer-rules`). (SPEC §11.2,
+    §11.5)
+  rationale: >-
+    The two stations need not agree on when a yield is due: the peer's
+    timer allows for one and pauses while a third station transmits.
+  supersedes:
+    adr: 0002-adopt-the-cairn-v0-1-protocol-specification
+    decision: yield-window
+  tags: [channel-access, session, v0.5]
+
+# --- Identification and control-block order ------------------------------
+
+- slug: session-id-cadence
+  title: Each station identifies at least every 9 minutes in a session
+  category: regulatory
+  strength: MUST
+  statement: >-
+    Each station keeps its own identification clock, restarted whenever it
+    sends an ID control block. In a session it adds an ID block to the first
+    frame it sends once 9 minutes have passed since its last one, whatever
+    the frame type (ACK frames included), so its ID blocks are never more
+    than 10 minutes apart. CONNECT, CONNECT-ACK, DISCONNECT and the
+    DISCONNECT reply always carry its ID block. (SPEC §3.3, §9.3, B.6)
+  rationale: >-
+    The 1-minute margin absorbs an idle session's keepalive interval and a
+    yield, so the 10-minute requirement of §97.119 is met without a
+    separate frame.
+  tags: [regulatory, session, v0.5]
+
+- slug: control-block-order
+  title: Control blocks follow a fixed order, at most three per frame
+  category: link-layer
+  strength: MUST
+  statement: >-
+    In a session frame the control blocks are, in order: the ACK block, the
+    block map when present (ADR 0008), an ID block when due, then any others
+    (such as CAL-REPORT). CONNECT and CONNECT-ACK follow
+    `session-establishment-steps`. A frame carries at most three control
+    blocks. A block that does not fit waits for the next frame; the ACK
+    block, the block map and a due ID block always fit, so only blocks such
+    as CAL-REPORT wait. (SPEC §8.4, B.5, B.6)
+  tags: [framing, session, v0.5]
+
+# --- Link adaptation edges ----------------------------------------------
+
+- slug: adaptation-rules-revised
+  title: Rung step-down, step-up and hold rules, with their edge cases
+  category: link-adaptation
+  strength: MUST
+  statement: |
+    The receiver applies these rules once per received frame (SPEC §10.1):
+
+    | Trigger | Action |
+    | --- | --- |
+    | A lost header (a preamble detected while awaiting the peer, then a header that fails), or more than 20% of the frame's data blocks failed | Request one rung lower immediately (two lower if more than 50% failed), never below MCS 0 |
+    | 3 consecutive frames with data blocks and zero block errors, and measured SNR at least 2 dB above the next rung's threshold | Request one rung higher. Frames without data blocks neither count toward the run nor break it |
+    | Anything else | Hold |
+    | A frame that replies to a CONNECT, CONNECT-ACK or SOUND | Request the highest rung whose threshold is at least 3 dB below the SNR measured on the frame being answered |
+    | Session idle | Keepalive SOUND every 30 s (`idle-keepalive`); the reply refreshes the estimate |
+    | Receive-side clipping detected | Hold the current rung and warn the operator |
+    | Frames this receiver measures at distortion index 3 or higher | Excluded from the step-down count; the peer, which sees the index in the ACK, lowers its drive or warns its operator |
+  rationale: >-
+    The table of ADR 0002 left frames without data blocks, the 30 s SOUND
+    and the distortion row ambiguous; the edges are now fixed, and the
+    keepalive replaces the 30 s rule.
+  supersedes:
+    adr: 0002-adopt-the-cairn-v0-1-protocol-specification
+    decision: adaptation-rules
+  tags: [adaptation, v0.5]
+
+- slug: sender-uses-requested-rung
+  title: The sender codes data at exactly the requested rung
+  category: link-adaptation
+  strength: MUST
+  statement: >-
+    A sender codes every data block of a frame, retransmissions included,
+    at the rung requested in the latest ACK control block it has decoded
+    from its peer. The initiator's first frame uses the Requested MCS of
+    CONNECT-ACK, and the responder's first data frame uses the initiator's
+    first ACK block. A frame without data blocks sends MCS 0 (ADR 0007).
+    (SPEC §10, B.2)
+  tags: [adaptation, v0.5]
+
+# --- Frame time, carrier sense and broadcast bookkeeping ------------------
+
+- slug: frame-time-definition
+  title: A frame's on-air time is the time PTT is keyed for it
+  category: channel-access
+  strength: MUST
+  statement: >-
+    A frame's on-air time is the time PTT is keyed for it: TXDelay, the
+    repeater access delay in repeater mode, every symbol of the frame, and
+    TXTail. The maximum frame on-air time (SPEC §7.3, B.3), the per-rung
+    limits of SPEC §10.2 and the 2 s legacy-activity cap (SPEC §11.3) all
+    limit this time. (SPEC §7.3, §10.2, §11.3, Appendix A)
+  rationale: >-
+    The channel is occupied from key-up to key-down; this is also how
+    Appendix A's 330 block symbols in a 4 s frame were derived.
+  tags: [timing, channel-access, v0.5]
+
+- slug: calibration-transmission-limit
+  title: A CAL-REQUEST and its tone bursts stay within 6 s
+  category: audio-level
+  strength: MUST
+  statement: >-
+    A CAL-REQUEST frame and the tone bursts that follow it are one keyed
+    transmission, exempt from the maximum frame on-air time but limited to
+    6.0 s in total. A station does not send a CAL-REQUEST whose B.5
+    parameters would exceed that. (SPEC §7.3, §13.5, B.5)
+  rationale: >-
+    The default sweep (8 steps of 400 ms with 100 ms gaps) alone takes
+    4.0 s, so the frame plus its bursts cannot meet the 4.0 s frame
+    ceiling. Releasing PTT between bursts would disturb the radio's level
+    chain, which is what the sweep measures. Calibration is rare and
+    operator-initiated.
+  tags: [audio-level, timing, v1.0]
+
+- slug: csma-procedure-details
+  title: How the p-persistent procedure runs and when it applies
+  category: channel-access
+  strength: MUST
+  statement: >-
+    The procedure of SPEC §11.1 (`p-persistent-csma`) runs as follows. The
+    station waits until DCD has been clear for 250 ms; at that moment, and
+    at each slot boundary after it, it transmits with probability p,
+    otherwise it waits one slot; if DCD asserts at any point, it starts
+    again from the 250 ms wait. p and the slot time are configuration
+    (defaults 0.25 and 100 ms), and the legacy-activity policy halves the
+    configured p. Over KISS, a persistence value P sets p = (P + 1)/256, and
+    slot time and TXDelay are in units of 10 ms. The procedure applies to
+    every transmission that is not a turn-holder reply: CONNECT and its
+    retries, PROBE and its repeats, BEACON, UI, a session transmission from
+    idle, and a deferral after a yield window. (SPEC §11.1, §13.1)
+  tags: [channel-access, host-interface, v0.5]
+
+- slug: retry-backoff-uniform
+  title: Random backoffs are uniform and grow for CONNECT retries
+  category: channel-access
+  strength: MUST
+  statement: >-
+    Random backoffs are drawn uniformly. Broadcast repeats and PROBE repeats
+    wait 1–5 s, and CONNECT retry k waits 1–5 s multiplied by k
+    (`connect-retry-schedule`), before starting the procedure of SPEC §11.1.
+    (SPEC §9.2, §9.6, §11.1)
+  supersedes:
+    adr: 0002-adopt-the-cairn-v0-1-protocol-specification
+    decision: retry-backoff
+  tags: [channel-access, v0.5]
+
+- slug: broadcast-frame-counter
+  title: Frames outside a session carry a counter or a fixed sequence
+  category: link-layer
+  strength: MUST
+  statement: >-
+    A station keeps one 16-bit frame counter for BEACON, UI and PROBE
+    frames, set to a random value when the modem starts. Each new frame of
+    those types takes the next value (mod 2^16) in its header's Sequence
+    field; an identical repeat (flag bit 5) keeps the value of the frame it
+    repeats. Other frames sent outside a session carry a fixed Sequence: a
+    CONNECT, the initiator's next unsent block (`session-establishment-steps`);
+    a SOUND that answers a PROBE, and a refusal DISCONNECT, 0. (SPEC §8.2,
+    §9.1, §12.4)
+  rationale: >-
+    A counter that restarted at 0 with the modem would have its first frames
+    suppressed as duplicates by every listener for 60 s.
+  tags: [framing, broadcast, v0.5]
+
+- slug: kiss-ui-frames
+  title: KISS traffic goes to the broadcast address, several PDUs per frame
+  category: host-interface
+  strength: MUST
+  statement: >-
+    A UI frame carrying AX25 PDUs from a KISS host is addressed to the
+    broadcast address (all ones); the AX.25 frame inside carries its own
+    addresses. A UI frame MAY carry several complete AX25 PDUs, and a
+    receiver returns each AX25 PDU to its KISS host as a separate frame. An
+    AX.25 frame too large for one UI frame is sent as a fragmented message
+    (ADR 0009 `broadcast-message-fragments`). (SPEC §9.1, §13.1)
+  tags: [host-interface, broadcast, v0.5]
+
+- slug: broadcast-during-session
+  title: A station in a session broadcasts only while the session is idle
+  category: channel-access
+  strength: MUST
+  statement: >-
+    While in a session, a station sends BEACON, UI and PROBE frames only
+    while the session is idle (`reply-required-frames`), using the carrier
+    sense of SPEC §11.1; the session's next frame is then a transmission
+    from idle. (SPEC §9.1, §11.2)
+  rationale: >-
+    A broadcast sent in a station's turn would leave its peer waiting for a
+    session frame and running its ACK timer.
+  tags: [channel-access, broadcast, session, v0.5]
