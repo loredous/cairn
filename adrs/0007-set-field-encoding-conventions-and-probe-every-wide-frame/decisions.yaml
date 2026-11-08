@@ -1,0 +1,134 @@
+# yaml-language-server: $schema=../../tools/adrsite/schemas/decisions.schema.json
+#
+# Once merged into main this file is frozen. Change decisions via a new ADR.
+
+- slug: field-bit-order
+  title: Field bits are numbered by weight and sent most significant first
+  category: framing
+  strength: MUST
+  statement: >-
+    In every header and control-block field (SPEC §8.2, Appendix B), "bit n"
+    has weight 2^n: bit 0 is the least significant. Fields are sent most
+    significant bit first, in the order the tables list them, so bit 0 of a
+    field is its last bit on air. A field holding one bit per item puts item
+    i at bit i: the ACK bitmap (block base + i), tone masks (tone k) and the
+    CAL-REPORT clip flags (step j at bit j − 1). A field holding a sequence
+    of multi-bit items puts the first item in the most significant bits, as
+    B.1 already does for callsign characters.
+  rationale: >-
+    The SPEC numbered bits without saying which way, and every bitmap and
+    mask on air depends on it. This is the reading of the Stage 1 vectors
+    (`vectors/header/`, `vectors/control/`, `vectors/frame/`) and of both the
+    Python and Rust implementations.
+  tags: [framing, interop, v0.5]
+
+- slug: absent-and-reserved-fields
+  title: Absent and reserved fields are zero and ignored; unknown header versions are discarded
+  category: framing
+  strength: MUST
+  statement: >-
+    Optional fields whose presence flag is clear (the ACK tone mask without
+    ACK flag bit 0, the ID block's grid locator without its flag, unused
+    path entries) and reserved bits are sent as zero and ignored on receipt.
+    A header whose version field is not 1 is discarded with its frame.
+    (SPEC §8.2, Appendix B)
+  rationale: >-
+    Ignoring reserved bits lets later versions use them without breaking
+    earlier receivers; a different version number is the signal that the
+    rest of the header cannot be read as this version.
+  tags: [framing, interop, v0.5]
+
+- slug: header-mcs-without-data
+  title: The header's MCS is ignored when a frame has no data blocks
+  category: framing
+  strength: MUST
+  statement: >-
+    A frame with no data blocks sends its header MCS field as 0, and the
+    receiver ignores the field. Such a frame is clipped at 7 dB (ADR 0003
+    `clip-level-by-rung`). A header naming a reserved rung (7–15) with data
+    blocks present makes the frame undecodable. (SPEC §6.2, §8.2)
+  tags: [framing, phy, v0.5]
+
+- slug: malformed-addresses
+  title: Malformed addresses are refused
+  category: framing
+  strength: MUST
+  statement: >-
+    An address (SPEC B.1) is malformed, and a header or control block
+    carrying it is discarded, if it uses a reserved character code other
+    than 63 in position one, has padding before a character, uses code 63
+    outside position one, or is empty. Long callsigns (7–10 characters) are
+    carried as code 63 plus the 30-bit hash of B.1 and are otherwise
+    unaffected.
+  rationale: >-
+    Refusing malformed addresses keeps a corrupted header that slipped past
+    its CRC from being attributed to a station that does not exist, and
+    gives every implementation the same answer for the same bits.
+  tags: [framing, addressing, interop, v0.5]
+
+- slug: snr-field-quantization
+  title: The ACK's measured SNR is rounded to the nearest 0.25 dB
+  category: link-adaptation
+  strength: MUST
+  statement: >-
+    The measured SNR field of the ACK control block (SPEC B.2) carries the
+    7 dB-equivalent channel SNR of ADR 0006 rounded to the nearest 0.25 dB,
+    halves rounded up, and saturating at 0 and 63.75 dB.
+  tags: [adaptation, framing, v0.5]
+
+- slug: grid-locator-padding
+  title: The ID block's grid locator is space-padded to six characters
+  category: framing
+  strength: MUST
+  statement: >-
+    The grid locator in the ID control block (SPEC B.6) is 4 or 6
+    characters; a 4-character locator is padded with two spaces.
+  tags: [framing, v0.5]
+
+- slug: width-probe-every-wide-frame
+  title: Every frame with data above the base tones carries the width probe
+  category: physical-layer
+  strength: MUST
+  statement: >-
+    A width probe is two symbols of known pilots on every tone up to the
+    sender's cap, sent immediately after the header, before any block, in
+    any frame whose header flag bit 4 is set. It MUST be sent in every
+    CONNECT, CONNECT-ACK and SOUND frame, in a DATA frame when the peer has
+    requested a re-probe (ACK flag bit 2), and in every frame whose data
+    blocks use tones above 23, session or broadcast. The receiver estimates
+    the tones above 23 from the probe of the same frame. (SPEC §5.4, §8.1,
+    §10.3)
+  rationale: >-
+    The preamble measures only the base tones, and the SPEC never said how a
+    receiver learns the other tones of a wide frame without a probe. Reusing
+    an earlier probe's estimate would rely on the audio chain staying the
+    same from frame to frame, which Stage 2 has not measured. The probe
+    costs 22.5 ms per frame (two symbols with the short prefix), about 0.5%
+    of a 4 s frame, and gives every frame a fresh estimate. Both Stage 1
+    receivers already work this way.
+  supersedes:
+    adr: 0002-adopt-the-cairn-v0-1-protocol-specification
+    decision: width-probe
+  tags: [phy, waveform, framing, v0.5]
+
+- slug: broadcast-width-from-probe
+  title: Broadcasts wider than 24 tones carry a probe that tells listeners the width
+  category: physical-layer
+  strength: MUST
+  statement: >-
+    Broadcast frames do not negotiate width; they use the configured
+    broadcast width (default 24 tones). A broadcast frame wider than 24
+    tones carries the width probe (`width-probe-every-wide-frame`) with its
+    cap equal to the broadcast width and no tone mask, and a listener takes
+    the frame's width from the probe: the highest tone on which the probe
+    sequence is received, plus one. A 24-tone broadcast carries no probe.
+    (SPEC §5.4, §10.4)
+  rationale: >-
+    The header does not carry the width, and a listener outside any session
+    has no link state to take it from. The probe, which a wide frame now
+    carries anyway, marks its own extent: tones up to the cap carry a known
+    sequence and tones above it carry nothing.
+  supersedes:
+    adr: 0002-adopt-the-cairn-v0-1-protocol-specification
+    decision: broadcast-fixed-width
+  tags: [phy, framing, broadcast, v0.5]
