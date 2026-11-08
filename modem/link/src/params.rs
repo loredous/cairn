@@ -209,6 +209,15 @@ pub const STEP_DOWN_TWO_FRACTION: f64 = 0.50;
 pub const STEP_UP_RUN: u8 = 3;
 /// SNR margin above the next rung's threshold needed to step up.
 pub const STEP_UP_MARGIN_DB: f64 = 2.0;
+/// ADR 0013 (multi-rung step-up): after the clean run, request the highest
+/// rung whose threshold is at least [`STEP_UP_MARGIN_DB`] below the measured
+/// SNR, not just the next rung (ADR 0010 `adaptation-rules-revised` stepped
+/// one rung per run). `false` restores the one-rung rule.
+pub const STEP_UP_MULTI_RUNG: bool = true;
+/// READING (ADR 0013 names "the measured SNR" without saying which frame's):
+/// the multi-rung target is taken from the lowest SNR of the frames in the
+/// clean run, the conservative choice when the SNR moved during the run.
+pub const READING_STEP_UP_SNR_IS_RUN_MINIMUM: bool = true;
 /// A reply to CONNECT, CONNECT-ACK or SOUND requests the highest rung whose
 /// threshold is at least this far below the measured SNR (also the link-test
 /// suggestion, ADR 0012 `probe-link-test-reply`).

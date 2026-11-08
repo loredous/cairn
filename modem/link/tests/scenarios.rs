@@ -58,11 +58,12 @@ fn rung_settles_within_two_frames_after_6db_drop() {
 }
 
 #[test]
-fn rung_climbs_after_6db_rise() {
-    // The step-up rule needs 3 clean frames per rung (§10.1), so a rise
-    // takes 3 frames per rung climbed; the §14.1 "2 frames" cannot hold
-    // upward (see the README, "Readings").
-    for (seed, from, to) in [(14u64, 19.0, 25.0), (15, 8.0, 14.0)] {
+fn rung_climbs_within_four_frames_after_6db_rise() {
+    // ADR 0013: §14.1 asks for the correct rung within 4 frames of a rise.
+    // The step-up still needs 3 clean frames (§10.1), but then requests the
+    // highest rung 2 dB below the measured SNR, so a 6 dB rise is climbed in
+    // one step: 3 frames to see the run, the 4th at the new rung.
+    for (seed, from, to) in [(14u64, 19.0, 25.0), (15, 8.0, 14.0), (16, 13.0, 19.0), (17, 6.0, 12.0)] {
         let mut sim = pair(seed, from);
         connect(&mut sim, 0, 1, t(0.0));
         send_chunks(&mut sim, 0, t(0.1), &payload(400_000, seed), 1000);
@@ -74,7 +75,8 @@ fn rung_climbs_after_6db_rise() {
         let climbed = rung.saturating_sub(before) as usize;
         eprintln!("{from} -> {to} dB: MCS {before} -> {rung} after {n} frames");
         assert!(rung > before);
-        assert!(n <= 3 * climbed + 2, "{n} frames for {climbed} rungs");
+        assert!(n <= 4, "{from} -> {to} dB: {n} frames for {climbed} rungs");
+        assert!(bler(to, RUNG_THRESHOLDS_DB[rung as usize]) <= 0.10, "MCS {rung} at {to} dB");
         assert_clean(&sim);
     }
 }
@@ -114,13 +116,14 @@ fn transfer_survives_60s_of_link_loss_without_resending_delivered_blocks() {
 }
 
 #[test]
-fn resume_after_link_loss_resends_no_delivered_block() {
+fn resume_after_120s_link_loss_resends_no_delivered_block() {
+    // ADR 0013: §14.1's session-resume target is tested at a 120 s outage.
     let mut sim = pair(22, 25.0);
     sim.stations[0].auto_resume = Some(Duration::from_secs(1));
     let data = payload(150_000, 22);
     connect(&mut sim, 0, 1, t(0.0));
     send_chunks(&mut sim, 0, t(0.1), &data, 1000);
-    // Long enough for both ends to declare the link lost.
+    // 120 s: long enough for both ends to declare the link lost.
     sim.outage(0, 1, t(20.0), t(140.0));
     sim.run_while(t(900.0), |s| s.delivered_bytes(1).len() < data.len());
     assert_eq!(sim.delivered_bytes(1), data, "exactly once, in order");

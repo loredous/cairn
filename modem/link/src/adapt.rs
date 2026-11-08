@@ -7,8 +7,8 @@ use std::time::Duration;
 
 use crate::params::{
     ALL_TONES, DISTORTION_EXCLUDE_INDEX, MASK_DROP_DB, MASK_DROP_FRAMES, MASK_ID_MODULUS, READING_REPROBE_INTERVAL,
-    REPLY_RULE_MARGIN_DB, RUNG_THRESHOLDS_DB, RUNGS, STEP_DOWN_FRACTION, STEP_DOWN_TWO_FRACTION, STEP_UP_MARGIN_DB,
-    STEP_UP_RUN, UNMASKABLE_TONES,
+    READING_STEP_UP_SNR_IS_RUN_MINIMUM, REPLY_RULE_MARGIN_DB, RUNG_THRESHOLDS_DB, RUNGS, STEP_DOWN_FRACTION,
+    STEP_DOWN_TWO_FRACTION, STEP_UP_MARGIN_DB, STEP_UP_MULTI_RUNG, STEP_UP_RUN, UNMASKABLE_TONES,
 };
 use crate::time::Instant;
 
@@ -56,8 +56,9 @@ pub enum Decision {
     Hold,
     /// Stepped down this many rungs.
     Down(u8),
-    /// Stepped up one rung.
-    Up,
+    /// Stepped up this many rungs (more than one under ADR 0013's
+    /// multi-rung step-up).
+    Up(u8),
     /// Held because this receiver clipped: warn the operator.
     ClippedHold,
 }
@@ -68,12 +69,22 @@ pub struct RateAdapter {
     thr: Thresholds,
     requested: u8,
     clean_run: u8,
+    /// Lowest SNR measured in the current clean run.
+    run_min_snr: f64,
+    /// SNR of the last frame of the run.
+    run_last_snr: f64,
 }
 
 impl RateAdapter {
     /// An adapter starting at `initial`.
     pub fn new(thr: Thresholds, initial: u8) -> Self {
-        RateAdapter { thr, requested: initial.min(RUNGS as u8 - 1), clean_run: 0 }
+        RateAdapter {
+            thr,
+            requested: initial.min(RUNGS as u8 - 1),
+            clean_run: 0,
+            run_min_snr: f64::INFINITY,
+            run_last_snr: 0.0,
+        }
     }
 
     /// The rung to request.
@@ -139,11 +150,27 @@ impl RateAdapter {
             self.clean_run = 0;
             return Decision::Hold;
         }
+        if self.clean_run == 0 {
+            self.run_min_snr = f64::INFINITY;
+        }
         self.clean_run += 1;
+        self.run_min_snr = self.run_min_snr.min(s.snr_db);
+        self.run_last_snr = s.snr_db;
         if self.clean_run >= STEP_UP_RUN {
-            self.requested += 1;
+            let before = self.requested;
+            self.requested = if STEP_UP_MULTI_RUNG {
+                // ADR 0013: the highest rung whose threshold is at least
+                // STEP_UP_MARGIN_DB below the measured SNR (READING: the run's
+                // lowest), never less than one rung up (every frame of the run
+                // cleared the next rung's threshold by the margin).
+                let snr = if READING_STEP_UP_SNR_IS_RUN_MINIMUM { self.run_min_snr } else { self.run_last_snr };
+                let top = (0..RUNGS).rev().find(|&m| self.thr.0[m] + STEP_UP_MARGIN_DB <= snr).unwrap_or(0) as u8;
+                top.max(before + 1)
+            } else {
+                before + 1
+            };
             self.clean_run = 0;
-            return Decision::Up;
+            return Decision::Up(self.requested - before);
         }
         Decision::Hold
     }
@@ -310,7 +337,7 @@ mod tests {
         assert_eq!(a.on_frame(&stats(10, 0, 12.0)), Decision::Hold);
         assert_eq!(a.on_frame(&stats(0, 0, 12.0)), Decision::Hold); // no data: neither counts nor breaks
         assert_eq!(a.on_frame(&stats(10, 0, 12.0)), Decision::Hold);
-        assert_eq!(a.on_frame(&stats(10, 0, 12.0)), Decision::Up);
+        assert_eq!(a.on_frame(&stats(10, 0, 12.0)), Decision::Up(1));
         assert_eq!(a.requested(), 2);
         let mut d = stats(10, 9, 5.0);
         d.distortion = 3;
@@ -320,6 +347,35 @@ mod tests {
         c.adc_clipped = true;
         assert_eq!(a.on_frame(&c), Decision::ClippedHold);
         assert_eq!(a.requested(), 1);
+    }
+
+    #[test]
+    fn multi_rung_step_up() {
+        // ADR 0013: after three clean frames, the highest rung whose
+        // threshold (with the 1 dB margin) is at least 2 dB below the SNR.
+        let mut a = RateAdapter::new(Thresholds::with_margin(1.0), 0);
+        // Thresholds + margin: 4.5, 7, 9.5, 13.5, 18.5, 22, 26.5.
+        assert_eq!(a.on_frame(&stats(3, 0, 25.0)), Decision::Hold);
+        assert_eq!(a.on_frame(&stats(3, 0, 21.0)), Decision::Hold);
+        // The run's lowest SNR, 21 dB, allows MCS 4 (18.5 + 2 <= 21).
+        assert_eq!(a.on_frame(&stats(3, 0, 30.0)), Decision::Up(4));
+        assert_eq!(a.requested(), 4);
+        // Just enough for the next rung only: one rung.
+        for _ in 0..2 {
+            assert_eq!(a.on_frame(&stats(10, 0, 24.0)), Decision::Hold);
+        }
+        assert_eq!(a.on_frame(&stats(10, 0, 24.5)), Decision::Up(1));
+        assert_eq!(a.requested(), 5);
+        // A frame below the next rung's condition restarts the run, and the
+        // run's minimum restarts with it.
+        assert_eq!(a.on_frame(&stats(10, 0, 40.0)), Decision::Hold);
+        assert_eq!(a.on_frame(&stats(10, 0, 20.0)), Decision::Hold);
+        for _ in 0..2 {
+            assert_eq!(a.on_frame(&stats(10, 0, 40.0)), Decision::Hold);
+        }
+        assert_eq!(a.on_frame(&stats(10, 0, 40.0)), Decision::Up(1));
+        assert_eq!(a.requested(), 6);
+        assert_eq!(a.on_frame(&stats(10, 0, 60.0)), Decision::Hold, "top rung");
     }
 
     #[test]

@@ -46,7 +46,7 @@ table.
 | `pdu` | ADR 0009 packing and parsing, filler, CRC-32/ISO-HDLC, broadcast fragmentation, reassembly with duplicate suppression. Kept alongside `cairn_phy::pdu` because the ARQ needs per-PDU completion ids, priority queues and lost-block parsing; `tests/pdu_vectors.rs` shows it byte-identical with `vectors/link/pdu_*.json` and, by property test, with `cairn_phy::pdu` |
 | `seq` | RFC 1982 16-bit sequences |
 | `arq` | Sender (window, retransmissions lowest first, block map, frame filling against a capacity), receiver (cumulative ACK, reassembly buffer, in-order delivery) |
-| `adapt` | §10.1 rules as revised by ADR 0010, thresholds = §6.2 + margin, mask tracker with IDs |
+| `adapt` | §10.1 rules as revised by ADR 0010 and ADR 0013 (multi-rung step-up), thresholds = §6.2 + margin, mask tracker with IDs |
 | `access` | DCD hold, p-persistent CSMA, slot draws, turn-holder 50 ms raw-DCD check, yield windows |
 | `session` | The ADR 0010 state machine |
 | `resume` | State retained 10 minutes after link loss |
@@ -83,6 +83,12 @@ and names it (`READING_*` constants in `params`, `READING:` comments):
 - Step-up needs the SNR condition on each of the three clean frames; a
   clipped or distortion-index-≥3 frame neither steps up nor down and
   restarts the run.
+- Multi-rung step-up (ADR 0013, `STEP_UP_MULTI_RUNG`): after the clean run
+  the receiver requests the highest rung whose threshold is at least 2 dB
+  below the measured SNR, taken as the lowest SNR of the run's frames
+  (`READING_STEP_UP_SNR_IS_RUN_MINIMUM`). The scenario tests hold the
+  ADR 0013 §14.1 targets: the right rung within 2 frames of a 6 dB drop and
+  within 4 frames of a 6 dB rise, and a resume after a 120 s outage.
 - A resend on ACK-timer expiry without data blocks after a DATA frame goes
   out as SOUND (a DATA frame cannot be empty).
 - Crossing *new* CONNECTs (each station connecting to the other) are
