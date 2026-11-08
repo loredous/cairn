@@ -42,6 +42,8 @@ pub struct Sender {
     slots: VecDeque<Slot>,
     queue: PduQueue,
     pdu_ends: VecDeque<(u64, u64)>,
+    sent_blocks: u64,
+    resent_blocks: u64,
 }
 
 impl Sender {
@@ -53,7 +55,20 @@ impl Sender {
             slots: VecDeque::new(),
             queue: PduQueue::default(),
             pdu_ends: VecDeque::new(),
+            sent_blocks: 0,
+            resent_blocks: 0,
         }
+    }
+
+    /// Data blocks chosen for frames so far, retransmissions included
+    /// (SPEC 13.6 transfer progress).
+    pub fn sent_blocks(&self) -> u64 {
+        self.sent_blocks
+    }
+
+    /// Of those, blocks sent again.
+    pub fn resent_blocks(&self) -> u64 {
+        self.resent_blocks
     }
 
     /// Queue a PDU under a host id.
@@ -196,6 +211,8 @@ impl Sender {
             }
         };
         let blocks = abs.iter().map(|&a| self.block(a)).collect();
+        self.sent_blocks += abs.len() as u64;
+        self.resent_blocks += abs.iter().filter(|a| retx.contains(a)).count() as u64;
         let seq = Seq::from_abs(abs.first().copied().unwrap_or(self.next));
         let consecutive = abs.windows(2).all(|w| w[1] == w[0] + 1);
         let map = if consecutive {

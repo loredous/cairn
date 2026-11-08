@@ -174,6 +174,8 @@ pub struct Session {
     last_data: Instant,
     disconnect: Option<bool>,
     peer_distortion: u8,
+    /// The peer's latest ACK block: its report of this station's frames.
+    peer_ack: Option<AckBlock>,
     last_frame_from_peer: Option<Instant>,
     /// When the link was lost, for state resumed from the retained store.
     pub(crate) lost_at: Option<Instant>,
@@ -213,6 +215,7 @@ impl Session {
             last_data: now,
             disconnect: None,
             peer_distortion: 0,
+            peer_ack: None,
             last_frame_from_peer: None,
             lost_at: None,
         }
@@ -666,6 +669,26 @@ impl Session {
             ctx.host(HostEvent::Warning(Warning::Distortion { peer: self.peer, index: a.distortion }));
         }
         self.peer_distortion = a.distortion;
+        self.peer_ack = Some(*a);
+    }
+
+    /// The peer's latest ACK block (its report of this station's last
+    /// decoded frame: SNR, block errors, distortion, requested rung, mask).
+    pub fn peer_ack(&self) -> Option<AckBlock> {
+        self.peer_ack
+    }
+
+    /// This station owes the next frame (a turn-holder reply).
+    pub fn owes_reply(&self) -> bool {
+        self.owed.is_some()
+    }
+
+    /// When the next yield window falls due (SPEC 11.1), in an open session.
+    pub fn next_yield(&self) -> Option<Instant> {
+        if !matches!(self.phase, Phase::Open | Phase::Closing { .. }) {
+            return None;
+        }
+        self.yield_start.map(|s| s + YIELD_INTERVAL)
     }
 
     fn on_connect_ack(&mut self, f: &RxFrame, ctx: &mut Ctx) -> Option<End> {

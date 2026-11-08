@@ -446,6 +446,82 @@ pub struct SessionInfo {
     pub rx_next: Seq,
     /// Everything queued has been acknowledged.
     pub drained: bool,
+    /// This station owes the next frame.
+    pub owes_reply: bool,
+    /// When the next yield window falls due (open sessions).
+    pub next_yield: Option<Instant>,
+    /// The peer's latest ACK block (its report of this station's frames).
+    pub peer_report: Option<AckBlock>,
+    /// Data blocks sent so far, retransmissions included.
+    pub sent_blocks: u64,
+    /// Data blocks sent again.
+    pub resent_blocks: u64,
+}
+
+/// What a pending transmission is (SPEC 13.6 etiquette status).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum WaitFor {
+    /// A CONNECT.
+    Connect,
+    /// A turn-holder session frame (CONNECT-ACK, first frame, reply, resend, SOUND, DISCONNECT answer).
+    SessionReply,
+    /// New session data from idle.
+    SessionData,
+    /// A keepalive from idle.
+    Keepalive,
+    /// This station's DISCONNECT.
+    Disconnect,
+    /// A reply owed outside the session (refusal, link-test SOUND, BEACON, linger).
+    OwedReply,
+    /// A broadcast (UI or BEACON).
+    Broadcast,
+    /// A PROBE.
+    Probe,
+}
+
+/// Why a pending transmission waits (SPEC 13.6 etiquette status).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum WaitReason {
+    /// A timer: retry spacing or a broadcast's not-before time.
+    Backoff,
+    /// DCD (with hold) is up: the channel is busy.
+    Carrier,
+    /// A turn-holder reply waiting for the peer's carrier to drop.
+    CarrierGone,
+    /// The raw-DCD check window before a turn-holder reply (ADR 0010).
+    TurnCheck,
+    /// The yield window (SPEC 11.1).
+    YieldWindow,
+    /// p-persistence slots (SPEC 11.1).
+    Persistence,
+    /// Nothing in the way: about to be granted.
+    Clear,
+}
+
+/// A pending transmission and what it waits for.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Waiting {
+    /// What.
+    pub what: WaitFor,
+    /// Why.
+    pub reason: WaitReason,
+    /// When the wait ends at the latest, when known.
+    pub until: Option<Instant>,
+}
+
+/// A snapshot of channel access (SPEC 13.6 etiquette status).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct ChannelInfo {
+    /// The raw detectors' OR.
+    pub dcd_raw: bool,
+    /// DCD with hold.
+    pub dcd_held: bool,
+    /// A transmission is in progress.
+    pub transmitting: bool,
+    /// Legacy activity in the last 10 minutes (SPEC 11.3).
+    pub legacy: bool,
+    /// The transmission waiting for the channel, if any.
+    pub waiting: Option<Waiting>,
 }
 
 /// One station's link layer.
@@ -546,7 +622,47 @@ impl Station {
             next_seq: s.tx.next_seq(),
             rx_next: s.rx.next_seq(),
             drained: s.tx.is_drained(),
+            owes_reply: s.owes_reply(),
+            next_yield: s.next_yield(),
+            peer_report: s.peer_ack(),
+            sent_blocks: s.tx.sent_blocks(),
+            resent_blocks: s.tx.resent_blocks(),
         })
+    }
+
+    /// Channel access as of the last event (SPEC 13.6 etiquette status).
+    pub fn channel_info(&self) -> ChannelInfo {
+        let waiting = if self.transmitting.is_some() {
+            None
+        } else {
+            self.desired().map(|(intent, mode)| {
+                let what = match intent {
+                    Intent::Session(SessTx::Connect) => WaitFor::Connect,
+                    Intent::Session(SessTx::FromIdle) => WaitFor::SessionData,
+                    Intent::Session(SessTx::Keepalive) => WaitFor::Keepalive,
+                    Intent::Session(SessTx::Disconnect) => WaitFor::Disconnect,
+                    Intent::Session(_) => WaitFor::SessionReply,
+                    Intent::Owed => WaitFor::OwedReply,
+                    Intent::Broadcast => WaitFor::Broadcast,
+                    Intent::Probe => WaitFor::Probe,
+                };
+                let (reason, until) = match &self.attempt {
+                    Some(a) if a.origin() == mode => a.wait_state(&self.dcd, self.now),
+                    _ => match mode {
+                        Mode::Csma { not_before } if not_before > self.now => (WaitReason::Backoff, Some(not_before)),
+                        _ => (WaitReason::Clear, None),
+                    },
+                };
+                Waiting { what, reason, until }
+            })
+        };
+        ChannelInfo {
+            dcd_raw: self.dcd.raw(),
+            dcd_held: self.held,
+            transmitting: self.transmitting.is_some(),
+            legacy: self.legacy(),
+            waiting,
+        }
     }
 
     /// Whether state is retained for resume with a peer.
