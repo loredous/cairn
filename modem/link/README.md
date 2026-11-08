@@ -106,4 +106,8 @@ and names it (`READING_*` constants in `params`, `READING:` comments):
 - The turn-holder's window and the yield window fail on any raw-DCD rising
   edge; a peer carrier still up 100 ms after its last symbol counts as busy.
 - CSMA slot draws start at the current time, not at past slot boundaries.
+- A dropped tone counts as recovered (§10.3) when a probe puts it within
+  3 dB of the active-tone average, 3 dB inside the 6 dB drop threshold, so
+  a tone near the threshold is not dropped and restored frame after frame
+  (`READING_MASK_RESTORE_DB`).
 - A graceful disconnect waits until everything queued is acknowledged.

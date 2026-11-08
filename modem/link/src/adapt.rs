@@ -6,9 +6,9 @@
 use std::time::Duration;
 
 use crate::params::{
-    ALL_TONES, DISTORTION_EXCLUDE_INDEX, MASK_DROP_DB, MASK_DROP_FRAMES, MASK_ID_MODULUS, REPLY_RULE_MARGIN_DB,
-    REPROBE_INTERVAL, RUNG_THRESHOLDS_DB, RUNGS, STEP_DOWN_FRACTION, STEP_DOWN_TWO_FRACTION, STEP_UP_MARGIN_DB,
-    STEP_UP_MULTI_RUNG, STEP_UP_RUN, UNMASKABLE_TONES,
+    ALL_TONES, DISTORTION_EXCLUDE_INDEX, MASK_DROP_DB, MASK_DROP_FRAMES, MASK_ID_MODULUS, READING_MASK_RESTORE_DB,
+    REPLY_RULE_MARGIN_DB, REPROBE_INTERVAL, RUNG_THRESHOLDS_DB, RUNGS, STEP_DOWN_FRACTION, STEP_DOWN_TWO_FRACTION,
+    STEP_UP_MARGIN_DB, STEP_UP_MULTI_RUNG, STEP_UP_RUN, UNMASKABLE_TONES,
 };
 use crate::time::Instant;
 
@@ -256,8 +256,9 @@ impl MaskTracker {
                 } else {
                     self.below[t] = 0;
                 }
-            } else if probe && v >= avg - MASK_DROP_DB {
-                // Restored only after a width probe shows it recovered (§10.3).
+            } else if probe && v >= avg - READING_MASK_RESTORE_DB {
+                // Restored only after a width probe shows it recovered (§10.3;
+                // `READING_MASK_RESTORE_DB`).
                 restore |= 1 << t;
             }
         }
@@ -443,6 +444,11 @@ mod tests {
         m2.on_measurement(Some(&p), false, Instant::ZERO);
         m2.on_measurement(Some(&p), false, Instant::ZERO);
         assert_eq!(m2.reported(), (ALL_TONES, 0));
+        // Not restored while it stays near the drop threshold (the reading).
+        snr = [20.0; 24];
+        snr[7] = 15.0;
+        m.on_measurement(Some(&snr), true, Instant::ZERO);
+        assert_eq!(m.reported().1, 1, "5 dB below: not recovered");
         // Restored only with a probe.
         snr = [20.0; 24];
         m.on_measurement(Some(&snr), false, Instant::ZERO);
