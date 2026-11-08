@@ -326,11 +326,9 @@ def build(cfg: FrameConfig, rng: np.random.Generator, header_msg: np.ndarray | N
     without either they are pseudo-random (the Stage 1 frames and
     ``vectors/bitmap/``). ``controls`` lists ``cfg.n_control`` control blocks,
     as ``fields`` objects or 240-bit messages; random bits if omitted.
-    Payloads are random unless given.
+    Payloads are random unless given. The waveform itself comes from
+    ``rebuild``, driven by the bits chosen here.
     """
-    dcode = ldpc.code_for(params.DATA_CODE)
-    rung = cfg.rung
-
     if header is not None:
         if header_msg is not None:
             raise ValueError("give header fields or header bits, not both")
@@ -339,16 +337,10 @@ def build(cfg: FrameConfig, rng: np.random.Generator, header_msg: np.ndarray | N
     if header_msg is None:
         header_msg = rng.integers(0, 2, params.HEADER_INFO_BITS - 16, dtype=np.uint8)
     header_bits = append_crc(header_msg[None])[0]
-    hpoints = header_points(cfg, header_bits)
-
     if payloads is None:
         payloads = rng.integers(0, 2, (cfg.n_blocks, params.DATA_PAYLOAD_BITS), dtype=np.uint8)
     payloads = np.asarray(payloads, dtype=np.uint8).reshape(cfg.n_blocks, params.DATA_PAYLOAD_BITS)
     block_bits = append_crc(payloads)
-    stream = _coded_stream(dcode, block_bits, rung.coded_bits, 1 + cfg.n_control, cfg.interleaver)
-    d_res = cfg.data_symbols * len(cfg.data_tones) * rung.bits_per_symbol
-    stream = np.concatenate([stream, _pad_bits(d_res - stream.size)])
-    dpoints = mapping.modulate(stream, rung.bits_per_symbol)
 
     if controls is None:
         cmsgs = (rng.integers(0, 2, (cfg.n_control, params.CONTROL_INFO_BITS - 16), dtype=np.uint8)
@@ -359,6 +351,36 @@ def build(cfg: FrameConfig, rng: np.random.Generator, header_msg: np.ndarray | N
         cmsgs = np.array([c if isinstance(c, np.ndarray) else fields.control_message_bits(c)
                           for c in controls], dtype=np.uint8).reshape(cfg.n_control, params.CONTROL_INFO_BITS - 16)
     control_bits = append_crc(cmsgs) if cfg.n_control else np.zeros((0, params.CONTROL_INFO_BITS), np.uint8)
+    tx = rebuild(cfg, header_bits, block_bits, control_bits)
+    tx.header = header
+    return tx
+
+
+def rebuild(cfg: FrameConfig, header_bits: np.ndarray, block_bits: np.ndarray,
+            control_bits: np.ndarray | None = None) -> TxFrame:
+    """The frame carrying given header, data block and control block bits
+    (CRCs included, as ``TxFrame.header_bits``, ``block_bits`` and
+    ``control_bits`` hold them; ``control_bits`` may be omitted only when
+    ``cfg.n_control`` is 0).
+
+    This is the transmitter's own path, driven by bits: the receiver calls it
+    with what it decoded to reproduce the waveform that was sent (ADR 0006),
+    preamble, header, probe, control and data segments alike.
+    """
+    if control_bits is None:
+        if cfg.n_control:
+            raise ValueError(f"a frame of {cfg.n_control} control blocks needs their bits")
+        control_bits = np.zeros((0, params.CONTROL_INFO_BITS), np.uint8)
+    control_bits = np.asarray(control_bits, dtype=np.uint8).reshape(cfg.n_control, params.CONTROL_INFO_BITS)
+    block_bits = np.asarray(block_bits, dtype=np.uint8).reshape(cfg.n_blocks, params.DATA_INFO_BITS)
+    dcode = ldpc.code_for(params.DATA_CODE)
+    rung = cfg.rung
+    hpoints = header_points(cfg, header_bits)
+    stream = _coded_stream(dcode, block_bits, rung.coded_bits, 1 + cfg.n_control, cfg.interleaver)
+    d_res = cfg.data_symbols * len(cfg.data_tones) * rung.bits_per_symbol
+    stream = np.concatenate([stream, _pad_bits(d_res - stream.size)])
+    dpoints = mapping.modulate(stream, rung.bits_per_symbol)
+
     cpoints = control_points(cfg, control_bits)
 
     p_base = params.pilots_for(params.BASE_TONES)
@@ -392,7 +414,7 @@ def build(cfg: FrameConfig, rng: np.random.Generator, header_msg: np.ndarray | N
             x = ofdm.clip_and_filter(x, cfg.width, np.array(list(tones)), cfg.cp,
                                      clip_db=cfg.clip_db, scale_tones=scale)
         out.append(x)
-    return TxFrame(cfg, np.concatenate(out), header_bits, block_bits, grid, control_bits, header)
+    return TxFrame(cfg, np.concatenate(out), header_bits, block_bits, grid, control_bits)
 
 
 def build_frame(header: fields.Header, controls: list | tuple = (), payloads: np.ndarray | None = None, *,
@@ -661,7 +683,7 @@ def receive(rx: np.ndarray, cfg: FrameConfig | None = None, *, link: LinkState |
             start: int | None = None, advance: int | None = None,
             phase_window: int = 15, smooth_window: int = 7,
             decision_directed: bool = True, burst_aware: bool = True,
-            header_noise: str = "measured") -> RxResult:
+            header_noise: str = "measured", measure_snr: bool = True) -> RxResult:
     """Decode one frame from real samples ``rx``.
 
     Give ``start`` (index of the frame's first sample) or ``reference`` (the
@@ -676,6 +698,8 @@ def receive(rx: np.ndarray, cfg: FrameConfig | None = None, *, link: LinkState |
     per-tone noise: "measured" (``header_noise_floor`` raised by
     ``estimate_header_noise``) or "s2" (the S2 difference plus the pilots'
     excess interpolated across the band, as used for the data).
+    ``measure_snr`` adds the channel SNR of ADR 0006 to ``detail`` (see
+    ``channel_snr``); it costs about one frame build.
 
     Without ``cfg`` the header is decoded first and the frame's geometry
     taken from its fields (``receive_header_first``), with width and mask
@@ -687,7 +711,7 @@ def receive(rx: np.ndarray, cfg: FrameConfig | None = None, *, link: LinkState |
         return receive_header_first(rx, link, reference=reference, start=start, advance=advance,
                                     phase_window=phase_window, smooth_window=smooth_window,
                                     decision_directed=decision_directed, burst_aware=burst_aware,
-                                    header_noise=header_noise)
+                                    header_noise=header_noise, measure_snr=measure_snr)
     if start is None:
         if reference is None:
             reference = ofdm.modulate(preamble.grid(cfg.width), cfg.cp, active=cfg.width)
@@ -771,11 +795,14 @@ def receive(rx: np.ndarray, cfg: FrameConfig | None = None, *, link: LinkState |
     dres = _decode_blocks(eq[d0:, dt], nv[d0:, dt], rung.bits_per_symbol, params.DATA_CODE, rung.coded_bits,
                           cfg.n_blocks, 1 + cfg.n_control, cfg.interleaver)
     detail = {"h": h, "noise": noise, "thermal": thermal, "eq": eq, "d0": d0, "c0": c0,
-              "window_start": window_start, "shifts": shifts, "drift": drift}
+              "window_start": window_start, "shifts": shifts, "drift": drift, "corr": corr}
     header, header_error = parse_header(bool(hres.ok[0]), hres.bits[0])
-    return RxResult(bool(hres.ok[0]), hres.bits[0], dres.ok, dres.bits, start, snr_db, dres.iterations, detail,
-                    control_ok=cres.ok, control_bits=cres.bits, header=header, header_error=header_error,
-                    controls=parse_controls(cres.ok, cres.bits), config=cfg)
+    out = RxResult(bool(hres.ok[0]), hres.bits[0], dres.ok, dres.bits, start, snr_db, dres.iterations, detail,
+                   control_ok=cres.ok, control_bits=cres.bits, header=header, header_error=header_error,
+                   controls=parse_controls(cres.ok, cres.bits), config=cfg)
+    if measure_snr:
+        _add_channel_snr(rx, cfg, out)
+    return out
 
 
 def _decode_blocks(eq: np.ndarray, nv: np.ndarray, bits_per_symbol: int, spec: params.CodeSpec, e: int,
@@ -834,7 +861,7 @@ def locate(rx: np.ndarray, cp: int | None = None,
 
 def receive_header_first(rx: np.ndarray, link: LinkState | None = None, *,
                          reference: np.ndarray | None = None, start: int | None = None,
-                         **kw) -> RxResult:
+                         measure_snr: bool = True, **kw) -> RxResult:
     """Decode a frame without being told its configuration (SPEC 8.2).
 
     Find the frame (``locate``; giving ``start`` skips the search and takes
@@ -843,7 +870,9 @@ def receive_header_first(rx: np.ndarray, link: LinkState | None = None, *,
     control and data block counts and the probe flag from it; width and mask
     come from ``link``. Then decode the whole frame with that configuration.
     A frame whose header fails (decode, CRC or fields) comes back with no
-    blocks, ``header`` None and ``header_error`` saying why.
+    blocks, ``header`` None and ``header_error`` saying why. ``measure_snr``
+    measures the channel SNR (ADR 0006) once the final header is settled;
+    a frame whose header fails gets the fallback over its preamble.
     """
     link = link or LinkState()
     if start is None:
@@ -854,17 +883,191 @@ def receive_header_first(rx: np.ndarray, link: LinkState | None = None, *,
     else:
         cp = link.cp if link.cp is not None else params.CP_SHORT
     head_cfg = FrameConfig(width=params.BASE_TONES, n_blocks=0, cp=cp, probe=False)
-    head = receive(rx, head_cfg, start=start, **kw)
+    head = receive(rx, head_cfg, start=start, measure_snr=False, **kw)
     if head.header is None:
+        if measure_snr:
+            _add_channel_snr(rx, head_cfg, head)
         head.config = None
         return head
     try:
         cfg = FrameConfig.from_header(head.header, link, cp=cp)
     except ValueError as e:
+        if measure_snr:
+            _add_channel_snr(rx, head_cfg, head)
         head.header_error = f"header describes no decodable frame: {e}"
         head.header, head.config = None, None
         return head
-    r = receive(rx, cfg, start=start, **kw)
+    r = receive(rx, cfg, start=start, measure_snr=False, **kw)
     # The header pass decided the geometry; report its header.
     r.header_ok, r.header_bits, r.header, r.header_error = True, head.header_bits, head.header, None
+    if measure_snr:
+        _add_channel_snr(rx, cfg, r)
     return r
+
+
+# --- channel SNR (ADR 0006) ---------------------------------------------------
+
+SNR_MAX_DB = 63.75      # B.2 field range: larger values saturate
+MIN_KNOWN_SYMBOLS = 8   # fewer known symbols than this: use the fallback estimate
+FALLBACK_MARGIN_DB = 1.0  # the fallback sees a weak frame through a few symbols (+-2 dB at 0 dB): err low
+FALLBACK_H_BIAS = 1 / 6  # noise power left in |h|^2: two S2 symbols averaged (1/2), 7-tone quadratic smoothing (1/3)
+
+
+@dataclass
+class ChannelSnr:
+    snr_db: float             # 7 dB-equivalent channel SNR, saturated at SNR_MAX_DB
+    per_tone_db: np.ndarray   # (width,) same scale; tones without enough known symbols are interpolated
+    known_symbols: int        # symbols whose content the receiver knew
+    fallback: bool            # the estimate counts the designed clipping (errs low)
+
+
+def known_symbols(cfg: FrameConfig, header_ok: bool, block_ok: np.ndarray,
+                  control_ok: np.ndarray | None = None) -> np.ndarray:
+    """Rows of the frame whose transmitted tones the receiver knows: the
+    preamble and probe always, the header once it decoded, each control
+    symbol whose control blocks (those its points fall in) all decoded, and
+    each data symbol whose data blocks all decoded. Symbols holding only
+    padding are known. ``control_ok`` None counts no control block as
+    decoded."""
+    known = np.ones(cfg.total_symbols, dtype=bool)
+    h0 = params.PREAMBLE_SYMBOLS
+    known[h0:h0 + cfg.header_symbols] = header_ok
+    control_ok = (np.zeros(cfg.n_control, dtype=bool) if control_ok is None
+                  else np.asarray(control_ok, dtype=bool))
+    ct = len(cfg.control_tones)
+    per_block = params.CONTROL_CODE.coded_bits[0] // QPSK       # QPSK points per control block
+    for s in range(cfg.control_symbols):
+        lo = (s * ct) // per_block
+        hi = min(((s + 1) * ct - 1) // per_block, cfg.n_control - 1)   # beyond the last block: padding
+        known[cfg.first_control + s] = bool(np.all(control_ok[lo:hi + 1])) if lo <= hi else True
+    d0 = cfg.first_data
+    per_symbol = cfg.rung.bits_per_symbol * len(cfg.data_tones)
+    e = cfg.rung.coded_bits
+    for s in range(cfg.data_symbols):
+        lo = (s * per_symbol) // e
+        hi = min(((s + 1) * per_symbol - 1) // e, cfg.n_blocks - 1)   # beyond the last block: padding, known
+        known[d0 + s] = bool(np.all(block_ok[lo:hi + 1])) if lo <= hi else True
+    return known
+
+
+def _clip_included_snr(res: RxResult, cfg: FrameConfig) -> tuple[float, np.ndarray]:
+    """Fallback: the measured SNR over the data tones, which counts the
+    designed clipping as noise (errs low), on the 7 dB-equivalent scale."""
+    h, noise, thermal = res.detail["h"], res.detail["noise"], res.detail["thermal"]
+    t = list(cfg.data_active_tones)
+    off = cfg.clip_db - 7.0
+    # |h|^2 carries the noise left in the smoothed estimate (about a third of
+    # half the S2 noise): take it out, or a weak frame reads high.
+    p = np.maximum(np.abs(h) ** 2 - thermal * FALLBACK_H_BIAS, 0.1 * np.abs(h) ** 2)
+    off -= FALLBACK_MARGIN_DB
+    overall = 10 * np.log10(np.sum(p[t]) / np.sum(noise[t])) + off
+    return float(overall), 10 * np.log10(p / np.maximum(noise, 1e-30)) + off
+
+
+def channel_snr(rx: np.ndarray, cfg: FrameConfig, res: RxResult) -> ChannelSnr:
+    """Channel SNR on the 7 dB-equivalent scale (ADR 0006).
+
+    The receiver rebuilds the symbols it knows from the decoded bits
+    (``rebuild``: re-encode, scramble, interleave, map, clip-and-filter as the
+    transmitter did) and demodulates the rebuilt waveform, so the designed
+    clipping is part of the reference. Each tone's gain is then fit by least
+    squares against the rebuilt tones over the known symbols (the channel
+    estimate from the preamble is too noisy to leave a 40 dB residue), after
+    the pilots' phase and timing tracking already in ``res.detail``. The
+    residual is noise plus everything else the channel and radios add;
+    signal is the fitted gain's power on the rebuilt tones, at the scale of
+    unboosted tones (a mask's ``control_gain`` and ``data_gain`` are divided
+    out of the signal; the additive noise is not scaled). The known symbols
+    are the preamble and probe, the header once it decoded, and the control
+    and data symbols whose blocks decoded (``known_symbols``).
+
+    With fewer than ``MIN_KNOWN_SYMBOLS`` known symbols, or a frame with data
+    of which no data symbol decoded (a weak frame), the result is the
+    fallback estimate, which counts the designed clipping. Frames with no
+    data blocks (header only, or control blocks only) are measured over
+    everything they carry.
+    """
+    det = res.detail
+    n_sym, w = cfg.total_symbols, cfg.width
+    known = known_symbols(cfg, res.header_ok, res.block_ok, res.control_ok)
+    off = cfg.clip_db - 7.0
+    n_known = int(known.sum())
+    fb_snr, fb_tone = _clip_included_snr(res, cfg)
+    d0 = cfg.first_data
+    # A frame with data whose data symbols all failed is weak, and its header
+    # decoding at all selects for a lucky, low-noise header: measured over the
+    # preamble and header alone, the figure reads high (up to +1.6 dB at 1 dB
+    # in Stage 1). Header-only and control-only frames are measured over
+    # everything they carry.
+    no_data_known = cfg.data_symbols > 0 and not known[d0:].any()
+    if n_known < MIN_KNOWN_SYMBOLS or no_data_known:
+        return ChannelSnr(min(fb_snr, SNR_MAX_DB), np.minimum(fb_tone, SNR_MAX_DB), n_known, True)
+
+    shifts = det["shifts"]
+    first, c_first, d_first = params.PREAMBLE_SYMBOLS, cfg.first_control, cfg.first_data
+    # Zeros past the end: room for the window shifts, and for a frame cut short.
+    need = int(det["window_start"]) + n_sym * cfg.stride + max(int(np.max(shifts)), 0) + 1
+    pad = np.concatenate([rx, np.zeros(max(need - rx.size, 0))])
+    y = ofdm.demodulate(pad, det["window_start"], n_sym, w, cfg.cp, active=w,
+                        shifts=shifts if np.any(shifts != 0) else None)
+    if np.any(shifts != 0):
+        f = params.BIN_OFFSET + np.arange(w)
+        y = y * np.exp(-2j * np.pi * f[None, :] * shifts[:, None] / params.N_USEFUL)
+
+    drift_c = np.ones((n_sym, w), dtype=complex)
+    drift_c[first:] = det["corr"]
+
+    sent = rebuild(cfg, res.header_bits, res.block_bits, res.control_bits)
+    x = ofdm.demodulate(np.concatenate([sent.samples, np.zeros(1)]), cfg.cp, n_sym, w, cfg.cp, active=w)
+    x = x * (sent.grid != 0)             # silent tones carry nothing: leave the rebuild's leakage out
+    gain = np.ones(n_sym)
+    gain[c_first:d_first] = cfg.control_gain
+    gain[d_first:] = cfg.data_gain
+
+    y, x, gain, drift_c = y[known], x[known], gain[known], drift_c[known]
+    u = np.flatnonzero(known) - 2.5                     # symbols from the S2 pair, where the channel was set
+    fk = params.BIN_OFFSET + np.arange(w)
+    live = np.abs(x) > 0
+    for _ in range(3):
+        # Gain per tone, then the common phase drift (alpha + beta f) per symbol
+        # re-fit against the rebuilt tones: pilots alone leave a few
+        # hundredths of a radian of the designed clipping's phase noise.
+        yc = y / drift_c
+        h = np.sum(yc * np.conj(x), axis=0) / np.maximum(np.sum(np.abs(x) ** 2, axis=0), 1e-30)
+        ref = h[None, :] * x
+        theta = np.angle(y * np.conj(ref * drift_c) + 1e-300)           # residual phase of each cell
+        wgt = np.abs(ref) ** 2 * live
+        uu = np.broadcast_to(u[:, None], theta.shape)
+        ff = np.broadcast_to(fk[None, :], theta.shape)
+        a_mat = np.stack([uu.ravel(), (uu * ff).ravel()], axis=1) * np.sqrt(wgt.ravel())[:, None]
+        sol = np.linalg.lstsq(a_mat, theta.ravel() * np.sqrt(wgt.ravel()), rcond=None)[0]
+        drift_c = drift_c * np.exp(1j * (sol[0] * uu + sol[1] * uu * ff))
+    y = y / drift_c
+    n_k = np.sum(live, axis=0)
+    den = np.sum(np.abs(x) ** 2, axis=0)
+    h = np.sum(y * np.conj(x), axis=0) / np.maximum(den, 1e-30)
+    # Only the cells a tone carries something in: a silent cell (upper tones
+    # in the preamble, header and control symbols, masked tones) holds noise
+    # but no fit, and is not counted in n_k either.
+    resid = np.sum(np.abs(y - h[None, :] * x) ** 2 * live, axis=0)
+    noise = resid / np.maximum(n_k - 1, 1)          # one complex gain fitted per tone
+    # |h|^2 over-reads by the noise left in the fit (noise / sum |x|^2).
+    h2 = np.maximum(np.abs(h) ** 2 - noise / np.maximum(den, 1e-30), 0.05 * np.abs(h) ** 2)
+    sig = h2 * np.sum(np.abs(x / gain[:, None]) ** 2, axis=0) / np.maximum(n_k, 1)
+    tiny = 1e-12 * max(float(np.max(sig)), 1e-30)
+    ok = n_k >= 3
+    t = np.array([k for k in cfg.data_active_tones if ok[k]], dtype=int)
+    if t.size == 0:
+        return ChannelSnr(min(fb_snr, SNR_MAX_DB), np.minimum(fb_tone, SNR_MAX_DB), n_known, True)
+    overall = 10 * np.log10(np.sum(sig[t]) / max(np.sum(noise[t]), tiny)) + off
+    per = np.full(w, np.nan)
+    per[ok] = 10 * np.log10(sig[ok] / np.maximum(noise[ok], tiny)) + off
+    per = np.interp(np.arange(w), np.flatnonzero(ok), per[ok])
+    return ChannelSnr(float(min(overall, SNR_MAX_DB)), np.minimum(per, SNR_MAX_DB), n_known, False)
+
+
+def _add_channel_snr(rx: np.ndarray, cfg: FrameConfig, res: RxResult) -> None:
+    """Put the ADR 0006 channel SNR (``channel_snr``) into ``res.detail``."""
+    m = channel_snr(rx, cfg, res)
+    res.detail.update(snr_db=m.snr_db, snr_per_tone_db=m.per_tone_db, snr_known_symbols=m.known_symbols,
+                      snr_total_symbols=cfg.total_symbols, snr_fallback=m.fallback)

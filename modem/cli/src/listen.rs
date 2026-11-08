@@ -148,7 +148,7 @@ impl FrameReport {
 
 enum Phase {
     Config,
-    Frame(FrameConfig),
+    Frame(Box<FrameConfig>),
 }
 
 struct Pending {
@@ -263,7 +263,7 @@ impl Listener {
                 }
                 let (seg, off) = self.slice_from(p.det.start, need);
                 match self.config.resolve(&p.det, &seg[off..]) {
-                    Ok(cfg) => p.phase = Phase::Frame(cfg),
+                    Ok(cfg) => p.phase = Phase::Frame(Box::new(cfg)),
                     Err(e) => {
                         ev.push(Event::Unresolved(p.det.clone(), e));
                         continue;
@@ -280,7 +280,7 @@ impl Listener {
             let Phase::Frame(cfg) = p.phase else { unreachable!() };
             ev.push(Event::Queued(p.det.clone()));
             // A closed decoder only happens at shutdown; dropping the job is fine then.
-            let _ = self.jobs.send(Job { det: p.det, cfg, samples, offset, ready_at: Instant::now() });
+            let _ = self.jobs.send(Job { det: p.det, cfg: *cfg, samples, offset, ready_at: Instant::now() });
         }
         self.pending = keep;
         ev
