@@ -68,7 +68,10 @@ def test_too_few_known_symbols_falls_back_and_counts_clipping():
     r.header_ok = False
     r.block_ok = np.zeros_like(r.block_ok)
     m = frame.channel_snr(tx.samples, cfg, r)
-    assert m.fallback and 15 < m.snr_db < 25     # about 21.7 dB: the designed clipping caps it
+    # About 25 dB: the designed clipping caps it (the level tracker takes the
+    # clipped symbols' lower in-band level out of the header's error, which
+    # without it read 21.7 dB).
+    assert m.fallback and 15 < m.snr_db < 28
 
 
 def test_saturates_at_field_maximum():
