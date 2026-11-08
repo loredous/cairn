@@ -136,6 +136,9 @@ pub struct LinkSection {
     /// Add the ID block to UI frames on the 9-minute ID clock.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub id_broadcasts: Option<bool>,
+    /// Dictionary directory (`*.zdict` files, SPEC 12.2).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub dict_dir: Option<PathBuf>,
 }
 
 /// `[host]`: interfaces and files.

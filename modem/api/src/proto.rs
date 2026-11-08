@@ -5,7 +5,7 @@ use std::fmt;
 use serde_json::{Map, Value, json};
 
 /// Schema version (`hello` `api_version`).
-pub const API_VERSION: &str = "0.1.0";
+pub const API_VERSION: &str = "0.2.0";
 
 /// Every command, in the order `hello` lists them.
 pub const COMMANDS: [&str; 11] = [
@@ -53,6 +53,7 @@ pub enum Code {
     SendRejected,
     BroadcastRejected,
     PduError,
+    UnknownDictionary,
     TxFailed,
     ReceiveClipping,
     Distortion,
@@ -81,6 +82,7 @@ impl Code {
             Code::SendRejected => "send_rejected",
             Code::BroadcastRejected => "broadcast_rejected",
             Code::PduError => "pdu_error",
+            Code::UnknownDictionary => "unknown_dictionary",
             Code::TxFailed => "tx_failed",
             Code::ReceiveClipping => "receive_clipping",
             Code::Distortion => "distortion",

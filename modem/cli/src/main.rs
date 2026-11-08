@@ -482,6 +482,10 @@ struct RunArgs {
     /// Save received files (FILE-CHUNK objects) and text messages in this directory
     #[arg(long)]
     rx_dir: Option<PathBuf>,
+    /// Dictionary directory (SPEC 12.2, 13.4): every *.zdict file in it is offered at session setup and used for
+    /// zstd encoding 2; its ID is the first 4 bytes of the file's SHA-256
+    #[arg(long)]
+    dict_dir: Option<PathBuf>,
     /// Quieting band for carrier detect, Hz (default just above the cap: 2800-3200 at 24 tones, 3600-4150 at 32)
     #[arg(long)]
     quieting: Option<String>,
@@ -603,6 +607,20 @@ fn run_cmd(a: RunArgs, file: &FileConfig) -> Result<(), String> {
         return Err("--ring-seconds must be 0-7200".into());
     }
     cfg.ring_seconds = a.ring_seconds;
+    if let Some(dir) = &a.dict_dir {
+        let (set, notes) = cairn_link::compress::Dictionaries::load_dir(dir)
+            .map_err(|e| format!("--dict-dir {}: {e}", dir.display()))?;
+        for n in notes {
+            eprintln!("note: dictionary {n}");
+        }
+        let list: Vec<String> =
+            set.iter().map(|d| format!("{} {}", cairn_link::compress::id_hex(d.id()), d.name())).collect();
+        println!("dictionaries: {}", if list.is_empty() { "none".to_string() } else { list.join(", ") });
+        if !set.is_empty() && !cairn_link::compress::Codec::AVAILABLE {
+            eprintln!("note: built without zstd; the dictionaries are not offered");
+        }
+        cfg.dictionaries = set;
+    }
     if let Some(q) = &a.quieting {
         let (lo, hi) = q.split_once('-').ok_or("--quieting LO-HI (Hz)")?;
         let lo: f64 = lo.trim().parse().map_err(|_| "--quieting LO-HI (Hz)")?;
@@ -835,6 +853,7 @@ fn apply_run(a: &mut RunArgs, c: &FileConfig, m: &Src) -> Result<(), String> {
     m.set("capture_on_failure", &mut a.capture_on_failure, c.host.capture_on_failure);
     m.set("heard_file", &mut a.heard_file, path(&c.host.heard_file).map(Some));
     m.set("rx_dir", &mut a.rx_dir, path(&c.host.rx_dir).map(Some));
+    m.set("dict_dir", &mut a.dict_dir, path(&c.link.dict_dir).map(Some));
     m.set("log_file", &mut a.log_file, path(&c.host.log_file).map(Some));
     m.set("persistence", &mut a.persistence, c.link.persistence);
     m.set("slot_ms", &mut a.slot_ms, c.link.slot_ms);

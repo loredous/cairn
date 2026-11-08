@@ -20,6 +20,7 @@ use cairn_api::proto::{
     parse_request, parse_utc, round, utc_stamp, utc_string,
 };
 use cairn_api::{ApiError, Code};
+use cairn_link::compress::{Codec, CodecError, DictionaryId, Preference, id_from_u32, id_hex, id_parse};
 use cairn_link::frame::snr_from_field;
 use cairn_link::linktest::{DirectionResult, ProbeKind};
 use cairn_link::pdu::{encoding, pdu_type};
@@ -30,7 +31,7 @@ use cairn_phy::dcd::DcdState;
 use serde_json::{Map, Value, json};
 
 use crate::control::{FILE_CHUNK_DATA, parse_call};
-use crate::runtime::{FrameInfo, Modem, Output};
+use crate::runtime::{Coding, FrameInfo, Modem, Output};
 use crate::rxdir::Saved;
 
 /// Host ids of API sends start here (the line interface counts from 1,
@@ -483,7 +484,7 @@ impl HostApi {
                 "commands": COMMANDS,
                 "unsupported": unsupported,
                 "events": EVENTS,
-                "encodings": ["raw"],
+                "encodings": if Codec::AVAILABLE { vec!["raw", "zstd", "zstd_dict"] } else { vec!["raw"] },
             })),
         )
         .to_string()
@@ -610,20 +611,30 @@ impl HostApi {
         if session && req.get("repeats").is_some() {
             return Err(ApiError::bad("repeats applies to broadcasts only"));
         }
-        if let Some(d) = req.opt_str("dictionary")? {
-            if d.len() != 8 || !d.bytes().all(|b| b.is_ascii_hexdigit() && !b.is_ascii_uppercase()) {
-                return Err(ApiError::bad("dictionary is 8 lower-case hex digits"));
-            }
-        }
-        match req.opt_str("encoding")?.unwrap_or("auto") {
-            "auto" | "raw" => {}
-            "zstd" | "zstd_dict" => {
-                return Err(ApiError::new(
-                    Code::Unsupported,
-                    "this modem has no zstd codec or dictionaries yet (SPEC 12.2); use \"raw\" or \"auto\"",
-                ));
-            }
+        let dictionary = match req.opt_str("dictionary")? {
+            Some(d) => Some(
+                id_parse(d)
+                    .filter(|_| !d.bytes().any(|b| b.is_ascii_uppercase()))
+                    .ok_or_else(|| ApiError::bad("dictionary is 8 lower-case hex digits"))?,
+            ),
+            None => None,
+        };
+        let enc = req.opt_str("encoding")?.unwrap_or("auto");
+        let pref = match enc {
+            "auto" => Preference::Auto,
+            "raw" => Preference::Raw,
+            "zstd" => Preference::Zstd,
+            "zstd_dict" => Preference::ZstdDict(dictionary),
             e => return Err(ApiError::bad(format!("encoding must be auto, raw, zstd or zstd_dict, not {e:?}"))),
+        };
+        if dictionary.is_some() && enc != "zstd_dict" {
+            return Err(ApiError::bad("dictionary applies to \"encoding\":\"zstd_dict\""));
+        }
+        if matches!(pref, Preference::Zstd | Preference::ZstdDict(_)) && !Codec::AVAILABLE {
+            return Err(ApiError::new(
+                Code::Unsupported,
+                "this modem was built without zstd (SPEC 12.2); use \"raw\" or \"auto\"",
+            ));
         }
         if session && modem.station().session_info().is_none() {
             return Err(ApiError::new(
@@ -631,7 +642,74 @@ impl HostApi {
                 "no session: connect first, or send with \"mode\":\"broadcast\"",
             ));
         }
+        // Dictionaries the receiver has: the session's negotiated set (SPEC
+        // 12.2); a broadcast has no negotiation, so only a dictionary the
+        // host names explicitly.
+        let usable: Vec<DictionaryId> = match (session, pref) {
+            (true, _) => modem
+                .station()
+                .session_info()
+                .map(|i| i.dictionaries.iter().map(|&d| id_from_u32(d)).collect())
+                .unwrap_or_default(),
+            (false, Preference::ZstdDict(Some(id))) => vec![id],
+            (false, _) => Vec::new(),
+        };
+        if let Preference::ZstdDict(d) = pref {
+            let have = |id: DictionaryId| modem.dictionaries().get(id).is_some();
+            let problem = match d {
+                Some(id) if !have(id) => Some(format!("this modem has no dictionary {}", id_hex(id))),
+                Some(id) if !usable.contains(&id) => {
+                    Some(format!("dictionary {} was not negotiated with the peer", id_hex(id)))
+                }
+                None if usable.is_empty() && session => Some("no dictionary negotiated with the peer".into()),
+                None if usable.is_empty() => Some("a broadcast names its dictionary".into()),
+                _ => None,
+            };
+            if let Some(m) = problem {
+                return Err(ApiError::new(Code::UnknownDictionary, m));
+            }
+        }
         let stream_byte = priority << 6 | stream;
+        // A compressed broadcast must fit one frame: only raw messages are
+        // fragmented (ADR 0009 `broadcast-message-fragments`).
+        let frame_bytes = (!session).then(|| modem.station().broadcast_frame_bytes());
+        let encode = |modem: &mut Modem, ptype: u8, body: Vec<u8>| -> Result<Pdu, ApiError> {
+            let p = modem.content().encode(ptype, stream_byte, body.clone(), pref, &usable).map_err(codec_api_error)?;
+            if p.length_field() > cairn_link::params::PDU_MAX_LENGTH {
+                // A forced encoding that grew an incompressible body past 65,535.
+                return Err(ApiError::new(
+                    Code::TooLarge,
+                    format!(
+                        "the {} PDU would be {} bytes, over 65,535; send it raw",
+                        encoding_name(p.encoding),
+                        p.wire_len()
+                    ),
+                ));
+            }
+            match frame_bytes {
+                Some(max) if p.encoding != encoding::RAW && p.wire_len() > max => {
+                    if pref != Preference::Auto {
+                        return Err(ApiError::new(
+                            Code::TooLarge,
+                            format!(
+                                "a compressed broadcast PDU must fit one frame ({max} bytes at the broadcast \
+                                 settings; this one is {}); send it raw",
+                                p.wire_len()
+                            ),
+                        ));
+                    }
+                    Ok(Pdu {
+                        pdu_type: ptype,
+                        stream: stream_byte,
+                        encoding: encoding::RAW,
+                        dictionary_id: None,
+                        body,
+                        crc: None,
+                    })
+                }
+                _ => Ok(p),
+            }
+        };
         // (PDU, payload bytes) list.
         let mut pdus: Vec<(Pdu, usize)> = Vec::new();
         let mut object = None;
@@ -652,15 +730,7 @@ impl HostApi {
                 body.extend_from_slice(&obj.to_be_bytes());
                 body.extend_from_slice(&((k * FILE_CHUNK_DATA) as u32).to_be_bytes());
                 body.extend_from_slice(c);
-                let pdu = Pdu {
-                    pdu_type: pdu_type::FILE_CHUNK,
-                    stream: stream_byte,
-                    encoding: encoding::RAW,
-                    dictionary_id: None,
-                    body,
-                    crc: None,
-                };
-                pdus.push((pdu, c.len()));
+                pdus.push((encode(modem, pdu_type::FILE_CHUNK, body)?, c.len()));
             }
         } else {
             let body = match (text, data) {
@@ -675,16 +745,15 @@ impl HostApi {
                 ));
             }
             let n = body.len();
-            let pdu = Pdu {
-                pdu_type: ptype,
-                stream: stream_byte,
-                encoding: encoding::RAW,
-                dictionary_id: None,
-                body,
-                crc: None,
-            };
-            pdus.push((pdu, n));
+            pdus.push((encode(modem, ptype, body)?, n));
         }
+        let encodings: BTreeSet<u8> = pdus.iter().map(|(p, _)| p.encoding).collect();
+        let dicts: BTreeSet<DictionaryId> = pdus.iter().filter_map(|(p, _)| p.dictionary_id).collect();
+        let pdu_bytes: usize = pdus.iter().map(|(p, _)| p.wire_len()).sum();
+        let used = match encodings.iter().collect::<Vec<_>>()[..] {
+            [e] => encoding_name(*e),
+            _ => "mixed",
+        };
         let r = self.new_ref();
         let total: usize = pdus.iter().map(|(_, n)| n).sum();
         let count = pdus.len();
@@ -703,7 +772,9 @@ impl HostApi {
             "mode": if session { "session" } else { "broadcast" },
             "bytes": total,
             "pdus": count,
-            "encoding": "raw",
+            "encoding": used,
+            "dictionary": (dicts.len() == 1).then(|| id_hex(*dicts.first().expect("one"))),
+            "pdu_bytes": pdu_bytes,
         }));
         if let Some(o) = object {
             m.insert("object".into(), json!(o));
@@ -769,6 +840,11 @@ impl HostApi {
 
     /// The `status` result members.
     pub fn status(&mut self, modem: &Modem) -> Map<String, Value> {
+        let dictionaries: Vec<Value> = modem
+            .dictionaries()
+            .iter()
+            .map(|d| json!({"id": id_hex(d.id()), "name": d.name(), "bytes": d.bytes().len()}))
+            .collect();
         let st = modem.station();
         let s = &modem.stats;
         let session = match st.session_info() {
@@ -788,6 +864,7 @@ impl HostApi {
                     "idle": i.idle,
                     "drained": i.drained,
                     "progress": progress,
+                    "dictionaries": i.dictionaries.iter().map(|&d| id_hex(id_from_u32(d))).collect::<Vec<_>>(),
                 })
             }
             None => Value::Null,
@@ -825,6 +902,7 @@ impl HostApi {
                 "buffered_seconds": round(modem.ring().len() as f64 / SAMPLE_RATE as f64, 3),
             },
             "heard_stations": self.heard.len(),
+            "dictionaries": dictionaries,
         }))
     }
 
@@ -1091,8 +1169,9 @@ impl HostApi {
                 self.push("tx", Value::Object(m));
             }
             Output::Host(e) => self.on_host_event(e, modem),
-            Output::Deliver { from, pdu } => {
-                let bytes = payload_len(pdu);
+            Output::Deliver { from, pdu, coding } => {
+                self.undecoded_warning(*from, coding);
+                let bytes = if coding.decoded() { payload_len(pdu) } else { pdu.body.len() };
                 if self.prog.peer.is_none() {
                     self.prog.peer = Some(*from);
                 }
@@ -1102,12 +1181,21 @@ impl HostApi {
                 self.prog.delivered += bytes as u64;
                 self.prog.rx_win.push_back((self.now, bytes as u64));
                 self.prog.dirty = true;
-                let ev = self.with_gap(rx_event(*from, "session", FrameType::Data, pdu, saved), *from);
+                let ev = self.with_gap(rx_event(*from, "session", FrameType::Data, pdu, coding, saved), *from);
                 self.push("rx", ev);
             }
-            Output::DeliverBroadcast { from, ftype, pdu } => {
-                let ev = self.with_gap(rx_event(*from, "broadcast", *ftype, pdu, saved), *from);
+            Output::DeliverBroadcast { from, ftype, pdu, coding } => {
+                self.undecoded_warning(*from, coding);
+                let ev = self.with_gap(rx_event(*from, "broadcast", *ftype, pdu, coding, saved), *from);
                 self.push("rx", ev);
+            }
+            Output::Discarded { from, ftype, pdu, error } => {
+                let m = format!(
+                    "{} PDU from {from} in encoding {} discarded, not delivered: {error}",
+                    ftype_name(*ftype),
+                    pdu.encoding
+                );
+                self.error(Code::PduError, &m, false, None, Some(*from));
             }
             Output::Heard(f) => {
                 self.last_frame_gap = Some((f.header.src, f.audio_gap.is_some()));
@@ -1172,6 +1260,18 @@ impl HostApi {
     pub fn on_ptt_fault(&mut self, message: &str, now: Instant) {
         self.tick(now);
         self.error(Code::PttFault, message, true, None, None);
+    }
+
+    /// A PDU naming a dictionary this modem lacks is delivered undecoded,
+    /// with a warning (SPEC 12.1: a dictionary mismatch fails loudly).
+    fn undecoded_warning(&mut self, from: Address, coding: &Coding) {
+        if let Some(CodecError::UnknownDictionary(id)) = coding.undecoded {
+            let m = format!(
+                "a PDU from {from} uses dictionary {}, which this modem lacks; delivered undecoded",
+                id_hex(id)
+            );
+            self.error(Code::UnknownDictionary, &m, true, None, Some(from));
+        }
     }
 
     fn error(&mut self, code: Code, message: &str, warning: bool, r: Option<u64>, peer: Option<Address>) {
@@ -1601,8 +1701,19 @@ fn payload_len(pdu: &Pdu) -> usize {
     if pdu.pdu_type == pdu_type::FILE_CHUNK { pdu.body.len().saturating_sub(8) } else { pdu.body.len() }
 }
 
-fn rx_event(from: Address, mode: &str, ftype: FrameType, pdu: &Pdu, saved: Option<&Saved>) -> Value {
-    let (data, extra) = if pdu.pdu_type == pdu_type::FILE_CHUNK && pdu.body.len() >= 8 {
+/// The API error for a body the codec cannot encode.
+fn codec_api_error(e: CodecError) -> ApiError {
+    match e {
+        CodecError::UnknownDictionary(_) => ApiError::new(Code::UnknownDictionary, e.to_string()),
+        CodecError::TooLarge { .. } => ApiError::new(Code::TooLarge, e.to_string()),
+        CodecError::Unavailable => ApiError::new(Code::Unsupported, e.to_string()),
+        _ => ApiError::new(Code::Internal, e.to_string()),
+    }
+}
+
+fn rx_event(from: Address, mode: &str, ftype: FrameType, pdu: &Pdu, coding: &Coding, saved: Option<&Saved>) -> Value {
+    let decoded = coding.decoded();
+    let (data, extra) = if decoded && pdu.pdu_type == pdu_type::FILE_CHUNK && pdu.body.len() >= 8 {
         let obj = u32::from_be_bytes(pdu.body[0..4].try_into().expect("4 bytes"));
         let off = u32::from_be_bytes(pdu.body[4..8].try_into().expect("4 bytes"));
         (&pdu.body[8..], Some((obj, off)))
@@ -1619,13 +1730,14 @@ fn rx_event(from: Address, mode: &str, ftype: FrameType, pdu: &Pdu, saved: Optio
         "priority": pdu.stream >> 6,
         "encoding": encoding_name(pdu.encoding),
         "dictionary": pdu.dictionary_id.map(|d| d.iter().map(|b| format!("{b:02x}")).collect::<String>()),
-        "decoded": pdu.encoding == encoding::RAW,
-        "crc": "ok",
+        "decoded": decoded,
+        "encoded_bytes": coding.encoded_bytes,
+        "crc": if decoded { "ok" } else { "unchecked" },
         "verify": "unsigned",
         "bytes": data.len(),
         "data": base64_encode(data),
     }));
-    if pdu.pdu_type == pdu_type::MESSAGE && pdu.encoding == encoding::RAW {
+    if pdu.pdu_type == pdu_type::MESSAGE && decoded {
         if let Ok(t) = std::str::from_utf8(data) {
             m.insert("text".into(), json!(t));
         }

@@ -25,7 +25,7 @@ use cairn_link::pdu::{encoding, pdu_type};
 use cairn_link::station::Warning;
 use cairn_link::{Address, ConnectFailure, FrameType, HostCommand, HostEvent, Pdu};
 
-use crate::runtime::{Modem, Output};
+use crate::runtime::{Coding, Modem, Output};
 
 /// FILE-CHUNK data bytes per PDU.
 pub const FILE_CHUNK_DATA: usize = 2048;
@@ -264,7 +264,10 @@ impl HostState {
     pub fn describe(&mut self, o: &Output) -> Option<String> {
         Some(match o {
             Output::Host(e) => self.host_event(e)?,
-            Output::Deliver { from, pdu } => match pdu.pdu_type {
+            Output::Deliver { from, pdu, coding } if !coding.decoded() => undecoded(from, pdu, coding),
+            Output::DeliverBroadcast { from, pdu, coding, .. } if !coding.decoded() => undecoded(from, pdu, coding),
+            Output::Discarded { from, ftype, error, .. } => format!("{ftype:?} from {from}: PDU discarded: {error}"),
+            Output::Deliver { from, pdu, .. } => match pdu.pdu_type {
                 pdu_type::FILE_CHUNK if pdu.body.len() >= 8 => {
                     let obj = u32::from_be_bytes(pdu.body[0..4].try_into().expect("4 bytes"));
                     let off = u32::from_be_bytes(pdu.body[4..8].try_into().expect("4 bytes"));
@@ -278,7 +281,7 @@ impl HostState {
                 }
                 _ => format!("rx from {from}: {}", text_or_len(&pdu.body)),
             },
-            Output::DeliverBroadcast { from, ftype, pdu } => match pdu.pdu_type {
+            Output::DeliverBroadcast { from, ftype, pdu, .. } => match pdu.pdu_type {
                 pdu_type::AX25 => format!("{ftype:?} from {from}: AX.25 frame, {} bytes", pdu.body.len()),
                 _ => format!("{ftype:?} from {from}: {}", text_or_len(&pdu.body)),
             },
@@ -352,6 +355,11 @@ impl HostState {
             }
         })
     }
+}
+
+fn undecoded(from: &Address, pdu: &Pdu, coding: &Coding) -> String {
+    let why = coding.undecoded.as_ref().map(ToString::to_string).unwrap_or_default();
+    format!("rx from {from}: {} bytes in encoding {}, not decoded ({why})", pdu.body.len(), pdu.encoding)
 }
 
 fn text_or_len(b: &[u8]) -> String {
