@@ -7,7 +7,7 @@
 use std::collections::VecDeque;
 
 use crate::frame::{Address, ControlBlock, Flags, FrameType, LinkFrame, TxParams};
-use crate::params::{ALL_TONES, BACKOFF_MAX, BACKOFF_MIN, BASE_WIDTH, BLOCK_PAYLOAD};
+use crate::params::{ALL_TONES, BACKOFF_MAX, BACKOFF_MIN, BASE_WIDTH, BLOCK_PAYLOAD, ID_INTERVAL};
 use crate::pdu::{FragmentRole, Pdu, PduError, blocks_needed, fragment, pack_frame};
 use crate::rng::Rng;
 use crate::seq::Seq;
@@ -32,6 +32,9 @@ struct Prepared {
     ids: Vec<u64>,
     repeats_left: u8,
     counter: Option<u16>,
+    /// Whether the frame carries the ID block, fixed when first built so a
+    /// repeat stays identical.
+    with_id: Option<bool>,
     not_before: Instant,
 }
 
@@ -81,6 +84,7 @@ impl BroadcastTx {
                     ids: vec![id],
                     repeats_left: repeats,
                     counter: None,
+                    with_id: None,
                     not_before: now,
                 });
                 continue;
@@ -111,6 +115,7 @@ impl BroadcastTx {
                     ids,
                     repeats_left: repeats,
                     counter: None,
+                    with_id: None,
                     not_before: now,
                 });
                 continue;
@@ -133,6 +138,7 @@ impl BroadcastTx {
                             ids: if i + 1 == n { vec![id] } else { vec![] },
                             repeats_left: repeats,
                             counter: None,
+                            with_id: None,
                             not_before: now,
                         });
                     }
@@ -161,7 +167,9 @@ impl BroadcastTx {
             }
         };
         let (first, more) = f.role.flags();
-        let controls = if f.ftype == FrameType::Beacon {
+        let id_due = last_id.is_none_or(|t| now.saturating_since(t) >= ID_INTERVAL);
+        let with_id = *f.with_id.get_or_insert(f.ftype == FrameType::Beacon || (cfg.id_broadcasts && id_due));
+        let controls = if with_id {
             *last_id = Some(now);
             vec![ControlBlock::Id(cfg.id.clone())]
         } else {

@@ -79,6 +79,16 @@ pub struct Config {
     pub accept_connects: bool,
     /// Stations whose CONNECTs are refused.
     pub deny: Vec<Address>,
+    /// When set, only these stations' CONNECTs are accepted (unattended
+    /// operation, SPEC 13.4; the deny list still applies).
+    pub allow: Option<Vec<Address>>,
+    /// Add the ID control block (B.6) to a UI frame when the station's
+    /// identification clock has run [`crate::params::ID_INTERVAL`] (9 minutes) since its
+    /// last ID block, as a session does (ADR 0010 `session-id-cadence`).
+    /// A UI frame may carry one (ADR 0013 `broadcast-control-block-order`);
+    /// the header callsign identifies every frame regardless (SPEC 8.3).
+    /// Off by default; unattended operation turns it on.
+    pub id_broadcasts: bool,
     /// Close an idle session after this long without data (off by default,
     /// ADR 0010 `idle-disconnect-policy`).
     pub idle_disconnect: Option<Duration>,
@@ -112,6 +122,8 @@ impl Config {
             track_masks: false,
             accept_connects: true,
             deny: Vec::new(),
+            allow: None,
+            id_broadcasts: false,
             idle_disconnect: None,
             answer_probes: true,
             initial_sequence: 0,
@@ -871,7 +883,8 @@ impl Station {
         if self.session.is_some() {
             return self.refuse(&f);
         }
-        if !self.cfg.accept_connects || self.cfg.deny.contains(&src) {
+        let allowed = self.cfg.allow.as_ref().is_none_or(|a| a.contains(&src));
+        if !self.cfg.accept_connects || !allowed || self.cfg.deny.contains(&src) {
             return self.refuse(&f);
         }
         let state = match self.retained.take(src) {
@@ -1149,7 +1162,9 @@ impl Station {
         }
         if self.bcast.next_ready().is_none() && !self.bcast.is_empty() {
             let caps = [self.broadcast_capacity(0), self.broadcast_capacity(1)];
-            for (id, error) in self.bcast.prepare(|n| caps[n.min(1)], self.now) {
+            // Room for the ID block in every UI frame when it may be due.
+            let extra = self.cfg.id_broadcasts as usize;
+            for (id, error) in self.bcast.prepare(|n| caps[(n + extra).min(1)], self.now) {
                 self.host(HostEvent::BroadcastRejected { id, error });
             }
         }
