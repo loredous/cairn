@@ -1,0 +1,17 @@
+{
+ "format": "cairn-bench/1",
+ "fs": 48000,
+ "peak_dbfs": -3,
+ "seed": 1,
+ "lead_s": 1,
+ "gap_s": 1,
+ "callsign": null,
+ "generator": "cairn-modem tx",
+ "n_samples": 125940,
+ "duration_s": 2.62375,
+ "level_tone": null,
+ "cw_ids": [],
+ "frames": [
+  {"index": 0, "mcs": 2, "width": 24, "prefix": "short", "cp": 60, "silenced": [], "n_blocks": 0, "seed": 1000, "start_s": 1, "start_sample": 48000, "n_samples": 5940, "duration_s": 0.12375, "clip_db": 7, "peak_dbfs": -3, "rms_dbfs": -10.184617200037401, "n_control": 0, "probe": false, "cap": 24, "header": {"message_hex": "28002db28c08022db28c080103870000", "control_hex": [], "payload_hex": null, "source": "K0JLB-2", "destination": "K0JLB-1", "type": "PROBE", "sequence": 903}}
+ ]
+}

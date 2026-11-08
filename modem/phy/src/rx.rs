@@ -71,6 +71,10 @@ pub struct RxOptions {
     /// Threads decoding data blocks (1: on the calling thread). Results do
     /// not depend on it.
     pub threads: usize,
+    /// The sample-clock offset expected before the frame is measured
+    /// ([`ClockPrior`]; default 0 +- 50 ppm). A [`LinkSource`] can give a
+    /// per-peer prior for the frame once its header names the sender.
+    pub clock_prior: ClockPrior,
 }
 
 impl Default for RxOptions {
@@ -85,6 +89,7 @@ impl Default for RxOptions {
             max_iter: params::LDPC_MAX_ITER,
             rebuild_snr: true,
             threads: 1,
+            clock_prior: ClockPrior::default(),
         }
     }
 }
@@ -120,8 +125,12 @@ pub struct RxResult {
     pub start: usize,
     /// Per-tone SNR estimate, dB (average-referenced, not clip-adjusted).
     pub snr_db: Vec<f64>,
-    /// Sample-clock drift estimate, samples per symbol.
+    /// Sample-clock drift estimate, samples per symbol: the pilots'
+    /// measurement combined with the clock prior ([`ClockPrior`]).
     pub drift: f64,
+    /// Standard deviation of `drift`, samples per symbol (the prior's on a
+    /// frame too short to measure it).
+    pub drift_sd: f64,
     /// Channel SNR excluding the designed clipping (ADR 0006), if measured.
     pub channel_snr: Option<ChannelSnr>,
     /// For a frame outside a session with a probe: which tones carried it
@@ -166,6 +175,13 @@ impl RxResult {
         };
         avg + cfg.clip_db - params::CLIP_DB_REFERENCE
     }
+
+    /// The sample-clock offset, ppm, and its standard deviation, from the
+    /// drift estimate (as `cairn-bench rx` reports it).
+    pub fn clock_ppm(&self, cfg: &FrameConfig) -> (f64, f64) {
+        let stride = cfg.stride() as f64;
+        (-self.drift / stride * 1e6, self.drift_sd / stride * 1e6)
+    }
 }
 
 /// Why a frame's header gave no usable fields.
@@ -193,14 +209,17 @@ impl std::fmt::Display for HeaderError {
 /// Channel SNR measured against the rebuilt transmitted symbols (ADR 0006).
 #[derive(Clone, Debug, PartialEq)]
 pub struct ChannelSnr {
-    /// Per tone, dB (NaN where no symbol of the tone was known).
+    /// Per tone, dB (interpolated across tones with fewer than three known symbols).
     pub per_tone_db: Vec<f64>,
     /// Over the data symbols' active tones: total signal over total noise, dB,
     /// average-referenced (add the clip offset for the 7 dB scale).
     pub effective_db: f64,
     /// Symbols whose content was known (preamble, probe, header if decoded,
-    /// data symbols whose blocks all decoded).
+    /// control and data symbols whose blocks all decoded).
     pub known_symbols: usize,
+    /// Too little was known to rebuild: the decoder's estimate, which counts
+    /// the designed clipping and errs low (ADR 0006).
+    pub fallback: bool,
 }
 
 struct Estimate {
@@ -212,6 +231,7 @@ struct Estimate {
     /// (body rows) x width phase correction.
     corr: Grid,
     drift: f64,
+    drift_sd: f64,
 }
 
 fn snr_of(h: &[Complex64], noise: &[f64]) -> Vec<f64> {
@@ -246,23 +266,75 @@ fn estimate_noise(y2: &[Complex64], y3: &[Complex64]) -> Vec<f64> {
     dsp::box_average(&raw, 7)
 }
 
-/// Phase correction per body row and tone from the pilots (see the sim's
-/// `track_drift`); returns the correction and the timing drift in samples
-/// per symbol.
+/// What the receiver assumes about the sample-clock offset between the
+/// sender's sound card and its own before it measures a frame: a Gaussian
+/// prior, ppm, with the sign of [`RxResult::clock_ppm`] (positive when the
+/// frame arrives compressed, the simulator's `sco_ppm`).
+///
+/// The pilots measure the offset with a variance that falls with the cube of
+/// the frame's length: about +-10 ppm on a one-block frame at 24 tones and
+/// 13 dB, +-300 ppm on a header-only frame, under 1 ppm on a 4 s frame. The
+/// receiver combines the measurement with this prior by their variances (so
+/// a long frame is measured, a short one keeps close to the prior) and
+/// bounds the result by [`CLOCK_BOUND_PPM`]. The default prior is SPEC
+/// 14.1's tolerance: 0 ppm, standard deviation [`CLOCK_PRIOR_SD_PPM`]. A link
+/// layer that has measured a peer on long frames can supply a tighter one
+/// ([`RxOptions::clock_prior`], [`LinkSource::clock_prior`]).
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct ClockPrior {
+    /// Expected offset, ppm.
+    pub ppm: f64,
+    /// Its standard deviation, ppm (> 0).
+    pub sd_ppm: f64,
+}
+
+impl Default for ClockPrior {
+    fn default() -> Self {
+        ClockPrior { ppm: 0.0, sd_ppm: CLOCK_PRIOR_SD_PPM }
+    }
+}
+
+impl ClockPrior {
+    /// (mean, standard deviation, bound) as drift in samples per symbol at `stride`.
+    fn drift_units(&self, stride: usize) -> (f64, f64, f64) {
+        let d = |ppm: f64| ppm * 1e-6 * stride as f64;
+        (-d(self.ppm), d(self.sd_ppm.max(1e-3)), d(CLOCK_BOUND_PPM))
+    }
+}
+
+/// Standard deviation of the default clock prior, ppm: SPEC 14.1 allows +-100
+/// ppm between stations, so two standard deviations.
+pub const CLOCK_PRIOR_SD_PPM: f64 = 50.0;
+/// No clock estimate exceeds this, ppm: SPEC 14.1's +-100 ppm plus margin.
+pub const CLOCK_BOUND_PPM: f64 = 150.0;
+
+/// Phase correction per body row and tone from the pilots (the sim's
+/// `track_drift`): each pilot's phase over the rows it is present in is
+/// unwrapped against a smoothed track and fitted with a line, whose
+/// residuals give the slope's variance (none with fewer than five rows); the
+/// slopes are fitted as alpha + beta f (common phase drift plus the timing
+/// drift of a clock offset). The timing drift beta implies is combined with
+/// the prior (mean, sd, bound in samples per symbol) by their variances and
+/// bounded, and alpha re-fitted for the beta kept. The correction is zero at
+/// row `s_ref[k]` for tone k, where its channel was estimated. Returns the
+/// correction and the timing drift in samples per symbol with its standard
+/// deviation.
 fn track_drift(
     obs: &[Vec<Option<Complex64>>],
     pilots: &[usize],
     width: usize,
-    s_ref: f64,
+    s_ref: &[f64],
     window: usize,
-) -> (Grid, f64) {
+    prior: (f64, f64, f64),
+) -> (Grid, f64, f64) {
     let n_sym = obs.len();
     // A pilot absent from all but one row (an upper pilot in a frame with no
     // data symbols) tells nothing about drift.
     let used: Vec<usize> =
         (0..pilots.len()).filter(|&j| obs.iter().filter(|row| row[j].is_some()).count() >= 2).collect();
     let mut slopes = vec![0.0; used.len()];
-    for (slope, &j) in slopes.iter_mut().zip(&used) {
+    let mut vars = vec![f64::INFINITY; used.len()];
+    for ((slope, var), &j) in slopes.iter_mut().zip(vars.iter_mut()).zip(&used) {
         let mut rows = Vec::new();
         let mut vals = Vec::new();
         for (s, row) in obs.iter().enumerate() {
@@ -274,23 +346,53 @@ fn track_drift(
         let klen = if rows.len() >= window { window } else { rows.len() };
         let kernel = vec![1.0 / klen as f64; klen];
         let sm = dsp::convolve_same_complex(&vals, &kernel);
-        let theta = dsp::unwrap(&sm.iter().map(|v| v.arg()).collect::<Vec<_>>());
+        let track = dsp::unwrap(&sm.iter().map(|v| v.arg()).collect::<Vec<_>>());
+        // Each symbol's own phase, unwrapped against the smoothed track (the
+        // smoothing alone would flatten the ends of a short run's slope).
+        let theta: Vec<f64> =
+            vals.iter().zip(&track).map(|(v, t)| t + (v * Complex64::from_polar(1.0, -t)).arg()).collect();
         let rm = dsp::mean(&rows);
         let tm = dsp::mean(&theta);
         let num: f64 = rows.iter().zip(&theta).map(|(r, t)| (r - rm) * (t - tm)).sum();
         let den: f64 = rows.iter().map(|r| (r - rm) * (r - rm)).sum();
         *slope = num / den.max(1e-12);
-    }
-    let f: Vec<f64> = used.iter().map(|&j| BIN_OFFSET + pilots[j] as f64).collect();
-    let (beta, alpha) = if used.len() > 1 { dsp::linear_fit(&f, &slopes) } else { (0.0, slopes[0]) };
-    let mut corr = Grid::zeros(n_sym, width);
-    for s in 0..n_sym {
-        for k in 0..width {
-            let fk = BIN_OFFSET + k as f64;
-            *corr.at_mut(s, k) = Complex64::from_polar(1.0, (alpha + beta * fk) * (s as f64 - s_ref));
+        // The slope's variance from the residuals, widened by nu / (nu - 2)
+        // (a t distribution's): a few rows estimate it poorly.
+        let nu = rows.len() as f64 - 2.0;
+        if nu > 2.0 {
+            let rss: f64 = rows.iter().zip(&theta).map(|(r, t)| (t - tm - *slope * (r - rm)).powi(2)).sum();
+            *var = rss / nu / den.max(1e-12) * nu / (nu - 2.0);
         }
     }
-    (corr, -beta * N_USEFUL as f64 / (2.0 * PI))
+    let f: Vec<f64> = used.iter().map(|&j| BIN_OFFSET + pilots[j] as f64).collect();
+    let to_drift = -(N_USEFUL as f64) / (2.0 * PI); // drift = to_drift * beta
+    let (mu, sd0, bound) = prior;
+    let (measured, var_d) = if used.len() > 1 {
+        let fm = dsp::mean(&f);
+        let sff: f64 = f.iter().map(|v| (v - fm) * (v - fm)).sum();
+        let beta: f64 = f.iter().zip(&slopes).map(|(v, s)| (v - fm) * s).sum::<f64>() / sff;
+        let var_beta: f64 = f.iter().zip(&vars).map(|(v, var)| (v - fm).powi(2) * var).sum::<f64>() / (sff * sff);
+        (to_drift * beta, var_beta * to_drift * to_drift)
+    } else {
+        (mu, f64::INFINITY)
+    };
+    let (drift, var_post) = if var_d.is_finite() {
+        let p0 = sd0 * sd0;
+        ((measured * p0 + mu * var_d) / (p0 + var_d), p0 * var_d / (p0 + var_d))
+    } else {
+        (mu, sd0 * sd0)
+    };
+    let drift = drift.clamp(-bound, bound);
+    let beta = drift / to_drift;
+    let alpha = if slopes.is_empty() { 0.0 } else { dsp::mean(&slopes) - beta * dsp::mean(&f) };
+    let mut corr = Grid::zeros(n_sym, width);
+    for s in 0..n_sym {
+        for (k, &r) in s_ref.iter().enumerate().take(width) {
+            let fk = BIN_OFFSET + k as f64;
+            *corr.at_mut(s, k) = Complex64::from_polar(1.0, (alpha + beta * fk) * (s as f64 - r));
+        }
+    }
+    (corr, drift, var_post.sqrt())
 }
 
 /// A data symbol whose pilots' error is this many times the assumed noise carries
@@ -437,7 +539,13 @@ impl Receiver {
                 }
             }
         }
-        let (corr, drift) = track_drift(&obs, pilots, w, 2.5 - first as f64, opts.phase_window);
+        let prior = opts.clock_prior.drift_units(cfg.stride());
+        // The drift correction is zero where each tone's channel was
+        // estimated: the S2 pair (rows 2-3) for the base tones, the probe pair
+        // for the rest (a clock offset turns them by the drift between the
+        // two, 18 degrees at tone 50 and 100 ppm).
+        let s_ref: Vec<f64> = (0..w).map(|k| if k < b { 2.5 - first as f64 } else { hs as f64 + 0.5 }).collect();
+        let (corr, drift, drift_sd) = track_drift(&obs, pilots, w, &s_ref, opts.phase_window, prior);
 
         let mut excess = vec![0.0; pilots.len()];
         if n_body > d0 {
@@ -466,7 +574,7 @@ impl Receiver {
             }
             snr_db = snr_of(&h, &noise);
         }
-        Estimate { h, noise, thermal, excess, snr_db, corr, drift }
+        Estimate { h, noise, thermal, excess, snr_db, corr, drift, drift_sd }
     }
 
     /// Decode one frame from real samples `rx` starting at sample `start`
@@ -485,7 +593,7 @@ impl Receiver {
             tones = self.demodulate(rx, window_start, cfg, Some(&shifts));
             est = self.estimate(&tones, cfg, opts);
         }
-        let Estimate { h, mut noise, thermal, excess, mut snr_db, corr, drift } = est;
+        let Estimate { h, mut noise, thermal, excess, mut snr_db, corr, drift, drift_sd } = est;
         let corr_kept = corr.clone();
         let w = cfg.n_tones();
         let hs = cfg.header_symbols();
@@ -670,7 +778,8 @@ impl Receiver {
             block_ok: &block_ok,
             block_bits: &block_bits,
         };
-        let channel_snr = opts.rebuild_snr.then(|| rebuild_snr(&tones, &corr_kept, cfg, advance, &decoded));
+        let est = DecoderEstimate { h: &h, noise: &noise, thermal: &thermal };
+        let channel_snr = opts.rebuild_snr.then(|| rebuild_snr(&tones, &corr_kept, cfg, advance, &decoded, &est));
         let (header, header_error) = parse_header(hres.ok, &hres.bits);
         let controls: Vec<Option<ControlBlock>> = control_ok
             .iter()
@@ -697,6 +806,7 @@ impl Receiver {
             start,
             snr_db,
             drift,
+            drift_sd,
             probe_extent: None,
         }
     }
@@ -715,6 +825,12 @@ pub trait LinkSource {
     fn link_for(&self, header: &Header) -> Option<LinkState>;
     /// A prefix to insist on before any header is decoded (None: the detector's).
     fn forced_cp(&self) -> Option<usize> {
+        None
+    }
+    /// The clock-offset prior for the frame with this header, e.g. what the
+    /// link layer has measured of its sender on long frames (None: the
+    /// receiver options' [`RxOptions::clock_prior`]).
+    fn clock_prior(&self, _header: &Header) -> Option<ClockPrior> {
         None
     }
 }
@@ -759,6 +875,14 @@ impl Receiver {
             return head;
         };
         let state = link.link_for(&header);
+        let peer_opts;
+        let opts = match link.clock_prior(&header) {
+            Some(clock_prior) => {
+                peer_opts = RxOptions { clock_prior, ..opts.clone() };
+                &peer_opts
+            }
+            None => opts,
+        };
         let extent = ((state.is_none() || !header.session) && header.probe)
             .then(|| self.probe_extent(rx, start, cp, &header, opts));
         match self.receive_frame(rx, &header, state.as_ref(), extent, start, cp, opts) {
@@ -1110,35 +1234,58 @@ struct Decoded<'a> {
     block_bits: &'a [Vec<u8>],
 }
 
-/// ADR 0006 channel SNR: rebuild the transmitted frame from the decoded bits
-/// (encode, map, clip-and-filter), demodulate it with the receiver's window,
-/// and fit received = g_k x corr x rebuilt per tone over the symbols whose
-/// content is known; the residual is everything the channel added, without
-/// the designed clipping (which is in the rebuilt reference).
-fn rebuild_snr(tones: &Grid, corr: &Grid, cfg: &FrameConfig, advance: usize, dec: &Decoded) -> ChannelSnr {
+/// Fewer known symbols than this: the channel SNR is the fallback estimate
+/// (mirrors `MIN_KNOWN_SYMBOLS` in the simulator).
+pub const MIN_KNOWN_SYMBOLS: usize = 8;
+/// The fallback sees a weak frame through a few symbols: it errs low by this, dB.
+pub const FALLBACK_MARGIN_DB: f64 = 1.0;
+/// Noise power left in |h|^2 by the S2 estimate (two symbols averaged, 7-tone
+/// quadratic smoothing), as a fraction of the S2 noise.
+pub const FALLBACK_H_BIAS: f64 = 1.0 / 6.0;
+/// Symbols from the frame's start in which the radios' audio level may still
+/// be settling (the 2026-11-07 captures: the level rises from 13 to 22 dB
+/// below its steady value at the first preamble sample, with a 19 ms time
+/// constant, frequency-flat). In the channel-SNR fit each known symbol after
+/// the preamble and before this has a gain of its own.
+pub const SNR_SETTLE_SYMBOLS: usize = 8;
+/// Alternations between the per-tone and per-symbol gains in the SNR fit.
+const SETTLE_ITERATIONS: usize = 4;
+
+/// The decoder's own estimate, for the fallback.
+struct DecoderEstimate<'a> {
+    h: &'a [Complex64],
+    noise: &'a [f64],
+    thermal: &'a [f64],
+}
+
+/// ADR 0006 channel SNR (the simulator's `frame.channel_snr`): rebuild the
+/// transmitted frame from the decoded bits (encode, map, clip-and-filter),
+/// demodulate it with the receiver's window, and fit
+/// received = g_k a_s x drift x rebuilt over the symbols after the preamble
+/// whose content is known: a gain g_k per tone, a gain a_s per known symbol
+/// before [`SNR_SETTLE_SYMBOLS`] (the radios' level settling; 1 after; its
+/// residual taken at the steady level), and the pilots' phase track refined
+/// against the rebuilt tones as (alpha + beta f) per symbol. The preamble
+/// is left out (built for a low crest factor, it escapes the radios'
+/// limiters, and their level is still settling under it). The residual,
+/// per degree of freedom, is
+/// everything the channel added, without the designed clipping (which is in
+/// the rebuilt reference); the signal is the fitted gain on the rebuilt tones
+/// as sent (a mask's boost counts). With fewer than [`MIN_KNOWN_SYMBOLS`]
+/// known symbols, or a frame with data none of whose data symbols is known,
+/// it is the fallback, which counts the designed clipping and errs low.
+fn rebuild_snr(
+    tones: &Grid,
+    corr: &Grid,
+    cfg: &FrameConfig,
+    advance: usize,
+    dec: &Decoded,
+    est: &DecoderEstimate,
+) -> ChannelSnr {
     let Decoded { header_ok, header_bits, control_ok, control_bits, block_ok, block_bits } = *dec;
     let w = cfg.n_tones();
     let n_sym = cfg.total_symbols();
     let first = PREAMBLE_SYMBOLS;
-    let hdr: Vec<u8> = header_bits[..params::HEADER_INFO_BITS - params::CRC_BITS].to_vec();
-    let cmsgs: Vec<Vec<u8>> =
-        control_bits.iter().map(|b| b[..params::CONTROL_INFO_BITS - params::CRC_BITS].to_vec()).collect();
-    let payloads: Vec<Vec<u8>> = block_bits.iter().map(|b| b[..params::DATA_PAYLOAD_BITS].to_vec()).collect();
-    let frame = tx::Transmitter::new().build_with_controls(cfg, &hdr, &cmsgs, &payloads);
-    let mut ofdm = Ofdm::new();
-    let mut reference = ofdm.demodulate(&frame.samples, cfg.cp - advance, n_sym, w, cfg.cp, cfg.width, None);
-    let cgain = cfg.control_gain();
-    for s in cfg.first_control()..cfg.first_data() {
-        for v in reference.row_mut(s) {
-            *v /= cgain;
-        }
-    }
-    let gain = cfg.data_gain();
-    for s in cfg.first_data()..n_sym {
-        for v in reference.row_mut(s) {
-            *v /= gain;
-        }
-    }
     // Known symbols and the tones each one carries.
     let base: Vec<usize> = (0..BASE_TONES).collect();
     let all: Vec<usize> = (0..w).collect();
@@ -1165,79 +1312,212 @@ fn rebuild_snr(tones: &Grid, corr: &Grid, cfg: &FrameConfig, advance: usize, dec
             known.push((cfg.first_data() + ds, &cfg.data_active_tones[..]));
         }
     }
-    // The pilot track is a per-tone phase ramp over symbols; extend it back
-    // over the preamble rows.
-    let step: Vec<Complex64> = (0..w)
-        .map(|k| if corr.rows > 1 { corr.at(1, k) * corr.at(0, k).conj() } else { Complex64::new(1.0, 0.0) })
-        .collect();
-    // Per tone: (symbol, received, rebuilt reference with the phase track).
-    let mut obs: Vec<Vec<(f64, Complex64, Complex64)>> = vec![Vec::new(); w];
-    for &(s, ks) in &known {
+    known.sort_by_key(|&(s, _)| s);
+    let n_known = known.len();
+    // A frame with data whose data symbols all failed is weak, and its header
+    // decoding at all selects for a lucky, low-noise header: measured over
+    // the preamble and header alone it reads high. Header-only and
+    // control-only frames are measured over everything they carry.
+    let no_data_known = cfg.data_symbols() > 0 && !known.iter().any(|&(s, _)| s >= cfg.first_data());
+    if n_known < MIN_KNOWN_SYMBOLS || no_data_known {
+        return fallback_snr(cfg, est, n_known);
+    }
+
+    let hdr: Vec<u8> = header_bits[..params::HEADER_INFO_BITS - params::CRC_BITS].to_vec();
+    let cmsgs: Vec<Vec<u8>> =
+        control_bits.iter().map(|b| b[..params::CONTROL_INFO_BITS - params::CRC_BITS].to_vec()).collect();
+    let payloads: Vec<Vec<u8>> = block_bits.iter().map(|b| b[..params::DATA_PAYLOAD_BITS].to_vec()).collect();
+    let frame = tx::Transmitter::new().build_with_controls(cfg, &hdr, &cmsgs, &payloads);
+    let mut ofdm = Ofdm::new();
+    let reference = ofdm.demodulate(&frame.samples, cfg.cp - advance, n_sym, w, cfg.cp, cfg.width, None);
+    // The received tones with the mask's known boost put back, as sent.
+    let boost = |s: usize| {
+        if s >= cfg.first_data() {
+            cfg.data_gain()
+        } else if s >= cfg.first_control() {
+            cfg.control_gain()
+        } else {
+            1.0
+        }
+    };
+    // The preamble is left out of the fit: its symbols are built for a low
+    // crest factor (SPEC 6.1), so a radio's limiter, which sets the noise of
+    // a strong FM link, does not touch them, and the radios' level is still
+    // settling under them (over the air they read 5-8 dB cleaner than the
+    // data). Counted in, they let a short frame over-report.
+    let known: Vec<(usize, &[usize])> = known.into_iter().filter(|&(s, _)| s >= first).collect();
+    // Dense (known symbol, tone) cells; x is zero where the symbol carries nothing.
+    let n = known.len();
+    let zero = Complex64::new(0.0, 0.0);
+    let one = Complex64::new(1.0, 0.0);
+    let mut y = vec![zero; n * w];
+    let mut x = vec![zero; n * w];
+    let mut live = vec![false; n * w];
+    let mut dc = vec![one; n * w];
+    for (i, &(s, ks)) in known.iter().enumerate() {
+        for k in 0..w {
+            y[i * w + k] = tones.at(s, k) * boost(s);
+            if s >= first {
+                dc[i * w + k] = corr.at(s - first, k);
+            }
+        }
         for &k in ks {
-            let c =
-                if s >= first { corr.at(s - first, k) } else { corr.at(0, k) * step[k].powi(s as i32 - first as i32) };
-            obs[k].push((s as f64, tones.at(s, k), reference.at(s, k) * c));
+            x[i * w + k] = reference.at(s, k);
+            live[i * w + k] = true;
         }
     }
+    let u: Vec<f64> = known.iter().map(|&(s, _)| s as f64 - 2.5).collect();
+    // Symbols with a gain of their own: the settling ones, when a later symbol anchors the level.
+    let settle: Vec<bool> = if known.iter().any(|&(s, _)| s >= SNR_SETTLE_SYMBOLS) {
+        known.iter().map(|&(s, _)| s < SNR_SETTLE_SYMBOLS).collect()
+    } else {
+        vec![false; n]
+    };
+    let mut a = vec![one; n];
+    let mut yc = vec![zero; n * w];
+    let mut g = vec![zero; w];
+    for _ in 0..3 {
+        for c in 0..n * w {
+            yc[c] = y[c] / dc[c];
+        }
+        fit_gains(&yc, &x, w, &settle, &mut a, &mut g);
+        // The common phase drift (alpha + beta f) per symbol re-fit against
+        // the rebuilt tones: pilots alone leave a few hundredths of a radian
+        // of the designed clipping's phase noise.
+        let (mut m00, mut m01, mut m11, mut b0, mut b1) = (0.0, 0.0, 0.0, 0.0, 0.0);
+        for i in 0..n {
+            for (k, gk) in g.iter().enumerate() {
+                let c = i * w + k;
+                if !live[c] {
+                    continue;
+                }
+                let r = gk * a[i] * x[c];
+                let theta = (y[c] * (r * dc[c]).conj() + 1e-300).arg();
+                let wt = r.norm_sqr();
+                let (p, q) = (u[i], u[i] * (BIN_OFFSET + k as f64));
+                m00 += wt * p * p;
+                m01 += wt * p * q;
+                m11 += wt * q * q;
+                b0 += wt * p * theta;
+                b1 += wt * q * theta;
+            }
+        }
+        let det = m00 * m11 - m01 * m01;
+        let (p0, p1) = if det.abs() > 1e-12 * (m00 * m11).max(1e-300) {
+            ((m11 * b0 - m01 * b1) / det, (m00 * b1 - m01 * b0) / det)
+        } else if m00 > 0.0 {
+            (b0 / m00, 0.0)
+        } else {
+            (0.0, 0.0)
+        };
+        for i in 0..n {
+            for k in 0..w {
+                let ff = BIN_OFFSET + k as f64;
+                dc[i * w + k] *= Complex64::from_polar(1.0, p0 * u[i] + p1 * u[i] * ff);
+            }
+        }
+    }
+    for c in 0..n * w {
+        yc[c] = y[c] / dc[c];
+    }
+    fit_gains(&yc, &x, w, &settle, &mut a, &mut g);
+    // Each own gain takes one complex degree of freedom from its symbol's tones.
+    let row_live: Vec<f64> = (0..n).map(|i| live[i * w..(i + 1) * w].iter().filter(|&&l| l).count() as f64).collect();
     let mut per_tone = vec![f64::NAN; w];
-    let (mut sig_sum, mut noise_sum) = (0.0, 0.0);
-    let data_act = &cfg.data_active_tones;
-    for (k, o) in obs.iter().enumerate() {
-        if o.len() < 4 {
-            continue;
+    let mut sig = vec![0.0; w];
+    let mut noise = vec![0.0; w];
+    let mut ok = vec![false; w];
+    for k in 0..w {
+        let (mut nk, mut mk, mut resid, mut den, mut xx) = (0.0, 0.0, 0.0, 0.0, 0.0);
+        for i in 0..n {
+            let c = i * w + k;
+            if !live[c] {
+                continue;
+            }
+            let xa = a[i] * x[c];
+            nk += 1.0;
+            if settle[i] {
+                mk += 1.0 / row_live[i];
+            }
+            // A settling symbol's level scales its noise too (the radios'
+            // clipping, which follows the level): its residual counts at the
+            // steady level.
+            resid += (yc[c] - g[k] * xa).norm_sqr() / a[i].norm_sqr().max(1e-30);
+            den += xa.norm_sqr();
+            xx += x[c].norm_sqr();
         }
-        let (sig, resid) = tone_fit(o);
-        per_tone[k] = 10.0 * (sig / resid).log10();
-        if data_act.contains(&k) {
-            sig_sum += sig;
-            noise_sum += resid;
-        }
+        noise[k] = resid / (nk - 1.0 - mk).max(1.0);
+        // |g|^2 over-reads by the noise left in the fit (noise / sum |x|^2).
+        let g2 = g[k].norm_sqr();
+        let h2 = (g2 - noise[k] / den.max(1e-30)).max(0.05 * g2);
+        sig[k] = h2 * xx / nk.max(1.0);
+        ok[k] = nk >= 3.0;
     }
-    ChannelSnr { per_tone_db: per_tone, effective_db: 10.0 * (sig_sum / noise_sum).log10(), known_symbols: known.len() }
+    let tiny = 1e-12 * sig.iter().copied().fold(1e-30, f64::max);
+    let t: Vec<usize> = cfg.data_active_tones.iter().copied().filter(|&k| k < w && ok[k]).collect();
+    if t.is_empty() {
+        return fallback_snr(cfg, est, n_known);
+    }
+    let effective =
+        10.0 * (t.iter().map(|&k| sig[k]).sum::<f64>() / t.iter().map(|&k| noise[k]).sum::<f64>().max(tiny)).log10();
+    let measured: Vec<f64> = (0..w).filter(|&k| ok[k]).map(|k| k as f64).collect();
+    let values: Vec<f64> = (0..w).filter(|&k| ok[k]).map(|k| 10.0 * (sig[k] / noise[k].max(tiny)).log10()).collect();
+    for (k, v) in per_tone.iter_mut().enumerate() {
+        *v = dsp::interp(k as f64, &measured, &values);
+    }
+    ChannelSnr { per_tone_db: per_tone, effective_db: effective, known_symbols: n_known, fallback: false }
 }
 
-/// Signal and residual power of one tone: received = g x reference by least
-/// squares, then again with a residual phase ramp over the symbols fitted
-/// (the pilots' drift track is noisy at high SNR, and a timing-slope error
-/// grows over a long frame); the smaller residual, per degree of freedom.
-fn tone_fit(o: &[(f64, Complex64, Complex64)]) -> (f64, f64) {
-    let fit = |rot: &dyn Fn(f64) -> Complex64| -> (Complex64, f64, f64) {
-        let (mut yx, mut xx) = (Complex64::new(0.0, 0.0), 0.0);
-        for &(s, y, x) in o {
-            let x = x * rot(s);
-            yx += y * x.conj();
-            xx += x.norm_sqr();
+/// Per-tone gains g (and the own gains a of the `settle` symbols, 1 for the
+/// rest) of yc = g_k a_s x by alternating least squares.
+fn fit_gains(yc: &[Complex64], x: &[Complex64], w: usize, settle: &[bool], a: &mut [Complex64], g: &mut [Complex64]) {
+    let n = a.len();
+    let tone_gains = |a: &[Complex64], g: &mut [Complex64]| {
+        for (k, gk) in g.iter_mut().enumerate() {
+            let (mut num, mut den) = (Complex64::new(0.0, 0.0), 0.0);
+            for i in 0..n {
+                let xa = a[i] * x[i * w + k];
+                num += yc[i * w + k] * xa.conj();
+                den += xa.norm_sqr();
+            }
+            *gk = num / den.max(1e-30);
         }
-        let g = yx / xx;
-        let r: f64 = o.iter().map(|&(s, y, x)| (y - g * x * rot(s)).norm_sqr()).sum();
-        (g, xx, r)
     };
-    let n = o.len() as f64;
-    let (g, xx, r1) = fit(&|_| Complex64::new(1.0, 0.0));
-    // Residual phase against the first fit, weighted line over the symbols.
-    let (mut sw, mut ss, mut st, mut sss, mut sst) = (0.0, 0.0, 0.0, 0.0, 0.0);
-    for &(s, y, x) in o {
-        let z = y * (g * x).conj();
-        let wgt = (g * x).norm_sqr();
-        let t = z.arg();
-        sw += wgt;
-        ss += wgt * s;
-        st += wgt * t;
-        sss += wgt * s * s;
-        sst += wgt * s * t;
+    if !settle.iter().any(|&v| v) {
+        tone_gains(a, g);
+        return;
     }
-    let den = sw * sss - ss * ss;
-    let slope = if den > 0.0 { (sw * sst - ss * st) / den } else { 0.0 };
-    let (g2, xx2, r2) = fit(&|s| Complex64::from_polar(1.0, slope * s));
-    // Keep the ramp only if it removes far more than the half complex degree
-    // of freedom of noise it absorbs by itself; choosing the smaller residual
-    // outright would bias the noise low and over-report.
-    let per_dof = r1 / (n - 1.0);
-    if r1 - r2 > 8.0 * per_dof {
-        (g2.norm_sqr() * xx2 / n, (r2 / (n - 1.5)).max(1e-30))
-    } else {
-        (g.norm_sqr() * xx / n, per_dof.max(1e-30))
+    for _ in 0..SETTLE_ITERATIONS {
+        tone_gains(a, g);
+        for i in (0..n).filter(|&i| settle[i]) {
+            let (mut num, mut den) = (Complex64::new(0.0, 0.0), 0.0);
+            for k in 0..w {
+                let r = g[k] * x[i * w + k];
+                num += yc[i * w + k] * r.conj();
+                den += r.norm_sqr();
+            }
+            a[i] = num / den.max(1e-30);
+        }
     }
+    tone_gains(a, g);
+}
+
+/// The fallback channel SNR (the simulator's `_clip_included_snr`): the
+/// decoder's estimate over the data's active tones, which counts the
+/// designed clipping as noise, less [`FALLBACK_MARGIN_DB`].
+fn fallback_snr(cfg: &FrameConfig, est: &DecoderEstimate, known_symbols: usize) -> ChannelSnr {
+    // |h|^2 carries the noise left in the smoothed estimate: take it out, or a weak frame reads high.
+    let p: Vec<f64> = est
+        .h
+        .iter()
+        .zip(est.thermal)
+        .map(|(h, t)| (h.norm_sqr() - t * FALLBACK_H_BIAS).max(0.1 * h.norm_sqr()))
+        .collect();
+    let t: Vec<usize> = cfg.data_active_tones.iter().copied().filter(|&k| k < p.len()).collect(); // no probe: the base tones
+    let overall = 10.0 * (t.iter().map(|&k| p[k]).sum::<f64>() / t.iter().map(|&k| est.noise[k]).sum::<f64>()).log10();
+    let per_tone =
+        p.iter().zip(est.noise).map(|(p, n)| 10.0 * (p / n.max(1e-30)).log10() - FALLBACK_MARGIN_DB).collect();
+    ChannelSnr { per_tone_db: per_tone, effective_db: overall - FALLBACK_MARGIN_DB, known_symbols, fallback: true }
 }
 
 /// Noise variance the preamble and pilots predict for header symbols: the

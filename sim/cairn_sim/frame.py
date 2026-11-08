@@ -684,8 +684,39 @@ def estimate_noise(y2: np.ndarray, y3: np.ndarray, window: int = 7) -> np.ndarra
     return np.convolve(raw, kernel, mode="same") / np.convolve(np.ones(raw.size), kernel, mode="same")
 
 
+CLOCK_PRIOR_SD_PPM = 50.0   # SPEC 14.1 allows +-100 ppm between stations: two standard deviations
+CLOCK_BOUND_PPM = 150.0     # no clock estimate exceeds this: SPEC 14.1's +-100 ppm plus margin
+
+
+@dataclass(frozen=True)
+class ClockPrior:
+    """What the receiver assumes about the sample-clock offset before it
+    measures a frame: a Gaussian prior, ppm, with the sign the receiver
+    reports (``-drift / stride * 1e6``; the channel's ``sco_ppm``).
+
+    The pilots measure the offset with a variance that falls with the cube
+    of the frame's length: about +-10 ppm on a one-block frame at 24 tones
+    and 13 dB, +-300 ppm on a header-only frame, under 1 ppm on a 4 s frame.
+    ``track_drift`` combines the measurement with this prior by their
+    variances (a long frame is measured, a short one keeps close to the
+    prior) and bounds the result by ``CLOCK_BOUND_PPM``. The default is
+    SPEC 14.1's tolerance: 0 ppm, standard deviation ``CLOCK_PRIOR_SD_PPM``.
+    A link layer that has measured a peer on long frames can supply a
+    tighter one (``receive(clock_prior=...)``).
+    """
+    ppm: float = 0.0
+    sd_ppm: float = CLOCK_PRIOR_SD_PPM
+
+    def drift_units(self, stride: int) -> tuple[float, float, float]:
+        """(mean, standard deviation, bound) as drift in samples per symbol."""
+        def d(ppm: float) -> float:
+            return ppm * 1e-6 * stride
+        return -d(self.ppm), d(max(self.sd_ppm, 1e-3)), d(CLOCK_BOUND_PPM)
+
+
 def track_drift(pilot_obs: np.ndarray, pilots: tuple[int, ...], width: int, *,
-                s_ref: float, window: int = 15) -> tuple[np.ndarray, float]:
+                s_ref: float | np.ndarray, window: int = 15,
+                prior: tuple[float, float, float] | None = None) -> tuple[np.ndarray, float, float]:
     """Phase correction per symbol and tone from the continuous pilots.
 
     ``pilot_obs`` is (n_sym, n_pilots): received pilot values divided by the
@@ -695,12 +726,25 @@ def track_drift(pilot_obs: np.ndarray, pilots: tuple[int, ...], width: int, *,
     as alpha + beta * f, a common phase drift plus the timing drift a
     sample-clock offset causes. The correction is zero at ``s_ref``, the
     symbol position (relative to ``pilot_obs`` row 0) where the channel was
-    estimated.
+    estimated: one for every tone, or per tone (the tones above 23 are
+    estimated from the width probe, after the header).
 
-    Returns the correction (n_sym, width) and the timing drift in samples per
+    Each pilot's phase is unwrapped against a smoothed track (smoothing
+    alone flattens the ends of a short run and halves its slope) and fitted
+    with a line, whose residuals give the slope's variance (none with fewer
+    than five rows). The timing drift beta implies is combined with
+    ``prior`` (mean, standard deviation, bound, in samples per symbol;
+    default ``ClockPrior()`` at the short prefix) by their variances and
+    bounded, and alpha is re-fitted for the beta kept: a frame too short to
+    measure the drift keeps the prior's.
+
+    Returns the correction (n_sym, width), the timing drift in samples per
     symbol implied by beta (a delay of d samples turns tone bin f by
-    -2 pi f d / N).
+    -2 pi f d / N) and its standard deviation.
     """
+    if prior is None:
+        prior = ClockPrior().drift_units(params.N_USEFUL + params.CP_SHORT)
+    mu, sd0, bound = prior
     n_sym = pilot_obs.shape[0]
     kernel = np.ones(window) / window
     s = np.arange(n_sym, dtype=float)
@@ -709,23 +753,47 @@ def track_drift(pilot_obs: np.ndarray, pilots: tuple[int, ...], width: int, *,
     use = [j for j in range(len(pilots)) if np.count_nonzero(~np.isnan(pilot_obs[:, j])) >= 2]
     pilot_obs, pilots = pilot_obs[:, use], tuple(pilots[j] for j in use)
     slopes = np.zeros(len(pilots))
+    var = np.full(len(pilots), np.inf)
     for j in range(len(pilots)):
         valid = ~np.isnan(pilot_obs[:, j])        # a contiguous run of rows
-        rows = s[valid]
+        rows, vals = s[valid], pilot_obs[valid, j]
         k = kernel if rows.size >= kernel.size else np.ones(rows.size) / rows.size
-        sm = np.convolve(pilot_obs[valid, j], k, mode="same")
-        theta = np.unwrap(np.angle(sm))
+        track = np.unwrap(np.angle(np.convolve(vals, k, mode="same")))
+        theta = track + np.angle(vals * np.exp(-1j * track))
         sc = rows - rows.mean()
-        slopes[j] = (sc @ (theta - theta.mean())) / max(sc @ sc, 1e-12)
+        sxx = max(sc @ sc, 1e-12)
+        tc = theta - theta.mean()
+        slopes[j] = (sc @ tc) / sxx
+        nu = rows.size - 2                         # degrees of freedom of the residual
+        if nu > 2:
+            # The slope's variance from the residuals, widened by nu / (nu - 2)
+            # (a t distribution's): a few rows estimate it poorly.
+            var[j] = np.sum((tc - slopes[j] * sc) ** 2) / nu / sxx * nu / (nu - 2)
     f = params.BIN_OFFSET + np.array(pilots, dtype=float)
-    beta, alpha = np.polyfit(f, slopes, 1) if len(pilots) > 1 else (0.0, slopes[0])
+    to_drift = -params.N_USEFUL / (2 * np.pi)     # drift = to_drift * beta
+    if len(pilots) > 1:
+        fc = f - f.mean()
+        sff = fc @ fc
+        measured = to_drift * (fc @ slopes) / sff
+        var_d = float(np.sum(fc ** 2 * var) / sff ** 2) * to_drift ** 2
+    else:
+        measured, var_d = mu, np.inf
+    if np.isfinite(var_d):
+        p0 = sd0 ** 2
+        drift, var_post = (measured * p0 + mu * var_d) / (p0 + var_d), p0 * var_d / (p0 + var_d)
+    else:
+        drift, var_post = mu, sd0 ** 2
+    drift = float(np.clip(drift, -bound, bound))
+    beta = drift / to_drift
+    alpha = float(np.mean(slopes) - beta * np.mean(f)) if len(pilots) else 0.0
     all_f = params.BIN_OFFSET + np.arange(width)
-    corr = np.exp(1j * (alpha + beta * all_f)[None, :] * (s - s_ref)[:, None])
-    return corr, float(-beta * params.N_USEFUL / (2 * np.pi))
+    ref = np.broadcast_to(np.asarray(s_ref, dtype=float), (width,))
+    corr = np.exp(1j * (alpha + beta * all_f)[None, :] * (s[:, None] - ref[None, :]))
+    return corr, drift, float(np.sqrt(var_post))
 
 
 def _estimate(tones: np.ndarray, cfg: FrameConfig, smooth_window: int, phase_window: int,
-              robust: bool = False):
+              robust: bool = False, clock_prior: ClockPrior | None = None):
     """Channel, noise and drift estimates from demodulated tones.
 
     ``tones`` has the control and data symbols already divided by
@@ -774,7 +842,14 @@ def _estimate(tones: np.ndarray, cfg: FrameConfig, smooth_window: int, phase_win
         act = list(cfg.data_active_tones)
         power = np.mean(np.abs(body[d0:, act]) ** 2 / np.abs(h[act]) ** 2, axis=1)
         obs[d0:][_outliers(power)] = np.nan
-    corr, drift = track_drift(obs, pilots, nt, s_ref=2.5 - first, window=phase_window)
+    prior = (clock_prior or ClockPrior()).drift_units(cfg.stride)
+    # The drift correction is zero where each tone's channel was estimated:
+    # the S2 pair (rows 2-3) for the base tones, the probe pair for the rest
+    # (a clock offset turns them by the drift between the two, 18 degrees at
+    # tone 50 and 100 ppm).
+    s_ref = np.full(nt, 2.5 - first)
+    s_ref[b:] = hs + 0.5
+    corr, drift, drift_sd = track_drift(obs, pilots, nt, s_ref=s_ref, window=phase_window, prior=prior)
 
     # The S2 pair sees only noise: both symbols carry the same clipping
     # distortion, so it cancels in their difference. Data symbols also carry
@@ -791,7 +866,7 @@ def _estimate(tones: np.ndarray, cfg: FrameConfig, smooth_window: int, phase_win
         excess = np.maximum(np.mean(r2, axis=0) - floor, 0)
         noise = noise + np.interp(np.arange(nt), pilots, excess) * np.abs(h) ** 2
         snr_db = 10 * np.log10(np.abs(h) ** 2 / noise)
-    return h, noise, thermal, excess, snr_db, corr, body, drift
+    return h, noise, thermal, excess, snr_db, corr, body, drift, drift_sd
 
 
 def _outliers(m: np.ndarray, k_sigma: float = 6.0) -> np.ndarray:
@@ -866,7 +941,8 @@ def receive(rx: np.ndarray, cfg: FrameConfig | None = None, *, link: LinkSource 
             start: int | None = None, advance: int | None = None,
             phase_window: int = 15, smooth_window: int = 7,
             decision_directed: bool = True, burst_aware: bool = True,
-            header_noise: str = "measured", measure_snr: bool = True) -> RxResult:
+            header_noise: str = "measured", measure_snr: bool = True,
+            clock_prior: ClockPrior | Callable[[fields.Header], ClockPrior | None] | None = None) -> RxResult:
     """Decode one frame from real samples ``rx``.
 
     Give ``start`` (index of the frame's first sample) or ``reference`` (the
@@ -882,7 +958,11 @@ def receive(rx: np.ndarray, cfg: FrameConfig | None = None, *, link: LinkSource 
     ``estimate_header_noise``) or "s2" (the S2 difference plus the pilots'
     excess interpolated across the band, as used for the data).
     ``measure_snr`` adds the channel SNR of ADR 0006 to ``detail`` (see
-    ``channel_snr``); it costs about one frame build.
+    ``channel_snr``); it costs about one frame build. ``clock_prior`` is the
+    sample-clock offset expected before the frame is measured (``ClockPrior``,
+    default 0 +- 50 ppm; see ``track_drift``); header first, it may be a
+    callable giving the prior for the decoded header (None: the default),
+    e.g. what the link layer has measured of the sender on long frames.
 
     Without ``cfg`` the header is decoded first and the frame's geometry
     taken from its fields (``receive_header_first``), with width and mask
@@ -895,7 +975,10 @@ def receive(rx: np.ndarray, cfg: FrameConfig | None = None, *, link: LinkSource 
         return receive_header_first(rx, link, reference=reference, start=start, cp=cp, advance=advance,
                                     phase_window=phase_window, smooth_window=smooth_window,
                                     decision_directed=decision_directed, burst_aware=burst_aware,
-                                    header_noise=header_noise, measure_snr=measure_snr)
+                                    header_noise=header_noise, measure_snr=measure_snr,
+                                    clock_prior=clock_prior)
+    if callable(clock_prior):
+        raise ValueError("a clock prior per header needs the header-first receiver (no cfg)")
     if start is None:
         if reference is None:
             reference = ofdm.modulate(preamble.grid(cfg.width), cfg.cp, active=cfg.width)
@@ -910,8 +993,8 @@ def receive(rx: np.ndarray, cfg: FrameConfig | None = None, *, link: LinkSource 
     tones = ofdm.demodulate(rx, window_start, n_sym, cfg.n_tones, cfg.cp, active=cfg.width)
     tones[c_first:d_first] /= cfg.control_gain                 # the mask's known power boost
     tones[d_first:] /= cfg.data_gain
-    h, noise, thermal, excess, snr_db, corr, body, drift = _estimate(
-        tones, cfg, smooth_window, phase_window, burst_aware)
+    h, noise, thermal, excess, snr_db, corr, body, drift, drift_sd = _estimate(
+        tones, cfg, smooth_window, phase_window, burst_aware, clock_prior)
     # Follow sample-clock drift: if the windows would wander by a sample or
     # more over the frame, move each symbol's window and estimate again.
     pos = np.arange(n_sym) - 2.5                      # symbols from the channel estimate
@@ -927,8 +1010,8 @@ def receive(rx: np.ndarray, cfg: FrameConfig | None = None, *, link: LinkSource 
         tones = tones * np.exp(-2j * np.pi * f[None, :] * shifts[:, None] / params.N_USEFUL)
         tones[c_first:d_first] /= cfg.control_gain
         tones[d_first:] /= cfg.data_gain
-        h, noise, thermal, excess, snr_db, corr, body, drift = _estimate(
-            tones, cfg, smooth_window, phase_window, burst_aware)
+        h, noise, thermal, excess, snr_db, corr, body, drift, drift_sd = _estimate(
+            tones, cfg, smooth_window, phase_window, burst_aware, clock_prior)
     hs = cfg.header_symbols
     c0, d0 = c_first - first, d_first - first                  # rows of ``body`` and ``eq``
     eq = body / (h[None, :] * corr)
@@ -983,7 +1066,8 @@ def receive(rx: np.ndarray, cfg: FrameConfig | None = None, *, link: LinkSource 
     dres = _decode_blocks(eq[d0:, dt], nv[d0:, dt], rung.bits_per_symbol, params.DATA_CODE, rung.coded_bits,
                           cfg.n_blocks, 1 + cfg.n_control, cfg.interleaver)
     detail = {"h": h, "noise": noise, "thermal": thermal, "eq": eq, "d0": d0, "c0": c0,
-              "window_start": window_start, "shifts": shifts, "drift": drift, "corr": corr}
+              "window_start": window_start, "shifts": shifts, "drift": drift, "drift_sd": drift_sd,
+              "corr": corr}
     header, header_error = parse_header(bool(hres.ok[0]), hres.bits[0])
     controls = parse_controls(cres.ok, cres.bits)
     out = RxResult(bool(hres.ok[0]), hres.bits[0], dres.ok, dres.bits, start, snr_db, dres.iterations, detail,
@@ -1213,7 +1297,17 @@ def receive_header_first(rx: np.ndarray, link: LinkSource = None, *,
     blocks, ``header`` None and ``header_error`` saying why. ``measure_snr``
     measures the channel SNR (ADR 0006) once the final header is settled;
     a frame whose header fails gets the fallback over its preamble.
+    ``clock_prior`` (a ``ClockPrior``, or a callable giving one or None for
+    the decoded header) is the clock offset expected of the frame's sender
+    (``track_drift``); the header pass uses the default unless it is fixed.
     """
+    prior = kw.pop("clock_prior", None)
+    if callable(prior):
+        kw_head = kw
+        frame_prior = None
+    else:
+        kw_head = dict(kw, clock_prior=prior)
+        frame_prior = prior
     known = link if isinstance(link, LinkState) else None
     if start is None:
         found = locate(rx, cp if cp is not None else (known.cp if known else None), reference)
@@ -1223,13 +1317,16 @@ def receive_header_first(rx: np.ndarray, link: LinkSource = None, *,
     elif cp is None:
         cp = known.cp if known is not None and known.cp is not None else params.CP_SHORT
     head_cfg = FrameConfig(width=params.BASE_TONES, n_blocks=0, cp=cp, probe=False)
-    head = receive(rx, head_cfg, start=start, measure_snr=False, **kw)
+    head = receive(rx, head_cfg, start=start, measure_snr=False, **kw_head)
     if head.header is None:
         if measure_snr:
             _add_channel_snr(rx, head_cfg, head)
         head.config = None
         return head
     link = _link_for(link, head.header)
+    if callable(prior):
+        frame_prior = prior(head.header)
+    kw = dict(kw, clock_prior=frame_prior)
     extent = None
     if (link is None or not head.header.session) and head.header.probe:
         extent = probe_extent(rx, start, cp, head.header, advance=kw.get("advance"))
@@ -1283,6 +1380,13 @@ SNR_MAX_DB = 63.75      # B.2 field range: larger values saturate
 MIN_KNOWN_SYMBOLS = 8   # fewer known symbols than this: use the fallback estimate
 FALLBACK_MARGIN_DB = 1.0  # the fallback sees a weak frame through a few symbols (+-2 dB at 0 dB): err low
 FALLBACK_H_BIAS = 1 / 6  # noise power left in |h|^2: two S2 symbols averaged (1/2), 7-tone quadratic smoothing (1/3)
+# Symbols from the frame's start in which the radios' audio level may still be
+# settling: the 2026-11-07 over-the-air captures show the received level rise
+# from 13 to 22 dB below its steady value at the first preamble sample, with a
+# 19 ms time constant, frequency-flat. In the channel-SNR fit each known
+# symbol after the preamble and before this has a gain of its own.
+SNR_SETTLE_SYMBOLS = 8
+SETTLE_ITERATIONS = 4   # alternations between the per-tone and per-symbol gains
 
 
 @dataclass
@@ -1326,7 +1430,7 @@ def _clip_included_snr(res: RxResult, cfg: FrameConfig) -> tuple[float, np.ndarr
     """Fallback: the measured SNR over the data tones, which counts the
     designed clipping as noise (errs low), on the 7 dB-equivalent scale."""
     h, noise, thermal = res.detail["h"], res.detail["noise"], res.detail["thermal"]
-    t = list(cfg.data_active_tones)
+    t = [k for k in cfg.data_active_tones if k < cfg.n_tones]     # a frame without a probe: the base tones
     off = cfg.clip_db - 7.0
     # |h|^2 carries the noise left in the smoothed estimate (about a third of
     # half the S2 noise): take it out, or a weak frame reads high.
@@ -1346,6 +1450,13 @@ def channel_snr(rx: np.ndarray, cfg: FrameConfig, res: RxResult) -> ChannelSnr:
     squares against the rebuilt tones over the known symbols (the channel
     estimate from the preamble is too noisy to leave a 40 dB residue), after
     the pilots' phase and timing tracking already in ``res.detail``. The
+    preamble is left out of the fit (built for a low crest factor, it escapes
+    the radios' limiters, and their level is still settling under it), and
+    each known symbol before ``SNR_SETTLE_SYMBOLS`` gets a gain of its own,
+    its residual taken at the steady level and its degree of freedom from
+    the residual's (the radios' level settling at the start of a
+    transmission would otherwise count as noise: up to 7 dB on a header-only
+    frame over the air). The
     residual is noise plus everything else the channel and radios add;
     signal is the fitted gain's power on the rebuilt tones as sent, a mask's
     power boost (``control_gain``, ``data_gain``) included: that is what
@@ -1393,17 +1504,29 @@ def channel_snr(rx: np.ndarray, cfg: FrameConfig, res: RxResult) -> ChannelSnr:
     sent = rebuild(cfg, res.header_bits, res.block_bits, res.control_bits)
     x = ofdm.demodulate(np.concatenate([sent.samples, np.zeros(1)]), cfg.cp, n_sym, w, cfg.cp, active=w)
     x = x * (sent.grid != 0)             # silent tones carry nothing: leave the rebuild's leakage out
-    y, x, drift_c = y[known], x[known], drift_c[known]
-    u = np.flatnonzero(known) - 2.5                     # symbols from the S2 pair, where the channel was set
+    # The preamble is left out of the fit: its symbols are built for a low
+    # crest factor (SPEC 6.1), so a radio's limiter, which sets the noise of
+    # a strong FM link, does not touch them, and the radios' level is still
+    # settling under them (over the air they read 5-8 dB cleaner than the
+    # data). Counted in, they let a short frame over-report.
+    fit = known.copy()
+    fit[:first] = False
+    y, x, drift_c = y[fit], x[fit], drift_c[fit]
+    rows = np.flatnonzero(fit)
+    u = rows - 2.5                                      # symbols from the S2 pair, where the channel was set
     fk = params.BIN_OFFSET + np.arange(w)
     live = np.abs(x) > 0
+    # The radios' level settles over the first symbols (SNR_SETTLE_SYMBOLS):
+    # those known symbols get a gain of their own, when a later one anchors the level.
+    settle = rows < SNR_SETTLE_SYMBOLS if np.any(rows >= SNR_SETTLE_SYMBOLS) else np.zeros(rows.size, dtype=bool)
+    a = np.ones(rows.size, dtype=complex)
     for _ in range(3):
-        # Gain per tone, then the common phase drift (alpha + beta f) per symbol
-        # re-fit against the rebuilt tones: pilots alone leave a few
-        # hundredths of a radian of the designed clipping's phase noise.
-        yc = y / drift_c
-        h = np.sum(yc * np.conj(x), axis=0) / np.maximum(np.sum(np.abs(x) ** 2, axis=0), 1e-30)
-        ref = h[None, :] * x
+        # Gains per tone (and per settling symbol), then the common phase drift
+        # (alpha + beta f) per symbol re-fit against the rebuilt tones: pilots
+        # alone leave a few hundredths of a radian of the designed clipping's
+        # phase noise.
+        h, a = _fit_gains(y / drift_c, x, a, settle)
+        ref = h[None, :] * a[:, None] * x
         theta = np.angle(y * np.conj(ref * drift_c) + 1e-300)           # residual phase of each cell
         wgt = np.abs(ref) ** 2 * live
         uu = np.broadcast_to(u[:, None], theta.shape)
@@ -1412,20 +1535,26 @@ def channel_snr(rx: np.ndarray, cfg: FrameConfig, res: RxResult) -> ChannelSnr:
         sol = np.linalg.lstsq(a_mat, theta.ravel() * np.sqrt(wgt.ravel()), rcond=None)[0]
         drift_c = drift_c * np.exp(1j * (sol[0] * uu + sol[1] * uu * ff))
     y = y / drift_c
+    h, a = _fit_gains(y, x, a, settle)
+    xa = a[:, None] * x
     n_k = np.sum(live, axis=0)
-    den = np.sum(np.abs(x) ** 2, axis=0)
-    h = np.sum(y * np.conj(x), axis=0) / np.maximum(den, 1e-30)
+    # Each settling symbol's own gain takes one complex degree of freedom
+    # from the tones it carries.
+    m_k = np.sum(live[settle] / np.maximum(np.sum(live[settle], axis=1, keepdims=True), 1), axis=0)
+    den = np.sum(np.abs(xa) ** 2, axis=0)
     # Only the cells a tone carries something in: a silent cell (upper tones
     # in the preamble, header and control symbols, masked tones) holds noise
     # but no fit, and is not counted in n_k either.
-    resid = np.sum(np.abs(y - h[None, :] * x) ** 2 * live, axis=0)
-    noise = resid / np.maximum(n_k - 1, 1)          # one complex gain fitted per tone
+    # A settling symbol's level scales its noise too (the radios' clipping,
+    # which follows the level): its residual counts at the steady level.
+    resid = np.sum(np.abs(y - h[None, :] * xa) ** 2 * live / np.abs(a[:, None]) ** 2, axis=0)
+    noise = resid / np.maximum(n_k - 1 - m_k, 1)    # one complex gain fitted per tone
     # |h|^2 over-reads by the noise left in the fit (noise / sum |x|^2).
     h2 = np.maximum(np.abs(h) ** 2 - noise / np.maximum(den, 1e-30), 0.05 * np.abs(h) ** 2)
     sig = h2 * np.sum(np.abs(x) ** 2, axis=0) / np.maximum(n_k, 1)     # the mask's boost counts
     tiny = 1e-12 * max(float(np.max(sig)), 1e-30)
     ok = n_k >= 3
-    t = np.array([k for k in cfg.data_active_tones if ok[k]], dtype=int)
+    t = np.array([k for k in cfg.data_active_tones if k < w and ok[k]], dtype=int)
     if t.size == 0:
         return ChannelSnr(min(fb_snr, SNR_MAX_DB), np.minimum(fb_tone, SNR_MAX_DB), n_known, True)
     overall = 10 * np.log10(np.sum(sig[t]) / max(np.sum(noise[t]), tiny)) + off
@@ -1433,6 +1562,22 @@ def channel_snr(rx: np.ndarray, cfg: FrameConfig, res: RxResult) -> ChannelSnr:
     per[ok] = 10 * np.log10(sig[ok] / np.maximum(noise[ok], tiny)) + off
     per = np.interp(np.arange(w), np.flatnonzero(ok), per[ok])
     return ChannelSnr(float(min(overall, SNR_MAX_DB)), np.minimum(per, SNR_MAX_DB), n_known, False)
+
+
+def _fit_gains(y: np.ndarray, x: np.ndarray, a: np.ndarray, settle: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """Per-tone gains h, and the gains a of the ``settle`` symbols (1 for the
+    rest), of y = h_k a_s x by alternating least squares from ``a``."""
+    def tone_gains(a):
+        xa = a[:, None] * x
+        return np.sum(y * np.conj(xa), axis=0) / np.maximum(np.sum(np.abs(xa) ** 2, axis=0), 1e-30)
+    if not settle.any():
+        return tone_gains(a), a
+    a = a.copy()
+    for _ in range(SETTLE_ITERATIONS):
+        h = tone_gains(a)
+        ref = h[None, :] * x[settle]
+        a[settle] = np.sum(y[settle] * np.conj(ref), axis=1) / np.maximum(np.sum(np.abs(ref) ** 2, axis=1), 1e-30)
+    return tone_gains(a), a
 
 
 def _add_channel_snr(rx: np.ndarray, cfg: FrameConfig, res: RxResult) -> None:
