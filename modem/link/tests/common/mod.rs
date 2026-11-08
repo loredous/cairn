@@ -357,6 +357,11 @@ impl Sim {
         if let Err(e) = frame.validate() {
             self.invalid_frames.push(format!("{now} [{st}] {e:?} {frame:?}"));
         }
+        // The PHY's own field and control-order checks (cairn_phy::fields).
+        #[cfg(feature = "phy")]
+        if let Err(e) = cairn_link::adapter::FieldCodec::to_phy(&cairn_link::adapter::PhyCodec, &frame) {
+            self.invalid_frames.push(format!("{now} [{st}] cairn-phy: {e:?} {frame:?}"));
+        }
         if self.stations[st].transmitting.is_some() {
             self.invalid_frames.push(format!("{now} [{st}] keyed while transmitting"));
         }

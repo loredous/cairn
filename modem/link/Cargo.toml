@@ -7,7 +7,15 @@ license.workspace = true
 rust-version.workspace = true
 publish = false
 
+[features]
+default = ["phy"]
+# The adapter between the link layer's frame types and `cairn_phy::fields`.
+# The link layer itself never needs the PHY.
+phy = ["dep:cairn-phy"]
+
 [dependencies]
+cairn-phy = { path = "../phy", optional = true }
 
 [dev-dependencies]
 proptest = { version = "1", default-features = false, features = ["std"] }
+serde_json = "1"

@@ -119,7 +119,9 @@ dependencies = [
 name = "cairn-link"
 version = "0.1.0"
 dependencies = [
+ "cairn-phy",
  "proptest",
+ "serde_json",
 ]
 
 [[package]]

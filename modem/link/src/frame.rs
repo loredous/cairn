@@ -397,18 +397,18 @@ pub enum ControlBlock {
     Id(IdBlock),
     /// Type 7.
     BlockMap(BlockMap),
-    /// Types 3, 4 and 6 (CAL-REQUEST, CAL-REPORT, path), carried opaquely:
-    /// the 240 bits after the type, as 30 bytes. The link layer does not
-    /// act on them yet (calibration is v1.0, the path block v1.x).
+    /// Any other type, carried opaquely: types 3, 4 and 6 (CAL-REQUEST,
+    /// CAL-REPORT, path), which the link layer does not act on yet
+    /// (calibration is v1.0, the path block v1.x), and the reserved types 2
+    /// and 8-15, which receivers skip and senders never use (Appendix B, ADR
+    /// 0008 `reserved-control-types-after-block-map`).
     Opaque {
         /// Control type.
         ctype: u8,
-        /// The block's bits after the type field and before the CRC.
-        body: [u8; 30],
+        /// The block's 240 message bits (type field first, CRC excluded),
+        /// first bit in the most significant bit of byte 0.
+        message: [u8; 30],
     },
-    /// A reserved type (2, 8-15), skipped on receipt (B, ADR 0008
-    /// `reserved-control-types-after-block-map`).
-    Unknown(u8),
 }
 
 impl ControlBlock {
@@ -420,8 +420,12 @@ impl ControlBlock {
             ControlBlock::Id(_) => 5,
             ControlBlock::BlockMap(_) => 7,
             ControlBlock::Opaque { ctype, .. } => *ctype,
-            ControlBlock::Unknown(t) => *t,
         }
+    }
+
+    /// A reserved control type (2, 8-15).
+    pub fn is_reserved(&self) -> bool {
+        matches!(self.ctype(), 2 | 8..=15)
     }
 }
 
@@ -533,6 +537,9 @@ impl LinkFrame {
             return Err(FrameError::BadField("mask id"));
         }
         let c = &self.controls;
+        if c.iter().any(|b| b.is_reserved()) {
+            return Err(FrameError::ControlOrder("reserved control type"));
+        }
         let is = |i: usize, f: fn(&ControlBlock) -> bool| c.get(i).is_some_and(f);
         let ack = |b: &C| matches!(b, C::Ack(_));
         let id = |b: &C| matches!(b, C::Id(_));

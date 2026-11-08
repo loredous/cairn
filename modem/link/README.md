@@ -9,6 +9,7 @@ cd modem
 cargo test --release -p cairn-link                         # unit, scenario and property tests
 PROPTEST_CASES=2000 cargo test --release -p cairn-link --test properties
 SIM_TRACE=1 cargo test --release -p cairn-link --test smoke -- --nocapture   # frame-by-frame trace
+cargo build -p cairn-link --no-default-features        # the link layer alone, without cairn-phy
 ```
 
 ## API
@@ -42,7 +43,7 @@ table.
 | --- | --- |
 | `params` | Every timer, limit and constant, each with its SPEC/ADR reference |
 | `frame` | `LinkFrame`, `RxFrame`, addresses, flags, ACK / B.3 / ID / block-map control blocks, control-block order validation |
-| `pdu` | ADR 0009 packing and parsing, filler, CRC-32/ISO-HDLC, broadcast fragmentation, reassembly with duplicate suppression; bit-exact with `vectors/link/pdu_blocks.json` of `cairn-phy` PR #21 |
+| `pdu` | ADR 0009 packing and parsing, filler, CRC-32/ISO-HDLC, broadcast fragmentation, reassembly with duplicate suppression. Kept alongside `cairn_phy::pdu` because the ARQ needs per-PDU completion ids, priority queues and lost-block parsing; `tests/pdu_vectors.rs` shows it byte-identical with `vectors/link/pdu_*.json` and, by property test, with `cairn_phy::pdu` |
 | `seq` | RFC 1982 16-bit sequences |
 | `arq` | Sender (window, retransmissions lowest first, block map, frame filling against a capacity), receiver (cumulative ACK, reassembly buffer, in-order delivery) |
 | `adapt` | §10.1 rules as revised by ADR 0010, thresholds = §6.2 + margin, mask tracker with IDs |
@@ -52,7 +53,7 @@ table.
 | `linktest` | PROBE link test and BEACON request (ADR 0012) |
 | `broadcast` | UI / BEACON send path: frame counter, several PDUs per UI frame, fragments, identical repeats |
 | `station` | The entry point and the arbitration between session, owed replies, PROBEs and broadcasts |
-| `adapter` | The `FieldCodec` trait and the field-by-field mapping onto `cairn_phy` |
+| `adapter` | The `FieldCodec` trait and, with the default `phy` feature, `PhyCodec`: field-by-field conversion to and from `cairn_phy::fields` (headers, ACK, B.3, ID, block map; CAL and path blocks opaque), the transmit `LinkState`, and `RxResult` to `RxFrame`. `tests/phy_adapter.rs` round-trips every frame type through the PHY bit packing, runs `check_controls` on every frame the simulated stations send, and carries session frames over the real waveform |
 | `capacity` | `FrameModel`, `AppendixA`, expected net rate |
 
 ## Simulation harness (`tests/common`)
