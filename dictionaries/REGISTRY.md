@@ -34,7 +34,7 @@ Things a reviewer should know. (1) The FEMA PDFs were downloaded from an officia
 | `80301843` | eval-0 (evaluation) | 65,536 B | `803018439fd28a79b33356a58fd56e6662d8eaccb159cec5610244b27b9340c7` | same | evaluation artifact, not a released dictionary |
 | `b2630412` | eval-0 (evaluation) | 114,688 B | `b2630412e07f377d3fc3f4d5a15bcbd8001c691a3acc790000ede3c4b1ddc550` | same | evaluation artifact, not a released dictionary |
 
-The ID is the first four bytes of the SHA-256 (SPEC 12.1). Files: `dictionaries/eval/eval-forms-{32,64,112}k.zdict`. License on release: CC0 1.0; until a release, no one should depend on these files. Measurements: `sim/results/dict_eval.md`.
+The ID is the first four bytes of the SHA-256 (SPEC 12.1). Files: `dictionaries/eval/eval-forms-{32,64,112}k.zdict`. License on release: CC0 1.0; until a release, no one should depend on these files. Measurements: `sim/results/dict_eval.md`. The zstd body vectors (`vectors/zstd/bodies.json`) and the reference modem's tests use `80301843`; replacing that file means regenerating them. `cairn-modem run --dict-dir dictionaries/eval` offers all three for testing between stations you control.
 
 ## Reproducible training command
 
