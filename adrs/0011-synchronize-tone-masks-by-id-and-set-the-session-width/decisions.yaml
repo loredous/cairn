@@ -1,0 +1,175 @@
+# yaml-language-server: $schema=../../tools/adrsite/schemas/decisions.schema.json
+#
+# Once merged into main this file is frozen. Change decisions via a new ADR.
+
+- slug: mask-id
+  title: Every tone mask has an ID, and the sender names the mask it applied
+  category: link-adaptation
+  strength: MUST
+  statement: >-
+    Each tone mask a receiver reports for its direction of a session has a
+    2-bit mask ID. The mask reported during setup has ID 0: CONNECT-ACK's
+    B.3 mask for the initiator-to-responder direction, and the mask in the
+    leading ACK block of the initiator's first frame for the other
+    direction. To change its mask, a receiver gives the new mask the next
+    ID (mod 4) and reports it in every ACK block until a header from the
+    sender names that ID. Until then it issues no further change, so at most
+    one change is outstanding. The sender applies to the control and data
+    blocks of each frame the mask of the latest ACK block it has decoded
+    from its peer (or the setup mask), and puts that mask's ID in the
+    header's Mask ID field. The receiver demaps those blocks with the mask
+    the header names, keeping its current and its pending mask for the
+    purpose; a frame whose header names neither has all its control and
+    data blocks counted as failed. CONNECT, CONNECT-ACK and every frame sent
+    outside a session are unmasked and carry Mask ID 0. A resume restarts
+    at ID 0. (SPEC §5.4, §8.2, §10.3, B.2)
+  rationale: >-
+    The mask applies to control blocks too (ADR 0004 `tone-mask-scope`), so
+    if the sender applied a new mask while the receiver expected the old
+    one, or the reverse, the frame's leading ACK block would fail with
+    everything else, and a change sent once could be lost for good. Naming
+    the mask in the header, which is never masked, removes the guesswork,
+    and one outstanding change means two stored masks always suffice.
+  tags: [adaptation, phy, framing, interop, v0.5]
+
+- slug: mask-in-every-session-ack
+  title: Every session ACK carries the current mask; tones drop and return as before
+  category: link-adaptation
+  strength: MUST
+  statement: >-
+    Every ACK control block sent in a session sets flag bit 0 and carries
+    the receiver's current tone mask with its mask ID (`mask-id`). The
+    receiver drops a tone from the mask when its estimated SNR falls more
+    than 6 dB below the active-tone average for two consecutive frames, and
+    restores a dropped tone only after a width probe shows it recovered:
+    the probe of a SOUND or of a wide frame (ADR 0007), or one the receiver
+    asks for with the re-probe flag (ACK flag bit 2). The sender applies the
+    latest mask it has decoded to its next frame. (SPEC §10.3, B.2)
+  rationale: >-
+    A mask sent only when it changed could be lost with its ACK and never
+    sent again. The field costs nothing; it is in every ACK block anyway.
+  supersedes:
+    adr: 0002-adopt-the-cairn-v0-1-protocol-specification
+    decision: tone-mask-updates
+  tags: [adaptation, phy, v0.5]
+
+- slug: session-width
+  title: A station's session width is its cap plus one, or 24
+  category: physical-layer
+  strength: MUST
+  statement: >-
+    B.3's Width cap field is the highest tone index a station will transmit
+    (23–55); its width is that index plus 1 tones. In a session, a station
+    transmits at width W = its width cap + 1 when its peer advertised
+    capability bit 0 (widths above 24 tones), and W = 24 otherwise; a
+    station without capability bit 0 advertises width cap 23. Control and
+    data symbols use tones 0 … W − 1, less the pilots and less the tones its
+    peer's mask marks unusable, scaled for width W as ADR 0004 requires.
+    Both stations know each W from the B.3 blocks of setup, so W is never
+    signalled again. (SPEC §5.4, B.3)
+  rationale: >-
+    The receiver needs W to place coded bits and to know the data symbols'
+    per-tone scale; tying it to the configured cap needs no new field. Tones
+    the channel does not pass are handled by the mask, as they already are
+    at any width.
+  tags: [phy, waveform, v0.5]
+
+- slug: width-probe-extent
+  title: The width probe covers the transmit width, so it costs the data nothing
+  category: physical-layer
+  strength: MUST
+  statement: >-
+    A width probe is two symbols of known pilots sent immediately after the
+    header, before any block, in any frame whose header flag bit 4 is set.
+    It covers tones 0 … W − 1 of the frame's width: in a session frame and
+    in CONNECT-ACK, the sender's session width (`session-width`); in a
+    CONNECT, a link-test PROBE and its SOUND reply (ADR 0012), the sender's
+    width cap + 1; in a broadcast, the broadcast width (ADR 0007
+    `broadcast-width-from-probe`). It MUST be sent in every CONNECT,
+    CONNECT-ACK and SOUND frame, in a frame that follows a re-probe request
+    (ACK flag bit 2), in the reply to a SOUND when the replier's width is
+    above 24 tones (ADR 0010 `sound-reply`), and in every frame whose data
+    blocks use tones above 23. The receiver estimates the tones above 23
+    from the probe of the same frame. (SPEC §5.4, §8.1, §10.3)
+  rationale: >-
+    The frame's peak is set once for the whole frame (SPEC §7.1, −3 dBFS
+    with a fixed per-tone level), so a probe wider than the data would set
+    the peak and cost the data up to 3.7 dB (56 probe tones against 24 data
+    tones). With the probe covering exactly the transmit width, as in a
+    session and in a broadcast, §5.4's "no penalty for having probed" holds.
+    Only CONNECT and the link test probe beyond the eventual width, and
+    those frames carry no data blocks.
+  supersedes:
+    adr: 0007-set-field-encoding-conventions-and-probe-every-wide-frame
+    decision: width-probe-every-wide-frame
+  tags: [phy, waveform, framing, v0.5]
+
+- slug: header-field-layout
+  title: 144-bit header field layout with the flag and reserved bits allocated
+  category: link-layer
+  strength: MUST
+  statement: |
+    The header is 144 bits, fields sent in this order (SPEC §8.2):
+
+    | Field | Bits | Meaning |
+    | --- | --- | --- |
+    | Version | 3 | Protocol version, 1 for this spec |
+    | Frame type | 5 | See `frame-types` (ADR 0002) |
+    | Flags | 8 | Bit 0: control block present (`control-block-count-authoritative`). Bit 1: data blocks present. Bit 2: more fragments (broadcast). Bit 3: session frame, set on every frame a station sends as part of a session from CONNECT-ACK onward (including SOUND and CAL-REQUEST sent in a session) and clear otherwise. Bit 4: width probe follows the header (`width-probe-extent`). Bit 5: identical repeat of a broadcast frame with the same frame counter. Bit 6: first fragment, set on every BEACON and UI frame except the second and later frames of a fragmented message (ADR 0009 `first-fragment-flag`). Bit 7: block map present (ADR 0008 `block-map-control-block`). |
+    | Source address | 40 | Callsign + SSID |
+    | Destination address | 40 | Callsign + SSID; all-ones = broadcast |
+    | Sequence | 16 | Session frame: the sequence of its first data block, or the sender's next unsent sequence when it has none (ADR 0008 `block-sequence-rules`). BEACON, UI and PROBE: the station's frame counter. CONNECT: the initiator's next unsent sequence. A SOUND answering a PROBE, and a refusal DISCONNECT: 0 (ADR 0010 `broadcast-frame-counter`) |
+    | Payload MCS | 4 | Rung of the data blocks; 0 without data blocks |
+    | Control block count | 2 | 0–3 (`control-block-count-authoritative`) |
+    | Data block count | 7 | Count minus 1 when flag bit 1 set, giving 1–128 (`data-block-count-encoding`) |
+    | Mask ID | 2 | Session frame: ID of the tone mask applied to its control and data blocks (`mask-id`); 0 otherwise |
+    | Reserved | 1 | Zero |
+    | CRC-16 | 16 | CRC-16/CCITT-FALSE over the preceding 128 bits |
+  supersedes:
+    adr: 0002-adopt-the-cairn-v0-1-protocol-specification
+    decision: header-fields
+  tags: [framing, addressing, v0.5]
+
+- slug: ack-control-block-layout
+  title: ACK control block layout with cumulative fields and the mask ID
+  category: link-layer
+  strength: MUST
+  statement: |
+    The ACK control block (control type 0) is 256 bits (SPEC Appendix B.2):
+
+    | Field | Bits | Meaning |
+    | --- | --- | --- |
+    | Control type | 4 | 0 = ACK |
+    | Flags | 4 | Bit 0: tone mask present, always set in a session (`mask-in-every-session-ack`). Bit 1: held for HARQ parity-only retransmission (`reserved-identifiers`). Bit 2: re-probe requested (send a width probe in your next frame). Bit 3: use long prefix (`long-prefix-request`). |
+    | Acknowledged base sequence | 16 | The receiver's next in-order sequence (ADR 0008 `cumulative-ack`) |
+    | Block bitmap | 128 | Bit i set = the receiver holds block base + i |
+    | Requested MCS | 4 | Rung the sender should use next |
+    | Measured SNR | 8 | 0.25 dB steps, 0–63.75 dB, 7 dB-equivalent channel SNR (ADR 0006, ADR 0007 `snr-field-quantization`) |
+    | Block errors in last frame | 8 | Failed data blocks of the peer's last decoded frame |
+    | Tone mask | 56 | Usable tones 0–55; valid when flag bit 0 set |
+    | Distortion index | 3 | 0 clean to 7 severe: transmit-side clipping or over-deviation as seen at this receiver, in 3 dB steps |
+    | Own ADC clipped | 1 | This receiver's input clipped during the frame: its measurements are unreliable and its own receive gain is wrong, not the sender's drive |
+    | Mask ID | 2 | ID of the tone mask in this block (`mask-id`); 0 outside a session |
+    | Reserved | 6 | |
+    | CRC-16 | 16 | |
+  supersedes:
+    adr: 0002-adopt-the-cairn-v0-1-protocol-specification
+    decision: ack-control-block
+  tags: [framing, arq, adaptation, v0.5]
+
+- slug: v0-5-mask-obligations
+  title: A 24-tone v0.5 station honours masks and the long-prefix flag
+  category: physical-layer
+  strength: MUST
+  statement: >-
+    A v0.5 implementation transmits 24 tones only (capability bit 0 clear,
+    width cap 23). It MUST apply every mask its peer reports and echo its
+    mask ID (`mask-id`), and MUST transmit with the long prefix in a
+    direction whose receiver sets ACK flag bit 3 (`long-prefix-request`).
+    It MAY report the all-ones mask throughout, keeping mask ID 0, and MAY
+    never request the long prefix. (SPEC §5.2, §5.4, §16.2)
+  rationale: >-
+    A v0.5 station must work with a later peer that does trim masks or
+    request the long prefix, and the PHY already supports both on
+    transmit; measuring and requesting them can wait.
+  tags: [phy, adaptation, interop, v0.5]
