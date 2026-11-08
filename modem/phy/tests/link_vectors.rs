@@ -283,7 +283,8 @@ fn broadcast_control_order() {
             assert!(fields::check_controls(&bc(t, c), c).is_err(), "{t} {c:?}");
         }
     }
-    assert!(fields::check_controls(&bc(frame_type::BEACON, &[path.clone()]), &[path]).is_err());
+    let only_path = [path];
+    assert!(fields::check_controls(&bc(frame_type::BEACON, &only_path), &only_path).is_err());
 }
 
 // --- frames: block maps, masks by ID, width and probe extent (ADR 0008, ADR 0011) ----------

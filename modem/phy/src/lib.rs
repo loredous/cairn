@@ -13,6 +13,7 @@
 
 pub mod channel;
 pub mod crc;
+pub mod dcd;
 pub mod detector;
 pub mod dsp;
 pub mod fields;
