@@ -362,20 +362,16 @@ impl Session {
         self.phase == Phase::Open && self.owed.is_none() && self.ack_timer.is_none()
     }
 
+    /// ADR 0011 `session-width`: cap + 1 when the peer advertised
+    /// capability bit 0, else 24 (a station without the bit advertises cap 23).
     fn tx_width(&self, cfg: &Config) -> u8 {
-        if self.peer_caps & caps::WIDE != 0 && cfg.capabilities & caps::WIDE != 0 {
-            cfg.width_cap + 1
-        } else {
-            BASE_WIDTH
-        }
+        if self.peer_caps & caps::WIDE != 0 { cfg.width_cap + 1 } else { BASE_WIDTH }
     }
 
+    /// The peer's session width: its cap + 1 when this station advertised
+    /// capability bit 0.
     fn rx_width(&self, cfg: &Config) -> u8 {
-        if self.peer_caps & caps::WIDE != 0 && cfg.capabilities & caps::WIDE != 0 {
-            self.peer_width_cap + 1
-        } else {
-            BASE_WIDTH
-        }
+        if cfg.capabilities & caps::WIDE != 0 { self.peer_width_cap + 1 } else { BASE_WIDTH }
     }
 
     /// The yield window is due before the next transmission.
@@ -471,7 +467,7 @@ impl Session {
     }
 
     /// The earliest time this session needs attention.
-    pub(crate) fn next_deadline(&self, cfg: &Config) -> Option<Instant> {
+    pub(crate) fn next_deadline(&self, cfg: &Config, now: Instant) -> Option<Instant> {
         let mut v: Vec<Instant> = Vec::new();
         if let Phase::Connecting { awaiting: Some(d), .. } = self.phase {
             v.push(d);
@@ -485,7 +481,9 @@ impl Session {
                 v.push(self.last_data + d);
             }
         }
-        v.into_iter().min()
+        // Level-triggered conditions already due (a keepalive or idle
+        // disconnect waiting for the channel) are not deadlines.
+        v.into_iter().filter(|&d| d > now).min()
     }
 
     /// Fire expired timers.

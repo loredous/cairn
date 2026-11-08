@@ -69,13 +69,13 @@ pub fn crc32(data: &[u8]) -> u32 {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Pdu {
     /// Type ([`pdu_type`]).
-    pub ptype: u8,
+    pub pdu_type: u8,
     /// Stream byte: bits 7-6 priority (0 highest), bits 5-0 stream number.
     pub stream: u8,
     /// Encoding ([`encoding`]).
     pub encoding: u8,
     /// Dictionary ID, present exactly when `encoding` is 2.
-    pub dict_id: Option<[u8; 4]>,
+    pub dictionary_id: Option<[u8; 4]>,
     /// Body as sent.
     pub body: Vec<u8>,
     /// CRC-32 of the decoded body; `None` on send means "compute it" (raw only).
@@ -101,7 +101,7 @@ pub enum PduError {
 impl Pdu {
     /// A raw MESSAGE PDU on the default stream.
     pub fn message(body: Vec<u8>) -> Pdu {
-        Pdu { ptype: pdu_type::MESSAGE, stream: 0, encoding: encoding::RAW, dict_id: None, body, crc: None }
+        Pdu { pdu_type: pdu_type::MESSAGE, stream: 0, encoding: encoding::RAW, dictionary_id: None, body, crc: None }
     }
 
     /// Priority, 0 highest (§12.1).
@@ -111,7 +111,10 @@ impl Pdu {
 
     /// Bytes after the Length field.
     pub fn length_field(&self) -> usize {
-        PDU_FIXED_BYTES + if self.dict_id.is_some() { PDU_DICT_BYTES } else { 0 } + self.body.len() + PDU_CRC_BYTES
+        PDU_FIXED_BYTES
+            + if self.dictionary_id.is_some() { PDU_DICT_BYTES } else { 0 }
+            + self.body.len()
+            + PDU_CRC_BYTES
     }
 
     /// Bytes on the stream, Length field included.
@@ -133,7 +136,7 @@ impl Pdu {
         if len > PDU_MAX_LENGTH {
             return Err(PduError::TooLong);
         }
-        if (self.encoding == encoding::ZSTD_DICT) != self.dict_id.is_some() {
+        if (self.encoding == encoding::ZSTD_DICT) != self.dictionary_id.is_some() {
             return Err(PduError::BadFields);
         }
         let crc = match (self.crc, self.encoding) {
@@ -143,8 +146,8 @@ impl Pdu {
         };
         let mut v = Vec::with_capacity(len + 2);
         v.extend_from_slice(&(len as u16).to_be_bytes());
-        v.extend_from_slice(&[self.ptype, self.stream, self.encoding]);
-        if let Some(d) = self.dict_id {
+        v.extend_from_slice(&[self.pdu_type, self.stream, self.encoding]);
+        if let Some(d) = self.dictionary_id {
             v.extend_from_slice(&d);
         }
         v.extend_from_slice(&self.body);
@@ -157,9 +160,9 @@ impl Pdu {
         if b.len() < PDU_FIXED_BYTES + PDU_CRC_BYTES {
             return Err(PduError::Malformed);
         }
-        let (ptype, stream, enc) = (b[0], b[1], b[2]);
+        let (pdu_type, stream, enc) = (b[0], b[1], b[2]);
         let mut i = 3;
-        let dict_id = if enc == encoding::ZSTD_DICT {
+        let dictionary_id = if enc == encoding::ZSTD_DICT {
             if b.len() < PDU_FIXED_BYTES + PDU_DICT_BYTES + PDU_CRC_BYTES {
                 return Err(PduError::Malformed);
             }
@@ -173,7 +176,7 @@ impl Pdu {
         if enc == encoding::RAW && crc32(&body) != crc {
             return Err(PduError::CrcMismatch);
         }
-        Ok(Pdu { ptype, stream, encoding: enc, dict_id, body, crc: Some(crc) })
+        Ok(Pdu { pdu_type, stream, encoding: enc, dictionary_id, body, crc: Some(crc) })
     }
 }
 
@@ -462,7 +465,7 @@ impl FragmentRole {
 #[derive(Clone, Debug)]
 struct Partial {
     next: u16,
-    ptype: u8,
+    pdu_type: u8,
     stream: u8,
     body: Vec<u8>,
     started: Instant,
@@ -530,7 +533,7 @@ impl Reassembler {
                         src,
                         Partial {
                             next: counter.wrapping_add(1),
-                            ptype: slice.ptype,
+                            pdu_type: slice.pdu_type,
                             stream: slice.stream,
                             body: slice.body,
                             started: now,
@@ -539,17 +542,17 @@ impl Reassembler {
                     return Some(out);
                 }
                 let Some(mut part) = self.partial.remove(&src) else { return Some(out) };
-                if part.next != counter || part.ptype != slice.ptype || part.stream != slice.stream {
+                if part.next != counter || part.pdu_type != slice.pdu_type || part.stream != slice.stream {
                     return Some(out); // gap or mismatch: discard
                 }
                 part.body.extend_from_slice(&slice.body);
                 part.next = counter.wrapping_add(1);
                 if role == FragmentRole::Last {
                     out.push(Pdu {
-                        ptype: part.ptype,
+                        pdu_type: part.pdu_type,
                         stream: part.stream,
                         encoding: encoding::RAW,
-                        dict_id: None,
+                        dictionary_id: None,
                         crc: Some(crc32(&part.body)),
                         body: part.body,
                     });
@@ -587,6 +590,82 @@ impl Reassembler {
 mod tests {
     use super::*;
     use proptest::prelude::*;
+
+    fn hex(s: &str) -> Vec<u8> {
+        (0..s.len()).step_by(2).map(|i| u8::from_str_radix(&s[i..i + 2], 16).unwrap()).collect()
+    }
+
+    /// The PDUs and blocks of `vectors/link/pdu_blocks.json` (cairn-phy PR
+    /// #21, branch `phy/link-fields`), so this module packs bit for bit as
+    /// `cairn_phy::pdu` does.
+    #[test]
+    fn matches_pdu_blocks_vector() {
+        let g0 = vec![
+            Pdu {
+                pdu_type: 1,
+                stream: 0,
+                encoding: 0,
+                dictionary_id: None,
+                body: hex(
+                    "7b6f97d5f3fa87718611ca523e07f2f8b76fbcf16303a7c12973df5c88e1fa0e2e0e8c2a8a779edac373d5a0dd0ff486e656f8ca23f5439771ddb0b2115883fbf69e68ac5c6e4dbe65ad117c2274afa807d825f30837acadcc022fa234b097e100766e4a58c147b802b6ab746cd873ca56848a79",
+                ),
+                crc: None,
+            },
+            Pdu {
+                pdu_type: 2,
+                stream: 194,
+                encoding: 0,
+                dictionary_id: None,
+                body: hex(
+                    "0000beef00001000e6789de00c4598758cd2865b7de2e4aaf65d46eccbc042cb9938569de4e3df2927a268d3715ae6098d321adc0a7e23db8a64134ef15bdde76202049cb475388d8c7e303523409fbd7b2755164aaf8996d37c88b0451e023469a4d10e02e3756f1547d835afda7daa0941eb2f82fdcc85c2afb5c31646c63f00cf63f5f2a56cbdb9c4c3ca5ab97a2acec099784c561b239da0653f5171601939885a771e384da65ef94af816556c63eab24e84597242bce7c62a4165f3d84eaae8561f6e23f83a422b912f412d3f62fa05178e57cbe5b7525381dc73b9493bdb1894251b052cd7d9afbf1a435b0c699a8f563e0c798f03fb40ec0471f79e3aae06b74d1e74a3b585946573784ca275f21ca85096b8316f67ad823c1316f5123a7738515adbcd983786f9a1",
+                ),
+                crc: None,
+            },
+            Pdu {
+                pdu_type: 0,
+                stream: 0,
+                encoding: 2,
+                dictionary_id: Some([0xac, 0xe0, 0x93, 0x75]),
+                body: hex("3df49c9e22c8b45beb8546c3f939364e11b6c52998b502695ca2c9897b179235bbee16b96d7d0faa"),
+                crc: Some(crc32(&hex(
+                    "44696374696f6e6172792d636f6d707265737365642074657874207374616e647320696e20686572653b20746865204352432d333220636f766572732074686973206465636f64656420626f64792e",
+                ))),
+            },
+        ];
+        let g1 = vec![
+            Pdu { pdu_type: 4, stream: 69, encoding: 0, dictionary_id: None, body: hex("00010203"), crc: None },
+            Pdu::message(vec![]),
+        ];
+        assert_eq!(g0[2].crc, Some(0xb223_7c56));
+        let blocks: Vec<Block> = pack_frame(&g0).unwrap().into_iter().chain(pack_frame(&g1).unwrap()).collect();
+        let want = [
+            "007b0100007b6f97d5f3fa87718611ca523e07f2f8b76fbcf16303a7c12973df5c88e1fa0e2e0e8c2a8a779edac373d5a0dd0ff486e656f8ca23f5439771ddb0b2115883fbf69e68ac5c6e4dbe65ad117c2274afa807d825f30837acadcc022fa234b097e100766e4a58c147b802b6ab746cd873ca56848a79bdcb99a400",
+            "013302c2000000beef00001000e6789de00c4598758cd2865b7de2e4aaf65d46eccbc042cb9938569de4e3df2927a268d3715ae6098d321adc0a7e23db8a64134ef15bdde76202049cb475388d8c7e303523409fbd7b2755164aaf8996d37c88b0451e023469a4d10e02e3756f1547d835afda7daa0941eb2f82fdcc85c2",
+            "afb5c31646c63f00cf63f5f2a56cbdb9c4c3ca5ab97a2acec099784c561b239da0653f5171601939885a771e384da65ef94af816556c63eab24e84597242bce7c62a4165f3d84eaae8561f6e23f83a422b912f412d3f62fa05178e57cbe5b7525381dc73b9493bdb1894251b052cd7d9afbf1a435b0c699a8f563e0c798f",
+            "03fb40ec0471f79e3aae06b74d1e74a3b585946573784ca275f21ca85096b8316f67ad823c1316f5123a7738515adbcd983786f9a12984852f0033000002ace093753df49c9e22c8b45beb8546c3f939364e11b6c52998b502695ca2c9897b179235bbee16b96d7d0faab2237c5600000000000000000000000000000000",
+            "000b044500000102038bb986130007010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        ];
+        assert_eq!(blocks.len(), want.len());
+        for (b, w) in blocks.iter().zip(want) {
+            assert_eq!(b.to_vec(), hex(w));
+        }
+        // And back.
+        let back = unpack_frame(&blocks[..4].iter().copied().map(Some).collect::<Vec<_>>());
+        assert_eq!(back.len(), 3);
+        assert_eq!(back[2].as_ref().unwrap().dictionary_id, Some([0xac, 0xe0, 0x93, 0x75]));
+        assert_eq!(back[1].as_ref().unwrap().body, g0[1].body);
+    }
+
+    /// `vectors/link/block_map_*.json` (cairn-phy PR #21).
+    #[test]
+    fn matches_block_map_vectors() {
+        use crate::frame::BlockMap;
+        use crate::seq::Seq;
+        let m = BlockMap { base: Seq(300), bitmap: 0xe5 };
+        assert_eq!(m.seqs(), [300, 302, 305, 306, 307].map(Seq).to_vec());
+        let m = BlockMap { base: Seq(65533), bitmap: (1u128 << 127) | 0xd };
+        assert_eq!(m.seqs(), [65533, 65535, 0, 124].map(Seq).to_vec());
+    }
 
     #[test]
     fn crc32_check_value() {

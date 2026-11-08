@@ -25,7 +25,7 @@ use crate::access::{AccessParams, Attempt, Dcd, Mode, Poll, Trigger};
 use crate::broadcast::{BroadcastTx, Message};
 use crate::capacity::{FrameModel, FrameShape};
 use crate::frame::{
-    AckBlock, Address, ControlBlock, Flags, FrameType, IdBlock, LinkFrame, Measurement, RxFrame, TxParams,
+    AckBlock, Address, ControlBlock, Flags, FrameType, IdBlock, LinkFrame, Measurement, RxFrame, RxHeader, TxParams,
 };
 use crate::linktest::{LinkTestResult, ProbeKind, Prober, sound_reply};
 use crate::params::{
@@ -529,14 +529,19 @@ impl Station {
         self.retained.get(peer).is_some()
     }
 
-    /// The tone mask that demaps a frame's control and data blocks, given
-    /// its header's source, session flag and Mask ID (ADR 0011 `mask-id`).
-    /// `None`: the header names neither the current nor the pending mask, so
+    /// The tone mask that demaps a frame's control and data blocks, from its
+    /// decoded header (ADR 0011 `mask-id`; `cairn_phy::LinkState::mask_for`).
+    /// CONNECT, CONNECT-ACK and every frame outside a session are unmasked,
+    /// whatever their Mask ID field says. `None`: a session frame from the
+    /// peer whose header names neither the current nor the pending mask, so
     /// every control and data block counts as failed.
-    pub fn rx_mask(&self, src: Address, session_frame: bool, mask_id: u8) -> Option<u64> {
+    pub fn rx_mask(&self, header: &RxHeader) -> Option<u64> {
+        if matches!(header.ftype, FrameType::Connect | FrameType::ConnectAck) || !header.flags.session {
+            return Some(ALL_TONES);
+        }
         match &self.session {
-            Some(s) if session_frame && s.peer() == src && !matches!(s.phase(), Phase::Connecting { .. }) => {
-                s.rx_mask_for(mask_id)
+            Some(s) if s.peer() == header.src && !matches!(s.phase(), Phase::Connecting { .. }) => {
+                s.rx_mask_for(header.mask_id)
             }
             _ => Some(ALL_TONES),
         }
@@ -873,7 +878,7 @@ impl Station {
         let mut v: Vec<Instant> = Vec::new();
         v.extend(self.attempt_wake);
         if let Some(s) = &self.session {
-            v.extend(s.next_deadline(&self.cfg));
+            v.extend(s.next_deadline(&self.cfg, self.now));
         }
         v.extend(self.retained.next_deadline());
         v.extend(self.prober.as_ref().and_then(|p| p.deadline()));
