@@ -27,7 +27,8 @@ use std::sync::mpsc::{Receiver as ChanRx, channel};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
-use cairn_link::adapter::{FieldCodec, PhyCodec, header_from_phy};
+use cairn_api::capture::AudioRing;
+use cairn_link::adapter::{FieldCodec, PhyCodec, address_from_phy, header_from_phy};
 use cairn_link::session::Phase;
 use cairn_link::{
     Action, Address, Config, Event, FrameType, HostCommand, HostEvent, Instant, LinkFrame, Measurement, Pdu, RxHeader,
@@ -47,6 +48,9 @@ use crate::phymodel::{PhyFrameModel, mask_tones};
 /// while the detection and header resolve (the final detection comes about
 /// 85 ms after the frame's start, the header 124 ms after it).
 const EARLY_HOLD: usize = 7_200;
+/// Longest a frame can be, samples (4 s of data, a probe, slack), for
+/// "on the air" before the frame's length is known.
+const ON_AIR_MAX: usize = 5 * 48_000;
 /// Input at or above this magnitude counts as clipped (SPEC 7.1).
 pub const CLIP_LEVEL: f64 = 0.999;
 
@@ -82,6 +86,11 @@ pub struct ModemConfig {
     pub decode_time: DecodeTime,
     /// Guard after PTT release during which input is still ignored.
     pub unmute_guard: Duration,
+    /// Raw-audio ring buffer length, seconds (SPEC 13.6; 0: off).
+    pub ring_seconds: f64,
+    /// The quieting band follows a live width-cap change
+    /// ([`Modem::set_cap`]); off when it was set explicitly.
+    pub quieting_follows_cap: bool,
 }
 
 impl ModemConfig {
@@ -96,6 +105,8 @@ impl ModemConfig {
             dcd: DcdConfig::default(),
             decode_time: DecodeTime::Fixed(Duration::from_millis(20)),
             unmute_guard: Duration::from_millis(5),
+            ring_seconds: 120.0,
+            quieting_follows_cap: true,
         }
     }
 }
@@ -111,12 +122,14 @@ pub struct TxRequest {
     pub frame: LinkFrame,
     /// A turn-holder reply (no p-persistence).
     pub turn_holder: bool,
+    /// Samples of audio (kept when a copy drops the audio itself).
+    pub samples: usize,
 }
 
 impl TxRequest {
     /// PTT-on time with these timings.
     pub fn keyed(&self, txdelay: Duration, txtail: Duration) -> Duration {
-        txdelay + Duration::from_secs_f64(self.audio.len() as f64 / FS as f64) + txtail
+        txdelay + Duration::from_secs_f64(self.samples as f64 / FS as f64) + txtail
     }
 }
 
@@ -145,6 +158,11 @@ pub struct FrameInfo {
     pub ppm: f64,
     /// The header named a mask the station does not hold (ADR 0011).
     pub unknown_mask: bool,
+    /// The frame's ACK block (B.2), when it carried one that decoded: in a
+    /// session, the peer's report of this station's last frame.
+    pub ack: Option<cairn_link::AckBlock>,
+    /// This receiver's input clipped during the frame.
+    pub clipped: bool,
 }
 
 impl FrameInfo {
@@ -314,6 +332,8 @@ struct RxView {
     masked_out: Vec<usize>,
     /// Starts of detections whose header failed.
     failed: Vec<usize>,
+    /// Sources of detections whose header decoded, by start.
+    sources: Vec<(usize, Address)>,
 }
 
 impl RxView {
@@ -372,7 +392,12 @@ impl ConfigSource for StationSource {
                 }
             }
         };
-        let (link, masked_out) = self.view.lock().expect("view").link_for(&header);
+        let (link, masked_out) = {
+            let mut v = self.view.lock().expect("view");
+            v.sources.retain(|(s, _)| *s != det.start);
+            v.sources.push((det.start, address_from_phy(&header.source)));
+            v.link_for(&header)
+        };
         if masked_out {
             self.view.lock().expect("view").masked_out.push(det.start);
         }
@@ -425,6 +450,10 @@ pub struct Modem {
     now: Instant,
     /// What the session log last said (widths, masks, rungs).
     sess_seen: Option<SessionView>,
+    /// The last seconds of input (SPEC 13.6).
+    ring: AudioRing,
+    /// The frame being received: its source and the index after its last sample.
+    on_air: Option<(Address, usize, usize)>,
     /// Counters.
     pub stats: Stats,
 }
@@ -467,6 +496,8 @@ impl Modem {
             last_peer_frame: None,
             now: Instant::ZERO,
             sess_seen: None,
+            ring: AudioRing::with_seconds(cfg.ring_seconds),
+            on_air: None,
             stats: Stats::default(),
             cfg,
         }
@@ -492,6 +523,50 @@ impl Modem {
         self.cfg.txdelay = txdelay;
         self.cfg.txtail = txtail;
         self.station.set_frame_model(Box::new(PhyFrameModel::new(txdelay, txtail, Duration::ZERO)));
+    }
+
+    /// A new width cap in tones (24-56; the B.3 width cap is `cap` - 1,
+    /// capability bit 0 above 24). Outside a session only. The quieting
+    /// band follows when [`ModemConfig::quieting_follows_cap`].
+    pub fn set_cap(&mut self, cap: u8) -> Result<(), String> {
+        if !(24..=56).contains(&cap) {
+            return Err("cap must be 24-56 tones".into());
+        }
+        if self.station.session_info().is_some() {
+            return Err("cap cannot change during a session".into());
+        }
+        let c = self.station.config_mut();
+        c.width_cap = cap - 1;
+        if cap > 24 {
+            c.capabilities |= cairn_link::frame::caps::WIDE;
+        } else {
+            c.capabilities &= !cairn_link::frame::caps::WIDE;
+        }
+        if self.cfg.quieting_follows_cap {
+            self.cfg.dcd.quieting_band_hz = DcdConfig::for_width(cap as usize).quieting_band_hz;
+            self.dcd = Dcd::new(self.cfg.dcd.clone());
+            if self.dstate.quieting {
+                let at = self.pos;
+                self.apply_edges(vec![DcdEdge { source: DcdSource::Quieting, up: false, at }]);
+            }
+        }
+        Ok(())
+    }
+
+    /// The raw-audio ring buffer (stream index = [`Modem::position`] - held).
+    pub fn ring(&self) -> &AudioRing {
+        &self.ring
+    }
+
+    /// The source of the frame on the air now (its header decoded, its last
+    /// sample not yet in), for "who holds the channel".
+    pub fn on_air(&self) -> Option<Address> {
+        self.on_air.filter(|(_, _, end)| *end > self.pos).map(|(a, _, _)| a)
+    }
+
+    /// Raw detector states, as last reported.
+    pub fn dcd_state(&self) -> DcdState {
+        self.dstate
     }
 
     /// Carrier detect's state.
@@ -568,6 +643,7 @@ impl Modem {
         self.pos = start;
         self.deliver_due(t_first);
         self.stats.samples += x.len() as u64;
+        self.ring.push(x);
         // Half duplex: ignore input from keying to release (plus a guard).
         let dt = 1e6 / FS as f64;
         let muted: Vec<bool> = match self.mute {
@@ -603,6 +679,11 @@ impl Modem {
         let rx_in: Vec<f64> =
             if any_muted { x.iter().zip(&muted).map(|(&v, &m)| if m { 0.0 } else { v }).collect() } else { x.to_vec() };
         let events = self.listener.push(&rx_in);
+        // Headers decoded in this chunk: their source is on the air until
+        // the frame's length is known (at most a frame's longest).
+        for (s, a) in std::mem::take(&mut self.view.lock().expect("view").sources) {
+            self.on_air = Some((a, s, s + ON_AIR_MAX));
+        }
         self.pos = start + x.len();
         self.pos_time = Instant(t_first.0 + (x.len() as f64 * dt).round() as u64);
         if let Some(i) = self.listener.take_early() {
@@ -622,8 +703,18 @@ impl Modem {
                         edges.extend(self.dcd.set_preamble(true, d.start));
                     }
                 }
-                listen::Event::Resolved(d, n) => self.pre_hold_until = self.pre_hold_until.max(d.start + n),
+                listen::Event::Resolved(d, n) => {
+                    self.pre_hold_until = self.pre_hold_until.max(d.start + n);
+                    if let Some((_, s, end)) = self.on_air.as_mut() {
+                        if *s == d.start {
+                            *end = d.start + n;
+                        }
+                    }
+                }
                 listen::Event::Unresolved(d, why) => {
+                    if self.on_air.is_some_and(|(_, s, _)| s == d.start) {
+                        self.on_air = None;
+                    }
                     let failed = {
                         let mut v = self.view.lock().expect("view");
                         let f = v.failed.contains(&d.start);
@@ -788,6 +879,8 @@ impl Modem {
             decode_ms,
             ppm: -res.drift / cfg.stride() as f64 * 1e6,
             unknown_mask: masked_out,
+            ack: f.ack().copied(),
+            clipped,
         };
         self.out.push_back(Output::Heard(info));
         self.queue(ready, Event::Frame(f));
@@ -928,7 +1021,13 @@ tx mask ID {}: {}; rx mask ID {}: {}; tx MCS {}, rx MCS {} requested",
                 }
                 self.stats.tx_frames += 1;
                 self.mute = Some((now, Instant::FAR));
-                self.out.push_back(Output::Transmit(TxRequest { audio, key_at: now, frame, turn_holder }));
+                self.out.push_back(Output::Transmit(TxRequest {
+                    samples: audio.len(),
+                    audio,
+                    key_at: now,
+                    frame,
+                    turn_holder,
+                }));
             }
             Err(e) => {
                 // Never leave the station waiting for a release that will not come.

@@ -334,6 +334,24 @@ struct RunArgs {
     /// Control interface on a TCP address too (the same line protocol as stdin), e.g. 127.0.0.1:8003
     #[arg(long)]
     control: Option<String>,
+    /// Native JSON API on a TCP address (SPEC 13.2, docs/api.md; port 8002), or "off"
+    #[arg(long, default_value = "127.0.0.1:8002")]
+    api: String,
+    /// Native JSON API on a Unix-domain socket too
+    #[arg(long)]
+    api_socket: Option<PathBuf>,
+    /// Raw-audio ring buffer, seconds of received audio kept for `capture` (0: off; 120 s is 11.5 MB)
+    #[arg(long, default_value_t = 120.0)]
+    ring_seconds: f64,
+    /// Where `capture` writes its WAV and JSON files
+    #[arg(long, default_value = "captures")]
+    capture_dir: PathBuf,
+    /// Capture automatically a little after a frame from the session peer fails (at most once a minute)
+    #[arg(long)]
+    capture_on_failure: bool,
+    /// Keep the heard list in this JSON file across restarts
+    #[arg(long)]
+    heard_file: Option<PathBuf>,
     /// Do not read control commands from stdin
     #[arg(long)]
     no_stdin: bool,
@@ -437,11 +455,16 @@ fn run_cmd(a: RunArgs) -> Result<(), String> {
     cfg.txdelay = Duration::from_secs_f64(timing.txdelay_s);
     cfg.txtail = Duration::from_secs_f64(timing.txtail_s);
     cfg.rx.threads = a.threads.clamp(1, 4);
+    if !(0.0..=7200.0).contains(&a.ring_seconds) {
+        return Err("--ring-seconds must be 0-7200".into());
+    }
+    cfg.ring_seconds = a.ring_seconds;
     if let Some(q) = &a.quieting {
         let (lo, hi) = q.split_once('-').ok_or("--quieting LO-HI (Hz)")?;
         let lo: f64 = lo.trim().parse().map_err(|_| "--quieting LO-HI (Hz)")?;
         let hi: f64 = hi.trim().parse().map_err(|_| "--quieting LO-HI (Hz)")?;
         cfg.dcd.quieting_band_hz = (lo, hi);
+        cfg.quieting_follows_cap = false;
     }
     println!(
         "cap {} tones (B.3 width cap {}{}), tone masks {}, quieting {:.0}-{:.0} Hz{}",
@@ -471,6 +494,11 @@ fn run_cmd(a: RunArgs) -> Result<(), String> {
         verbose: a.verbose,
         status_every: (a.status > 0.0).then(|| Duration::from_secs_f64(a.status)),
         rx_dir: a.rx_dir.clone(),
+        api: (a.api != "off").then(|| a.api.clone()),
+        api_socket: a.api_socket.clone(),
+        capture_dir: a.capture_dir.clone(),
+        heard_file: a.heard_file.clone(),
+        capture_on_failure: a.capture_on_failure,
     };
     let summary = cairn_modem::driver::run(cfg, &opts, ptt, &signals::STOP)?;
     println!("{summary}");

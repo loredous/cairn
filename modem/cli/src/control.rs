@@ -1,5 +1,6 @@
-//! A minimal line-based control interface (the native API of SPEC 13.2 is
-//! not built yet): commands in, one line per host event out.
+//! A minimal line-based control interface for an operator at a terminal
+//! (applications use the native API of SPEC 13.2, `hostapi`): commands in,
+//! one line per host event out.
 //!
 //! ```text
 //! connect CALL[-SSID] [new]   open a session (resumes retained state unless "new")
@@ -10,6 +11,8 @@
 //! beacon [TEXT]               a BEACON (ID block, optional status text)
 //! ui TEXT                     a UI broadcast carrying a MESSAGE PDU
 //! status                      session, rung, carrier detect, counters
+//! heard                       the heard list (SPEC 13.6)
+//! capture [SECONDS] [LABEL]   save the raw-audio ring and decoder state
 //! quit
 //! ```
 
@@ -28,7 +31,7 @@ use crate::runtime::{Modem, Output};
 pub const FILE_CHUNK_DATA: usize = 2048;
 
 /// A parsed control line.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Control {
     /// Open a session.
     Connect {
@@ -59,6 +62,15 @@ pub enum Control {
     Ui(String),
     /// Status.
     Status,
+    /// The heard list.
+    Heard,
+    /// Save the raw-audio ring buffer and decoder state.
+    Capture {
+        /// The last this many seconds (default: all of the ring).
+        seconds: Option<f64>,
+        /// Added to the file names.
+        label: Option<String>,
+    },
     /// Help.
     Help,
     /// Stop the modem.
@@ -115,6 +127,19 @@ pub fn parse(line: &str) -> Result<Control, String> {
             }
         }
         "status" | "st" => Ok(Control::Status),
+        "heard" | "h" => Ok(Control::Heard),
+        "capture" | "cap" => {
+            let mut seconds = None;
+            let mut label = None;
+            for w in &words {
+                match w.parse::<f64>() {
+                    Ok(x) if seconds.is_none() && x > 0.0 && x.is_finite() => seconds = Some(x),
+                    _ if label.is_none() && cairn_api::capture::valid_label(w) => label = Some(w.to_string()),
+                    _ => return Err("capture [SECONDS] [LABEL] (label: A-Z a-z 0-9 _ -, up to 32)".into()),
+                }
+            }
+            Ok(Control::Capture { seconds, label })
+        }
         "help" | "?" => Ok(Control::Help),
         "quit" | "exit" | "q" => Ok(Control::Quit),
         "" => Err(String::new()),
@@ -124,7 +149,7 @@ pub fn parse(line: &str) -> Result<Control, String> {
 
 /// Help text.
 pub const HELP: &str = "commands: connect CALL[-SSID] [new] | send TEXT | send @PATH | disconnect [now] | \
-probe CALL [beacon] | beacon [TEXT] | ui TEXT | status | quit";
+probe CALL [beacon] | beacon [TEXT] | ui TEXT | status | heard | capture [SECONDS] [LABEL] | quit";
 
 /// The host side: ids, what each send was, received files.
 #[derive(Default)]
@@ -194,7 +219,9 @@ impl HostState {
                     format!("queued UI {id}"),
                 )
             }
-            Control::Status | Control::Help | Control::Quit => (vec![], String::new()),
+            Control::Status | Control::Help | Control::Quit | Control::Heard | Control::Capture { .. } => {
+                (vec![], String::new())
+            }
         })
     }
 
@@ -418,6 +445,13 @@ mod tests {
         assert_eq!(parse("probe N0CALL-7 beacon").unwrap(), Control::Probe { target: n0, kind: ProbeKind::Beacon });
         assert_eq!(parse("beacon").unwrap(), Control::Beacon(None));
         assert_eq!(parse("status").unwrap(), Control::Status);
+        assert_eq!(parse("heard").unwrap(), Control::Heard);
+        assert_eq!(parse("capture").unwrap(), Control::Capture { seconds: None, label: None });
+        assert_eq!(
+            parse("capture 30 fade").unwrap(),
+            Control::Capture { seconds: Some(30.0), label: Some("fade".into()) }
+        );
+        assert!(parse("capture ../x").is_err());
         assert!(parse("frobnicate").is_err());
         assert!(parse("connect").is_err());
         // A long callsign is carried as a hash.

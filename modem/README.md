@@ -15,7 +15,10 @@ on-air two-radio session ran on 2026-11-07 (24 tones, a few kB each way);
 from it came wider session widths with tone masks (`run --cap`), received
 files on disk (`run --rx-dir`) and carrier-detect hysteresis
 ([docs/bench-testing.md](../docs/bench-testing.md#two-station-session-with-cairn-modem-run)).
-The native JSON API (SPEC 13.2) is not built yet.
+The native JSON API of SPEC 13.2 (step 6) runs in `run` on TCP port 8002
+and a Unix socket, with the heard list and, from step 8, the raw-audio ring
+buffer and diagnostic capture; its schema is
+[docs/api.md](../docs/api.md) ([docs/api.schema.json](../docs/api.schema.json)).
 
 ```sh
 cd modem
@@ -36,7 +39,8 @@ Building needs the ALSA headers (`libasound2-dev` on Debian/Ubuntu,
 | `cairn-audio` | `audio/` | cpal streams at 48 kHz chosen by name, lock-free rings, xrun counters, timing of every output sample, input level meter |
 | `cairn-ptt` | `ptt/` | PTT trait and backends: serial RTS/DTR, CM108 HID, Hamlib `rigctld`, VOX/none; a drop guard and a shared handle for signal handlers |
 | `cairn-link` | `link/` | The link layer, sans-IO (SPEC 8-12, ADRs 0008-0013); see [link/README.md](link/README.md) |
-| `cairn-modem` | `cli/` | Transmit sequencing, the listener, test frames and the level-setting tone; the modem runtime (link layer + PHY + carrier detect), KISS, the control interface, the two-station simulator (library), and the `cairn-modem` binary |
+| `cairn-api` | `api/` | The native API's transport side (SPEC 13.2): protocol constants and message builders, the TCP and Unix-socket server with per-client subscriptions, the heard list, the raw-audio ring buffer and capture files, a JSON Schema validator for tests |
+| `cairn-modem` | `cli/` | Transmit sequencing, the listener, test frames and the level-setting tone; the modem runtime (link layer + PHY + carrier detect), KISS, the native API on the runtime (`hostapi`), the control interface, the two-station simulator (library), and the `cairn-modem` binary |
 
 ## The `cairn-modem` command
 
@@ -279,6 +283,8 @@ two-station session on the air is in
 M=target/release/cairn-modem
 $M run -d All-In-One-Cable --ptt serial:All-In-One-Cable --callsign N0CALL-1 --grid FN31
 #   --kiss 127.0.0.1:8001 (default; "off")    --control 127.0.0.1:8003 (the stdin protocol on TCP)
+#   --api 127.0.0.1:8002 (default; "off")     --api-socket PATH (the native API on a Unix socket too)
+#   --ring-seconds 120 (raw-audio ring; 0 off)  --capture-dir captures  --capture-on-failure  --heard-file PATH
 #   --txdelay/--txtail (ms)  --persistence 0.25  --slot-ms 100  --max-frame 4.0  --broadcast-mcs 0
 #   --cap 32 (width cap in tones, 24-56)  --no-mask  --rx-dir DIR (received files and messages)
 #   --quieting 3600-4150 (Hz; default just above the cap)  --dcd-legacy  --refuse  --status 30
@@ -330,6 +336,8 @@ send TEXT | send @PATH      a MESSAGE PDU, or a file as FILE-CHUNK PDUs (object 
 disconnect [now]            graceful by default (after everything queued is acknowledged)
 probe CALL [beacon]         link test (ADR 0012), or a BEACON request
 beacon [TEXT]  |  ui TEXT   broadcasts
+heard                       the heard list (SPEC 13.6)
+capture [SECONDS] [LABEL]   save the raw-audio ring and decoder state (below)
 status  |  quit
 ```
 
@@ -341,6 +349,71 @@ disconnected, rx (text, or file chunks with object and offset), delivered
 (both directions' SNR, rung and expected kbps), beacons heard, warnings
 (receive clipping, the peer's distortion report), and each transmission
 with the measured TXDelay and TXTail.
+
+### The native API (SPEC 13.2)
+
+JSON lines on TCP (`--api`, default `127.0.0.1:8002`) and a Unix socket
+(`--api-socket PATH`), any number of clients; the schema, with every
+command, event, field, unit and error code and an example of each, is
+[docs/api.md](../docs/api.md), and [docs/api.schema.json](../docs/api.schema.json)
+is the same as a JSON Schema. Each connection starts with a `hello` event
+naming the schema version (0.1.0), the commands, the unsupported ones and
+the events.
+
+```sh
+python3 tools/api_client.py                                       # print every event
+python3 tools/api_client.py --connect N0CALL-2 --file report.txt --disconnect
+printf '%s\n' '{"id":1,"cmd":"status"}' | nc -q1 127.0.0.1 8002     # by hand
+```
+
+- **Commands**: `connect` (resumes retained state unless `"resume":false`),
+  `disconnect`, `send` (session or broadcast; `text`, base64 `data` or a
+  `file` path as FILE-CHUNK PDUs; `stream`, `priority`, `encoding`,
+  `pdu_type`), `beacon`, `probe` (link test or BEACON request), `heard`,
+  `status`, `config` (read, and set the parameters that are safe live:
+  persistence, slot time, maximum frame time, broadcast rung, width cap
+  outside a session, TXDelay, TXTail, accepting CONNECTs; all or nothing),
+  `calibrate`, `capture`, and `subscribe` (per-client event filter).
+- **Events**: `rx` (every delivered PDU: source, mode, stream, priority,
+  type, encoding, CRC, signature result, the body in base64 and as text,
+  where `--rx-dir` saved it), `session` (state changes; progress: bytes
+  queued, acknowledged and delivered, rate over 30 s, ETA, blocks sent and
+  resent; each send's delivery or non-delivery), `link` (per frame from the
+  peer: SNR, clock offset, rung and width and mask each way, block errors
+  and the block error rate over 16 frames, the peer's report from its ACK
+  block; link-test results), `heard` (every decoded header), `channel`
+  (carrier detect with and without hold, who holds the channel, whose turn
+  it is, what the modem wants to send and why it waits: backoff, carrier,
+  the turn-holder check, the yield window, p-persistence; time to the next
+  yield window; legacy activity), `dcd` (each raw detector edge), `tx`
+  (each keying with the measured TXDelay and TXTail; broadcasts sent),
+  `error` (asynchronous errors and the clipping and distortion warnings).
+- **Unsupported here**: `calibrate` (no host level control yet, SPEC 21.3
+  step 7) and `send` with `"encoding":"zstd"` or `"zstd_dict"` (no codec or
+  dictionaries yet, SPEC 12.2) answer the schema's `unsupported` error;
+  `auto` sends raw. Signatures are not implemented, so every `rx` says
+  `"verify":"unsigned"`. `capture` answers `unsupported` with
+  `--ring-seconds 0`.
+- **Heard list**: every decoded header updates its source's entry (first
+  and last heard, count, last and best SNR, width, rung, frame types and
+  their counts, modes); `heard` lists it most recent first, `heard` events
+  push each update, and `--heard-file` keeps it across restarts (written
+  every 30 s when changed and at exit).
+- **Raw-audio ring and capture** (SPEC 13.6, 21.3 step 8): the last
+  `--ring-seconds` (default 120 s, 11.5 MB as 16-bit samples) of input are
+  kept in a buffer allocated at start; the event loop copies each 10 ms
+  chunk in (the sound card's callback is untouched, and nothing is
+  allocated per chunk). `capture` (API or the control line) writes the last
+  N seconds to `--capture-dir` as `cairn-YYYYMMDDTHHMMSSZ[-label].wav`
+  (16-bit mono 48 kHz, the samples exactly as captured) and a `.json`
+  sidecar: every decoded header in the window (time, source, type, rung,
+  width, blocks, SNR, clock offset, decode time), header failures, the
+  carrier-detect timeline, own transmissions, the `status` and `config`
+  results. `--capture-on-failure` captures 2 s after a frame from the
+  session peer loses blocks or a header fails during a session, at most
+  once a minute. `listen --wav` and `cairn-bench rx` replay the WAV.
+- Port 8002 has no authentication: it can key the radio and read any file
+  the modem can (`send` `file`). Keep it on loopback or a Unix socket.
 
 KISS (SPEC 13.1, ADR 0010 `kiss-ui-frames`): each data frame from a host
 is one AX25 PDU in a UI frame to the broadcast address (several per frame
@@ -622,6 +695,28 @@ Real-time layer:
   header bits matching.
 - `modem/tools/turnaround.sh`: the receive turnaround at real-time pace
   (below).
+- `cli/tests/api.rs`: two complete modems in the two-station simulator,
+  each behind an API server, driven only by clients on real sockets (TCP
+  for one, a Unix socket for the other): connect, a 9000-byte file and a
+  message, `rx`, `session` (states, progress, deliveries), `link`, `heard`,
+  `channel`, `dcd` and `tx` events, `heard`, `status`, a capture at the
+  receiver, disconnect; a second client subscribed to `heard` gets nothing
+  else. Every line the modems send (about 200: hello, responses, events) is
+  validated against `docs/api.schema.json`. Also: `calibrate` and zstd
+  answer `unsupported`, every malformed input (bad JSON, a non-object, a
+  missing `cmd`, a bad `id`, non-UTF-8, a line over 1 MiB, unknown
+  commands, out-of-range and read-only `config` values, an atomic `config`
+  failure) gets its error and the connection keeps working; `capture`
+  without a ring is `unsupported`; a capture's WAV equals, sample for
+  sample, the audio pushed into the modem.
+- `api/`: the server's framing (CRLF, blank, over-long and non-UTF-8
+  lines), hello-before-events, subscriptions, several clients, TCP and Unix
+  sockets; the heard list, its file; the ring buffer; base64 and RFC 3339
+  times; the schema validator against `docs/api.schema.json`.
+- `tests/test_api_schema.py` (repository root, `uv run pytest`): the schema
+  is valid draft 2020-12, every example in `docs/api.md` validates (and
+  there is one for every command and event), invalid messages fail, and
+  `tools/api_client.py` sends only valid requests to a stand-in modem.
 
 Physical layer (paths under `phy/`):
 

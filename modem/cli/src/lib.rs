@@ -14,6 +14,7 @@ pub mod control;
 pub mod driver;
 pub mod frames;
 pub mod headers;
+pub mod hostapi;
 pub mod kiss;
 pub mod listen;
 pub mod nprng;

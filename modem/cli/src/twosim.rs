@@ -370,6 +370,10 @@ pub struct SimStation {
     /// a frame peaks at -3 dBFS, as transmitted).
     pub rx_gain: f64,
     noise_fir: Option<Fir>,
+    /// When set, every output is also kept here (transmit audio dropped),
+    /// with PTT releases as `None`, for a host driving the station through
+    /// the native API (`hostapi`); the host takes them.
+    pub outputs: Option<Vec<(Instant, Option<Output>)>>,
 }
 
 impl SimStation {
@@ -464,6 +468,7 @@ impl Sim {
             noise_shape: None,
             rx_gain: 1.0,
             noise_fir: None,
+            outputs: None,
         });
         for row in &mut self.snr {
             row.push(snr_db);
@@ -517,6 +522,15 @@ impl Sim {
     /// Stations `a` and `b` cannot hear each other in this interval.
     pub fn outage(&mut self, a: usize, b: usize, from: Instant, until: Instant) {
         self.outages.push((a, b, from, until));
+    }
+
+    /// Call into station `i`'s modem now (a host request), then route what
+    /// it said, so a transmission it asks for keys at this time.
+    pub fn modem_call<R>(&mut self, i: usize, f: impl FnOnce(&mut Modem, Instant) -> R) -> R {
+        let now = self.now();
+        let r = f(&mut self.stations[i].modem, now);
+        self.route(i, now);
+        r
     }
 
     /// Issue a host command at a time.
@@ -645,6 +659,15 @@ impl Sim {
 
     fn route(&mut self, st: usize, now: Instant) {
         for o in self.stations[st].modem.drain() {
+            if let Some(v) = self.stations[st].outputs.as_mut() {
+                let kept = match &o {
+                    Output::Transmit(req) => {
+                        Output::Transmit(crate::runtime::TxRequest { audio: Vec::new(), ..req.clone() })
+                    }
+                    other => other.clone(),
+                };
+                v.push((now, Some(kept)));
+            }
             match o {
                 Output::Transmit(req) => {
                     let s = &self.stations[st];
@@ -787,6 +810,9 @@ impl Sim {
                     0 => {
                         let (_, rel) = self.stations[i].tx.take().expect("tx");
                         self.stations[i].modem.tx_done(rel, t);
+                        if let Some(v) = self.stations[i].outputs.as_mut() {
+                            v.push((t, None));
+                        }
                     }
                     1 => {
                         let (_, cmd) = self.stations[i].pending.remove(0);
