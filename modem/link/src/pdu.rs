@@ -411,6 +411,12 @@ pub fn unpack_frame(blocks: &[Option<Block>]) -> Vec<Result<Pdu, PduError>> {
     out
 }
 
+/// The body of a raw PDU, or None for a compressed one: the decoder for
+/// fragments when no codec is available.
+pub fn raw_body(p: &Pdu) -> Option<Vec<u8>> {
+    (p.encoding == encoding::RAW).then(|| p.body.clone())
+}
+
 // --- Broadcast fragmentation (ADR 0009 `broadcast-message-fragments`) -----------------
 
 /// Split a raw message into slices of at most `max_body` bytes, each its own
@@ -489,7 +495,8 @@ pub struct Reassembler {
 
 impl Reassembler {
     /// Process one broadcast frame's PDUs (from [`unpack_frame`]); returns
-    /// the PDUs to deliver.
+    /// the PDUs to deliver. Fragments must be raw ([`raw_body`]); see
+    /// [`Reassembler::on_frame_with`].
     pub fn on_frame(
         &mut self,
         src: Address,
@@ -497,6 +504,24 @@ impl Reassembler {
         role: FragmentRole,
         pdus: Vec<Result<Pdu, PduError>>,
         now: Instant,
+    ) -> Option<Vec<Pdu>> {
+        self.on_frame_with(src, counter, role, pdus, now, &mut raw_body)
+    }
+
+    /// [`Reassembler::on_frame`] with a decoder for the slices of a
+    /// fragmented message: each slice is compressed independently and the
+    /// reassembled message is the concatenation of their decoded bodies (ADR
+    /// 0009 `broadcast-message-fragments`), delivered raw. A slice that
+    /// `decode` refuses ends the partial message. Complete PDUs pass
+    /// through as received.
+    pub fn on_frame_with(
+        &mut self,
+        src: Address,
+        counter: u16,
+        role: FragmentRole,
+        pdus: Vec<Result<Pdu, PduError>>,
+        now: Instant,
+        decode: &mut dyn FnMut(&Pdu) -> Option<Vec<u8>>,
     ) -> Option<Vec<Pdu>> {
         self.purge(now);
         let all_ok = pdus.iter().all(|p| p.is_ok());
@@ -528,6 +553,10 @@ impl Reassembler {
                     }
                 };
                 entry.complete = true;
+                let Some(body) = decode(&slice) else {
+                    self.partial.remove(&src);
+                    return Some(out);
+                };
                 if role == FragmentRole::First {
                     self.partial.insert(
                         src,
@@ -535,7 +564,7 @@ impl Reassembler {
                             next: counter.wrapping_add(1),
                             pdu_type: slice.pdu_type,
                             stream: slice.stream,
-                            body: slice.body,
+                            body,
                             started: now,
                         },
                     );
@@ -545,7 +574,7 @@ impl Reassembler {
                 if part.next != counter || part.pdu_type != slice.pdu_type || part.stream != slice.stream {
                     return Some(out); // gap or mismatch: discard
                 }
-                part.body.extend_from_slice(&slice.body);
+                part.body.extend_from_slice(&body);
                 part.next = counter.wrapping_add(1);
                 if role == FragmentRole::Last {
                     out.push(Pdu {

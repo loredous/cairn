@@ -448,6 +448,12 @@ pub struct SessionInfo {
     pub peer_width_cap: u8,
     /// The peer's B.3 capability bits.
     pub peer_capabilities: u16,
+    /// The dictionary IDs the peer listed at setup (B.3).
+    pub peer_dictionaries: Vec<u32>,
+    /// The negotiated dictionaries (SPEC §12.2): this station's that the
+    /// peer listed too, in this station's order; empty until the setup
+    /// completes. Encoding 2 in this session uses only these.
+    pub dictionaries: Vec<u32>,
     /// Neither station owes a reply.
     pub idle: bool,
     /// ACK-timer expirations since the last decoded peer header.
@@ -536,6 +542,10 @@ pub struct ChannelInfo {
     pub waiting: Option<Waiting>,
 }
 
+/// Decodes one slice of a fragmented broadcast: its decoded body, CRC-32
+/// checked, or None ([`Station::set_slice_decoder`]).
+pub type SliceDecoder = Box<dyn FnMut(&Pdu) -> Option<Vec<u8>> + Send>;
+
 /// One station's link layer.
 pub struct Station {
     cfg: Config,
@@ -552,6 +562,8 @@ pub struct Station {
     retained: RetainedStore,
     bcast: BroadcastTx,
     reasm: Reassembler,
+    /// Decodes the slices of fragmented broadcasts (raw only by default).
+    slice_decoder: SliceDecoder,
     prober: Option<Prober>,
     owed: VecDeque<OwedReply>,
     linger: Option<Linger>,
@@ -595,6 +607,7 @@ impl Station {
             retained: RetainedStore::default(),
             bcast: BroadcastTx::default(),
             reasm: Reassembler::default(),
+            slice_decoder: Box::new(crate::pdu::raw_body),
             prober: None,
             owed: VecDeque::new(),
             linger: None,
@@ -602,6 +615,22 @@ impl Station {
             last_id: None,
             out: Vec::new(),
         }
+    }
+
+    /// Decode the slices of fragmented broadcast messages with this (the
+    /// decoded body, CRC-32 checked, or None to drop the message): each slice
+    /// is compressed independently (ADR 0009 `broadcast-message-fragments`).
+    /// Without one only raw slices reassemble.
+    pub fn set_slice_decoder(&mut self, decode: SliceDecoder) {
+        self.slice_decoder = decode;
+    }
+
+    /// Stream bytes one UI frame carries at the broadcast settings (room
+    /// left for the ID block when `id_broadcasts` may add it). A broadcast
+    /// PDU longer than this is fragmented, which only a raw PDU can be: a
+    /// host compresses a broadcast only when the result fits.
+    pub fn broadcast_frame_bytes(&self) -> usize {
+        self.broadcast_capacity(self.cfg.id_broadcasts as usize) * crate::params::BLOCK_PAYLOAD
     }
 
     /// The configuration.
@@ -629,6 +658,8 @@ impl Station {
             rx_width: s.rx_width(&self.cfg),
             peer_width_cap: s.peer_width_cap,
             peer_capabilities: s.peer_caps,
+            peer_dictionaries: s.peer_dictionaries().to_vec(),
+            dictionaries: s.dictionaries(&self.cfg),
             idle: s.is_idle(),
             expiries: s.expiries(),
             next_seq: s.tx.next_seq(),
@@ -924,7 +955,9 @@ impl Station {
         let h = f.header;
         let role = FragmentRole::from_flags(h.flags.first_fragment, h.flags.more_fragments);
         let pdus = unpack_frame(&f.data);
-        let Some(out) = self.reasm.on_frame(h.src, h.seq.0, role, pdus, self.now) else { return };
+        let Some(out) = self.reasm.on_frame_with(h.src, h.seq.0, role, pdus, self.now, &mut *self.slice_decoder) else {
+            return;
+        };
         if h.ftype == FrameType::Beacon {
             let id = f.controls.iter().flatten().find_map(|c| match c {
                 ControlBlock::Id(i) => Some(i.clone()),

@@ -138,6 +138,42 @@ pub(crate) fn frame_time_units(d: Duration) -> u8 {
     (d.as_millis() / FRAME_TIME_UNIT.as_millis()).clamp(5, 40) as u8
 }
 
+/// Dictionary ID slots in one B.3 block.
+const DICTS_PER_B3: usize = 4;
+
+/// This station's dictionary IDs, without empty (zero) slots or repeats.
+fn offered(cfg: &Config) -> Vec<u32> {
+    let mut v: Vec<u32> = Vec::new();
+    for &d in &cfg.dict_ids {
+        if d != 0 && !v.contains(&d) {
+            v.push(d);
+        }
+    }
+    v
+}
+
+/// The dictionary IDs a CONNECT or CONNECT-ACK lists: its first B.3 block's,
+/// then a dictionary-only second B.3 block's when flag bit 0 announces one
+/// (B.3; ADR 0010 `session-establishment-steps`).
+fn listed_dictionaries(f: &RxFrame) -> Vec<u32> {
+    let mut v: Vec<u32> = Vec::new();
+    let Some(Some(ControlBlock::Connect(b3))) = f.controls.first() else { return v };
+    let mut add = |ids: &[u32; DICTS_PER_B3]| {
+        for &d in ids {
+            if d != 0 && !v.contains(&d) {
+                v.push(d);
+            }
+        }
+    };
+    add(&b3.dict_ids);
+    if b3.more_dicts {
+        if let Some(Some(ControlBlock::Connect(second))) = f.controls.get(2) {
+            add(&second.dict_ids);
+        }
+    }
+    v
+}
+
 /// One session (live, or being set up).
 #[derive(Clone, Debug)]
 pub struct Session {
@@ -152,6 +188,8 @@ pub struct Session {
     pub(crate) peer_caps: u16,
     pub(crate) peer_width_cap: u8,
     pub(crate) peer_max_frame: Duration,
+    /// The dictionary IDs the peer listed in its B.3 blocks (SPEC §12.2).
+    pub(crate) peer_dicts: Vec<u32>,
     pub(crate) tx: Sender,
     pub(crate) rx: Receiver,
     rate: RateAdapter,
@@ -193,6 +231,7 @@ impl Session {
             peer_caps: 0,
             peer_width_cap: BASE_WIDTH - 1,
             peer_max_frame: cfg.max_frame_time,
+            peer_dicts: Vec::new(),
             tx,
             rx,
             rate: RateAdapter::new(Thresholds::with_margin(cfg.threshold_margin_db), 0),
@@ -234,6 +273,7 @@ impl Session {
                 s.peer_caps = r.peer_caps;
                 s.peer_width_cap = r.peer_width_cap;
                 s.peer_max_frame = r.peer_max_frame;
+                s.peer_dicts = r.peer_dicts;
                 s.lost_at = Some(r.lost_at);
                 s
             }
@@ -258,6 +298,7 @@ impl Session {
                 s.peer_caps = r.peer_caps;
                 s.peer_width_cap = r.peer_width_cap;
                 s.peer_max_frame = r.peer_max_frame;
+                s.peer_dicts = r.peer_dicts;
                 s.lost_at = Some(r.lost_at);
                 s
             }
@@ -274,6 +315,7 @@ impl Session {
                 s.peer_caps = b3.capabilities;
                 s.peer_width_cap = b3.width_cap;
                 s.peer_max_frame = b3.max_frame_duration();
+                s.peer_dicts = listed_dictionaries(f);
                 s
             }
         };
@@ -693,6 +735,18 @@ impl Session {
         self.peer_ack
     }
 
+    /// The negotiated dictionaries (SPEC §12.2): this station's offered IDs
+    /// that the peer also listed, in this station's order. Empty before the
+    /// setup completes.
+    pub fn dictionaries(&self, cfg: &Config) -> Vec<u32> {
+        offered(cfg).into_iter().filter(|d| self.peer_dicts.contains(d)).collect()
+    }
+
+    /// The dictionary IDs the peer listed in its B.3 blocks.
+    pub fn peer_dictionaries(&self) -> &[u32] {
+        &self.peer_dicts
+    }
+
     /// This station owes the next frame (a turn-holder reply).
     pub fn owes_reply(&self) -> bool {
         self.owed.is_some()
@@ -714,6 +768,10 @@ impl Session {
         self.peer_caps = b3.capabilities;
         self.peer_width_cap = b3.width_cap;
         self.peer_max_frame = b3.max_frame_duration();
+        if !(self.resume && b3.resume) {
+            // A resume keeps the negotiated dictionaries (SPEC §9.2).
+            self.peer_dicts = listed_dictionaries(f);
+        }
         self.tx_mcs = b3.requested_mcs.min(6);
         self.tx_mask = (b3.mask, 0);
         self.tx_long_prefix = ctx.cfg.repeater;
@@ -786,9 +844,47 @@ impl Session {
         ack
     }
 
+    /// The dictionary IDs this station lists in its setup frame: all of its
+    /// own in CONNECT, the intersection with the peer's in CONNECT-ACK
+    /// (the accepted parameters; SPEC §12.2 negotiates the intersection).
+    fn listed_dicts(&self, ctx: &Ctx) -> Vec<u32> {
+        let mut ids = match self.role {
+            Role::Initiator => offered(ctx.cfg),
+            Role::Responder => self.dictionaries(ctx.cfg),
+        };
+        ids.truncate(2 * DICTS_PER_B3);
+        ids
+    }
+
+    /// The B.3 block of a setup frame and, when more than four IDs are
+    /// listed and `second` allows it, the dictionary-only second block
+    /// (B.3 flag bit 0; ADR 0010 `session-establishment-steps`).
+    fn my_b3s(
+        &self,
+        ctx: &Ctx,
+        requested_mcs: u8,
+        mask: u64,
+        resume: bool,
+        second: bool,
+    ) -> (ConnectBlock, Option<ConnectBlock>) {
+        let ids = self.listed_dicts(ctx);
+        let slots = |from: usize| {
+            let mut s = [0u32; DICTS_PER_B3];
+            for (i, d) in ids.iter().skip(from).take(DICTS_PER_B3).enumerate() {
+                s[i] = *d;
+            }
+            s
+        };
+        let more = second && ids.len() > DICTS_PER_B3;
+        let mut b3 = self.my_b3(ctx, requested_mcs, mask, resume);
+        b3.dict_ids = slots(0);
+        b3.more_dicts = more;
+        (b3, more.then(|| ConnectBlock::dictionaries_only(slots(DICTS_PER_B3))))
+    }
+
     fn my_b3(&self, ctx: &Ctx, requested_mcs: u8, mask: u64, resume: bool) -> ConnectBlock {
         let mut ids = [0u32; 4];
-        for (i, d) in ctx.cfg.dict_ids.iter().take(4).enumerate() {
+        for (i, d) in offered(ctx.cfg).iter().take(4).enumerate() {
             ids[i] = *d;
         }
         ConnectBlock {
@@ -837,14 +933,12 @@ impl Session {
         }
         match what {
             SessTx::Connect => {
-                let b3 = self.my_b3(ctx, 0, ALL_TONES, self.resume);
+                // A resume CONNECT carries B.3 and ID only (SPEC §9.2).
+                let (b3, more) = self.my_b3s(ctx, 0, ALL_TONES, self.resume, !self.resume);
                 let id = self.id_block(ctx);
-                let mut f = self.frame(
-                    ctx,
-                    FrameType::Connect,
-                    Flags { probe: true, ..Default::default() },
-                    vec![ControlBlock::Connect(b3), id],
-                );
+                let mut controls = vec![ControlBlock::Connect(b3), id];
+                controls.extend(more.map(ControlBlock::Connect));
+                let mut f = self.frame(ctx, FrameType::Connect, Flags { probe: true, ..Default::default() }, controls);
                 f.tx.width = ctx.cfg.width_cap + 1;
                 f.tx.long_prefix = ctx.cfg.repeater;
                 f
@@ -852,9 +946,11 @@ impl Session {
             SessTx::ConnectAck => {
                 let (mask, _) = self.mask.reported();
                 let req = self.rate.requested();
-                let b3 = self.my_b3(ctx, req, mask, self.resume);
+                // On resume the third block is the ACK block instead.
+                let (b3, more) = self.my_b3s(ctx, req, mask, self.resume, !self.resume);
                 let id = self.id_block(ctx);
                 let mut controls = vec![ControlBlock::Connect(b3), id];
+                controls.extend(more.map(ControlBlock::Connect));
                 if self.resume {
                     let (base, bitmap) = self.rx.ack_fields();
                     controls.push(ControlBlock::Ack(AckBlock {
@@ -1019,6 +1115,7 @@ impl Session {
             peer_caps: self.peer_caps,
             peer_width_cap: self.peer_width_cap,
             peer_max_frame: self.peer_max_frame,
+            peer_dicts: self.peer_dicts,
             lost_at: self.lost_at.unwrap_or(now),
         }
     }

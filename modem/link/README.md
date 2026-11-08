@@ -44,6 +44,7 @@ table.
 | `params` | Every timer, limit and constant, each with its SPEC/ADR reference |
 | `frame` | `LinkFrame`, `RxFrame`, addresses, flags, ACK / B.3 / ID / block-map control blocks, control-block order validation |
 | `pdu` | ADR 0009 packing and parsing, filler, CRC-32/ISO-HDLC, broadcast fragmentation, reassembly with duplicate suppression. Kept alongside `cairn_phy::pdu` because the ARQ needs per-PDU completion ids, priority queues and lost-block parsing; `tests/pdu_vectors.rs` shows it byte-identical with `vectors/link/pdu_*.json` and, by property test, with `cairn_phy::pdu` |
+| `compress` | SPEC 12.2 content encoding (ADR 0014 `zstd-frame-format`): the zstd frame header parser, dictionaries and their IDs, and `Codec` (encode a body as the smallest of encodings 0/1/2 or a forced one; decode with the 65,528-byte bound, magic, trailing-byte and CRC-32 checks). libzstd behind the `zstd` feature (default); `tests/zstd_vectors.rs` matches `vectors/zstd/bodies.json` byte for byte, `tests/compression.rs` runs compressed PDUs and dictionary negotiation through sessions |
 | `seq` | RFC 1982 16-bit sequences |
 | `arq` | Sender (window, retransmissions lowest first, block map, frame filling against a capacity), receiver (cumulative ACK, reassembly buffer, in-order delivery) |
 | `adapt` | §10.1 rules as revised by ADR 0010 and ADR 0013 (multi-rung step-up), thresholds = §6.2 + margin, mask tracker with IDs |
