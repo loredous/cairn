@@ -469,7 +469,7 @@ impl Quieting {
             self.hops.clear();
             self.release_run = 0;
             self.fresh = 0;
-            if self.recovery_hops > 0 && self.armed {
+            if self.recovery_hops > 0 && self.n_learn > 0 {
                 self.recovering = Some(0);
             }
             return self.set(false);
@@ -481,7 +481,7 @@ impl Quieting {
         if let Some(k) = self.recovering {
             // The radio's own transmit tail: silence until its receiver is
             // back. One hop within the assert margin of the floor ends it.
-            if p >= self.floor * self.assert_k || k + 1 >= self.recovery_hops || !self.armed {
+            if p >= self.floor * self.assert_k || k + 1 >= self.recovery_hops {
                 self.recovering = None;
                 self.recovered = Some(self.guard_hops + k + 1);
                 self.fresh = 0;
