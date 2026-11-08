@@ -28,6 +28,7 @@ use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use cairn_api::capture::AudioRing;
+use cairn_audio::LevelMeter;
 use cairn_link::adapter::{FieldCodec, PhyCodec, address_from_phy, header_from_phy};
 use cairn_link::session::Phase;
 use cairn_link::{
@@ -41,7 +42,8 @@ use cairn_phy::params::FS;
 use cairn_phy::rx::{extent_samples, frame_link};
 use cairn_phy::{ConfigError, FrameConfig, LinkState, Receiver, RxOptions, Transmitter};
 
-use crate::listen::{self, ConfigSource, Job, Listener, Plan, Resolution, header_samples};
+use crate::agc::{LevelKind, LevelObs};
+use crate::listen::{self, ConfigSource, FrameGap, Job, Listener, Plan, Resolution, header_samples};
 use crate::phymodel::{PhyFrameModel, mask_tones};
 
 /// How long the preamble correlator holds DCD after its early confirmation
@@ -53,6 +55,8 @@ const EARLY_HOLD: usize = 7_200;
 const ON_AIR_MAX: usize = 5 * 48_000;
 /// Input at or above this magnitude counts as clipped (SPEC 7.1).
 pub const CLIP_LEVEL: f64 = 0.999;
+/// Idle level windows for the receive AGC, samples (0.5 s).
+const IDLE_WINDOW: u64 = 24_000;
 
 /// When a decoded frame reaches the station.
 #[derive(Clone, Copy, Debug)]
@@ -163,6 +167,8 @@ pub struct FrameInfo {
     pub ack: Option<cairn_link::AckBlock>,
     /// This receiver's input clipped during the frame.
     pub clipped: bool,
+    /// Capture gaps inside the frame (zeros in place of lost audio).
+    pub audio_gap: Option<FrameGap>,
 }
 
 impl FrameInfo {
@@ -186,7 +192,7 @@ impl FrameInfo {
             self.ppm,
             self.decode_ms,
             if self.unknown_mask { " unknown mask ID" } else { "" }
-        )
+        ) + &self.audio_gap.map(|g| format!(" {}", g.text())).unwrap_or_default()
     }
 }
 
@@ -215,10 +221,13 @@ pub enum Output {
     },
     /// Every decoded header.
     Heard(FrameInfo),
-    /// A preamble whose header failed.
+    /// A preamble whose header failed (toward the link layer as any header
+    /// failure, also when a capture gap explains it).
     HeaderFailed {
         /// Its start.
         at: Instant,
+        /// Capture gaps after its start.
+        audio_gap: Option<FrameGap>,
     },
     /// A carrier-detect change (raw, no hold).
     Dcd {
@@ -262,6 +271,12 @@ pub struct Stats {
     /// open-squelch noise again after PTT release (the radio's transmit
     /// tail; `cairn_phy::dcd::Dcd::take_recovery`), ms.
     pub rx_recovery_ms: Vec<f64>,
+    /// Capture gaps (lost audio replaced by zeros).
+    pub audio_gaps: u64,
+    /// Samples in those gaps.
+    pub audio_gap_samples: u64,
+    /// Detections with a capture gap inside.
+    pub gapped_frames: u64,
 }
 
 /// Per-tone SNR for the tone-mask rules (SPEC 10.3): the ADR 0006 channel
@@ -454,6 +469,10 @@ pub struct Modem {
     ring: AudioRing,
     /// The frame being received: its source and the index after its last sample.
     on_air: Option<(Address, usize, usize)>,
+    /// Levels while the receiver is idle, for the AGC.
+    idle_meter: LevelMeter,
+    /// Level windows not yet taken.
+    levels: Vec<LevelObs>,
     /// Counters.
     pub stats: Stats,
 }
@@ -498,6 +517,8 @@ impl Modem {
             sess_seen: None,
             ring: AudioRing::with_seconds(cfg.ring_seconds),
             on_air: None,
+            idle_meter: LevelMeter::new(),
+            levels: Vec::new(),
             stats: Stats::default(),
             cfg,
         }
@@ -594,6 +615,44 @@ impl Modem {
     /// Samples taken so far.
     pub fn position(&self) -> usize {
         self.pos
+    }
+
+    /// A capture gap: `samples` zeros from stream index `at` stand in for
+    /// lost audio. Call before pushing the chunk that holds them; a frame
+    /// across the gap is flagged (`audio_gap`), and one whose header fails
+    /// is a header failure like any other.
+    pub fn note_gap(&mut self, at: usize, samples: usize) {
+        self.stats.audio_gaps += 1;
+        self.stats.audio_gap_samples += samples as u64;
+        self.listener.note_gap(at, samples);
+    }
+
+    /// Nothing is being received: no carrier, no frame detected, queued or
+    /// on the air, not keyed or just after. Receive gain may change now
+    /// (SPEC 13.5: between frames only).
+    pub fn rx_idle(&self) -> bool {
+        !self.raw && !self.pre_up && self.listener.pending() == 0 && self.on_air().is_none() && self.mute.is_none()
+    }
+
+    /// Level windows since the last call: each received frame's levels and
+    /// 0.5 s windows of idle input (open-squelch noise), for the AGC.
+    pub fn take_levels(&mut self) -> Vec<LevelObs> {
+        std::mem::take(&mut self.levels)
+    }
+
+    fn push_level(&mut self, l: LevelObs) {
+        // Nobody may be taking them (no AGC): keep the newest only.
+        if self.levels.len() >= 64 {
+            self.levels.remove(0);
+        }
+        self.levels.push(l);
+    }
+
+    /// The receive gain changed by `db` (AGC): carrier detect's quieting
+    /// floor follows, and the idle level window restarts.
+    pub fn level_step(&mut self, db: f64) {
+        self.dcd.level_step(db);
+        self.idle_meter = LevelMeter::new();
     }
 
     /// When to call [`Modem::tick`] next.
@@ -711,10 +770,11 @@ impl Modem {
                         }
                     }
                 }
-                listen::Event::Unresolved(d, why) => {
+                listen::Event::Unresolved(d, why, audio_gap) => {
                     if self.on_air.is_some_and(|(_, s, _)| s == d.start) {
                         self.on_air = None;
                     }
+                    self.stats.gapped_frames += audio_gap.is_some() as u64;
                     let failed = {
                         let mut v = self.view.lock().expect("view");
                         let f = v.failed.contains(&d.start);
@@ -724,10 +784,11 @@ impl Modem {
                     if failed {
                         self.stats.header_failures += 1;
                         let at = self.time_of(d.start);
-                        self.out.push_back(Output::HeaderFailed { at });
+                        self.out.push_back(Output::HeaderFailed { at, audio_gap });
                         self.queue(at.max(self.time_of(d.start + header_samples(d.cp))), Event::HeaderFailed);
                     } else {
-                        self.out.push_back(Output::Log(format!("undecoded frame: {why}")));
+                        let gap = audio_gap.map(|g| format!(" ({})", g.text())).unwrap_or_default();
+                        self.out.push_back(Output::Log(format!("undecoded frame: {why}{gap}")));
                     }
                 }
                 listen::Event::Queued(_) => {}
@@ -738,6 +799,22 @@ impl Modem {
             edges.extend(self.dcd.set_preamble(false, self.pre_hold_until.max(start)));
         }
         self.apply_edges(edges);
+        // Idle level windows for the AGC.
+        if self.rx_idle() && !any_muted {
+            self.idle_meter.push_f64(x);
+            if self.idle_meter.samples() >= IDLE_WINDOW {
+                let l = self.idle_meter.take();
+                self.push_level(LevelObs {
+                    kind: LevelKind::Idle,
+                    at_s: self.pos_time.as_secs_f64(),
+                    rms_dbfs: l.rms_dbfs,
+                    peak_dbfs: l.peak_dbfs,
+                    clipped: l.clipping(),
+                });
+            }
+        } else if self.idle_meter.samples() > 0 {
+            self.idle_meter = LevelMeter::new();
+        }
         // Frames whose last sample is in: decode now.
         let chunk_end = self.pos_time;
         while let Ok(job) = self.jobs.try_recv() {
@@ -824,8 +901,23 @@ impl Modem {
         let cfg = res.config.clone().unwrap_or_else(|| job.plan.cfg.clone());
         let end = job.det.start + cfg.n_samples();
         let ended_at = self.time_of(end);
+        // The frame's own levels, for the AGC.
+        let a = job.offset.min(job.samples.len());
+        let b = (job.offset + cfg.n_samples()).min(job.samples.len());
+        let mut meter = LevelMeter::new();
+        meter.push_f64(&job.samples[a..b]);
+        let l = meter.take();
+        self.push_level(LevelObs {
+            kind: LevelKind::Frame,
+            at_s: ended_at.as_secs_f64(),
+            rms_dbfs: l.rms_dbfs,
+            peak_dbfs: l.peak_dbfs,
+            clipped: l.clipping(),
+        });
+        self.stats.gapped_frames += job.gap.is_some() as u64;
         if !res.header_ok {
             self.stats.header_failures += 1;
+            self.out.push_back(Output::HeaderFailed { at: self.time_of(job.det.start), audio_gap: job.gap });
             self.queue(ready, Event::HeaderFailed);
             return;
         }
@@ -881,6 +973,7 @@ impl Modem {
             unknown_mask: masked_out,
             ack: f.ack().copied(),
             clipped,
+            audio_gap: job.gap,
         };
         self.out.push_back(Output::Heard(info));
         self.queue(ready, Event::Frame(f));

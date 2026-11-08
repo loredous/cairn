@@ -49,5 +49,10 @@ jobs:
       - name: Lint
         run: cargo clippy --all-targets --locked -- -D warnings
 
+      # The native ALSA capture and mixer are a feature (on by default);
+      # the build without them must stay clean too.
+      - name: Lint without the alsa feature
+        run: cargo clippy --all-targets --locked --no-default-features -- -D warnings
+
       - name: Test
         run: cargo test --locked

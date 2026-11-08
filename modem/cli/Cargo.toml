@@ -11,10 +11,16 @@ publish = false
 name = "cairn-modem"
 path = "src/main.rs"
 
+[features]
+default = ["alsa"]
+# Native ALSA capture (own period and buffer sizes) and the receive-gain
+# mixer control behind `run --rx-agc` (cairn-audio/alsa).
+alsa = ["cairn-audio/alsa"]
+
 [dependencies]
 cairn-phy = { path = "../phy" }
 cairn-link = { path = "../link" }
-cairn-audio = { path = "../audio" }
+cairn-audio = { path = "../audio", default-features = false }
 cairn-ptt = { path = "../ptt" }
 cairn-api = { path = "../api" }
 serde_json = "1.0.154"

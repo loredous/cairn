@@ -731,7 +731,7 @@ impl Sim {
                     }
                     self.stations[st].heard.push(f);
                 }
-                Output::HeaderFailed { at } => {
+                Output::HeaderFailed { at, .. } => {
                     if self.trace {
                         eprintln!("{at} [{st}] header failed");
                     }

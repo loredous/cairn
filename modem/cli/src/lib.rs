@@ -9,6 +9,7 @@
 
 #![warn(missing_docs)]
 
+pub mod agc;
 pub mod boost;
 pub mod control;
 pub mod driver;

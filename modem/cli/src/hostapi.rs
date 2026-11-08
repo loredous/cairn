@@ -50,8 +50,59 @@ const HEARD_SAVE_EVERY: Duration = Duration::from_secs(30);
 const SETTABLE: [&str; 8] =
     ["persistence", "slot_ms", "max_frame_s", "broadcast_mcs", "cap", "txdelay_ms", "txtail_ms", "accept_connects"];
 /// Read-only `config` parameters.
-const READ_ONLY: [&str; 7] =
-    ["callsign", "width_cap", "track_masks", "repeater", "ring_seconds", "quieting_hz", "settable"];
+const READ_ONLY: [&str; 9] = [
+    "callsign",
+    "width_cap",
+    "track_masks",
+    "repeater",
+    "ring_seconds",
+    "quieting_hz",
+    "rx_agc",
+    "rx_gain_db",
+    "settable",
+];
+
+/// The capture side, as the event loop last saw it (`status` `audio`).
+#[derive(Clone, Debug, Default)]
+pub struct AudioStatus {
+    /// Capture counters.
+    pub input: cairn_audio::InputStats,
+    /// `alsa`, `cpal` or `mock`.
+    pub backend: &'static str,
+    /// Device period, frames.
+    pub period_frames: u32,
+    /// Device buffer, frames.
+    pub buffer_frames: u32,
+    /// The capture thread's scheduling.
+    pub rt: Option<String>,
+    /// Receive AGC, when on.
+    pub rx_gain: Option<RxGainStatus>,
+}
+
+/// Receive AGC state (SPEC 13.5).
+#[derive(Clone, Debug, Default)]
+pub struct RxGainStatus {
+    /// The mixer control.
+    pub control: String,
+    /// Gain now, dB.
+    pub gain_db: f64,
+    /// Lowest gain, dB.
+    pub min_db: f64,
+    /// Highest gain, dB.
+    pub max_db: f64,
+    /// Steps taken.
+    pub changes: u64,
+    /// Why the last step was taken.
+    pub last_reason: Option<String>,
+}
+
+/// The `audio_gap` member of an event: null, or the gap inside the frame.
+pub fn gap_json(g: Option<&crate::listen::FrameGap>) -> Value {
+    match g {
+        Some(g) => json!({"ms": round(g.ms(), 1), "offset_ms": round(g.offset_ms(), 1), "gaps": g.count}),
+        None => Value::Null,
+    }
+}
 
 /// Settings.
 #[derive(Clone, Debug)]
@@ -209,6 +260,9 @@ pub struct HostApi {
     heard_saved: Option<Instant>,
     events: Vec<ApiEvent>,
     now: Instant,
+    audio: Option<AudioStatus>,
+    /// The last decoded frame's source and capture gap, for `rx` events.
+    last_frame_gap: Option<(Address, bool)>,
 }
 
 /// The SPEC 8.4 name of a frame type.
@@ -344,6 +398,42 @@ impl HostApi {
             heard_saved: None,
             events: Vec::new(),
             now: Instant::ZERO,
+            audio: None,
+            last_frame_gap: None,
+        })
+    }
+
+    /// The capture side's state for `status` and `config` (the live modem
+    /// updates it a few times a second).
+    pub fn set_audio(&mut self, a: AudioStatus) {
+        self.audio = Some(a);
+    }
+
+    fn audio_json(&self) -> Value {
+        let Some(a) = &self.audio else { return Value::Null };
+        let i = &a.input;
+        let ms = |n: u64| round(n as f64 * 1e3 / SAMPLE_RATE as f64, 1);
+        json!({
+            "backend": a.backend,
+            "period_ms": ms(a.period_frames as u64),
+            "buffer_ms": ms(a.buffer_frames as u64),
+            "realtime": a.rt,
+            "xruns": i.xruns,
+            "gaps": i.gaps,
+            "gap_ms": round(i.gap_ns as f64 / 1e6, 1),
+            "filled_samples": i.filled_samples,
+            "overflows": i.overflow_events,
+            "ring_ms": ms(i.ring_capacity),
+            "ring_high_water_ms": ms(i.ring_high_samples),
+            "rx_gain": a.rx_gain.as_ref().map(|g| json!({
+                "agc": true,
+                "control": g.control,
+                "gain_db": round(g.gain_db, 2),
+                "min_db": round(g.min_db, 2),
+                "max_db": round(g.max_db, 2),
+                "changes": g.changes,
+                "last_reason": g.last_reason,
+            })),
         })
     }
 
@@ -726,7 +816,10 @@ impl HostApi {
                 "dcd_rises": {
                     "quieting": s.dcd_rises[0], "preamble": s.dcd_rises[1], "afsk": s.dcd_rises[2], "cos": s.dcd_rises[3],
                 },
+                "audio_gaps": s.audio_gaps,
+                "gapped_frames": s.gapped_frames,
             },
+            "audio": self.audio_json(),
             "capture": {
                 "ring_seconds": round(modem.ring().seconds(), 3),
                 "buffered_seconds": round(modem.ring().len() as f64 / SAMPLE_RATE as f64, 3),
@@ -754,6 +847,8 @@ impl HostApi {
             "repeater": c.repeater,
             "ring_seconds": round(modem.ring().seconds(), 3),
             "quieting_hz": [m.dcd.quieting_band_hz.0, m.dcd.quieting_band_hz.1],
+            "rx_agc": self.audio.as_ref().is_some_and(|a| a.rx_gain.is_some()),
+            "rx_gain_db": self.audio.as_ref().and_then(|a| a.rx_gain.as_ref()).map(|g| round(g.gain_db, 2)),
             "settable": SETTABLE,
         })
     }
@@ -1007,13 +1102,33 @@ impl HostApi {
                 self.prog.delivered += bytes as u64;
                 self.prog.rx_win.push_back((self.now, bytes as u64));
                 self.prog.dirty = true;
-                self.push("rx", rx_event(*from, "session", FrameType::Data, pdu, saved));
+                let ev = self.with_gap(rx_event(*from, "session", FrameType::Data, pdu, saved), *from);
+                self.push("rx", ev);
             }
             Output::DeliverBroadcast { from, ftype, pdu } => {
-                self.push("rx", rx_event(*from, "broadcast", *ftype, pdu, saved));
+                let ev = self.with_gap(rx_event(*from, "broadcast", *ftype, pdu, saved), *from);
+                self.push("rx", ev);
             }
-            Output::Heard(f) => self.on_heard(f, modem),
-            Output::HeaderFailed { at } => self.diag.fails.push_back(*at),
+            Output::Heard(f) => {
+                self.last_frame_gap = Some((f.header.src, f.audio_gap.is_some()));
+                self.on_heard(f, modem)
+            }
+            Output::HeaderFailed { at, audio_gap } => {
+                self.diag.fails.push_back(*at);
+                // In a session the dashboard hears of a header failure (the
+                // link layer counts it as one either way).
+                if let Some(i) = modem.station().session_info() {
+                    self.push(
+                        "link",
+                        json!({
+                            "kind": "header_failed",
+                            "peer": i.peer.to_string(),
+                            "at": round(at.as_secs_f64(), 3),
+                            "audio_gap": gap_json(audio_gap.as_ref()),
+                        }),
+                    );
+                }
+            }
             Output::Dcd { at, state } => {
                 self.diag.dcd.push_back((*at, *state));
                 self.push(
@@ -1024,6 +1139,16 @@ impl HostApi {
             Output::Log(_) => {}
         }
         self.diag.trim(self.now);
+    }
+
+    /// `audio_gap` on an `rx` event: whether the frame that completed the
+    /// PDU (the last one decoded from its source) had a capture gap.
+    fn with_gap(&self, mut ev: Value, from: Address) -> Value {
+        let gap = self.last_frame_gap.is_some_and(|(a, g)| a == from && g);
+        if let Value::Object(m) = &mut ev {
+            m.insert("audio_gap".into(), json!(gap));
+        }
+        ev
     }
 
     /// PTT released: the measured times (None in a simulator).
@@ -1325,6 +1450,7 @@ impl HostApi {
                 "far_end": far,
                 "distortion": 0,
                 "clipped": f.clipped,
+                "audio_gap": gap_json(f.audio_gap.as_ref()),
             }),
         );
     }

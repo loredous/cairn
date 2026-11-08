@@ -301,9 +301,21 @@ Result members:
 | `session` | object or null | See below |
 | `channel` | object | The channel state, as the `channel` event |
 | `dcd` | object | `raw` (boolean), `detectors` (`quieting`, `preamble`, `afsk`, `cos`: booleans), `quieting_floor_dbfs` (the open-squelch floor the quieting detector learnt, null while unarmed) |
-| `counters` | object | `samples`, `detections`, `header_failures`, `frames`, `blocks_ok`, `blocks`, `tx_frames`, `keyed_s`, `dcd_rises` (per detector) |
+| `counters` | object | `samples`, `detections`, `header_failures`, `frames`, `blocks_ok`, `blocks`, `tx_frames`, `keyed_s`, `dcd_rises` (per detector), `audio_gaps` (capture gaps filled with zeros), `gapped_frames` (detections with a gap inside) |
 | `capture` | object | `ring_seconds` (raw-audio ring length, 0 when off), `buffered_seconds` (audio in it now) |
+| `audio` | object or null | The capture side (below); null where the modem has no sound card (a simulator) |
 | `heard_stations` | integer | Entries in the heard list |
+
+`audio`: `backend` (`alsa`, `cpal` or `mock`), `period_ms` and `buffer_ms`
+(the capture device's period and buffer), `realtime` (what the capture
+thread got from the scheduler, e.g. `SCHED_RR 20 via rtkit`, or why not),
+`xruns`, `gaps` and `gap_ms` (audio lost before it reached the modem),
+`filled_samples` (zeros put in its place, so later frames keep their
+timing), `overflows` (times the processing thread fell a whole ring behind),
+`ring_ms` and `ring_high_water_ms` (the capture ring and its highest fill:
+how far processing ever lagged), and `rx_gain`: null without receive AGC,
+else `agc` (true), `control` (the mixer control), `gain_db`, `min_db`,
+`max_db`, `changes` and `last_reason` (SPEC §13.5).
 
 `session`: `peer`, `phase` (`connecting`, `half_open`, `open`, `closing`),
 `role` (`initiator`, `responder`), `session_id`, `tx` and `rx` (each a
@@ -314,7 +326,7 @@ reply), `drained` (everything queued is acknowledged), `progress` (as the
 
 ```json
 {"id":10,"cmd":"status"}
-{"id":10,"ok":true,"cmd":"status","station":"N0CALL-1","time":"2026-11-07T18:03:01.000Z","modem_time":185.3,"session":{"peer":"N0CALL-2","phase":"open","role":"initiator","session_id":4660,"tx":{"mcs":4,"width":32,"mask_id":1,"mask":"0x00000000fffffff8","masked":[0,1,2]},"rx":{"mcs":4,"width":32,"mask_id":0,"mask":"0x00000000ffffffff","masked":[]},"idle":false,"drained":false,"progress":{"tx":{"queued_bytes":9019,"acked_bytes":4096,"pending_bytes":4923,"rate_bps":5210.0,"eta_s":7.6},"rx":{"delivered_bytes":0,"rate_bps":0.0},"retransmissions":2,"blocks_sent":48}},"channel":{"dcd":true,"dcd_raw":true,"keyed":false,"holder":"peer","holder_address":"N0CALL-2","turn":"peer","waiting":null,"next_yield_s":12.0,"legacy":false},"dcd":{"raw":true,"detectors":{"quieting":true,"preamble":true,"afsk":false,"cos":false},"quieting_floor_dbfs":-31.5},"counters":{"samples":8894400,"detections":31,"header_failures":0,"frames":31,"blocks_ok":402,"blocks":404,"tx_frames":30,"keyed_s":61.2,"dcd_rises":{"quieting":30,"preamble":31,"afsk":0,"cos":0}},"capture":{"ring_seconds":120.0,"buffered_seconds":120.0},"heard_stations":2}
+{"id":10,"ok":true,"cmd":"status","station":"N0CALL-1","time":"2026-11-07T18:03:01.000Z","modem_time":185.3,"session":{"peer":"N0CALL-2","phase":"open","role":"initiator","session_id":4660,"tx":{"mcs":4,"width":32,"mask_id":1,"mask":"0x00000000fffffff8","masked":[0,1,2]},"rx":{"mcs":4,"width":32,"mask_id":0,"mask":"0x00000000ffffffff","masked":[]},"idle":false,"drained":false,"progress":{"tx":{"queued_bytes":9019,"acked_bytes":4096,"pending_bytes":4923,"rate_bps":5210.0,"eta_s":7.6},"rx":{"delivered_bytes":0,"rate_bps":0.0},"retransmissions":2,"blocks_sent":48}},"channel":{"dcd":true,"dcd_raw":true,"keyed":false,"holder":"peer","holder_address":"N0CALL-2","turn":"peer","waiting":null,"next_yield_s":12.0,"legacy":false},"dcd":{"raw":true,"detectors":{"quieting":true,"preamble":true,"afsk":false,"cos":false},"quieting_floor_dbfs":-31.5},"counters":{"samples":8894400,"detections":31,"header_failures":0,"frames":31,"blocks_ok":402,"blocks":404,"tx_frames":30,"keyed_s":61.2,"dcd_rises":{"quieting":30,"preamble":31,"afsk":0,"cos":0},"audio_gaps":0,"gapped_frames":0},"capture":{"ring_seconds":120.0,"buffered_seconds":120.0},"audio":{"backend":"alsa","period_ms":10.0,"buffer_ms":200.0,"realtime":"SCHED_RR 20 via rtkit","xruns":0,"gaps":0,"gap_ms":0.0,"filled_samples":0,"overflows":0,"ring_ms":8000.0,"ring_high_water_ms":31.2,"rx_gain":{"agc":true,"control":"hw:CARD=AllInOneCable 'AIOC Audio In'","gain_db":-6.0,"min_db":-24.0,"max_db":0.0,"changes":2,"last_reason":"open-squelch noise -16.4 dBFS, above -17"}},"heard_stations":2}
 ```
 
 ### `config`
@@ -346,11 +358,13 @@ changes. Errors: `bad_request` (not a known parameter, or wrong type),
 | `repeater` | boolean | | no | Repeater mode (v1.x) |
 | `ring_seconds` | number | | no | Raw-audio ring length |
 | `quieting_hz` | [number, number] | | no | Quieting detector band |
+| `rx_agc` | boolean | | no | Receive AGC on (`run --rx-agc`, SPEC §13.5) |
+| `rx_gain_db` | number or null | | no | The capture gain the AGC set; null without AGC |
 | `settable` | array | | | Names of the settable parameters |
 
 ```json
 {"id":11,"cmd":"config","set":{"persistence":0.5,"txdelay_ms":200}}
-{"id":11,"ok":true,"cmd":"config","config":{"callsign":"N0CALL-1","persistence":0.5,"slot_ms":100,"max_frame_s":4.0,"broadcast_mcs":0,"cap":32,"txdelay_ms":200,"txtail_ms":10,"accept_connects":true,"width_cap":31,"track_masks":true,"repeater":false,"ring_seconds":120.0,"quieting_hz":[3600.0,4150.0],"settable":["persistence","slot_ms","max_frame_s","broadcast_mcs","cap","txdelay_ms","txtail_ms","accept_connects"]},"changed":["persistence","txdelay_ms"]}
+{"id":11,"ok":true,"cmd":"config","config":{"callsign":"N0CALL-1","persistence":0.5,"slot_ms":100,"max_frame_s":4.0,"broadcast_mcs":0,"cap":32,"txdelay_ms":200,"txtail_ms":10,"accept_connects":true,"width_cap":31,"track_masks":true,"repeater":false,"ring_seconds":120.0,"quieting_hz":[3600.0,4150.0],"rx_agc":true,"rx_gain_db":-6.0,"settable":["persistence","slot_ms","max_frame_s","broadcast_mcs","cap","txdelay_ms","txtail_ms","accept_connects"]},"changed":["persistence","txdelay_ms"]}
 ```
 
 ### `calibrate`
@@ -457,10 +471,11 @@ suppressed.
 | `text` | string | `message` PDUs that are valid UTF-8: the body as text |
 | `object`, `offset` | integer | `file_chunk` only |
 | `saved` | object | When the modem saves received objects (`run --rx-dir`): `path`, `complete`, and for a completed file `bytes` and `sha256` |
+| `audio_gap` | boolean | The frame that completed the PDU had a capture gap inside (audio lost and replaced by zeros); its blocks passed their CRC all the same |
 
 ```json
-{"event":"rx","time":"2026-11-07T18:02:10.120Z","modem_time":154.4,"from":"N0CALL-2","mode":"session","frame_type":"DATA","pdu_type":"message","pdu_type_code":1,"stream":0,"priority":0,"encoding":"raw","dictionary":null,"decoded":true,"crc":"ok","verify":"unsigned","bytes":5,"data":"aGVsbG8=","text":"hello"}
-{"event":"rx","time":"2026-11-07T18:02:14.500Z","modem_time":158.8,"from":"N0CALL-2","mode":"session","frame_type":"DATA","pdu_type":"file_chunk","pdu_type_code":2,"stream":0,"priority":3,"encoding":"raw","dictionary":null,"decoded":true,"crc":"ok","verify":"unsigned","bytes":3,"data":"AAEC","object":1,"offset":8192,"saved":{"path":"rx/N0CALL-2_obj1.bin","complete":true,"bytes":8195,"sha256":"0f5a6e5e28e5a1d1c5a7e8b2a8f1c7c2b0a4d9a4c3f2e1d0c9b8a7f6e5d4c3b2"}}
+{"event":"rx","time":"2026-11-07T18:02:10.120Z","modem_time":154.4,"from":"N0CALL-2","mode":"session","frame_type":"DATA","pdu_type":"message","pdu_type_code":1,"stream":0,"priority":0,"encoding":"raw","dictionary":null,"decoded":true,"crc":"ok","verify":"unsigned","bytes":5,"data":"aGVsbG8=","text":"hello","audio_gap":false}
+{"event":"rx","time":"2026-11-07T18:02:14.500Z","modem_time":158.8,"from":"N0CALL-2","mode":"session","frame_type":"DATA","pdu_type":"file_chunk","pdu_type_code":2,"stream":0,"priority":3,"encoding":"raw","dictionary":null,"decoded":true,"crc":"ok","verify":"unsigned","bytes":3,"data":"AAEC","object":1,"offset":8192,"saved":{"path":"rx/N0CALL-2_obj1.bin","complete":true,"bytes":8195,"sha256":"0f5a6e5e28e5a1d1c5a7e8b2a8f1c7c2b0a4d9a4c3f2e1d0c9b8a7f6e5d4c3b2"},"audio_gap":false}
 ```
 
 ### `session`
@@ -517,6 +532,12 @@ dashboard).
 | `far_end` | object or null | The peer's report of this station's last frame, from its ACK block (B.2): `snr_db`, `block_errors`, `distortion` (0-7), `requested_mcs`, `clipped`; null before the first |
 | `distortion` | integer 0-7 | The distortion index this receiver measured (0 until the B.2 measurement is implemented) |
 | `clipped` | boolean | This receiver's input clipped during the frame |
+| `audio_gap` | object or null | A capture gap inside the frame (an xrun: audio lost before it reached the modem, replaced by as many zeros so the timing holds): `ms` (missing), `offset_ms` (from the frame's start), `gaps`; null when the frame's audio was complete |
+
+`kind` `header_failed`: during a session, a preamble whose header did not
+decode; the link layer counts it as any header failure. `peer`, `at` (modem
+time of the frame's start) and `audio_gap` (as above: a gap explains the
+failure, not the channel).
 
 `kind` `probe`: the result of a `probe` (`ref`): `target`, `answered`, and
 `forward` (this station to the target, measured there) and `reverse` (target
@@ -525,7 +546,8 @@ to this station), each `snr_db`, `mcs` (the rung the SNR supports) and
 request.
 
 ```json
-{"event":"link","time":"2026-11-07T18:01:20.000Z","modem_time":124.3,"kind":"frame","peer":"N0CALL-2","frame_type":"ACK","seq":48,"snr_db":24.6,"ppm":-12.3,"frame_mcs":4,"blocks":0,"block_errors":0,"bler":0.02,"rx":{"mcs":4,"width":32,"mask_id":0,"mask":"0x00000000ffffffff","masked":[]},"tx":{"mcs":4,"width":32,"mask_id":1,"mask":"0x00000000fffffff8","masked":[0,1,2]},"far_end":{"snr_db":24.25,"block_errors":0,"distortion":0,"requested_mcs":4,"clipped":false},"distortion":0,"clipped":false}
+{"event":"link","time":"2026-11-07T18:01:20.000Z","modem_time":124.3,"kind":"frame","peer":"N0CALL-2","frame_type":"ACK","seq":48,"snr_db":24.6,"ppm":-12.3,"frame_mcs":4,"blocks":0,"block_errors":0,"bler":0.02,"rx":{"mcs":4,"width":32,"mask_id":0,"mask":"0x00000000ffffffff","masked":[]},"tx":{"mcs":4,"width":32,"mask_id":1,"mask":"0x00000000fffffff8","masked":[0,1,2]},"far_end":{"snr_db":24.25,"block_errors":0,"distortion":0,"requested_mcs":4,"clipped":false},"distortion":0,"clipped":false,"audio_gap":null}
+{"event":"link","time":"2026-11-07T18:01:24.410Z","modem_time":128.7,"kind":"header_failed","peer":"N0CALL-2","at":128.6,"audio_gap":{"ms":26.6,"offset_ms":61.0,"gaps":1}}
 {"event":"link","time":"2026-11-07T18:00:30.000Z","modem_time":74.3,"kind":"probe","ref":11,"target":"N0CALL-2","answered":true,"forward":{"snr_db":14.2,"mcs":2,"net_kbps":3.02},"reverse":{"snr_db":14.0,"mcs":2,"net_kbps":3.02}}
 ```
 
@@ -628,7 +650,7 @@ What a client sees (events filtered to `session`, `rx` and `tx` for brevity):
 {"event":"session","time":"2026-11-07T18:01:00.000Z","modem_time":104.3,"kind":"state","peer":"N0CALL-2","state":"connecting","session_id":null,"initiator":true,"resumed":null,"reason":null}
 {"event":"tx","time":"2026-11-07T18:01:00.100Z","modem_time":104.4,"kind":"start","frame_type":"CONNECT","dst":"N0CALL-2","seq":0,"mcs":0,"width":24,"blocks":0,"turn_holder":false,"keyed_s":0.58}
 {"event":"session","time":"2026-11-07T18:01:01.900Z","modem_time":106.2,"kind":"state","peer":"N0CALL-2","state":"open","session_id":4660,"initiator":true,"resumed":false,"reason":null}
-{"id":2,"cmd":"send","text":"hello"}
+{"id":2,"cmd":"send","text":"hello","audio_gap":false}
 {"id":2,"ok":true,"cmd":"send","ref":1,"mode":"session","bytes":5,"pdus":1,"encoding":"raw"}
 {"event":"session","time":"2026-11-07T18:01:06.000Z","modem_time":110.3,"kind":"delivered","peer":"N0CALL-2","ref":1,"bytes":5}
 {"id":3,"cmd":"disconnect"}

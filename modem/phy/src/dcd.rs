@@ -378,6 +378,9 @@ const Q_ALPHA_DOWN: f64 = 0.005;
 const Q_ALPHA_QUIETED: f64 = 0.05;
 /// Disarm this far below the minimum floor (dB).
 const Q_ARM_HYST_DB: f64 = 3.0;
+/// Hops ignored after a receive-gain step (100 ms: the step reaches the
+/// samples through the device's buffer some periods later).
+const Q_LEVEL_SETTLE_HOPS: usize = 10;
 
 struct Quieting {
     bp: BandPass,
@@ -413,6 +416,8 @@ struct Quieting {
     recovering: Option<usize>,
     /// The last recovery's length (hops after the guard), once.
     recovered: Option<usize>,
+    /// Hops still ignored after a receive-gain step.
+    settle: usize,
 }
 
 fn db(x: f64) -> f64 {
@@ -453,7 +458,18 @@ impl Quieting {
             recovery_hops: (cfg.recovery_max_s * FS as f64 / HOP as f64).round() as usize,
             recovering: None,
             recovered: None,
+            settle: 0,
         }
+    }
+
+    /// The input gain changed by `db`: move the floor and the quieted level
+    /// with it, and ignore the hops around the step.
+    fn level_step(&mut self, db: f64) {
+        let k = undb(db);
+        self.floor *= k;
+        self.quieted *= k;
+        self.hops.iter_mut().for_each(|h| *h *= k);
+        self.settle = Q_LEVEL_SETTLE_HOPS;
     }
 
     fn mean_last(&self, k: usize) -> f64 {
@@ -476,6 +492,14 @@ impl Quieting {
         }
         self.since_unmute += 1;
         if self.since_unmute <= self.guard_hops {
+            return None;
+        }
+        if self.settle > 0 {
+            // Across a gain step: neither learn nor decide on mixed hops.
+            self.settle -= 1;
+            self.hops.clear();
+            self.release_run = 0;
+            self.fresh = 0;
             return None;
         }
         if let Some(k) = self.recovering {
@@ -958,6 +982,14 @@ impl Dcd {
     /// The configuration.
     pub fn config(&self) -> &DcdConfig {
         &self.cfg
+    }
+
+    /// The receive gain changed by `db` (AGC, SPEC 13.5) between frames:
+    /// the quieting floor follows, and the next 100 ms are ignored, so the
+    /// step itself (3 dB, within the assert margin's reach) is never taken
+    /// for a carrier.
+    pub fn level_step(&mut self, db: f64) {
+        self.q.level_step(db);
     }
 
     /// Feed receive audio (any length). Decisions are taken on fixed 10 ms

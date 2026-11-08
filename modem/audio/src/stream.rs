@@ -2,36 +2,93 @@
 
 use std::collections::VecDeque;
 use std::sync::Arc;
-use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicI32, AtomicU64, Ordering};
 use std::time::{Duration, Instant};
 
 use cpal::traits::{DeviceTrait, StreamTrait};
 use cpal::{BufferSize, SampleFormat, StreamConfig, SupportedBufferSize};
 use rtrb::{Consumer, Producer, RingBuffer};
 
+use crate::capture::{Backend, CaptureSink, InputStream, NS};
 use crate::device::{Direction, find_device};
+use crate::rt::{self, RtConfig, RtGrant, ThreadRole};
 use crate::{AudioError, SAMPLE_RATE};
 
-const NS: u64 = 1_000_000_000;
+/// Which implementation captures.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum CaptureBackend {
+    /// Native ALSA where built in (its own period and buffer sizes), cpal
+    /// if that fails to open or is not built in.
+    #[default]
+    Auto,
+    /// Native ALSA only (Linux, the `alsa` feature).
+    Alsa,
+    /// cpal (a buffer of two periods).
+    Cpal,
+}
+
+impl std::str::FromStr for CaptureBackend {
+    type Err = String;
+    fn from_str(s: &str) -> Result<Self, String> {
+        match s {
+            "auto" => Ok(CaptureBackend::Auto),
+            "alsa" => Ok(CaptureBackend::Alsa),
+            "cpal" => Ok(CaptureBackend::Cpal),
+            _ => Err(format!("unknown audio backend {s:?} (auto, alsa or cpal)")),
+        }
+    }
+}
 
 /// Stream settings.
 #[derive(Clone, Debug)]
 pub struct StreamOptions {
-    /// Callback period in frames (`None`: the backend's default). The ALSA
-    /// backend double-buffers, so output latency is about two periods.
+    /// Callback period in frames (`None`: the backend's default). Output
+    /// (cpal) double-buffers, so its latency is about two periods.
     pub period_frames: Option<u32>,
-    /// Ring buffer length, seconds.
+    /// Capture device buffer, ms (native ALSA). It costs no latency: the
+    /// reader takes each period as it completes, and the rest of the buffer
+    /// is headroom for an audio thread that wakes late. cpal capture always
+    /// has two periods.
+    pub buffer_ms: f64,
+    /// Output ring length, seconds.
     pub ring_seconds: f64,
+    /// Capture ring length, seconds: how far the processing thread may fall
+    /// behind before samples are dropped (and replaced by zeros).
+    pub capture_ring_seconds: f64,
+    /// Capture implementation.
+    pub backend: CaptureBackend,
+    /// Real-time priority for the audio threads.
+    pub rt: RtConfig,
 }
 
 impl Default for StreamOptions {
     fn default() -> Self {
-        StreamOptions { period_frames: Some(480), ring_seconds: 4.0 }
+        StreamOptions {
+            period_frames: Some(480),
+            buffer_ms: 200.0,
+            ring_seconds: 4.0,
+            capture_ring_seconds: 8.0,
+            backend: CaptureBackend::Auto,
+            rt: RtConfig::default(),
+        }
     }
 }
 
+impl StreamOptions {
+    /// The capture buffer in frames: `buffer_ms`, at least two periods.
+    pub fn buffer_frames(&self) -> u32 {
+        let p = self.period_frames.unwrap_or(480);
+        ((self.buffer_ms * SAMPLE_RATE as f64 / 1e3).round() as u32).max(2 * p)
+    }
+}
+
+/// Frames as ms, for logs.
+pub(crate) fn frames_ms(n: u32) -> f64 {
+    n as f64 * 1e3 / SAMPLE_RATE as f64
+}
+
 /// Sample types the callbacks convert (the formats USB interfaces offer).
-trait Sample: cpal::SizedSample + Send + 'static {
+pub(crate) trait Sample: cpal::SizedSample + Send + 'static {
     const SILENCE: Self;
     fn to_f32(self) -> f32;
     fn from_f32(v: f32) -> Self;
@@ -88,102 +145,46 @@ fn ns_since(origin: Instant) -> u64 {
     origin.elapsed().as_nanos() as u64
 }
 
+/// Wait for a callback thread to say who it is, then ask for real-time
+/// priority for it from here (nothing of the kind runs in the callback).
+fn promote_callback_thread(tid: &AtomicI32, cfg: &RtConfig) -> Option<RtGrant> {
+    if !cfg.enabled {
+        return Some(RtGrant::Denied("disabled".into()));
+    }
+    let t0 = Instant::now();
+    while t0.elapsed() < Duration::from_secs(1) {
+        let t = tid.load(Ordering::Acquire);
+        if t != 0 {
+            return Some(rt::promote_thread(t, ThreadRole::Audio, cfg));
+        }
+        std::thread::sleep(Duration::from_millis(2));
+    }
+    None
+}
+
 // ---------------------------------------------------------------------------
 // Input
-
-#[derive(Default)]
-struct InShared {
-    frames: AtomicU64,
-    overflow_samples: AtomicU64,
-    overflow_events: AtomicU64,
-    xruns: AtomicU64,
-    gaps: AtomicU64,
-    gap_ns: AtomicU64,
-    errors: AtomicU64,
-    period: AtomicU64,
-    dead: AtomicBool,
-}
-
-/// Input counters.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
-pub struct InputStats {
-    /// Frames delivered by the device.
-    pub frames: u64,
-    /// Samples dropped because the ring was full (the reader fell behind).
-    pub overflow_samples: u64,
-    /// Callbacks that dropped samples.
-    pub overflow_events: u64,
-    /// Backend-reported xruns (ALSA overruns, recovered with prepare/start).
-    pub xruns: u64,
-    /// Discontinuities seen in the capture timestamps (samples lost before
-    /// they reached us, whether or not the backend reported an xrun).
-    pub gaps: u64,
-    /// Total time lost in those gaps, ns.
-    pub gap_ns: u64,
-    /// Other backend errors.
-    pub errors: u64,
-    /// Last callback size, frames.
-    pub period_frames: u64,
-}
-
-impl InputStats {
-    /// Any sample lost anywhere.
-    pub fn lost_any(&self) -> bool {
-        self.overflow_samples + self.xruns + self.gaps > 0
-    }
-}
-
-/// A capture stream feeding a ring buffer of f32 samples (mono, 48 kHz).
-pub struct InputStream {
-    _stream: cpal::Stream,
-    cons: Consumer<f32>,
-    sh: Arc<InShared>,
-    /// Device id opened.
-    pub id: String,
-    /// Format description, e.g. `i16 x1 @ 48000 Hz, period 480`.
-    pub format: String,
-}
 
 fn build_input<T: Sample>(
     dev: &cpal::Device,
     cfg: StreamConfig,
-    mut prod: Producer<f32>,
-    sh: Arc<InShared>,
+    mut sink: CaptureSink,
+    tid: Arc<AtomicI32>,
 ) -> Result<cpal::Stream, cpal::Error> {
     let ch = cfg.channels as usize;
-    let sh_err = sh.clone();
-    // Gap detection state, owned by the callback.
-    let mut next_capture: Option<Duration> = None;
+    let sh_err = sink.sh.clone();
     let mut first_capture: Option<cpal::StreamInstant> = None;
     dev.build_input_stream::<T, _, _>(
         cfg,
         move |data: &[T], info: &cpal::InputCallbackInfo| {
+            if first_capture.is_none() {
+                tid.store(rt::current_tid(), Ordering::Release);
+            }
             let frames = data.len() / ch;
-            sh.frames.fetch_add(frames as u64, Ordering::Relaxed);
-            sh.period.store(frames as u64, Ordering::Relaxed);
-            // Timestamp continuity, in the stream's own time base.
+            // Timestamps in the stream's own time base.
             let cap = info.timestamp().capture;
             let t0 = *first_capture.get_or_insert(cap);
-            let t = cap.duration_since(t0);
-            if let Some(expect) = next_capture {
-                let period = Duration::from_nanos(frames as u64 * NS / SAMPLE_RATE as u64);
-                let tol = (period * 2 / 5).max(Duration::from_millis(4));
-                if t > expect + tol {
-                    sh.gaps.fetch_add(1, Ordering::Relaxed);
-                    sh.gap_ns.fetch_add((t - expect).as_nanos() as u64, Ordering::Relaxed);
-                }
-            }
-            next_capture = Some(t + Duration::from_nanos(frames as u64 * NS / SAMPLE_RATE as u64));
-
-            let n = prod.slots().min(frames);
-            if n < frames {
-                sh.overflow_samples.fetch_add((frames - n) as u64, Ordering::Relaxed);
-                sh.overflow_events.fetch_add(1, Ordering::Relaxed);
-            }
-            if n > 0 {
-                let chunk = prod.write_chunk_uninit(n).expect("slots checked");
-                chunk.fill_from_iter(data.chunks_exact(ch).map(|f| f[0].to_f32()));
-            }
+            sink.deliver(frames, Some(cap.duration_since(t0)), data.chunks_exact(ch).map(|f| f[0].to_f32()));
         },
         move |e: cpal::Error| match e.kind() {
             cpal::ErrorKind::Xrun => {
@@ -199,74 +200,71 @@ fn build_input<T: Sample>(
 }
 
 impl InputStream {
-    /// Open the capture device matching `query` (see [`find_device`]) and start it.
+    /// Open the capture device matching `query` (see [`find_device`]) and
+    /// start it, with the backend `opts` asks for (native ALSA first, cpal
+    /// if that fails, by default). The audio thread asks for real-time
+    /// priority ([`InputStream::rt`] says what it got).
     pub fn open(query: &str, opts: &StreamOptions) -> Result<Self, AudioError> {
         let (dev, id) = find_device(query, Direction::Input)?;
+        #[cfg(all(target_os = "linux", feature = "alsa"))]
+        if opts.backend != CaptureBackend::Cpal {
+            match crate::alsa_in::open(&id, opts) {
+                Ok(s) => return Ok(s),
+                Err(e) if opts.backend == CaptureBackend::Alsa => return Err(e),
+                Err(e) => eprintln!("note: native ALSA capture of {id} failed ({e}); using cpal"),
+            }
+        }
+        #[cfg(not(all(target_os = "linux", feature = "alsa")))]
+        if opts.backend == CaptureBackend::Alsa {
+            return Err(AudioError::Config("native ALSA capture is not built in (the alsa feature)".into()));
+        }
+        Self::open_cpal(dev, id, opts)
+    }
+
+    fn open_cpal(dev: cpal::Device, id: String, opts: &StreamOptions) -> Result<Self, AudioError> {
         let (fmt, ch, sizes) = pick_format(&dev, Direction::Input)?;
         let mut cfg = stream_config(ch, sizes, opts);
-        let cap = (opts.ring_seconds * SAMPLE_RATE as f64) as usize;
-        let sh = Arc::new(InShared::default());
-        let build = |cfg: StreamConfig| -> Result<(cpal::Stream, Consumer<f32>), cpal::Error> {
-            let (prod, cons) = RingBuffer::new(cap);
+        let cap = (opts.capture_ring_seconds * SAMPLE_RATE as f64) as usize;
+        let tid = Arc::new(AtomicI32::new(0));
+        let build = |cfg: StreamConfig| -> Result<_, cpal::Error> {
+            let (sink, cons, gaps, sh) = CaptureSink::new(cap);
             let s = match fmt {
-                SampleFormat::I16 => build_input::<i16>(&dev, cfg, prod, sh.clone())?,
-                _ => build_input::<f32>(&dev, cfg, prod, sh.clone())?,
+                SampleFormat::I16 => build_input::<i16>(&dev, cfg, sink, tid.clone())?,
+                _ => build_input::<f32>(&dev, cfg, sink, tid.clone())?,
             };
-            Ok((s, cons))
+            Ok((s, cons, gaps, sh))
         };
-        let (stream, cons) = match build(cfg) {
+        let (stream, cons, gaps, sh) = match build(cfg) {
             Ok(x) => x,
             Err(e) if cfg.buffer_size != BufferSize::Default && e.kind() == cpal::ErrorKind::UnsupportedConfig => {
                 cfg.buffer_size = BufferSize::Default;
-                build(cfg)?
+                build(cfg).map_err(|e| open_error(&id, e))?
             }
             Err(e) => return Err(open_error(&id, e)),
         };
         stream.play()?;
-        let period = match cfg.buffer_size {
-            BufferSize::Fixed(p) => format!("period {p}"),
-            BufferSize::Default => "default period".into(),
-        };
-        let format = format!("{fmt} x{ch} @ {SAMPLE_RATE} Hz, {period}");
-        Ok(InputStream { _stream: stream, cons, sh, id, format })
-    }
-
-    /// Samples waiting in the ring.
-    pub fn available(&self) -> usize {
-        self.cons.slots()
-    }
-
-    /// Move up to `out.len()` samples out of the ring without blocking.
-    pub fn read(&mut self, out: &mut [f32]) -> Result<usize, AudioError> {
-        let n = self.cons.slots().min(out.len());
-        if n == 0 {
-            if self.sh.dead.load(Ordering::Relaxed) {
-                return Err(AudioError::StreamDead);
+        let rt = promote_callback_thread(&tid, &opts.rt);
+        let (period, period_frames) = match cfg.buffer_size {
+            BufferSize::Fixed(p) => {
+                (format!("period {p} ({:.1} ms), buffer {} ({:.1} ms)", frames_ms(p), 2 * p, frames_ms(2 * p)), p)
             }
-            return Ok(0);
-        }
-        let chunk = self.cons.read_chunk(n).expect("slots checked");
-        let (a, b) = chunk.as_slices();
-        out[..a.len()].copy_from_slice(a);
-        out[a.len()..n].copy_from_slice(b);
-        chunk.commit_all();
-        Ok(n)
-    }
-
-    /// Counters.
-    pub fn stats(&self) -> InputStats {
-        let s = &self.sh;
-        let l = |a: &AtomicU64| a.load(Ordering::Relaxed);
-        InputStats {
-            frames: l(&s.frames),
-            overflow_samples: l(&s.overflow_samples),
-            overflow_events: l(&s.overflow_events),
-            xruns: l(&s.xruns),
-            gaps: l(&s.gaps),
-            gap_ns: l(&s.gap_ns),
-            errors: l(&s.errors),
-            period_frames: l(&s.period),
-        }
+            BufferSize::Default => ("default period".into(), 0),
+        };
+        let format = format!("{fmt} x{ch} @ {SAMPLE_RATE} Hz, {period}, cpal");
+        Ok(InputStream {
+            _backend: Backend::Cpal(stream),
+            cons,
+            gaps,
+            sh,
+            capacity: cap.max(1) as u64,
+            id,
+            format,
+            period_frames,
+            buffer_frames: 2 * period_frames,
+            backend: "cpal",
+            rt,
+            start: None,
+        })
     }
 }
 
@@ -416,6 +414,8 @@ pub struct OutputStream {
     pub id: String,
     /// Format description.
     pub format: String,
+    /// What the audio thread got from the scheduler (None: not known).
+    pub rt: Option<RtGrant>,
 }
 
 fn build_output<T: Sample>(
@@ -425,12 +425,18 @@ fn build_output<T: Sample>(
     mut timing_tx: Producer<TimingEvent>,
     sh: Arc<OutShared>,
     origin: Instant,
+    tid: Arc<AtomicI32>,
 ) -> Result<cpal::Stream, cpal::Error> {
     let ch = cfg.channels as usize;
     let sh_err = sh.clone();
+    let mut said = false;
     dev.build_output_stream::<T, _, _>(
         cfg,
         move |data: &mut [T], info: &cpal::OutputCallbackInfo| {
+            if !said {
+                said = true;
+                tid.store(rt::current_tid(), Ordering::Release);
+            }
             let now = ns_since(origin);
             let ts = info.timestamp();
             let lat = ts.playback.duration_since(ts.callback).as_nanos() as u64;
@@ -483,13 +489,14 @@ impl OutputStream {
         let cap = (opts.ring_seconds * SAMPLE_RATE as f64) as usize;
         let sh = Arc::new(OutShared::default());
         let origin = Instant::now();
+        let tid = Arc::new(AtomicI32::new(0));
         type Built = (cpal::Stream, Producer<f32>, Consumer<TimingEvent>);
         let build = |cfg: StreamConfig| -> Result<Built, cpal::Error> {
             let (prod, cons) = RingBuffer::new(cap);
             let (ttx, trx) = RingBuffer::new(1024);
             let s = match fmt {
-                SampleFormat::I16 => build_output::<i16>(&dev, cfg, cons, ttx, sh.clone(), origin)?,
-                _ => build_output::<f32>(&dev, cfg, cons, ttx, sh.clone(), origin)?,
+                SampleFormat::I16 => build_output::<i16>(&dev, cfg, cons, ttx, sh.clone(), origin, tid.clone())?,
+                _ => build_output::<f32>(&dev, cfg, cons, ttx, sh.clone(), origin, tid.clone())?,
             };
             Ok((s, prod, trx))
         };
@@ -502,12 +509,16 @@ impl OutputStream {
             Err(e) => return Err(open_error(&id, e)),
         };
         stream.play()?;
+        let rt = promote_callback_thread(&tid, &opts.rt);
         let period = match cfg.buffer_size {
-            BufferSize::Fixed(p) => format!("period {p}"),
+            BufferSize::Fixed(p) => {
+                format!("period {p} ({:.1} ms), buffer {} ({:.1} ms)", frames_ms(p), 2 * p, frames_ms(2 * p))
+            }
             BufferSize::Default => "default period".into(),
         };
-        let format = format!("{fmt} x{ch} @ {SAMPLE_RATE} Hz, {period}");
+        let format = format!("{fmt} x{ch} @ {SAMPLE_RATE} Hz, {period}, cpal");
         Ok(OutputStream {
+            rt,
             _stream: stream,
             prod,
             timing_rx,

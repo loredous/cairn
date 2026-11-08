@@ -172,7 +172,7 @@
     },
     "config": {
       "type": "object",
-      "required": ["callsign", "persistence", "slot_ms", "max_frame_s", "broadcast_mcs", "cap", "txdelay_ms", "txtail_ms", "accept_connects", "width_cap", "track_masks", "repeater", "ring_seconds", "settable"],
+      "required": ["callsign", "persistence", "slot_ms", "max_frame_s", "broadcast_mcs", "cap", "txdelay_ms", "txtail_ms", "accept_connects", "width_cap", "track_masks", "repeater", "ring_seconds", "rx_agc", "rx_gain_db", "settable"],
       "properties": {
         "callsign": { "$ref": "#/$defs/address" },
         "persistence": { "type": "number", "exclusiveMinimum": 0, "maximum": 1 },
@@ -188,7 +188,58 @@
         "repeater": { "type": "boolean" },
         "ring_seconds": { "type": "number", "minimum": 0 },
         "quieting_hz": { "type": "array", "items": { "type": "number" }, "minItems": 2, "maxItems": 2 },
+        "rx_agc": { "type": "boolean", "description": "Receive AGC on (run --rx-agc, SPEC 13.5)." },
+        "rx_gain_db": { "type": ["number", "null"], "description": "The capture gain the AGC set; null without AGC." },
         "settable": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "audio_gap": {
+      "anyOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "required": ["ms", "offset_ms", "gaps"],
+          "properties": {
+            "ms": { "type": "number", "minimum": 0, "description": "Audio missing inside the frame (replaced by as many zeros)." },
+            "offset_ms": { "type": "number", "minimum": 0, "description": "From the frame's start to the first missing sample." },
+            "gaps": { "type": "integer", "minimum": 1 }
+          }
+        }
+      ]
+    },
+    "audio_status": {
+      "type": "object",
+      "required": ["backend", "period_ms", "buffer_ms", "realtime", "xruns", "gaps", "gap_ms", "filled_samples", "overflows", "ring_ms", "ring_high_water_ms", "rx_gain"],
+      "properties": {
+        "backend": { "type": "string", "enum": ["alsa", "cpal", "mock"] },
+        "period_ms": { "type": "number", "minimum": 0 },
+        "buffer_ms": { "type": "number", "minimum": 0 },
+        "realtime": { "type": ["string", "null"], "description": "What the capture thread got from the scheduler, or why not." },
+        "xruns": { "type": "integer", "minimum": 0 },
+        "gaps": { "type": "integer", "minimum": 0 },
+        "gap_ms": { "type": "number", "minimum": 0 },
+        "filled_samples": { "type": "integer", "minimum": 0 },
+        "overflows": { "type": "integer", "minimum": 0 },
+        "ring_ms": { "type": "number", "minimum": 0 },
+        "ring_high_water_ms": { "type": "number", "minimum": 0 },
+        "rx_gain": {
+          "anyOf": [
+            { "type": "null" },
+            {
+              "type": "object",
+              "required": ["agc", "control", "gain_db", "min_db", "max_db", "changes", "last_reason"],
+              "properties": {
+                "agc": { "type": "boolean" },
+                "control": { "type": "string" },
+                "gain_db": { "type": "number" },
+                "min_db": { "type": "number" },
+                "max_db": { "type": "number" },
+                "changes": { "type": "integer", "minimum": 0 },
+                "last_reason": { "type": ["string", "null"] }
+              }
+            }
+          ]
+        }
       }
     },
     "config_set": {
@@ -459,7 +510,7 @@
     },
     "res_status": {
       "type": "object",
-      "required": ["ok", "cmd", "station", "time", "modem_time", "session", "channel", "dcd", "counters", "capture", "heard_stations"],
+      "required": ["ok", "cmd", "station", "time", "modem_time", "session", "channel", "dcd", "counters", "capture", "audio", "heard_stations"],
       "properties": {
         "ok": { "const": true },
         "cmd": { "const": "status" },
@@ -479,7 +530,7 @@
         },
         "counters": {
           "type": "object",
-          "required": ["samples", "detections", "header_failures", "frames", "blocks_ok", "blocks", "tx_frames", "keyed_s", "dcd_rises"],
+          "required": ["samples", "detections", "header_failures", "frames", "blocks_ok", "blocks", "tx_frames", "keyed_s", "dcd_rises", "audio_gaps", "gapped_frames"],
           "properties": {
             "samples": { "type": "integer", "minimum": 0 },
             "detections": { "type": "integer", "minimum": 0 },
@@ -498,7 +549,9 @@
                 "afsk": { "type": "integer", "minimum": 0 },
                 "cos": { "type": "integer", "minimum": 0 }
               }
-            }
+            },
+            "audio_gaps": { "type": "integer", "minimum": 0 },
+            "gapped_frames": { "type": "integer", "minimum": 0 }
           }
         },
         "capture": {
@@ -509,6 +562,7 @@
             "buffered_seconds": { "type": "number", "minimum": 0 }
           }
         },
+        "audio": { "anyOf": [{ "type": "null" }, { "$ref": "#/$defs/audio_status" }] },
         "heard_stations": { "type": "integer", "minimum": 0 }
       }
     },
@@ -598,7 +652,7 @@
     },
     "ev_rx": {
       "type": "object",
-      "required": ["event", "from", "mode", "frame_type", "pdu_type", "pdu_type_code", "stream", "priority", "encoding", "crc", "verify", "bytes", "data"],
+      "required": ["event", "from", "mode", "frame_type", "pdu_type", "pdu_type_code", "stream", "priority", "encoding", "crc", "verify", "bytes", "data", "audio_gap"],
       "properties": {
         "event": { "const": "rx" },
         "from": { "$ref": "#/$defs/address" },
@@ -618,6 +672,7 @@
         "text": { "type": "string", "description": "The body as text, for message PDUs that are valid UTF-8." },
         "object": { "type": "integer", "minimum": 0 },
         "offset": { "type": "integer", "minimum": 0 },
+        "audio_gap": { "type": "boolean", "description": "The frame that completed the PDU had a capture gap inside." },
         "saved": {
           "type": "object",
           "required": ["path", "complete"],
@@ -714,9 +769,19 @@
               ]
             },
             "distortion": { "type": "integer", "minimum": 0, "maximum": 7 },
-            "clipped": { "type": "boolean" }
+            "clipped": { "type": "boolean" },
+            "audio_gap": { "$ref": "#/$defs/audio_gap" }
           },
-          "required": ["peer", "frame_type", "seq", "snr_db", "ppm", "frame_mcs", "blocks", "block_errors", "bler", "rx", "tx", "far_end", "distortion", "clipped"]
+          "required": ["peer", "frame_type", "seq", "snr_db", "ppm", "frame_mcs", "blocks", "block_errors", "bler", "rx", "tx", "far_end", "distortion", "clipped", "audio_gap"]
+        },
+        {
+          "properties": {
+            "kind": { "const": "header_failed" },
+            "peer": { "$ref": "#/$defs/address" },
+            "at": { "$ref": "#/$defs/modem_time" },
+            "audio_gap": { "$ref": "#/$defs/audio_gap" }
+          },
+          "required": ["peer", "at", "audio_gap"]
         },
         {
           "properties": {

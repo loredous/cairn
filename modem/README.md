@@ -19,6 +19,12 @@ The native JSON API of SPEC 13.2 (step 6) runs in `run` on TCP port 8002
 and a Unix socket, with the heard list and, from step 8, the raw-audio ring
 buffer and diagnostic capture; its schema is
 [docs/api.md](../docs/api.md) ([docs/api.schema.json](../docs/api.schema.json)).
+After a capture lost 26.6 ms inside a frame on a loaded laptop in that
+session, the audio path asks for real-time priority, captures through ALSA
+with a 200 ms buffer, fills any capture gap with exactly as many zeros
+(later frames keep their timing; the frame across it is flagged), and
+`run --rx-agc` sets the receive gain between frames (SPEC 13.5); see
+[real-time audio](#real-time-audio-priority-buffers-gaps-and-receive-gain).
 
 ```sh
 cd modem
@@ -29,14 +35,18 @@ cargo build --release -p cairn-modem         # target/release/cairn-modem
 ```
 
 Building needs the ALSA headers (`libasound2-dev` on Debian/Ubuntu,
-`alsa-lib` on Arch) and `pkg-config`.
+`alsa-lib` on Arch) and `pkg-config`. The `alsa` feature (on by default)
+adds native ALSA capture and the receive-gain mixer control;
+`--no-default-features` builds without them (capture through cpal, no
+`--rx-agc`).
+
 
 ## Crates
 
 | Crate | Directory | Contents |
 | --- | --- | --- |
 | `cairn-phy` | `phy/` | Waveform, codes, bit mapping, preamble detector, receiver (below) |
-| `cairn-audio` | `audio/` | cpal streams at 48 kHz chosen by name, lock-free rings, xrun counters, timing of every output sample, input level meter |
+| `cairn-audio` | `audio/` | Streams at 48 kHz chosen by name (capture on native ALSA with its own period and buffer, or cpal; playback on cpal), lock-free rings, real-time thread priority (`rt`: `SCHED_FIFO` or rtkit), xrun, gap and ring high-water counters, capture gaps filled with zeros at their place, a mock capture device, timing of every output sample, input level meter, the capture-gain mixer control (`mixer`) |
 | `cairn-ptt` | `ptt/` | PTT trait and backends: serial RTS/DTR, CM108 HID, Hamlib `rigctld`, VOX/none; a drop guard and a shared handle for signal handlers |
 | `cairn-link` | `link/` | The link layer, sans-IO (SPEC 8-12, ADRs 0008-0013); see [link/README.md](link/README.md) |
 | `cairn-api` | `api/` | The native API's transport side (SPEC 13.2): protocol constants and message builders, the TCP and Unix-socket server with per-client subscriptions, the heard list, the raw-audio ring buffer and capture files, a JSON Schema validator for tests |
@@ -128,15 +138,27 @@ $M run -d All-In-One-Cable --ptt serial:All-In-One-Cable --callsign N0CALL-1   #
   unless `--prefix` forces it), for `--random-header` frames.
 - Every keyed transmission over 5 s needs `--force` (and 300 s is the
   hard limit).
+- **Audio threads and buffers** (every command that opens a sound card):
+  `--period` (frames, default 480 = 10 ms: how often the audio threads
+  wake), `--buffer-ms` (capture buffer, default 200: headroom, no added
+  latency), `--audio-backend auto|alsa|cpal` (default auto: native ALSA,
+  cpal if that fails to open), `--no-rt`, `--rt-prio` (default 60 for the
+  audio threads; processing threads 20 below). The input line says what
+  was granted: `input plughw:... (S16 x1 @ 48000 Hz, period 480 (10.0 ms),
+  buffer 9600 (200.0 ms), alsa); capture thread SCHED_RR 20 via rtkit`.
+  How to allow real-time priority: [docs/bench-testing.md](../docs/bench-testing.md#real-time-priority-capture-gaps-and-receive-gain).
 
 ### How it works
 
-- **Audio** (`cairn-audio`): the callbacks only convert samples
-  (i16 or f32, any channel count; input takes the first channel) and move
-  them through preallocated `rtrb` rings, plus atomics: no allocation,
-  locking or I/O. Counted: ALSA xruns, input ring overflows, gaps in the
-  capture timestamps (samples lost upstream whether or not ALSA said so),
-  output underruns during a transmission. The output stream runs
+- **Audio** (`cairn-audio`): the audio threads only convert samples
+  (i16, S32 or f32, any channel count; input takes the first channel) and
+  move them through preallocated `rtrb` rings, plus atomics: no
+  allocation, locking or I/O. Counted: ALSA xruns, input ring overflows and
+  the ring's high-water mark, gaps in the capture timestamps (samples lost
+  upstream whether or not ALSA said so), output underruns during a
+  transmission. Capture runs on native ALSA (the `alsa` feature) with the
+  period and the buffer set separately, playback on cpal; see
+  [real-time audio](#real-time-audio-priority-buffers-gaps-and-receive-gain). The output stream runs
   continuously (silence when idle) and reports each callback's DAC time
   (`OutputCallbackInfo` playback timestamp), so the time any queued sample
   plays is known. Default period 480 frames (10 ms); output latency on the
@@ -289,6 +311,7 @@ $M run -d All-In-One-Cable --ptt serial:All-In-One-Cable --callsign N0CALL-1 --g
 #   --cap 32 (width cap in tones, 24-56)  --no-mask  --rx-dir DIR (received files and messages)
 #   --quieting 3600-4150 (Hz; default just above the cap)  --dcd-legacy  --refuse  --status 30
 #   -v (every header and DCD change)  --seconds N  --tx-budget S (never key more than S s in total)
+#   --rx-agc [--rx-agc-control NAME] (receive gain between frames)  --period/--buffer-ms/--no-rt/--rt-prio
 ```
 
 - **Width** (`--cap N`, 24-56 tones, default 24): the B.3 width cap is
@@ -568,6 +591,100 @@ a KISS client on port 8001 sent an AX.25 frame and the modem sent it as a
 UI frame (813 ms keyed). The planned 60 s idle check with PTT wired was not
 run (the cable was moved to live radios).
 
+### Real-time audio: priority, buffers, gaps and receive gain
+
+- **Priority** (`cairn_audio::rt`). The capture and playback threads ask
+  for `SCHED_FIFO` (`--rt-prio`, default 60), the processing threads (the
+  event loop that detects, decodes and runs the link layer; `listen`'s
+  processing and decoder threads; the transmit thread) for `SCHED_RR` 20
+  below: directly when `RLIMIT_RTPRIO` allows it (`@audio - rtprio 95`),
+  else through rtkit on the system bus (via `busctl`; audio threads get up
+  to rtkit's 20, processing threads nice -10, so rtkit's `RLIMIT_RTTIME`
+  watchdog never meets the decoder), else a lower nice value if allowed,
+  else one warning line and normal priority. Nothing of it runs in an
+  audio callback: a cpal callback publishes its thread id once and the
+  opener promotes it. The decoder's utilisation clamp (`boost`) stays.
+- **Buffers.** cpal sizes the ALSA buffer at two periods, so a capture
+  thread that woke more than about 10 ms late lost audio. Capture now
+  opens the PCM itself (`audio/src/alsa_in.rs`: blocking `snd_pcm_wait`
+  and `snd_pcm_readi` of one period into a preallocated buffer, capture
+  time from the status timestamp less the frames still waiting, EPIPE
+  recovered with prepare and start): 10 ms periods in a 200 ms buffer by
+  default (`--period`, `--buffer-ms`; the line at start shows what ALSA
+  granted). The buffer adds no latency: each period is taken as it
+  completes. Playback stays on cpal (two periods; its thread is real-time).
+  The capture ring between the audio thread and the processing thread
+  holds 8 s, and its high-water mark is in `status` (line and API): the
+  processing thread never blocks the audio thread, it can only fall behind,
+  and the mark says by how much. Control clients that stop reading are
+  dropped after 200 ms instead of stalling the event loop.
+- **Gaps** (`cairn_audio::AudioGap`). When the capture timestamps jump
+  (an xrun, a buffer lost) or the ring was full, the audio thread puts
+  exactly the missing number of zero samples in the stream and reports the
+  interval, so stream index *i* is always the *i*-th sample period: later
+  frames decode at their true times. The listener keeps the intervals; a
+  frame across one is flagged (`FrameReport::gap`, `FrameInfo::audio_gap`,
+  `Output::HeaderFailed::audio_gap`; `AUDIO GAP 26.6 ms at +1.234 s` on its
+  line, printed by `run` also without `-v`; `audio_gap` in the API's `link`
+  and `rx` events, `link` `header_failed`). A frame whose header was lost
+  is a header failure toward the link layer like any other; nothing
+  changes on the air.
+- **Receive AGC** (`run --rx-agc`, `agc::RxAgc`, SPEC 7.1 and 13.5). The
+  runtime measures each received frame's level and 0.5 s windows of idle
+  input; the controller steps the capture gain by 3 dB toward open-squelch
+  noise at -20 dBFS RMS (dead band +-3 dB; without a noise reference,
+  squelch closed, the data's RMS toward -18 +- 4 dBFS), never letting frame
+  peaks pass -3 dBFS or the data fall under -30 dBFS, stepping down at once
+  (2 s) on clipping or hot peaks. Only while the receiver is idle (no
+  carrier, nothing detected, queued or on the air, not keyed) and not
+  within 300 ms of a frame's end; at most one step per 10 s; two windows
+  in a row must agree; measurements from before a step and the second
+  after it are discarded. Carrier detect is told (`Dcd::level_step`: the
+  quieting floor moves with the gain and 100 ms around the step are
+  ignored; untold, 6 dB steps gave 29-33 false quieting asserts in 2
+  minutes of noise, told none). The control is a `MixerControl`: ALSA's
+  capture volume of the input's card ('AIOC Audio In' on the AIOC, or
+  `--rx-agc-control`), in dB where the card gives a dB scale; there is no
+  way to reach a playback control through it. Changes print as `rx gain
+  +0.0 -> -3.0 dB: open-squelch noise -13.1 dBFS, above -17`; the gain is
+  in `status` and the API's `status` (`audio.rx_gain`) and `config`
+  (`rx_agc`, `rx_gain_db`).
+- **Under load** (`cargo run --release -p cairn-modem --example rx_load --
+  --burn N --matrix`): the full receiver on audio played at real-time pace
+  through the mock capture device, whose audio thread wakes once a period
+  like ALSA's and overruns when it wakes later than its buffer allows,
+  while N threads burn CPU at normal priority.
+
+  60 s of synthetic UI broadcasts (MCS 0-4, widths 24 and 32, 25 dB SNR)
+  per configuration; "old" is the capture path before this change (no
+  real-time priority, two 10 ms periods of buffer); "rt" is real-time
+  priority, "200 ms" the native ALSA buffer. On a KVM guest with 16 vCPUs
+  (the build host), already at load 16-30 from other jobs, plus 16
+  burners; priority through `RLIMIT_RTPRIO` 95 (audio `SCHED_FIFO` 60,
+  processing `SCHED_RR` 40), two runs:
+
+  | Configuration | xruns (ms lost) | Frames with a gap | Ring high-water | Decode latency p50/p99 | Turnaround p50/p99 |
+  | --- | --- | --- | --- | --- | --- |
+  | old (20 ms, no rt) | 0 (0) / 1 (20) | 0 / 1 | 20 / 30 ms | 25/43 / 25/38 ms | 33/54 / 30/47 ms |
+  | 200 ms, no rt | 0 / 0 | 0 / 0 | 190 / 20 ms | 23/71 / 25/34 ms | 27/80 / 31/43 ms |
+  | rt, 20 ms | 11 (680) / 6 (400) | 7 / 6 | 230 / 170 ms | 13/19 / 14/17 ms | 19/87 / 19/28 ms |
+  | rt and 200 ms (new default) | 0 / 0 | 0 / 0 | 60 / 140 ms | 14/18 / 13/40 ms | 20/27 / 19/88 ms |
+
+  The guest loses its vCPUs to the host now and then (steal time) for
+  tens of milliseconds whatever the thread's priority: real-time priority
+  halves the decode latency but cannot prevent those stalls, and with a
+  20 ms buffer every one was an overrun (about 65 ms lost each); the
+  200 ms buffer absorbed all of them. On this laptop (8 cores, bare metal,
+  rtkit: audio `SCHED_RR` 20, processing nice -10) neither 16 spinning
+  threads nor a `cargo build -j16` loop of the workspace caused a single
+  overrun in any configuration (turnaround p99 20-29 ms). With 16 threads
+  each also mapping, touching and unmapping 256 MB in a loop (`--mem 256`,
+  the page-fault and TLB-shootdown load of parallel compiles; 30 s runs),
+  still no overrun, but the receiver itself slowed: turnaround p50/p99
+  113/432 ms on the old path, 88/250 ms with the buffer alone, 86/144 ms
+  with priority alone and 78/147 ms with both, so real-time priority is
+  what keeps the 100 ms budget of SPEC 7.3 in sight under memory pressure.
+
 ## Physical layer
 
 One library crate, `phy/` (`cairn-phy`):
@@ -708,6 +825,30 @@ Real-time layer:
   header bits matching.
 - `modem/tools/turnaround.sh`: the receive turnaround at real-time pace
   (below).
+- `audio/src/capture.rs`, `audio/src/mock.rs`: a timestamp jump becomes
+  exactly the missing zeros with later samples at their true index; a full
+  ring (the reader stalled) keeps alignment too, the gaps reported before
+  their zeros; buffers dropped from the mock device come back as zeros at
+  their place; the paced mock keeps real time. `alsa_in.rs` opens ALSA's
+  software `null` PCM (`--ignored`: needs an ALSA configuration; no sound
+  card). `rt.rs`: priorities, the report text, `--no-rt`.
+- `cli/tests/gaps.rs`: five UI broadcasts through the mock capture device
+  with 26.6 ms dropped inside frame 1's data, 50 ms between frames 2 and 3,
+  and frame 4's whole header dropped: frames 0-3 decode at their sent
+  sample positions (within 4 samples; without the zeros the later ones
+  would be 1277 and 3677 samples early) and on the modem's clock, only
+  frame 1 is flagged (offset and length exact), frame 4 is one header
+  failure, flagged; through `listen::run` and through the `Modem` runtime.
+- `cli/src/agc.rs`: the AGC controller on synthetic level sequences: the
+  bench's -12 dBFS noise steps down into the band and stays; quiet noise
+  steps up only as far as the peaks allow; clipping steps down within 2 s,
+  twice; nothing while busy or within 300 ms of a frame; stable or wobbling
+  input never moves; one odd window is not enough; squelch closed uses the
+  data; down steps keep the data above -30 dBFS; nothing at the end of the
+  range; measurements from before a step are discarded.
+  `phy/tests/dcd.rs` `quieting_follows_agc_gain_steps`: 3 and 6 dB steps
+  every 5 s for 2 minutes of open-squelch noise, applied 30 ms after the
+  detector is told, give no quieting assert.
 - `cli/tests/api.rs`: two complete modems in the two-station simulator,
   each behind an API server, driven only by clients on real sockets (TCP
   for one, a Unix socket for the other): connect, a 9000-byte file and a
