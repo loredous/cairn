@@ -309,13 +309,113 @@ fn quieting_mute() {
     assert_eq!(rel.len(), 1);
     assert!(!rel[0].up && rel[0].source == DcdSource::Quieting && !dcd.state().quieting);
     run(&mut dcd, &vec![0.0; FS / 2], HOP);
-    // Unmute into a carrier.
+    // Unmute into a carrier: it reads as the radio's own transmit tail until
+    // `recovery_max_s`, then asserts.
     dcd.set_muted(false);
     let pos = dcd.position();
-    let e = run(&mut dcd, &noise(FS / 2, NOISE_RMS * 0.1), HOP);
+    let e = run(&mut dcd, &noise(2 * FS, NOISE_RMS * 0.1), HOP);
     let up = ups(&e, DcdSource::Quieting);
     assert_eq!(up.len(), 1, "{e:?}");
-    println!("unmuted into a carrier: quieting up {:.0} ms after unmute", ms((up[0] - pos) as f64));
+    let after = ms((up[0] - pos) as f64);
+    println!("unmuted into a carrier: quieting up {after:.0} ms after unmute");
+    let max = DcdConfig::default().recovery_max_s * 1e3;
+    assert!(after > max && after < max + 150.0, "{after}");
+}
+
+/// Noise, own PTT (muted), then the radio's own transmit tail (silence for
+/// `tail_s` after unmute, the receiver deaf until the transmitter really
+/// drops), then noise again; then a peer's carrier. Returns the quieting
+/// rises during the tail and noise, the recovery reported, and the peer
+/// carrier's up latency.
+fn own_tail_trial(cfg: DcdConfig, tail_s: f64, seed: u64) -> (usize, Option<f64>, Option<f64>) {
+    let mut ns = OpenSquelchNoise::new(NoiseKind::White, Rng::new(seed));
+    let mut noise = |n: usize, g: f64| -> Vec<f64> { ns.generate(n).iter().map(|v| v * g).collect() };
+    let mut dcd = Dcd::new(cfg);
+    run(&mut dcd, &noise(3 * FS, NOISE_RMS), HOP);
+    dcd.set_muted(true);
+    run(&mut dcd, &vec![0.0; FS], HOP);
+    dcd.set_muted(false);
+    let tail = (tail_s * FS as f64) as usize;
+    // The transmitter's tail: near silence, then the key-down transient
+    // (noise back over 20 ms, a few dB low at first).
+    let mut x: Vec<f64> = noise(tail, NOISE_RMS * 0.003);
+    let ramp = noise(FS / 50, NOISE_RMS);
+    x.extend(ramp.iter().enumerate().map(|(i, v)| v * i as f64 / ramp.len() as f64));
+    x.extend(noise(FS / 10, NOISE_RMS * 0.7));
+    x.extend(noise(2 * FS, NOISE_RMS));
+    let e = run(&mut dcd, &x, HOP);
+    let rises = ups(&e, DcdSource::Quieting).len();
+    let rec = dcd.take_recovery();
+    let pos = dcd.position();
+    let e = run(&mut dcd, &noise(FS / 2, NOISE_RMS * 0.03), HOP);
+    let up = ups(&e, DcdSource::Quieting).first().map(|&t| ms((t - pos) as f64));
+    (rises, rec, up)
+}
+
+#[test]
+fn quieting_ignores_the_radios_own_transmit_tail() {
+    // Measured on the air (2026-11-07): the receiver stays silent 0.64-0.73 s
+    // after PTT release (the transmitter's tail), then the noise returns.
+    let mut legacy_rises = 0;
+    for (k, tail) in [0.0, 0.1, 0.3, 0.65, 0.73, 1.2].into_iter().enumerate() {
+        let (rises, rec, up) = own_tail_trial(DcdConfig::default(), tail, 40 + k as u64);
+        let (lr, _, _) = own_tail_trial(DcdConfig::default().legacy(), tail, 40 + k as u64);
+        legacy_rises += lr;
+        println!(
+            "own tail {:.0} ms: {rises} rises (legacy {lr}), recovered after {:?} ms, a peer carrier then up after {:?} ms",
+            tail * 1e3,
+            rec.map(|r| (r * 1e3).round()),
+            up.map(f64::round)
+        );
+        assert_eq!(rises, 0, "tail {tail}");
+        let rec = rec.expect("recovery reported");
+        assert!((rec - tail.max(0.05)).abs() < 0.04, "tail {tail}: recovery {rec}");
+        assert!(up.is_some_and(|u| u <= 70.0), "tail {tail}: {up:?}");
+    }
+    assert!(legacy_rises >= 4, "the legacy detector read the tails as carriers: {legacy_rises}");
+}
+
+#[test]
+fn quieting_carrier_end_does_not_chatter() {
+    // A deep carrier (40 dB of quieting) whose end brings the noise back a
+    // few dB low for 120 ms with 10 ms dips, as on the air: one rise per
+    // carrier, released within 25 ms of the noise returning.
+    let (mut new, mut old) = (0, 0);
+    let mut downs_ms = Vec::new();
+    for seed in 0..20u64 {
+        let mut ns = OpenSquelchNoise::new(NoiseKind::White, Rng::new(500 + seed));
+        let mut x: Vec<f64> = ns.generate(3 * FS).iter().map(|v| v * NOISE_RMS).collect();
+        let lead = x.len();
+        x.extend(ns.generate(FS).iter().map(|v| v * NOISE_RMS * 0.01));
+        let end = x.len();
+        let mut back: Vec<f64> = ns.generate(FS / 8).iter().map(|v| v * NOISE_RMS * 0.7).collect();
+        for d in [3, 6, 9] {
+            back[d * HOP..(d + 1) * HOP].iter_mut().for_each(|v| *v *= 0.55);
+        }
+        x.extend(back);
+        x.extend(ns.generate(2 * FS).iter().map(|v| v * NOISE_RMS));
+        for legacy in [false, true] {
+            let cfg = if legacy { DcdConfig::default().legacy() } else { DcdConfig::default() };
+            let mut dcd = Dcd::new(cfg);
+            let e = run(&mut dcd, &x, HOP);
+            let u = ups(&e, DcdSource::Quieting);
+            assert!(u.first().is_some_and(|&t| t > lead && t < lead + FS / 10), "{u:?}");
+            if legacy {
+                old += u.len();
+            } else {
+                new += u.len();
+                let d = downs(&e, DcdSource::Quieting);
+                downs_ms.push(ms((d[0] - end) as f64));
+            }
+        }
+    }
+    println!(
+        "carrier ends with a dipping return: {new} rises in 20 carriers ({old} legacy); release {} ms",
+        summary(&mut downs_ms)
+    );
+    assert_eq!(new, 20);
+    assert!(old > new, "the legacy detector chattered here");
+    assert!(downs_ms.iter().all(|&d| d <= 25.0), "{downs_ms:?}");
 }
 
 /// A Bell 202 burst: `flags` flags, a 30-byte frame, 2 flags.

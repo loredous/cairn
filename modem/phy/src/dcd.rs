@@ -20,6 +20,21 @@
 //!   [`DcdConfig::min_floor_dbfs`] (squelch closed, or no radio). Levels are
 //!   band power in dB relative to a mean square of 1.0 (a full-scale DC
 //!   level; a full-scale sine is -3 dB).
+//!
+//!   Hysteresis (from the first on-air session, 2026-11-07, where quieting
+//!   rose 72 times in 3.5 minutes): after a release the detector decides on
+//!   hops after it only, at least [`DcdConfig::min_off_s`] (50 ms), so the
+//!   assert window never straddles the carrier that just ended, and for
+//!   [`DcdConfig::reassert_window_s`] (250 ms) it needs a drop
+//!   [`DcdConfig::reassert_extra_db`] (3 dB) deeper (the noise comes back a
+//!   few dB low for about 100 ms after a carrier); once up it stays up at
+//!   least [`DcdConfig::min_on_s`] (30 ms). Release latency is unchanged.
+//!   After own PTT, the radio's own transmit tail reads as silence (the
+//!   AIOC radios kept their carrier 0.64-0.73 s after release): quieting
+//!   neither learns nor asserts until the open-squelch noise is back (one
+//!   hop within the assert margin of the floor), at most
+//!   [`DcdConfig::recovery_max_s`] (1.5 s); [`Dcd::take_recovery`] reports
+//!   how long that took. [`DcdConfig::legacy`] restores the first version.
 //! - **Preamble correlator.** Driven by the caller ([`Dcd::set_preamble`]),
 //!   who runs the streaming preamble detector (see
 //!   [`crate::detector::Detector::take_early`]) and knows frame lengths.
@@ -206,6 +221,30 @@ pub struct DcdConfig {
     /// Quieting asserted continuously this long re-learns its floor from the
     /// current level and releases (a stuck state recovers), seconds.
     pub relearn_s: f64,
+    /// Consecutive hops whose 20 ms mean is above the release level before
+    /// quieting releases (1: the first; 2 rides out a 10 ms burst of a
+    /// frame's own spectrum or of speech in the band).
+    pub release_confirm_hops: usize,
+    /// After a release (or the end of a recovery), quieting decides on
+    /// hops after it only, and at least this long (seconds): the assert
+    /// window never straddles the carrier that just ended, so the returning
+    /// noise cannot re-assert it. 0: the window may straddle (legacy).
+    pub min_off_s: f64,
+    /// Once asserted, quieting stays up at least this long (seconds).
+    pub min_on_s: f64,
+    /// For this long after a release (seconds) quieting asserts only on a
+    /// drop [`DcdConfig::reassert_extra_db`] deeper than usual: the noise
+    /// comes back a few dB low after a carrier ends (the receiver's AGC and
+    /// de-emphasis settling), and a real new carrier is far deeper.
+    pub reassert_window_s: f64,
+    /// The extra drop needed inside [`DcdConfig::reassert_window_s`] (dB).
+    pub reassert_extra_db: f64,
+    /// After own PTT (unmuted plus the guard), quieting neither learns nor
+    /// asserts until the open-squelch noise is back (one hop within
+    /// [`DcdConfig::assert_drop_db`] of the floor), for at most this long
+    /// (seconds): the radio's own transmit tail and key-down transient read
+    /// as silence, not as a carrier. 0: off (legacy).
+    pub recovery_max_s: f64,
 }
 
 impl Default for DcdConfig {
@@ -232,7 +271,25 @@ impl DcdConfig {
             afsk: true,
             unmute_guard_s: 0.05,
             relearn_s: 60.0,
+            release_confirm_hops: 1,
+            min_off_s: 0.05,
+            min_on_s: 0.03,
+            reassert_window_s: 0.25,
+            reassert_extra_db: 3.0,
+            recovery_max_s: 1.5,
         }
+    }
+
+    /// The detector as first built (before the on-air session of
+    /// 2026-11-07): release on the first hop, an assert window that may
+    /// straddle a release, no recovery after own PTT. For comparisons.
+    pub fn legacy(mut self) -> Self {
+        self.release_confirm_hops = 1;
+        self.min_off_s = 0.0;
+        self.min_on_s = 0.0;
+        self.reassert_window_s = 0.0;
+        self.recovery_max_s = 0.0;
+        self
     }
 }
 
@@ -341,6 +398,21 @@ struct Quieting {
     disarm_floor: f64,
     guard_hops: usize,
     relearn_hops: usize,
+    release_confirm: usize,
+    /// Consecutive hops meeting the release condition.
+    release_run: usize,
+    min_off_hops: usize,
+    min_on_hops: usize,
+    reassert_hops: usize,
+    reassert_k: f64,
+    /// Hops pushed since the last release or recovery (saturating).
+    fresh: usize,
+    recovery_hops: usize,
+    /// After own PTT: waiting for the open-squelch noise to return, and the
+    /// hops waited so far.
+    recovering: Option<usize>,
+    /// The last recovery's length (hops after the guard), once.
+    recovered: Option<usize>,
 }
 
 fn db(x: f64) -> f64 {
@@ -371,6 +443,16 @@ impl Quieting {
             disarm_floor: undb(cfg.min_floor_dbfs - Q_ARM_HYST_DB),
             guard_hops: (cfg.unmute_guard_s * FS as f64 / HOP as f64).ceil() as usize,
             relearn_hops: (cfg.relearn_s * FS as f64 / HOP as f64).ceil() as usize,
+            release_confirm: cfg.release_confirm_hops.max(1),
+            release_run: 0,
+            min_off_hops: (cfg.min_off_s * FS as f64 / HOP as f64).round() as usize,
+            min_on_hops: (cfg.min_on_s * FS as f64 / HOP as f64).round() as usize,
+            reassert_hops: (cfg.reassert_window_s * FS as f64 / HOP as f64).round() as usize,
+            reassert_k: undb(-cfg.reassert_extra_db),
+            fresh: usize::MAX,
+            recovery_hops: (cfg.recovery_max_s * FS as f64 / HOP as f64).round() as usize,
+            recovering: None,
+            recovered: None,
         }
     }
 
@@ -385,21 +467,40 @@ impl Quieting {
         if muted {
             self.since_unmute = 0;
             self.hops.clear();
+            self.release_run = 0;
+            self.fresh = 0;
+            if self.recovery_hops > 0 && self.armed {
+                self.recovering = Some(0);
+            }
             return self.set(false);
         }
         self.since_unmute += 1;
         if self.since_unmute <= self.guard_hops {
             return None;
         }
+        if let Some(k) = self.recovering {
+            // The radio's own transmit tail: silence until its receiver is
+            // back. One hop within the assert margin of the floor ends it.
+            if p >= self.floor * self.assert_k || k + 1 >= self.recovery_hops || !self.armed {
+                self.recovering = None;
+                self.recovered = Some(self.guard_hops + k + 1);
+                self.fresh = 0;
+            } else {
+                self.recovering = Some(k + 1);
+                return None;
+            }
+        }
         self.hops.push_back(p);
         if self.hops.len() > Q_LONG_HOPS {
             self.hops.pop_front();
         }
+        self.fresh = self.fresh.saturating_add(1);
         let n = self.hops.len();
         if self.up {
             self.up_hops += 1;
             if self.up_hops >= self.relearn_hops {
                 self.floor = self.mean_last(n);
+                self.fresh = 0;
                 return self.set(false);
             }
         } else if n == Q_LONG_HOPS {
@@ -411,8 +512,15 @@ impl Quieting {
         let p_a = self.mean_last(Q_ASSERT_HOPS);
         let p_r = self.mean_last(Q_RELEASE_HOPS);
         if !self.up {
-            if p_a <= self.floor * self.assert_k && p_r <= self.floor * self.release_k {
+            // Decide on hops after the last release only (the window must
+            // not straddle the carrier that just ended).
+            if self.min_off_hops > 0 && self.fresh < Q_ASSERT_HOPS.max(self.min_off_hops) {
+                return None;
+            }
+            let k = if self.fresh < self.reassert_hops { self.assert_k * self.reassert_k } else { self.assert_k };
+            if p_a <= self.floor * k && p_r <= self.floor * self.release_k {
                 self.quieted = p_a;
+                self.release_run = 0;
                 return self.set(true);
             }
             return None;
@@ -422,8 +530,14 @@ impl Quieting {
         // end is seen at once, a shallow one does not chatter.
         let release_level = (self.floor * self.release_k).min((self.floor * self.quieted).sqrt());
         if p_r > release_level {
-            return self.set(false);
+            self.release_run += 1;
+            if self.release_run >= self.release_confirm && self.up_hops >= self.min_on_hops {
+                self.fresh = 0;
+                return self.set(false);
+            }
+            return None;
         }
+        self.release_run = 0;
         self.quieted += Q_ALPHA_QUIETED * (p - self.quieted);
         None
     }
@@ -455,6 +569,7 @@ impl Quieting {
         }
         self.up = up;
         self.up_hops = 0;
+        self.release_run = 0;
         Some(up)
     }
 }
@@ -919,6 +1034,18 @@ impl Dcd {
             }
         }
         edges
+    }
+
+    /// After own PTT: how long quieting waited for the open-squelch noise
+    /// to return (from unmuting, the guard included), seconds, once per
+    /// unmute; `None` until it has returned (or when recovery is off).
+    pub fn take_recovery(&mut self) -> Option<f64> {
+        self.q.recovered.take().map(|h| h as f64 * HOP as f64 / FS as f64)
+    }
+
+    /// Quieting is waiting for the open-squelch noise to return after own PTT.
+    pub fn recovering(&self) -> bool {
+        self.q.recovering.is_some()
     }
 
     /// Whether muted.

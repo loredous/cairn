@@ -225,12 +225,17 @@ fn bell202_burst_during_a_session_is_deferred_to() {
     let data = payload(40_000, 5);
     connect(&mut sim, 0, 1, t(0.5));
     send_file(&mut sim, 0, t(0.5), &data);
-    // A packet station keys at 20 s: 300 ms of flags (its TXDelay), a
-    // 60-byte frame, heard by both stations at 20 dB.
+    // A packet station keys after 20 s, in the first gap between the
+    // session's transmissions (10 ms after a release): 300 ms of flags (its
+    // TXDelay), a 60-byte frame, heard by both stations at 20 dB.
     let frame: Vec<u8> = (0..60u8).collect();
     let audio = bell202(&hdlc_bits(&frame, 45, 3), 0.3, 0.0);
     let burst_len = Duration::from_secs_f64(audio.len() as f64 / 48_000.0);
-    sim.foreign(t(20.0), Duration::from_millis(30), audio, Duration::from_millis(20), 20.0);
+    sim.run_until(t(20.0));
+    sim.run_while(t(40.0), |s| !s.stations.iter().any(|st| st.modem.keyed()));
+    sim.run_while(t(40.0), |s| s.stations.iter().any(|st| st.modem.keyed()));
+    let at = sim.now() + Duration::from_millis(10);
+    sim.foreign(at, Duration::from_millis(30), audio, Duration::from_millis(20), 20.0);
     sim.run_while(t(300.0), |s| s.stations[1].delivered_bytes().len() < data.len());
     assert_eq!(sim.stations[1].delivered_bytes(), data);
     let afsk: Vec<u64> = sim.stations.iter().map(|s| s.modem.stats.dcd_rises[2]).collect();
