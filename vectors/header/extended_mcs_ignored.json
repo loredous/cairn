@@ -13,6 +13,8 @@
   "session": false,
   "probe": false,
   "repeat": false,
+  "first_fragment": false,
+  "block_map": false,
   "source": {
    "callsign": "N0CALL",
    "ssid": 1,
@@ -26,7 +28,8 @@
   "sequence": 0,
   "mcs": 15,
   "control_blocks": 1,
-  "data_blocks": 0
+  "data_blocks": 0,
+  "mask_id": 0
  },
  "message_hex": "3f0139b0c130c139b0c130c20000f400",
  "info_hex": "3f0139b0c130c139b0c130c20000f4002b41"

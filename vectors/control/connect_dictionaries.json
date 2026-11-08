@@ -1,0 +1,22 @@
+{
+ "format": "cairn-control-vectors",
+ "version": 1,
+ "license": "CC BY 4.0",
+ "name": "connect_dictionaries",
+ "description": "The second B.3 block: dictionary IDs only, every other field zero (width cap and max frame time 0 mark it)",
+ "valid": true,
+ "fields": {
+  "type": 1,
+  "session_id": 0,
+  "capabilities": 0,
+  "width_cap": 0,
+  "requested_mcs": 0,
+  "max_frame_time": 0,
+  "tone_mask": [],
+  "dictionary_ids": [287454020,1432778632,2578103244,3723427584],
+  "more_dictionaries": false,
+  "resume": false
+ },
+ "message_hex": "1000000000000000000000000000112233445566778899aabbccddeeff00",
+ "info_hex": "1000000000000000000000000000112233445566778899aabbccddeeff00c1c6"
+}

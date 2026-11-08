@@ -4,8 +4,10 @@
 //!
 //! Header and control block fields (SPEC 8.2, Appendix B) are here too, so a
 //! receiver can decode a frame header first without being told its
-//! configuration. No audio, PTT or link layer: samples in, samples out, at
-//! 48 kHz.
+//! configuration, with the link rules that sit on the fields (block
+//! sequences, control-block orders, session width; ADRs 0008-0012) and PDU
+//! packing ([`pdu`], ADR 0009). No audio, PTT or link state machine: samples
+//! in, samples out, at 48 kHz.
 
 #![warn(missing_docs)]
 
@@ -21,12 +23,14 @@ pub mod ldpc;
 pub mod mapping;
 pub mod ofdm;
 pub mod params;
+pub mod pdu;
 pub mod preamble;
 pub mod rx;
 pub mod tx;
 pub mod wav;
 
-pub use fields::{Address, ControlBlock, FieldError, Header};
+pub use fields::{AckBlock, Address, BlockMapBlock, ConnectBlock, ControlBlock, FieldError, Header, IdBlock};
 pub use frame::{ConfigError, FrameConfig, LinkState};
-pub use rx::{ProbeExtent, Receiver, RxOptions, RxResult};
+pub use pdu::{Pdu, PduError};
+pub use rx::{LinkSource, ProbeExtent, Receiver, RxOptions, RxResult};
 pub use tx::{Transmitter, TxFrame};

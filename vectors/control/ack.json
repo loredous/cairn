@@ -3,21 +3,22 @@
  "version": 1,
  "license": "CC BY 4.0",
  "name": "ack",
- "description": "ACK: base sequence, bitmap of blocks 0-2 with block 1 failed, no tone mask",
+ "description": "ACK in a session: next in-order block 1200, blocks 1202 and 1205 held beyond it, tone mask without tone 9 under mask ID 1",
  "valid": true,
  "fields": {
   "type": 0,
   "base_sequence": 1200,
-  "bitmap_hex": "00000000000000000000000000000005",
+  "bitmap_hex": "00000000000000000000000000000024",
   "requested_mcs": 2,
   "snr_q": 58,
   "block_errors": 1,
-  "tone_mask": null,
+  "tone_mask": [0,1,2,3,4,5,6,7,8,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55],
   "reprobe": false,
   "long_prefix": false,
   "distortion": 0,
-  "adc_clipped": false
+  "adc_clipped": false,
+  "mask_id": 1
  },
- "message_hex": "0004b00000000000000000000000000000000523a0100000000000000000",
- "info_hex": "0004b00000000000000000000000000000000523a0100000000000000000482d"
+ "message_hex": "0104b00000000000000000000000000000002423a01fffffffffffdff040",
+ "info_hex": "0104b00000000000000000000000000000002423a01fffffffffffdff040d29e"
 }

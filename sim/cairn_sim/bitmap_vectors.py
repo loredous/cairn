@@ -51,12 +51,15 @@ class Case:
     header: fields.Header | None = None     # real header fields (frame vectors); None: random bits
     controls: tuple = ()                    # control blocks (``fields``), with ``header`` only
     prefix: str = "cairn-bitmap-vector"     # pseudo-random input domain (``case_bytes``)
+    description: str | None = None          # one line for the frame vectors
 
     def config(self) -> frame.FrameConfig:
         mask = None if self.usable is None else frozenset(self.usable)
         if self.header is not None:
-            return frame.FrameConfig.from_header(self.header, frame.LinkState(self.width, mask),
-                                                 cp=self.cp, clip=False)
+            # The mask is the one the header's Mask ID names (ADR 0011); the
+            # probe covers the width (ADR 0011 width-probe-extent).
+            link = frame.LinkState(self.width, mask, mask_id=self.header.mask_id)
+            return frame.FrameConfig.from_header(self.header, link, cp=self.cp, clip=False)
         return frame.FrameConfig(width=self.width, mcs=self.mcs, n_blocks=self.n_blocks,
                                  cp=self.cp, clip=False, mask=mask)
 
@@ -155,8 +158,10 @@ def header_json(h: fields.Header) -> dict:
     """Header fields as published in the vectors."""
     return {"version": h.version, "frame_type": int(h.frame_type), "flags": h.flags(),
             "more_fragments": h.more_fragments, "session": h.session, "probe": h.probe, "repeat": h.repeat,
+            "first_fragment": h.first_fragment, "block_map": h.block_map,
             "source": _address_json(h.source), "destination": _address_json(h.destination),
-            "sequence": h.sequence, "mcs": h.mcs, "control_blocks": h.n_control, "data_blocks": h.n_data}
+            "sequence": h.sequence, "mcs": h.mcs, "control_blocks": h.n_control, "data_blocks": h.n_data,
+            "mask_id": h.mask_id}
 
 
 def _mask_json(mask: frozenset[int] | None) -> list[int] | None:
@@ -169,7 +174,7 @@ def control_json(c) -> dict:
         return {"type": 0, "base_sequence": c.base_sequence, "bitmap_hex": f"{c.bitmap:032x}",
                 "requested_mcs": c.requested_mcs, "snr_q": c.snr_q, "block_errors": c.block_errors,
                 "tone_mask": _mask_json(c.tone_mask), "reprobe": c.reprobe, "long_prefix": c.long_prefix,
-                "distortion": c.distortion, "adc_clipped": c.adc_clipped}
+                "distortion": c.distortion, "adc_clipped": c.adc_clipped, "mask_id": c.mask_id}
     if isinstance(c, fields.ConnectBlock):
         return {"type": 1, "session_id": c.session_id, "capabilities": c.capabilities,
                 "width_cap": c.width_cap, "requested_mcs": c.requested_mcs,
@@ -187,6 +192,9 @@ def control_json(c) -> dict:
     if isinstance(c, fields.PathBlock):
         return {"type": 6, "entries": [_address_json(a) for a in c.entries], "hops": c.hops,
                 "used": list(c.used), "via": c.via}
+    if isinstance(c, fields.BlockMapBlock):
+        return {"type": 7, "base_sequence": c.base_sequence, "bitmap_hex": f"{c.bitmap:032x}",
+                "sequences": c.sequences()}
     raise TypeError(c)
 
 
@@ -304,6 +312,12 @@ def case_doc(case: Case) -> dict:
     if case.header is not None:
         doc["header"] = {"fields": header_json(case.header), **doc["header"]}
         doc["clip_db"] = cfg.clip_db       # the level the frame is clipped at on air (7 dB without data)
+        if case.description is not None:
+            doc = {**{k: doc[k] for k in ("format", "version", "license", "name")},
+                   "description": case.description, **doc}
+        if cfg.n_blocks:
+            # ADR 0008: the sequence each data block carries (header and block map).
+            doc["block_sequences"] = list(fields.block_sequences(case.header, case.controls))
     if not cfg.n_blocks:
         del doc["data"]
     if case.controls:

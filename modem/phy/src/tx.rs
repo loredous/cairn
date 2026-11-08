@@ -304,10 +304,15 @@ impl Transmitter {
         self.build_with_controls(cfg, header_msg, &[], payloads)
     }
 
-    /// Build the frame a SPEC 8.2 header describes at the link's width, mask,
-    /// cap and prefix (short unless `link.cp` says otherwise), with its
-    /// control blocks and payloads (1008 bits each). Header flag bit 4 is set
-    /// when the data uses tones above 23 (ADR 0007); [`TxFrame::header`]
+    /// Build the frame a SPEC 8.2 header describes at the link's width, the
+    /// mask its Mask ID names (ADR 0011), the probe's extent and the prefix
+    /// (short unless `link.cp` says otherwise), with its control blocks and
+    /// payloads (1008 bits each; [`crate::pdu::block_bits`]). The k-th
+    /// payload is the data block the block map names k-th
+    /// ([`crate::fields::plan_blocks`] gives the header's Sequence and the
+    /// map; the map must agree with the header,
+    /// [`crate::fields::check_block_map`]). Header flag bit 4 is set when the
+    /// data uses tones above 23 (ADR 0007, ADR 0011); [`TxFrame::header`]
     /// holds the header as sent.
     pub fn build_frame(
         &mut self,
@@ -316,6 +321,7 @@ impl Transmitter {
         payloads: &[Vec<u8>],
         link: &LinkState,
     ) -> Result<TxFrame, BuildError> {
+        crate::fields::check_block_map(header, controls)?;
         let mut header = header.clone();
         if !header.probe {
             // ADR 0007: a frame whose data uses tones above 23 carries the probe.

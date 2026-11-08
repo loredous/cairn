@@ -1,7 +1,10 @@
 //! Frames with real SPEC 8.2 headers for `cairn-modem tx`, and the text
 //! `cairn-modem listen` prints for headers and control blocks (Appendix B).
 
-use cairn_phy::fields::{AckBlock, Address, ControlBlock, Header, IdBlock, frame_type, snr_code};
+use cairn_phy::fields::{
+    ALL_TONES, AckBlock, Address, ConnectBlock, ControlBlock, Header, IdBlock, capability, frame_type, snr_code,
+    tones_to_mask,
+};
 use cairn_phy::params::{self, CP_SHORT};
 use cairn_phy::{FrameConfig, LinkState, Transmitter, TxFrame};
 
@@ -18,15 +21,18 @@ pub struct HeaderSpec {
     pub destination: Address,
     /// Frame type (`frame_type`).
     pub frame_type: u8,
-    /// Sequence field: the frame counter (broadcast) or the first data
-    /// block's sequence number (session).
+    /// Sequence field: the frame counter (BEACON, UI, PROBE) or the first
+    /// data block's sequence number (session; ADR 0008, ADR 0010).
     pub sequence: u16,
-    /// Width, tones: the broadcast width, or the session link's.
+    /// Width, tones: the broadcast width, or the session width W (ADR 0011).
     pub width: usize,
-    /// Session frames: this station's cap in tones, the probe's extent (None: the width).
+    /// Session frames: the probe's extent in tones (None: the width, as ADR
+    /// 0011 `width-probe-extent` requires).
     pub cap: Option<usize>,
     /// Session frames: usable tones (None: all).
     pub usable: Option<Vec<usize>>,
+    /// Session frames: the ID of that mask, named in the header (ADR 0011 `mask-id`).
+    pub mask_id: u8,
     /// Prefix, samples.
     pub cp: usize,
     /// Data rung.
@@ -58,6 +64,7 @@ impl HeaderSpec {
             width,
             cap: None,
             usable: None,
+            mask_id: 0,
             cp: CP_SHORT,
             mcs,
             n_data,
@@ -75,21 +82,34 @@ impl HeaderSpec {
         )
     }
 
-    /// The control blocks this frame carries: in a session the ACK block
-    /// first (SPEC 8.4; demonstration values), then the ID block if asked
-    /// (always in a BEACON).
+    /// The control blocks this frame carries, in the order of ADR 0010
+    /// `control-block-order` (demonstration values): CONNECT and CONNECT-ACK
+    /// their B.3 block, then the ID block; other session frames the ACK block
+    /// first (cumulative, with this station's mask under mask ID 0; SPEC 8.4,
+    /// ADR 0008, ADR 0011), then the ID block if asked (always in a BEACON).
     pub fn controls(&self) -> Result<Vec<ControlBlock>, String> {
         let mut c = Vec::new();
-        if self.is_session() {
+        let setup = matches!(self.frame_type, frame_type::CONNECT | frame_type::CONNECT_ACK);
+        if setup {
+            let wide = self.width > 24;
+            c.push(ControlBlock::Connect(ConnectBlock {
+                session_id: 0x5A5A,
+                capabilities: if wide { capability::WIDE } else { 0 },
+                width_cap: (self.width - 1) as u8,
+                requested_mcs: if self.frame_type == frame_type::CONNECT_ACK { self.mcs } else { 0 },
+                tone_mask: self.usable.as_deref().map_or(ALL_TONES, tones_to_mask),
+                ..Default::default()
+            }));
+        } else if self.is_session() {
             c.push(ControlBlock::Ack(AckBlock {
-                base_sequence: self.sequence.wrapping_sub(1),
-                bitmap: 1,
+                base_sequence: 0,
                 requested_mcs: self.mcs,
                 snr_q: snr_code(20.0),
+                tone_mask: Some(ALL_TONES),
                 ..Default::default()
             }));
         }
-        if self.id || self.frame_type == frame_type::BEACON {
+        if setup || self.id || self.frame_type == frame_type::BEACON {
             if self.callsign.is_empty() {
                 return Err("the ID block needs the callsign as text".into());
             }
@@ -102,7 +122,10 @@ impl HeaderSpec {
         Ok(c)
     }
 
-    /// The header (flag bit 4 is set by the builder when the data needs the probe).
+    /// The header (flag bit 4 is set by the builder when the data needs the
+    /// probe). BEACON and UI frames set flag bit 6: each is a complete
+    /// message (ADR 0009 `first-fragment-flag`). Session frames other than
+    /// CONNECT-ACK name the mask's ID (ADR 0011).
     pub fn header(&self, n_control: usize) -> Header {
         let mut h = Header::new(self.frame_type, self.source.clone(), self.destination.clone());
         h.sequence = self.sequence;
@@ -110,17 +133,29 @@ impl HeaderSpec {
         h.n_control = n_control;
         h.n_data = self.n_data;
         h.session = self.is_session();
+        h.first_fragment = matches!(self.frame_type, frame_type::BEACON | frame_type::UI);
+        if h.session && self.frame_type != frame_type::CONNECT_ACK {
+            h.mask_id = self.mask_id;
+        }
         h
     }
 
     /// The link state the frame is built for: broadcasts use the width with
     /// no mask and the probe to the width (ADR 0007); session frames the mask
-    /// and this station's cap.
+    /// under its ID and the probe to the width unless `cap` says otherwise
+    /// (ADR 0011). CONNECT and CONNECT-ACK are unmasked whatever `usable`.
     pub fn link(&self) -> LinkState {
         if self.is_session() {
-            LinkState { width: self.width, usable: self.usable.clone(), cp: Some(self.cp), cap: self.cap }
+            LinkState {
+                width: self.width,
+                usable: self.usable.clone(),
+                cp: Some(self.cp),
+                cap: self.cap,
+                mask_id: self.mask_id,
+                pending: None,
+            }
         } else {
-            LinkState { width: self.width, usable: None, cp: Some(self.cp), cap: None }
+            LinkState { width: self.width, cp: Some(self.cp), ..Default::default() }
         }
     }
 
@@ -233,20 +268,30 @@ pub fn parse_type(s: &str) -> Result<u8, String> {
         .ok_or_else(|| format!("unknown frame type {s:?} (UI, BEACON, DATA, PROBE, ...)"))
 }
 
-/// The header's flags in brackets (session, probe, more fragments, repeat), or nothing.
+/// The header's flags in brackets (session, probe, first and more
+/// fragments, repeat, block map, a nonzero mask ID), or nothing.
 pub fn flag_text(h: &Header) -> String {
-    let mut f = Vec::new();
+    let mut f: Vec<String> = Vec::new();
     if h.session {
-        f.push("session");
+        f.push("session".into());
     }
     if h.probe {
-        f.push("probe");
+        f.push("probe".into());
+    }
+    if h.first_fragment {
+        f.push("first".into());
     }
     if h.more_fragments {
-        f.push("more");
+        f.push("more".into());
     }
     if h.repeat {
-        f.push("repeat");
+        f.push("repeat".into());
+    }
+    if h.block_map {
+        f.push("map".into());
+    }
+    if h.mask_id != 0 {
+        f.push(format!("mask {}", h.mask_id));
     }
     if f.is_empty() { String::new() } else { format!(" [{}]", f.join(",")) }
 }
@@ -264,7 +309,7 @@ pub fn control_summary(c: &ControlBlock) -> String {
                 a.block_errors
             );
             if let Some(m) = a.tone_mask {
-                s += &format!(" mask {} tones", m.count_ones());
+                s += &format!(" mask {} tones (ID {})", m.count_ones(), a.mask_id);
             }
             if a.reprobe {
                 s += " re-probe";
@@ -315,6 +360,7 @@ pub fn control_summary(c: &ControlBlock) -> String {
             p.hops,
             p.entries.iter().map(|a| a.to_string()).collect::<Vec<_>>().join(",")
         ),
+        ControlBlock::BlockMap(m) => format!("BLOCK-MAP base {} blocks {:?}", m.base_sequence, m.sequences()),
         ControlBlock::Unknown { control_type, .. } => format!("reserved type {control_type} (skipped)"),
     }
 }

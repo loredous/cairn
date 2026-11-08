@@ -13,8 +13,11 @@ Header-first reception (SPEC 8.2). ``receive(rx)`` without a
 fields (``fields.Header``) and takes the frame's geometry from them: the
 data rung, the control and data block counts and whether a width probe
 follows. Width and tone mask are link state, not header fields, so they come
-from ``link`` (default: 24 tones, no mask); the prefix comes from the
-detector (SPEC 6.1). ``build`` takes header fields and control blocks
+from ``link`` (default: 24 tones, no mask), which may be a callable that
+gives the link state for the decoded header; the header's Mask ID selects
+the mask (ADR 0011 ``mask-id``); the prefix comes from the detector (SPEC
+6.1). The result names each data block's sequence (``RxResult.block_sequences``,
+from the header and the block map of ADR 0008). ``build`` takes header fields and control blocks
 (``fields``) the same way; without them it sends pseudo-random header bits,
 as the Stage 1 simulator always has (``vectors/bitmap/``).
 
@@ -36,6 +39,7 @@ unmasked one. The receiver divides that known factor back out.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field, replace
 from functools import cached_property
 
@@ -53,28 +57,86 @@ HEADER_POSITION = 0     # scrambler position of the header; control block i uses
 QPSK = 2
 
 
+class UnknownMask(ValueError):
+    """A session frame's header names a mask ID the link state does not hold
+    (ADR 0011 ``mask-id``): its control and data blocks count as failed."""
+
+
 @dataclass(frozen=True)
 class LinkState:
-    """What a receiver in a session must know that the header does not say
-    (SPEC 5.4, 8.2): the link width, the tone mask, the peer's cap (the
-    width probe's extent in tones, B.3 width cap + 1; ``None``: the link
-    width), and optionally the prefix (``None``: detect it, SPEC 6.1).
+    """What a station in a session must know that the header does not say
+    (SPEC 5.4, 8.2): the width W of the frames (ADR 0011 ``session-width``),
+    the tone masks by ID, the width probe's extent in tones (``cap``; None:
+    the width, as in every session frame since ADR 0011
+    ``width-probe-extent``), and optionally the prefix (None: detect it,
+    SPEC 6.1).
 
-    It applies to session frames (header flag bit 3). A frame outside a
-    session takes its width from its own probe (ADR 0007
-    ``broadcast-width-from-probe``) or is 24 tones without one.
+    Masks (ADR 0011 ``mask-id``): ``mask`` is the current mask, with ID
+    ``mask_id``; ``pending`` an (ID, mask) reported but not yet named by a
+    header, so at most two are held. A session frame's header names the
+    mask its control and data blocks use (``mask_for``). A receiver holds
+    the masks it reported for its direction; a sender builds with the mask
+    its peer last reported and names its ID.
+
+    It applies to session frames (header flag bit 3), except that CONNECT
+    and CONNECT-ACK are unmasked. A frame outside a session takes its width
+    from its own probe (ADR 0007 ``broadcast-width-from-probe``) or is 24
+    tones without one.
     """
 
     width: int = params.BASE_TONES
     mask: frozenset[int] | None = None
     cp: int | None = None
     cap: int | None = None
+    mask_id: int = 0
+    pending: tuple[int, frozenset[int] | None] | None = None
+
+    def __post_init__(self) -> None:
+        ids = [self.mask_id] + ([self.pending[0]] if self.pending is not None else [])
+        if any(not 0 <= i < fields.MASK_IDS for i in ids) or len(set(ids)) != len(ids):
+            raise ValueError(f"mask IDs {ids}: 0-3, current and pending different")
 
     @classmethod
     def from_cap(cls, cap: int, mask: frozenset[int] | None = None, cp: int | None = None) -> LinkState:
-        """A session whose width is the sender's cap (data on tones up to the
-        cap, unusable ones masked) and whose probe reaches the same cap."""
+        """A link ``cap`` tones wide whose probe reaches the same tones."""
         return cls(width=cap, mask=mask, cp=cp, cap=cap)
+
+    @classmethod
+    def session(cls, sender: fields.ConnectBlock, receiver_capabilities: int, *,
+                mask: frozenset[int] | None = None, mask_id: int = 0, cp: int | None = None) -> LinkState:
+        """The frames a station sends in a session, from the B.3 blocks of
+        setup: W = the sender's width cap + 1 when the receiver advertised
+        capability bit 0, else 24 (``fields.session_width``), with the probe
+        to W (ADR 0011 ``session-width``, ``width-probe-extent``). A receiver
+        passes its peer's B.3 and its own capabilities; a sender its own B.3
+        and the peer's capabilities."""
+        w = fields.session_width(sender.width_cap, receiver_capabilities)
+        return cls(width=w, mask=mask, cp=cp, cap=w, mask_id=mask_id)
+
+    @classmethod
+    def probe_to(cls, width_cap: int, cp: int | None = None) -> LinkState:
+        """CONNECT, a link-test PROBE and its SOUND reply: unmasked, probing
+        tones 0 .. width cap (ADR 0011 ``width-probe-extent``)."""
+        return cls(width=width_cap + 1, cp=cp, cap=width_cap + 1)
+
+    @property
+    def masks(self) -> dict[int, frozenset[int] | None]:
+        """Mask ID -> usable tones (None: every tone)."""
+        out = {self.mask_id: self.mask}
+        if self.pending is not None:
+            out[self.pending[0]] = self.pending[1]
+        return out
+
+    def mask_for(self, header: fields.Header) -> frozenset[int] | None:
+        """The mask of a frame with this header: the one its Mask ID names in
+        a session frame, none in CONNECT, CONNECT-ACK and outside a session.
+        Raises ``UnknownMask`` for an ID not held."""
+        if not header.session or header.frame_type in (fields.FrameType.CONNECT, fields.FrameType.CONNECT_ACK):
+            return None
+        masks = self.masks
+        if header.mask_id not in masks:
+            raise UnknownMask(f"mask ID {header.mask_id} is not held (held: {sorted(masks)})")
+        return masks[header.mask_id]
 
 
 @dataclass(frozen=True)
@@ -89,7 +151,7 @@ class FrameConfig:
     mask: frozenset[int] | None = None  # usable tones (SPEC 5.4); None: every tone usable
     interleaver: str = "linear"         # mapping.INTERLEAVERS; "random" is an evaluation reference
     n_control: int = 0                  # control blocks (0-3), MCS 0 on the base tones
-    cap: int | None = None              # the probe's extent in tones (the sender's cap); None: the width
+    cap: int | None = None              # the probe's extent in tones (ADR 0011); None: the width
 
     def __post_init__(self) -> None:
         if not 0 <= self.mcs < len(params.RUNGS):
@@ -121,14 +183,16 @@ class FrameConfig:
             object.__setattr__(self, "probe", self.needs_probe)
         elif self.needs_probe and not self.probe:
             raise ValueError("data blocks on tones above 23 need the width probe (ADR 0007 "
-                             "width-probe-every-wide-frame)")
+                             "width-probe-every-wide-frame, ADR 0011 width-probe-extent)")
         if self.n_control and not self.control_tones:
             raise ValueError("the mask leaves no control tones")
 
     @classmethod
     def from_header(cls, header: fields.Header, link: LinkState | None = None, *,
                     cp: int | None = None, **kw) -> FrameConfig:
-        """The frame a header describes, at the link's width and mask (SPEC 8.2).
+        """The frame a header describes, at the link's width and the mask its
+        Mask ID names (SPEC 8.2, ADR 0011; ``LinkState.mask_for``, which raises
+        ``UnknownMask``).
 
         The rung is the header's when it has data blocks (MCS 0 otherwise:
         control blocks are always MCS 0 and the field is then ignored). The
@@ -139,12 +203,12 @@ class FrameConfig:
         if header.n_data and not 0 <= header.mcs < len(params.RUNGS):
             raise ValueError(f"header MCS {header.mcs} is a reserved rung")
         return cls(width=link.width, mcs=header.mcs if header.n_data else 0, n_blocks=header.n_data,
-                   n_control=header.n_control, cp=cp, probe=header.probe, mask=link.mask,
+                   n_control=header.n_control, cp=cp, probe=header.probe, mask=link.mask_for(header),
                    cap=link.cap if link.cap is not None else link.width, **kw)
 
     @property
     def needs_probe(self) -> bool:
-        """ADR 0007 ``width-probe-every-wide-frame``: data symbols use a tone
+        """ADR 0007, ADR 0011 ``width-probe-extent``: data symbols use a tone
         above 23 (a data tone or an upper pilot), so the receiver needs the
         probe of the same frame to estimate it."""
         return self.n_blocks > 0 and self.data_active_tones[-1] >= params.BASE_TONES
@@ -351,7 +415,8 @@ class TxFrame:
 
 
 def _check_header(cfg: FrameConfig, header: fields.Header) -> None:
-    want = FrameConfig.from_header(header, LinkState(cfg.width, cfg.mask, cap=cfg.cap), cp=cfg.cp)
+    want = FrameConfig.from_header(header, LinkState(cfg.width, cfg.mask, cap=cfg.cap, mask_id=header.mask_id),
+                                   cp=cfg.cp)
     got = (cfg.n_blocks, cfg.n_control, cfg.has_probe, cfg.mcs if cfg.n_blocks else 0)
     if got != (want.n_blocks, want.n_control, want.has_probe, want.mcs):
         raise ValueError("header fields (data and control block counts, probe flag, MCS) "
@@ -463,13 +528,31 @@ def rebuild(cfg: FrameConfig, header_bits: np.ndarray, block_bits: np.ndarray,
     return TxFrame(cfg, np.concatenate(out), header_bits, block_bits, grid, control_bits)
 
 
+def check_block_map(header: fields.Header, controls) -> None:
+    """Raise ``ValueError`` unless the frame's block map agrees with its
+    header (ADR 0008 ``block-map-control-block``): flag bit 7 set exactly when
+    the second control block is a block map, whose base is the header's
+    Sequence, bit 0 set and one bit per data block."""
+    controls = list(controls)
+    if header.block_map:
+        if fields.block_sequences(header, [None] + controls[1:2]) is None:
+            raise ValueError("flag bit 7 needs a block map as the second control block, base = Sequence, "
+                             "bit 0 set, one bit per data block")
+    elif any(isinstance(c, fields.BlockMapBlock) for c in controls):
+        raise ValueError("a block map needs header flag bit 7")
+
+
 def build_frame(header: fields.Header, controls: list | tuple = (), payloads: np.ndarray | None = None, *,
                 link: LinkState | None = None, rng: np.random.Generator | None = None,
                 **kw) -> TxFrame:
     """Build the frame a header describes (SPEC 8.2), at the link's width,
-    mask, cap and prefix; ``kw`` goes to ``FrameConfig`` (for example
-    ``clip``). Header flag bit 4 is set if the frame's data blocks use tones
-    above 23 (ADR 0007 ``width-probe-every-wide-frame``)."""
+    the mask its Mask ID names, the probe's extent and the prefix; ``kw``
+    goes to ``FrameConfig`` (for example ``clip``). Header flag bit 4 is set
+    if the frame's data blocks use tones above 23 (ADR 0007, ADR 0011
+    ``width-probe-extent``). The k-th payload is the data block the block
+    map names k-th (``check_block_map``; ``fields.plan_blocks`` gives the
+    header's Sequence and the map for a set of sequences)."""
+    check_block_map(header, controls)
     if not header.probe:
         with_probe = replace(header, probe=True)
         if FrameConfig.from_header(with_probe, link, **kw).needs_probe:
@@ -504,6 +587,22 @@ class RxResult:
     header_error: str | None = None
     controls: tuple = ()
     config: FrameConfig | None = None       # the configuration the frame was decoded with
+    # The sequence of each data block (ADR 0008, ``fields.block_sequences``):
+    # consecutive from the header's Sequence, or as the block map names them;
+    # None when the header failed, or flag bit 7 is set and the block map
+    # failed or breaks its rules (then no data block counts as received).
+    block_sequences: tuple[int, ...] | None = None
+    # Why the frame's control and data blocks were not decoded although its
+    # header was: a Mask ID the link state does not hold (ADR 0011).
+    link_error: str | None = None
+
+    def delivered(self) -> list[tuple[int, np.ndarray]]:
+        """(sequence, 1,008 payload bits) of every data block received: CRC
+        passed and its sequence known."""
+        if self.block_sequences is None:
+            return []
+        return [(seq, self.block_bits[k, :params.DATA_PAYLOAD_BITS])
+                for k, seq in enumerate(self.block_sequences) if self.block_ok[k]]
 
 
 def header_noise_floor(pre: np.ndarray, h: np.ndarray, thermal: np.ndarray,
@@ -762,8 +861,8 @@ def find_start(rx: np.ndarray, reference: np.ndarray) -> int:
     return int(np.argmax(np.abs(corr)))
 
 
-def receive(rx: np.ndarray, cfg: FrameConfig | None = None, *, link: LinkState | None = None,
-            reference: np.ndarray | None = None,
+def receive(rx: np.ndarray, cfg: FrameConfig | None = None, *, link: LinkSource = None,
+            reference: np.ndarray | None = None, cp: int | None = None,
             start: int | None = None, advance: int | None = None,
             phase_window: int = 15, smooth_window: int = 7,
             decision_directed: bool = True, burst_aware: bool = True,
@@ -787,12 +886,13 @@ def receive(rx: np.ndarray, cfg: FrameConfig | None = None, *, link: LinkState |
 
     Without ``cfg`` the header is decoded first and the frame's geometry
     taken from its fields (``receive_header_first``), with width and mask
-    from ``link``.
+    from ``link`` (a ``LinkState`` or a callable giving one for the header)
+    and the prefix ``cp`` (default: the detector's).
     """
     if header_noise not in ("s2", "measured"):
         raise ValueError(f"unknown header_noise {header_noise!r}")
     if cfg is None:
-        return receive_header_first(rx, link, reference=reference, start=start, advance=advance,
+        return receive_header_first(rx, link, reference=reference, start=start, cp=cp, advance=advance,
                                     phase_window=phase_window, smooth_window=smooth_window,
                                     decision_directed=decision_directed, burst_aware=burst_aware,
                                     header_noise=header_noise, measure_snr=measure_snr)
@@ -885,9 +985,11 @@ def receive(rx: np.ndarray, cfg: FrameConfig | None = None, *, link: LinkState |
     detail = {"h": h, "noise": noise, "thermal": thermal, "eq": eq, "d0": d0, "c0": c0,
               "window_start": window_start, "shifts": shifts, "drift": drift, "corr": corr}
     header, header_error = parse_header(bool(hres.ok[0]), hres.bits[0])
+    controls = parse_controls(cres.ok, cres.bits)
     out = RxResult(bool(hres.ok[0]), hres.bits[0], dres.ok, dres.bits, start, snr_db, dres.iterations, detail,
                    control_ok=cres.ok, control_bits=cres.bits, header=header, header_error=header_error,
-                   controls=parse_controls(cres.ok, cres.bits), config=cfg)
+                   controls=controls, config=cfg,
+                   block_sequences=_sequences(header, controls, cfg.n_blocks))
     if measure_snr:
         _add_channel_snr(rx, cfg, out)
     return out
@@ -906,6 +1008,12 @@ def _decode_blocks(eq: np.ndarray, nv: np.ndarray, bits_per_symbol: int, spec: p
                                                                  first_position + i), first_position + i)
                      for i in range(n)])
     return ldpc.decode(code, code.rate_recover(llrs, e), rows=code.rows_needed(code.tx_positions(e)))
+
+
+def _sequences(header: fields.Header | None, controls: tuple, n_blocks: int) -> tuple[int, ...] | None:
+    if header is None or header.n_data != n_blocks:
+        return None
+    return fields.block_sequences(header, controls)
 
 
 def parse_header(ok: bool, bits: np.ndarray) -> tuple[fields.Header | None, str | None]:
@@ -1061,44 +1169,59 @@ def width_alternatives(width: int) -> list[int]:
     return [width + d for d in EXTENT_RETRY if params.BASE_TONES <= width + d <= params.MAX_TONES]
 
 
-def frame_link(header: fields.Header, link: LinkState, extent: ProbeExtent | None) -> LinkState:
+def frame_link(header: fields.Header, link: LinkState | None, extent: ProbeExtent | None) -> LinkState:
     """The link state a frame is decoded with: the caller's for a session
-    frame (header flag bit 3); outside a session, the probe's extent as
-    width and cap, with no mask (ADR 0007), or 24 tones without a probe."""
-    if header.session:
+    frame (header flag bit 3); outside a session, or with no link state
+    (``link`` None, as for a CONNECT-ACK before its B.3 is known), the
+    probe's extent as width and cap, with no mask (ADR 0007), or 24 tones
+    without a probe. The prefix stays the caller's."""
+    if link is not None and header.session:
         return link
     width = extent.width if extent is not None and header.probe else params.BASE_TONES
-    return LinkState(width=width, cp=link.cp, cap=width)
+    return LinkState(width=width, cp=link.cp if link is not None else None, cap=width)
 
 
-def receive_header_first(rx: np.ndarray, link: LinkState | None = None, *,
+LinkSource = LinkState | Callable[[fields.Header], LinkState | None] | None
+
+
+def _link_for(source: LinkSource, header: fields.Header) -> LinkState | None:
+    return source(header) if callable(source) else source
+
+
+def receive_header_first(rx: np.ndarray, link: LinkSource = None, *,
                          reference: np.ndarray | None = None, start: int | None = None,
-                         measure_snr: bool = True, **kw) -> RxResult:
+                         cp: int | None = None, measure_snr: bool = True, **kw) -> RxResult:
     """Decode a frame without being told its configuration (SPEC 8.2).
 
     Find the frame (``locate``; giving ``start`` skips the search and takes
-    the prefix from ``link.cp``, default short), decode the preamble and
-    header on the base tones, unpack the header, and take the data rung, the
-    control and data block counts and the probe flag from it. A session
-    frame (flag bit 3) takes width, mask and the peer's cap from ``link``;
-    any other frame takes its width from its own probe (``probe_extent``,
-    ADR 0007; in ``detail["probe_extent"]``), or is 24 tones without one;
-    if no data block decodes at the probe's width, the widths around it are
-    tried (``width_alternatives``) and the first at which a block decodes is
-    kept. Then decode the whole frame with that configuration.
+    the prefix from ``cp``, else ``link.cp``, default short), decode the
+    preamble and header on the base tones, unpack the header, and take the
+    data rung, the control and data block counts and the probe flag from it.
+    ``link`` is a ``LinkState`` or a callable that returns one (or None) for
+    the decoded header: the caller supplies link state once it knows who
+    sent the frame. A session frame (flag bit 3) takes its width, probe
+    extent and the mask its Mask ID names from it (ADR 0011); a Mask ID it
+    does not hold fails the frame's control and data blocks
+    (``link_error``). Any other frame, or a session frame with no link state
+    (None), takes its width from its own probe (``probe_extent``, ADR 0007;
+    in ``detail["probe_extent"]``), or is 24 tones without one; if no data
+    block decodes at the probe's width, the widths around it are tried
+    (``width_alternatives``) and the first at which a block decodes is kept.
+    Then decode the whole frame with that configuration, and name each data
+    block's sequence (``block_sequences``, ADR 0008).
     A frame whose header fails (decode, CRC or fields) comes back with no
     blocks, ``header`` None and ``header_error`` saying why. ``measure_snr``
     measures the channel SNR (ADR 0006) once the final header is settled;
     a frame whose header fails gets the fallback over its preamble.
     """
-    link = link or LinkState()
+    known = link if isinstance(link, LinkState) else None
     if start is None:
-        found = locate(rx, link.cp, reference)
+        found = locate(rx, cp if cp is not None else (known.cp if known else None), reference)
         if found is None:
             raise ValueError("no frame found")
         start, cp = found
-    else:
-        cp = link.cp if link.cp is not None else params.CP_SHORT
+    elif cp is None:
+        cp = known.cp if known is not None and known.cp is not None else params.CP_SHORT
     head_cfg = FrameConfig(width=params.BASE_TONES, n_blocks=0, cp=cp, probe=False)
     head = receive(rx, head_cfg, start=start, measure_snr=False, **kw)
     if head.header is None:
@@ -1106,11 +1229,25 @@ def receive_header_first(rx: np.ndarray, link: LinkState | None = None, *,
             _add_channel_snr(rx, head_cfg, head)
         head.config = None
         return head
+    link = _link_for(link, head.header)
     extent = None
-    if not head.header.session and head.header.probe:
+    if (link is None or not head.header.session) and head.header.probe:
         extent = probe_extent(rx, start, cp, head.header, advance=kw.get("advance"))
     try:
         cfg = FrameConfig.from_header(head.header, frame_link(head.header, link, extent), cp=cp)
+    except UnknownMask as e:
+        # ADR 0011 mask-id: the frame's control and data blocks count as failed.
+        if measure_snr:
+            _add_channel_snr(rx, head_cfg, head)
+        h = head.header
+        head.config, head.link_error, head.block_sequences = None, str(e), None
+        head.control_ok = np.zeros(h.n_control, dtype=bool)
+        head.control_bits = np.zeros((h.n_control, params.CONTROL_INFO_BITS), np.uint8)
+        head.controls = (None,) * h.n_control
+        head.block_ok = np.zeros(h.n_data, dtype=bool)
+        head.block_bits = np.zeros((h.n_data, params.DATA_INFO_BITS), np.uint8)
+        head.iterations = np.zeros(h.n_data, np.int32)
+        return head
     except ValueError as e:
         if measure_snr:
             _add_channel_snr(rx, head_cfg, head)
@@ -1124,7 +1261,7 @@ def receive_header_first(rx: np.ndarray, link: LinkState | None = None, *,
         # only at the width it was sent at, so try the neighbours.
         for w in width_alternatives(extent.width):
             try:
-                alt = FrameConfig.from_header(head.header, LinkState(width=w, cp=link.cp, cap=w), cp=cp)
+                alt = FrameConfig.from_header(head.header, LinkState(width=w, cap=w), cp=cp)
             except ValueError:
                 continue
             ra = receive(rx, alt, start=start, measure_snr=False, **kw)
@@ -1133,6 +1270,7 @@ def receive_header_first(rx: np.ndarray, link: LinkState | None = None, *,
                 break
     # The header pass decided the geometry; report its header.
     r.header_ok, r.header_bits, r.header, r.header_error = True, head.header_bits, head.header, None
+    r.block_sequences = _sequences(r.header, r.controls, cfg.n_blocks)
     r.detail["probe_extent"] = extent
     if measure_snr:
         _add_channel_snr(rx, cfg, r)

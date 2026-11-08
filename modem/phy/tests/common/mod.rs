@@ -3,7 +3,8 @@
 use std::path::PathBuf;
 
 use cairn_phy::fields::{
-    AckBlock, Address, CalReportBlock, CalRequestBlock, ConnectBlock, ControlBlock, Header, IdBlock, PathBlock,
+    AckBlock, Address, BlockMapBlock, CalReportBlock, CalRequestBlock, ConnectBlock, ControlBlock, Header, IdBlock,
+    PathBlock,
 };
 use serde_json::Value;
 
@@ -141,6 +142,9 @@ pub fn header(f: &Value) -> Header {
         session: b(&f["session"]),
         probe: b(&f["probe"]),
         repeat: b(&f["repeat"]),
+        first_fragment: b(&f["first_fragment"]),
+        block_map: b(&f["block_map"]),
+        mask_id: u(&f["mask_id"]) as u8,
     };
     assert_eq!(h.flags() as u64, u(&f["flags"]));
     h
@@ -164,6 +168,7 @@ pub fn control(f: &Value) -> ControlBlock {
             long_prefix: b(&f["long_prefix"]),
             distortion: u(&f["distortion"]) as u8,
             adc_clipped: b(&f["adc_clipped"]),
+            mask_id: u(&f["mask_id"]) as u8,
         }),
         1 => ControlBlock::Connect(ConnectBlock {
             session_id: u(&f["session_id"]) as u16,
@@ -208,6 +213,33 @@ pub fn control(f: &Value) -> ControlBlock {
             used: [b(&f["used"][0]), b(&f["used"][1])],
             via: b(&f["via"]),
         }),
+        7 => {
+            let m = BlockMapBlock {
+                base_sequence: u(&f["base_sequence"]) as u16,
+                bitmap: u128::from_str_radix(f["bitmap_hex"].as_str().unwrap(), 16).unwrap(),
+            };
+            let want: Vec<u16> = f["sequences"].as_array().unwrap().iter().map(|x| u(x) as u16).collect();
+            assert_eq!(m.sequences(), want);
+            ControlBlock::BlockMap(m)
+        }
         t => panic!("type {t}"),
     }
+}
+
+/// The JSON files of `vectors/<kind>/`, sorted by name.
+pub fn vector_docs(kind: &str) -> Vec<(PathBuf, Value)> {
+    let dir = repo().join("vectors").join(kind);
+    let mut paths: Vec<_> = std::fs::read_dir(&dir)
+        .unwrap_or_else(|e| panic!("{}: {e}", dir.display()))
+        .map(|e| e.unwrap().path())
+        .filter(|p| p.extension().is_some_and(|e| e == "json"))
+        .collect();
+    paths.sort();
+    paths
+        .into_iter()
+        .map(|p| {
+            let d = read_json(&p);
+            (p, d)
+        })
+        .collect()
 }

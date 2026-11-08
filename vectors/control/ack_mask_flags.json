@@ -3,12 +3,12 @@
  "version": 1,
  "license": "CC BY 4.0",
  "name": "ack_mask_flags",
- "description": "ACK with every field set: tone mask without tones 9 and 25, re-probe, long prefix, saturated SNR, 255 block errors, distortion 5, ADC clipped, block 127 and 0 passed",
+ "description": "ACK with every field set: tone mask without tones 9 and 25 (mask ID 3), re-probe, long prefix, saturated SNR, 255 block errors, distortion 5, ADC clipped, blocks base+1 and base+127 held",
  "valid": true,
  "fields": {
   "type": 0,
   "base_sequence": 65535,
-  "bitmap_hex": "80000000000000000000000000000001",
+  "bitmap_hex": "80000000000000000000000000000002",
   "requested_mcs": 6,
   "snr_q": 255,
   "block_errors": 255,
@@ -16,8 +16,9 @@
   "reprobe": true,
   "long_prefix": true,
   "distortion": 5,
-  "adc_clipped": true
+  "adc_clipped": true,
+  "mask_id": 3
  },
- "message_hex": "0dffff800000000000000000000000000000016fffffffffffdfffdffb00",
- "info_hex": "0dffff800000000000000000000000000000016fffffffffffdfffdffb00cb85"
+ "message_hex": "0dffff800000000000000000000000000000026fffffffffffdfffdffbc0",
+ "info_hex": "0dffff800000000000000000000000000000026fffffffffffdfffdffbc01756"
 }

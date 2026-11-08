@@ -8,10 +8,11 @@
 //!
 //! Where the frame configuration comes from is pluggable ([`ConfigSource`]):
 //! [`HeaderFirst`] decodes the header once the preamble and header are in
-//! and takes the frame's geometry from it (SPEC 8.2), with the width, mask
-//! and peer cap of the link for session frames and, for a broadcast wider
-//! than 24 tones, the width from its probe (ADR 0007); [`FixedConfig`]
-//! takes everything from the command line.
+//! and takes the frame's geometry from it (SPEC 8.2), with the link state a
+//! [`LinkSource`] gives for that header for session frames (width, probe
+//! extent, the mask the header's Mask ID names; ADR 0011) and, for a
+//! broadcast wider than 24 tones, the width from its probe (ADR 0007);
+//! [`FixedConfig`] takes everything from the command line.
 
 use std::collections::{HashMap, VecDeque};
 use std::sync::mpsc::{Receiver as ChanRx, Sender, channel};
@@ -23,7 +24,7 @@ use cairn_phy::detector::{Detection, Detector, DetectorConfig};
 use cairn_phy::fields::Header;
 use cairn_phy::params::{CP_LONG, FS, PREAMBLE_SYMBOLS};
 use cairn_phy::rx::{extent_samples, frame_link};
-use cairn_phy::{FrameConfig, LinkState, ProbeExtent, Receiver, RxOptions, RxResult};
+use cairn_phy::{ConfigError, FrameConfig, LinkSource, LinkState, ProbeExtent, Receiver, RxOptions, RxResult};
 
 use crate::headers;
 
@@ -49,8 +50,9 @@ pub struct Plan {
     pub cfg: FrameConfig,
     /// The decoded header (header-first), else None (decode `cfg` as given).
     pub header: Option<Header>,
-    /// The link state for session frames.
-    pub link: LinkState,
+    /// The link state for session frames (None: no session state; the
+    /// frame took its width from its probe).
+    pub link: Option<LinkState>,
     /// For a broadcast with a probe: its extent (ADR 0007).
     pub extent: Option<ProbeExtent>,
 }
@@ -116,8 +118,9 @@ impl ConfigSource for FixedConfig {
     fn resolve(&mut self, det: &Detection, _from_start: &[f64]) -> Resolution {
         match self.build(self.force_cp.unwrap_or(det.cp)) {
             Ok(cfg) => {
-                let link = LinkState { width: cfg.width, usable: cfg.usable.clone(), cp: Some(cfg.cp), cap: None };
-                Resolution::Ready(Box::new(Plan { cfg, header: None, link, extent: None }))
+                let link =
+                    LinkState { width: cfg.width, usable: cfg.usable.clone(), cp: Some(cfg.cp), ..Default::default() };
+                Resolution::Ready(Box::new(Plan { cfg, header: None, link: Some(link), extent: None }))
             }
             Err(e) => Resolution::Fail(e),
         }
@@ -125,12 +128,15 @@ impl ConfigSource for FixedConfig {
 }
 
 /// Header-first configuration (SPEC 8.2): decode the header once the
-/// preamble and header have arrived; a session frame (flag bit 3) is decoded
-/// at the link's width, mask and peer cap; a frame outside a session at the
-/// width of its probe (ADR 0007), measured once the data symbols every width
-/// has are in, or at 24 tones without a probe.
+/// preamble and header have arrived and ask the [`LinkSource`] for that
+/// header's link state; a session frame (flag bit 3) is decoded at its width
+/// and probe extent with the mask its Mask ID names (ADR 0011; a mask ID the
+/// link state does not hold leaves the frame undecoded); a frame outside a
+/// session, or one the source has no state for, at the width of its probe
+/// (ADR 0007), measured once the data symbols every width has are in, or at
+/// 24 tones without a probe.
 pub struct HeaderFirst {
-    link: LinkState,
+    link: Box<dyn LinkSource + Send>,
     rx: Receiver,
     opts: RxOptions,
     /// Headers decoded while waiting for a probe's data symbols, by start.
@@ -138,11 +144,12 @@ pub struct HeaderFirst {
 }
 
 impl HeaderFirst {
-    /// A source for a link of `link`'s width, mask and peer cap (`link.cp`
-    /// forces the prefix; None takes the detector's).
-    pub fn new(link: LinkState, opts: RxOptions) -> Self {
+    /// A source whose session frames take the link state `link` gives for
+    /// their header: a fixed [`LinkState`] (whose `cp` forces the prefix;
+    /// None takes the detector's) or a closure `Fn(&Header) -> Option<LinkState>`.
+    pub fn new<L: LinkSource + Send + 'static>(link: L, opts: RxOptions) -> Self {
         HeaderFirst {
-            link,
+            link: Box::new(link),
             rx: Receiver::new(),
             opts: RxOptions { rebuild_snr: false, threads: 1, ..opts },
             waiting: HashMap::new(),
@@ -157,11 +164,11 @@ pub fn header_samples(cp: usize) -> usize {
 
 impl ConfigSource for HeaderFirst {
     fn lookahead(&self, det: &Detection) -> usize {
-        header_samples(self.link.cp.unwrap_or(det.cp))
+        header_samples(self.link.forced_cp().unwrap_or(det.cp))
     }
 
     fn resolve(&mut self, det: &Detection, from_start: &[f64]) -> Resolution {
-        let cp = self.link.cp.unwrap_or(det.cp);
+        let cp = self.link.forced_cp().unwrap_or(det.cp);
         let header = match self.waiting.remove(&det.start) {
             Some(h) => h,
             None => {
@@ -176,7 +183,8 @@ impl ConfigSource for HeaderFirst {
                 }
             }
         };
-        let extent = if !header.session && header.probe {
+        let link = self.link.link_for(&header);
+        let extent = if (link.is_none() || !header.session) && header.probe {
             let need = extent_samples(&header, cp) + 64;
             if from_start.len() < need {
                 self.waiting.insert(det.start, header);
@@ -186,8 +194,12 @@ impl ConfigSource for HeaderFirst {
         } else {
             None
         };
-        match FrameConfig::from_header(&header, &frame_link(&header, &self.link, extent.as_ref()), cp) {
-            Ok(cfg) => Resolution::Ready(Box::new(Plan { cfg, header: Some(header), link: self.link.clone(), extent })),
+        match FrameConfig::from_header(&header, &frame_link(&header, link.as_ref(), extent.as_ref()), cp) {
+            Ok(cfg) => Resolution::Ready(Box::new(Plan { cfg, header: Some(header), link, extent })),
+            Err(ConfigError::UnknownMask(id)) => Resolution::Fail(format!(
+                "{} > {} seq {}: mask ID {id} is not held; control and data blocks count as failed (ADR 0011)",
+                header.source, header.destination, header.sequence
+            )),
             Err(e) => Resolution::Fail(format!("header describes no decodable frame: {e}")),
         }
     }
@@ -458,7 +470,7 @@ pub fn decode_job(rx: &mut Receiver, job: &Job, opts: &RxOptions) -> RxResult {
     let plan = &job.plan;
     match &plan.header {
         Some(h) => rx
-            .receive_frame(&job.samples, h, &plan.link, plan.extent.clone(), job.offset, plan.cfg.cp, opts)
+            .receive_frame(&job.samples, h, plan.link.as_ref(), plan.extent.clone(), job.offset, plan.cfg.cp, opts)
             .unwrap_or_else(|_| rx.receive(&job.samples, &plan.cfg, job.offset, opts)),
         None => rx.receive(&job.samples, &plan.cfg, job.offset, opts),
     }
@@ -770,7 +782,7 @@ mod tests {
         let me = Address::new("N0CALL", 3).unwrap();
         let peer = Address::new("N1CALL", 0).unwrap();
         let usable: Vec<usize> = (0..30).filter(|&k| k != 11).collect();
-        let link = LinkState { width: 30, usable: Some(usable.clone()), cp: None, cap: None };
+        let link = LinkState { width: 30, usable: Some(usable.clone()), ..Default::default() };
         let mut tx = Transmitter::new();
         let mut specs = vec![
             HeaderSpec::broadcast(me.clone(), frame_type::UI, 0, 24, 2, 3),

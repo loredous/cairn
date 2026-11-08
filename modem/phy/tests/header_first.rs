@@ -110,6 +110,7 @@ fn control_field_ranges() {
             long_prefix: rng.next_u64() & 1 == 1,
             distortion: (rng.next_u64() % 8) as u8,
             adc_clipped: rng.next_u64() & 1 == 1,
+            mask_id: (rng.next_u64() % 4) as u8,
         }));
     }
     assert_eq!((fields::snr_code(-3.0), fields::snr_code(17.125), fields::snr_code(99.0)), (0, 69, 255));
@@ -212,8 +213,9 @@ fn header_only_frame() {
 fn controls_with_probe_masked_long_prefix() {
     let mut rng = Rng::new(8);
     let usable: Vec<usize> = (0..56).filter(|k| ![1, 9, 25].contains(k)).collect();
-    let tx_link = LinkState { width: 30, usable: Some(usable.clone()), cp: Some(params::CP_LONG), cap: None };
-    let rx_link = LinkState { width: 30, usable: Some(usable.clone()), cp: None, cap: None };
+    let tx_link =
+        LinkState { width: 30, usable: Some(usable.clone()), cp: Some(params::CP_LONG), ..Default::default() };
+    let rx_link = LinkState { width: 30, usable: Some(usable.clone()), ..Default::default() };
     // CONNECT-ACK: probe, two control blocks, no data.
     let mut h = Header::new(frame_type::CONNECT_ACK, station(2), station(1));
     (h.n_control, h.session, h.probe) = (2, true, true);
@@ -226,7 +228,7 @@ fn controls_with_probe_masked_long_prefix() {
     });
     let frame = Transmitter::new().build_frame(&h, &[cb.clone(), ack(8)], &[], &tx_link).unwrap();
     assert!(frame.config.has_probe && frame.config.cp == params::CP_LONG);
-    assert_eq!(frame.config.control_tones.len(), 20); // 22 less tones 1 and 9
+    assert_eq!(frame.config.control_tones.len(), 22); // CONNECT-ACK is unmasked (ADR 0011 mask-id)
     let y = awgn(&padded(&frame.output()), 14.0, 24, &mut rng, None);
     let r = Receiver::new().detect_and_receive(&y, &rx_link, &RxOptions::default()).unwrap();
     assert_eq!(r.header.as_ref(), Some(&h));

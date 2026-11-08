@@ -3,16 +3,18 @@
  "version": 1,
  "license": "CC BY 4.0",
  "name": "ui_fragment_repeat",
- "description": "UI with more-fragments and repeat flags, MCS 3, the maximum 128 data blocks and sequence 65535",
+ "description": "UI first fragment (flag bits 6 and 2) repeated (bit 5), MCS 3, the maximum 128 data blocks and frame counter 65535",
  "valid": true,
  "fields": {
   "version": 1,
   "frame_type": 1,
-  "flags": 38,
+  "flags": 102,
   "more_fragments": true,
   "session": false,
   "probe": false,
   "repeat": true,
+  "first_fragment": true,
+  "block_map": false,
   "source": {
    "callsign": "N0CALL",
    "ssid": 15,
@@ -25,8 +27,9 @@
   "sequence": 65535,
   "mcs": 3,
   "control_blocks": 0,
-  "data_blocks": 128
+  "data_blocks": 128,
+  "mask_id": 0
  },
- "message_hex": "212639b0c130cfffffffffffffff33f8",
- "info_hex": "212639b0c130cfffffffffffffff33f8c845"
+ "message_hex": "216639b0c130cfffffffffffffff33f8",
+ "info_hex": "216639b0c130cfffffffffffffff33f8e24c"
 }

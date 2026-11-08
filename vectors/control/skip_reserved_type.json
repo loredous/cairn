@@ -3,9 +3,9 @@
  "version": 1,
  "license": "CC BY 4.0",
  "name": "skip_reserved_type",
- "description": "ack bits with the control type set to 7 (reserved): receivers skip the block and go on",
+ "description": "ack bits with the control type set to 8 (reserved since type 7 became the block map): receivers skip the block and go on",
  "valid": false,
  "error": "unknown",
- "message_hex": "7004b00000000000000000000000000000000523a0100000000000000000",
- "info_hex": "7004b00000000000000000000000000000000523a01000000000000000008d9e"
+ "message_hex": "8104b00000000000000000000000000000002423a01fffffffffffdff040",
+ "info_hex": "8104b00000000000000000000000000000002423a01fffffffffffdff0401d9a"
 }

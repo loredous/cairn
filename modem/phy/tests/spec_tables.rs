@@ -152,5 +152,12 @@ fn appendix_a_geometry() {
         let cbs: Vec<usize> = row[1].split(" / ").map(|v| v.parse().unwrap()).collect();
         let r = &params::RUNGS[mcs as usize];
         assert_eq!(cbs, vec![r.bits_per_point * 22, r.bits_per_point * 52]);
+        let kbps: Vec<String> = row[4].split(" / ").map(str::to_string).collect();
+        for (w, k) in [(24, &kbps[0]), (56, &kbps[1])] {
+            assert_eq!(&format!("{:.2}", params::net_bps(mcs, w, frame_s) / 1000.0), k, "MCS {mcs} at {w} kbps");
+        }
     }
+    let data = get("Data-block symbols in a 4 s DATA frame");
+    assert_eq!(data[1], params::data_block_symbols(24, 4.0).to_string());
+    assert_eq!(data[2], params::data_block_symbols(56, 4.0).to_string());
 }

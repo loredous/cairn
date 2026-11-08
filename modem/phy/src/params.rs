@@ -251,10 +251,40 @@ pub const fn control_symbols_per_block() -> usize {
     CONTROL_CODED_BITS.div_ceil(2 * (BASE_TONES - 2))
 }
 
-/// Data blocks that fit a frame of `frame_s` seconds at a width and rung
-/// with no mask (A.2).
+/// Data-block symbols of a DATA frame of `frame_s` seconds at a width with
+/// no mask (A.1: 318 / 316 for 4 s): the block symbols less the ACK control
+/// block every DATA frame carries (SPEC 8.4) and, above 24 tones, the width
+/// probe (ADR 0007).
+pub fn data_block_symbols(width: usize, frame_s: f64) -> usize {
+    let probe = if width > BASE_TONES { PROBE_SYMBOLS } else { 0 };
+    block_symbols_available(frame_s, CP_SHORT) - control_symbols_per_block() - probe
+}
+
+/// Data blocks that fit a DATA frame of `frame_s` seconds at a width and
+/// rung with no mask (A.2).
 pub fn blocks_per_frame(mcs: u8, width: usize, frame_s: f64) -> usize {
     let r = &RUNGS[mcs as usize];
     let data_tones = width - pilots_for(width).len();
-    block_symbols_available(frame_s, CP_SHORT) * r.bits_per_point * data_tones / r.coded_bits
+    data_block_symbols(width, frame_s) * r.bits_per_point * data_tones / r.coded_bits
+}
+
+/// Peer turnaround plus its TXDelay assumed by SPEC 7.4 and Appendix A.
+pub const APPENDIX_A_PEER_TURNAROUND_S: f64 = 0.250;
+
+/// Net one-direction throughput of Appendix A.2, bits/s: the blocks of
+/// [`blocks_per_frame`] over the cycle of the frame (TXDelay, preamble,
+/// header, probe, ACK control block, the data run padded to whole symbols,
+/// TXTail) and the 0.51 s peer ACK cycle (turnaround and TXDelay, then
+/// preamble, header and one control block).
+pub fn net_bps(mcs: u8, width: usize, frame_s: f64) -> f64 {
+    let r = &RUNGS[mcs as usize];
+    let symbol_s = (N_USEFUL + CP_SHORT) as f64 / FS as f64;
+    let blocks = blocks_per_frame(mcs, width, frame_s);
+    let data_tones = width - pilots_for(width).len();
+    let data_symbols = (blocks * r.coded_bits).div_ceil(r.bits_per_point * data_tones);
+    let probe = if width > BASE_TONES { PROBE_SYMBOLS } else { 0 };
+    let fixed = PREAMBLE_SYMBOLS + header_symbols() + probe + control_symbols_per_block();
+    let frame = APPENDIX_A_TXDELAY_S + (fixed + data_symbols) as f64 * symbol_s + APPENDIX_A_TXTAIL_S;
+    let ack = (PREAMBLE_SYMBOLS + header_symbols() + control_symbols_per_block()) as f64 * symbol_s;
+    (blocks * DATA_PAYLOAD_BITS) as f64 / (frame + APPENDIX_A_PEER_TURNAROUND_S + ack)
 }

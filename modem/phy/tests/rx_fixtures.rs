@@ -123,7 +123,8 @@ fn receiver_matches_simulator() {
         let start = prx["start"].as_u64().unwrap() as usize;
         let header_first = doc.get("header_first").is_some();
         let r = if header_first {
-            let link = LinkState { width: cfg.width, usable: cfg.usable.clone(), cp: Some(cfg.cp), cap: None };
+            let link =
+                LinkState { width: cfg.width, usable: cfg.usable.clone(), cp: Some(cfg.cp), ..Default::default() };
             let r = rx.receive_header_first(&samples, &link, start, cfg.cp, &RxOptions::default());
             // The header told the receiver what the fixture's configuration is.
             assert_eq!(r.config.as_ref(), Some(&cfg), "{name}: configuration from the header");

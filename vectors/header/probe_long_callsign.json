@@ -3,7 +3,7 @@
  "version": 1,
  "license": "CC BY 4.0",
  "name": "probe_long_callsign",
- "description": "PROBE from a 7-character callsign (code 63 and its 30-bit hash)",
+ "description": "BEACON-request PROBE from a 7-character callsign (code 63 and its 30-bit hash); sequence is the frame counter",
  "valid": true,
  "fields": {
   "version": 1,
@@ -13,6 +13,8 @@
   "session": false,
   "probe": false,
   "repeat": false,
+  "first_fragment": false,
+  "block_map": false,
   "source": {
    "callsign": "N0CALL/7",
    "hash30": 242965280,
@@ -24,11 +26,12 @@
    "ssid": 0,
    "value_hex": "39b0c130c0"
   },
-  "sequence": 0,
+  "sequence": 4242,
   "mcs": 0,
   "control_blocks": 0,
-  "data_blocks": 0
+  "data_blocks": 0,
+  "mask_id": 0
  },
- "message_hex": "2800fce7b5b20039b0c130c000000000",
- "info_hex": "2800fce7b5b20039b0c130c00000000070d1"
+ "message_hex": "2800fce7b5b20039b0c130c010920000",
+ "info_hex": "2800fce7b5b20039b0c130c0109200007d2f"
 }

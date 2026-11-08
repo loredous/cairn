@@ -1,0 +1,24 @@
+{
+ "format": "cairn-control-vectors",
+ "version": 1,
+ "license": "CC BY 4.0",
+ "name": "ack_refusal",
+ "description": "ACK with every field zero: the first block of a refusal DISCONNECT (ADR 0010 connect-refusal)",
+ "valid": true,
+ "fields": {
+  "type": 0,
+  "base_sequence": 0,
+  "bitmap_hex": "00000000000000000000000000000000",
+  "requested_mcs": 0,
+  "snr_q": 0,
+  "block_errors": 0,
+  "tone_mask": null,
+  "reprobe": false,
+  "long_prefix": false,
+  "distortion": 0,
+  "adc_clipped": false,
+  "mask_id": 0
+ },
+ "message_hex": "000000000000000000000000000000000000000000000000000000000000",
+ "info_hex": "0000000000000000000000000000000000000000000000000000000000002a45"
+}
