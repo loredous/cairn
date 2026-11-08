@@ -17,3 +17,29 @@
     about 0.4–0.5 dB higher than the same channel unmasked. Found when the
     Rust and Python receivers disagreed by that amount on a masked fixture.
   date: 2026-11-07
+
+- slug: level-settling-at-frame-start
+  decision: snr-measurement-accuracy
+  question: >-
+    Over the air the received level rises over the first 60 ms or so of a
+    transmission: on the 2026-11-07 two-radio captures it starts 13 to 22 dB
+    below its steady value at the first preamble sample and settles with a
+    19 ms time constant, the same on every tone. The preamble, built for a
+    low crest factor, also escapes the radios' limiters, whose clipping sets
+    the noise of a strong FM link. Measured over every known symbol with one
+    gain per tone, header-only and control-only frames read 4 to 7 dB below
+    the data frames on the same path; giving the preamble symbols gains of
+    their own instead made a header-only frame read up to 3 dB high. Which
+    SNR does the requirement mean over such a frame?
+  interpretation: >-
+    The SNR the frame's data symbols would see at the steady level. A level
+    still settling at the start of a transmission is not noise and
+    distortion the data meets, and the preamble's freedom from limiter
+    clipping does not represent the data. A receiver may leave the preamble
+    out of the measurement and give the known symbols before the level has
+    settled a gain of their own, counting their residual at the steady level
+    and one degree of freedom each (the reference receivers do so for the
+    symbols before the eighth). On the captures the short frames then read
+    within 1.4 dB of the 4 s frame on the same path, none more than 0.8 dB
+    above it.
+  date: 2026-11-07

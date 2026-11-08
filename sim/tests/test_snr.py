@@ -170,3 +170,33 @@ def test_control_only_frame_with_failed_controls_falls_back():
     r.header_ok = False
     m = frame.channel_snr(tx.samples, tx.config, r)
     assert m.fallback and m.known_symbols == params.PREAMBLE_SYMBOLS
+
+
+@pytest.mark.parametrize("n_blocks", [4, 0])
+def test_per_tone_snr_on_probed_tones_next_to_bad_tones(n_blocks):
+    # A 32-tone frame with its width probe; tones 0-2 swamped by interferers
+    # (0 dB there). Every probed tone above 23 is measured (finite, near the
+    # channel SNR), even in a header-only frame where only its two probe
+    # symbols cover it, and tones 3-4 next to the bad ones read their own
+    # SNR: mask decisions use these values (the decoder's smoothed estimate
+    # spills the bad tones over their neighbours).
+    true_db = 20.0
+    rng = np.random.default_rng(77)
+    cfg = frame.FrameConfig(width=32, mcs=0, n_blocks=n_blocks, probe=True)
+    tx = frame.build(cfg, rng)
+    last = cfg.first_data if n_blocks else cfg.first_probe
+    p = float(np.mean(tx.samples[last * cfg.stride:] ** 2))
+    x = np.concatenate([np.zeros(600), tx.samples, np.zeros(600)])
+    y = channel.awgn(x, true_db, cfg.width, rng, signal_power=p)
+    t = np.arange(y.size) / params.FS
+    for k in (0, 1, 2):
+        y = y + np.sqrt(2 * p / cfg.width) * np.cos(2 * np.pi * params.tone_freq(k) * t + rng.uniform(0, 2 * np.pi))
+    r = frame.receive(y, cfg, start=600)
+    assert r.header_ok and r.block_ok.all() and not r.detail["snr_fallback"]
+    per = r.detail["snr_per_tone_db"]
+    assert np.all(np.isfinite(per)) and per.size == 32
+    assert np.all(per[:3] < 6.0), per[:3]
+    # A header-only frame measures each base tone on 9 symbols (+-1.7 dB).
+    assert np.all(np.abs(per[3:5] - true_db) < (2.5 if n_blocks else 5.0)), per[3:5]
+    upper = per[24:]
+    assert np.all(np.abs(upper - true_db) < (3.0 if n_blocks else 6.0)), upper

@@ -33,5 +33,5 @@ pub mod wav;
 pub use fields::{AckBlock, Address, BlockMapBlock, ConnectBlock, ControlBlock, FieldError, Header, IdBlock};
 pub use frame::{ConfigError, FrameConfig, LinkState};
 pub use pdu::{Pdu, PduError};
-pub use rx::{LinkSource, ProbeExtent, Receiver, RxOptions, RxResult};
+pub use rx::{ClockPrior, LinkSource, ProbeExtent, Receiver, RxOptions, RxResult};
 pub use tx::{Transmitter, TxFrame};

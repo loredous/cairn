@@ -7,8 +7,9 @@
 
 mod common;
 
-/// Largest channel-SNR difference allowed between the receivers, dB.
-const CHANNEL_SNR_AGREEMENT_DB: f64 = 0.15;
+/// Largest channel-SNR difference allowed between the receivers, dB (they
+/// run the same fit; measured: under 0.001 dB).
+const CHANNEL_SNR_AGREEMENT_DB: f64 = 0.01;
 
 use cairn_phy::detector::{self, DetectorConfig};
 use cairn_phy::{LinkState, Receiver, RxOptions, Transmitter, wav};
@@ -176,7 +177,7 @@ fn receiver_matches_simulator() {
         );
         assert!(snr_diff < 1e-6, "{name}: per-tone SNR differs by {snr_diff} dB");
         // The protocol's SNR (ADR 0006, the mask's boost counted as signal):
-        // the two receivers fit it differently but must agree closely.
+        // the two receivers run the same fit and must agree closely.
         let py_ch = prx["channel_snr_db"].as_f64().unwrap();
         let ch = r.snr_7db_equivalent(r.config.as_ref().unwrap_or(&cfg)).min(63.75); // B.2 saturates
         println!("{name}: channel SNR rust {ch:.3} python {py_ch:.3} dB");

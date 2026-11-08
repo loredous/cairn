@@ -449,11 +449,24 @@ One library crate, `phy/` (`cairn-phy`):
 The reported SNR (`RxResult::snr_7db_equivalent`, SPEC 7.1 and ADR 0006)
 is the channel's, without clip-and-filter's designed distortion: the
 receiver rebuilds the frame from the decoded bits (encode, map,
-clip-and-filter), demodulates it with its own window, and fits each tone
-over the symbols whose content is known (preamble, probe, a decoded header,
-data symbols whose blocks all decoded), with a residual phase ramp where
-the pilot track leaves one. `tests/loopback.rs` checks it within 1 dB from
-12 to 45 dB at MCS 0, 4 and 6 (measured within 0.2 dB).
+clip-and-filter), demodulates it with its own window, and fits a gain per
+tone over the symbols after the preamble whose content is known (probe, a
+decoded header, control and data symbols whose blocks all decoded), with
+the pilots' phase track refined against the rebuilt tones and a gain of
+their own for the symbols before the eighth, where the radios' level may
+still be settling (ADR 0006 interpretation `level-settling-at-frame-start`);
+the same fit as the simulator's `frame.channel_snr`, fallback rules
+included. `tests/loopback.rs` checks it within 1 dB from 12 to 45 dB at
+MCS 0, 4 and 6 (measured within 0.3 dB).
+
+The sample-clock drift comes from the continuous pilots' phase slopes, with
+a variance from their residuals; it is combined with a prior
+(`ClockPrior`: 0 +- 50 ppm by default, or what the link layer knows of the
+peer, through `RxOptions::clock_prior` or `LinkSource::clock_prior`) by
+their variances and bounded at +-150 ppm, so a header-only frame (where
+two pilots over seven symbols measure it to +-300 ppm) keeps the prior and
+a 4 s frame measures it to under 1 ppm. `RxResult::clock_ppm` gives the
+estimate and its standard deviation.
 
 The receiver decodes header first (`Receiver::receive_header_first`, or
 `detect_and_receive` with the detector in front): it decodes the preamble
@@ -588,9 +601,8 @@ Physical layer (paths under `phy/`):
   16-bit WAV. The Rust detector finds the simulator's starts, prefixes and
   clock-grid points; the receiver's per-tone SNR agrees to 1e-12 dB and it
   decodes the same blocks in the same number of LDPC iterations; the
-  protocol's channel SNR (ADR 0006, mask boost counted) agrees within
-  0.15 dB (measured: 0.07 dB at most, 0.006 dB on the masked 30-tone
-  frame). Six `hdr_*` fixtures (mic and repeater profiles, AWGN at 30
+  protocol's channel SNR (ADR 0006, mask boost counted), the same fit in
+  both, agrees within 0.01 dB (measured: under 0.001 dB). Six `hdr_*` fixtures (mic and repeater profiles, AWGN at 30
   tones with a probe, mask and two control blocks, a header-only PROBE,
   and two wide UI broadcasts, 33 tones in AWGN and 27 through the mic
   path) carry real headers and control blocks and are decoded header first
@@ -598,7 +610,17 @@ Physical layer (paths under `phy/`):
   width from the probe for the broadcasts), same control blocks, per-tone
   SNR within 1e-13 dB. Rust clip-and-filter matches the simulator to 3e-15.
 - `tests/loopback.rs`: Rust TX to Rust RX, every rung at widths 24-56,
-  both prefixes, with and without masks; header-only frames; the channel SNR.
+  both prefixes, with and without masks; header-only frames; the channel
+  SNR; short frames (header only, a control block, one data block) with the
+  received level settling over the first symbols as over the air: clock
+  estimate near its prior, channel SNR within 1 dB.
+- `tests/offair.rs`: real frames from the first two-radio session
+  (`fixtures/offair/`, cut by `tools/cut_offair_fixtures.py`; see its
+  README): every frame type decodes in both directions (but a one-block
+  frame whose capture lost 26.6 ms to an input xrun); short frames' clock
+  offset consistent with the direction's 4 s frame (within 5 ppm given it
+  as the peer's prior); their SNR within 1.5 dB of the 4 s frame, never
+  more than 1 dB above it.
 - Block-by-block agreement near the MCS 2 threshold (3,200 blocks at 7.0,
   7.5, 8.0 and 8.25 dB, 24 tones): no block, header or LDPC iteration count
   differs between the Rust and Python receivers.

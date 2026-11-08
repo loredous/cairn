@@ -1,0 +1,185 @@
+{
+ "source": "2026-11-07 two-radio session, cap/cap_AtoB.wav and cap/cap_BtoA.wav",
+ "lead_s": 0.1,
+ "tail_s": 0.05,
+ "directions": {
+  "AtoB": {
+   "capture": "cap/cap_AtoB.wav",
+   "long_frame": {
+    "clock_ppm": -3.2401460189812012,
+    "clock_sd_ppm": 0.7747681932848004,
+    "snr_db": 13.365470846123399,
+    "blocks_ok": 13,
+    "blocks": 13
+   },
+   "frames": [
+    {
+     "wav": "AtoB_1blk.wav",
+     "manifest": "AtoB_ref1.json",
+     "kind": "1blk",
+     "type": "DATA",
+     "data_decodable": true,
+     "capture_gap": null,
+     "capture_start_sample": 722242,
+     "start_sample": 4800,
+     "cp": 60,
+     "mcs": 2,
+     "n_blocks": 1,
+     "n_control": 1,
+     "header_message_hex": "240b2db28c08012db28c080203212400",
+     "control_hex": [
+      "0100000000000000000000000000000000000025000ffffffffffffff000"
+     ],
+     "payload_hex": [
+      "2491d9a1c3387f900c9ede5ce5ef82ae9f7c5cec8afbb8ccd172c40675f3f94521ac173929a59140eac7e468ec91c98ba245420cb436030c8a74b47917e03f4ac77fc548e3235fa48313ebad5ee359e2d02a26f2ba8584f0e1b186d04dc83f6c26227a91d82523a75e133482de8c8a2a26ca74dffbc412856c19232d9f41"
+     ]
+    },
+    {
+     "wav": "AtoB_4s.wav",
+     "manifest": "AtoB_ref2.json",
+     "kind": "4s",
+     "type": "DATA",
+     "data_decodable": true,
+     "capture_gap": null,
+     "capture_start_sample": 866057,
+     "start_sample": 4800,
+     "cp": 60,
+     "mcs": 2,
+     "n_blocks": 13,
+     "n_control": 1,
+     "header_message_hex": "240b2db28c08012db28c080203222460",
+     "control_hex": [
+      "0100000000000000000000000000000000000025000ffffffffffffff000"
+     ],
+     "payload_hex": [
+      "2491d9a1c3387f900c9ede5ce5ef82ae9f7c5cec8afbb8ccd172c40675f3f94521ac173929a59140eac7e468ec91c98ba245420cb436030c8a74b47917e03f4ac77fc548e3235fa48313ebad5ee359e2d02a26f2ba8584f0e1b186d04dc83f6c26227a91d82523a75e133482de8c8a2a26ca74dffbc412856c19232d9f41",
+      "17895c9df18a1935fc1f8de0e44fa106d5d13fe1d49b1ac74c7c07eb59d01ab0336599baba9cc653b9db510c1bdcb91f4c2a5508b455787c9e43067446ad15cb26aaf8efaf1de666b5af511191be9eb5c5549d1cdeb6d3618b89d7156f2933713d8c7c11987a53fe242a162791e79db0853213212c3932b808894ab6df3c",
+      "037f596f9a0d3898a8581ee8e0bd0a678fc11261f81cb9486232df0a952357920bed13e3622dba8a6fee8ec0d964f5812bd08892cb1e0fdf09f38aa290431cfb4a3d02738307b480061e61e52b3f2fe4e1ce374eb744beada32cc32790d352d713df3b43fb92d644fabab75fe10a580cfe5c66e446446ba92cf74cd7c8c3",
+      "44ef03494ef1bdcc33f1e4096a1148e0d07a4db555d35c50584600aaa26ba5983080194211393e46252579a48c637185e97fc7fa442ecf250f0deaf6d10aa70cf53613bd01b5c2435e513bd98d1658af8c0ae280bb6a3a58ce1704b3b72dad0bc1b15b4ca849775e8ed18f9742899b1b9143b5c5ecd4d216928e008fcebc",
+      "669a7069c360bf172f3fb48432f0d6ac55071794d23a919534f7e477e853a76682afeec1fc970b8864ac5a8b78fac1cc5fdc3874e7e047d237f0387d705b41906846914eb44110abbf20d1a85aa3a92df365038e5808c357e726e7a82794a46e056c043421ca2d7925457ac119ef328e33f6c9d3bc80b4c081685bdab962",
+      "5098dcda1d75f3eaa1ff453548cee9f8fa27824ef2f447a9991b1bc7426e6ecb531183fc059c0f81d65863f4f7ee60d21ae2f50e331e905a0a80c1855c40cc52ca20b97fcb82cf555215d31ccee5af1626cedddd1f1d2657a111fd82f26c1ccbb588278673a9c767c8d49d08075052ab7621c29e8bc48a53ededb66bd0a0",
+      "26b4c1c8ed86f7a5df6a5ed13ec01444e8ee8a3acf6c8c2fc51a58a850034b5b02a40c932d4714aa6831fbfefcbed4c0da2b040e591307c5feba958c73abdf0761784a3d536c1832a4f438122a49a0b8d2e8eed4692879239a120d752688548ff705356cb177bd44f950975b913674f6de5e5a343549c1e09206d6383d9a",
+      "b2d2dbb642652bd9c2caa60238f18b1064b95865d572d742e501e90bd01ebe48af431e182f855c946c5d35ff515c72c35c975878277a2ddd3562b79b456fbf608764a4359adf0a9df26e50eac665b1fed6ea9d72cb1b5480e8b282d97961772117823cdde594ac232761e9ff3ebc6bd9c09f474c9452bb2acdaa4c400c13",
+      "f8d354ad8b870858a1d91d9ee3e37ed972270d1a76ee1d3311e771b8fefd54e7399c7066d18f39d1a955aa41248190c7989615972542dc93b21c6efdbfe48a961bc7abfc41ff76b224669f682e293e43da1760181565946d604dc5a50fc6c4aed32e78f3b492a88e39145bdac8f508cfe990f35bce58ff06efedc64f383d",
+      "28aceebbfd4f01eb323e2f6592e58e23055ae1eeaa5e38218379951cfe0165cfde76d6b64a1cedcc9972a79c67b14e7ac5fe3f90c140fbc83a21fa77b35e24cbfa015a9e5f40d576bebf940c3457104ad04c6a5613acff35a2b390ea5e093d019db097d7ecf39a2989feb070cda2a6c4991bebc2dc34a6145cda422820c8",
+      "3c02915451328ec3030f962ae6f4bd7bce8e5371353b84611080575c03919b67220d02fcec17aaf8d2af223c78fc095327c5fce2363bea67cdfd9e944ec3d3b183110bdc6bd74d811e5ceb214023675147021b6697113b6d6fc5825406ffbd9024eed04c1a7207077e284cce3c5e3b0bd7cb550be9f2db84c96c16e0a56c",
+      "e3be4da3f06ad567d98e3f0240ddd172bc176b7ad3ed6f23ce3607c7be8bf60a54a45104a922dab46b1e7da1615ee862428219c8bd3eb75962a6b34112a57f343e18b84c7933c544a3fb82952ae572859b9d8b8b21d99d6501b8e6cad956a7a4eacd885ae9b10eaa5766963a02040348836139b4e9cf2e566c1b345c05d3",
+      "5c3243ed79f970cadd2bb63f0443d15479e6bc7cbd0160541b6301c3f8bb942cfd338638bb88bd4e198540da55391c77e0409fb46a7cac64aab614c6a889187c45a7673579bb1d50a78dfc3d5333d943ca056518ab12a4ca204fd953a3a2d2e287c971da25a824c026aa389583f3e6afd825faec82be1fdfdb3718a5f297"
+     ]
+    },
+    {
+     "wav": "AtoB_probe.wav",
+     "manifest": "AtoB_ref3.json",
+     "kind": "probe",
+     "type": "PROBE",
+     "data_decodable": true,
+     "capture_gap": null,
+     "capture_start_sample": 1160198,
+     "start_sample": 4800,
+     "cp": 60,
+     "mcs": 2,
+     "n_blocks": 0,
+     "n_control": 0,
+     "header_message_hex": "28002db28c08012db28c080203230000",
+     "control_hex": [],
+     "payload_hex": []
+    },
+    {
+     "wav": "AtoB_ui.wav",
+     "manifest": "AtoB_ref4.json",
+     "kind": "ui",
+     "type": "UI",
+     "data_decodable": true,
+     "capture_gap": null,
+     "capture_start_sample": 1283659,
+     "start_sample": 4800,
+     "cp": 60,
+     "mcs": 0,
+     "n_blocks": 1,
+     "n_control": 1,
+     "header_message_hex": "21432db28c0801ffffffffff03240400",
+     "control_hex": [
+      "504b304a4c42202020202010000000000000000000000000000000000000"
+     ],
+     "payload_hex": [
+      "4b304a4c422d636170747572650000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+     ]
+    }
+   ]
+  },
+  "BtoA": {
+   "capture": "cap/cap_BtoA.wav",
+   "long_frame": {
+    "clock_ppm": 2.18795617537065,
+    "clock_sd_ppm": 0.7780264372492058,
+    "snr_db": 13.661182564770975,
+    "blocks_ok": 11,
+    "blocks": 13
+   },
+   "frames": [
+    {
+     "wav": "BtoA_1blk.wav",
+     "manifest": "BtoA_ref1.json",
+     "kind": "1blk",
+     "type": "DATA",
+     "data_decodable": false,
+     "capture_gap": {
+      "at_sample": 20680,
+      "samples_lost": 1276
+     },
+     "capture_start_sample": 526539,
+     "start_sample": 4800,
+     "cp": 60,
+     "mcs": 2,
+     "n_blocks": 1,
+     "n_control": 1,
+     "header_message_hex": "240b2db28c08022db28c080103852400",
+     "control_hex": [
+      "0100000000000000000000000000000000000025000ffffffffffffff000"
+     ],
+     "payload_hex": [
+      "2491d9a1c3387f900c9ede5ce5ef82ae9f7c5cec8afbb8ccd172c40675f3f94521ac173929a59140eac7e468ec91c98ba245420cb436030c8a74b47917e03f4ac77fc548e3235fa48313ebad5ee359e2d02a26f2ba8584f0e1b186d04dc83f6c26227a91d82523a75e133482de8c8a2a26ca74dffbc412856c19232d9f41"
+     ]
+    },
+    {
+     "wav": "BtoA_probe.wav",
+     "manifest": "BtoA_ref3.json",
+     "kind": "probe",
+     "type": "PROBE",
+     "data_decodable": true,
+     "capture_gap": null,
+     "capture_start_sample": 965726,
+     "start_sample": 4800,
+     "cp": 60,
+     "mcs": 2,
+     "n_blocks": 0,
+     "n_control": 0,
+     "header_message_hex": "28002db28c08022db28c080103870000",
+     "control_hex": [],
+     "payload_hex": []
+    },
+    {
+     "wav": "BtoA_ui.wav",
+     "manifest": "BtoA_ref4.json",
+     "kind": "ui",
+     "type": "UI",
+     "data_decodable": true,
+     "capture_gap": null,
+     "capture_start_sample": 1091034,
+     "start_sample": 4800,
+     "cp": 60,
+     "mcs": 0,
+     "n_blocks": 1,
+     "n_control": 1,
+     "header_message_hex": "21432db28c0802ffffffffff03880400",
+     "control_hex": [
+      "504b304a4c42202020202020000000000000000000000000000000000000"
+     ],
+     "payload_hex": [
+      "4b304a4c422d636170747572650000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+     ]
+    }
+   ]
+  }
+ }
+}
