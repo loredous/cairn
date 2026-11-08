@@ -1,0 +1,47 @@
+# yaml-language-server: $schema=../../tools/adrsite/schemas/decisions.schema.json
+#
+# Once merged into main this file is frozen. Change decisions via a new ADR.
+
+# --- Link adaptation --------------------------------------------------------
+
+- slug: step-up-after-reply-rule
+  title: The first step-up run after a reply-rule request is one clean frame
+  category: link-adaptation
+  strength: MUST
+  statement: |
+    The receiver applies these rules once per received frame (SPEC §10.1):
+
+    | Trigger | Action |
+    | --- | --- |
+    | A lost header (a preamble detected while awaiting the peer, then a header that fails), or more than 20% of the frame's data blocks failed | Request one rung lower immediately (two lower if more than 50% failed), never below MCS 0 |
+    | 3 consecutive frames with data blocks and zero block errors, and measured SNR at least 2 dB above the next rung's threshold; 1 such frame if it is the first frame with data blocks judged since the last reply-rule request | Request the highest rung whose threshold is at least 2 dB below the lowest SNR measured on the run's frames, which may be more than one rung higher. Frames without data blocks neither count toward the run nor break it |
+    | Anything else | Hold |
+    | A frame that replies to a CONNECT, CONNECT-ACK or SOUND (a reply-rule request) | Request the highest rung whose threshold is at least 3 dB below the SNR measured on the frame being answered |
+    | Session idle | Keepalive SOUND every 30 s (ADR 0010 `idle-keepalive`); the reply refreshes the estimate |
+    | Receive-side clipping detected | Hold the current rung and warn the operator |
+    | Frames this receiver measures at distortion index 3 or higher | Excluded from the step-down count; the peer, which sees the index in the ACK, lowers its drive or warns its operator |
+
+    A frame with data blocks is judged unless this receiver measured it
+    with its ADC clipped or at distortion index 3 or higher. The first
+    judged frame after a reply-rule request uses up the one-frame run
+    whatever it does: if it holds or steps down, the next run needs 3
+    frames. A lost header also uses it up. Every other rule of ADR 0013
+    `adaptation-rules-multi-rung` is unchanged.
+  rationale: >-
+    The reply rule measures a CONNECT, CONNECT-ACK or SOUND, which is sent
+    before the receiver's tone mask is in use. On the 2026-11-08 1.25 m
+    tests the radios' high-pass delayed tones 0-2 by 1.4-2.8 ms, past the
+    1.25 ms cyclic prefix, and their spill onto tones 3-7 made unmasked
+    frames read 2-4 dB below the masked frames that followed on the same
+    tones, so every session opened a rung or two low and spent three
+    frames (about 30 s) before it could step up. The first data frame is
+    measured as the session sends it, masked and at the session's width,
+    so one clean reading is as good a basis as the reply rule had, and the
+    2 dB step-up margin still applies. Only the first run after the
+    request is shortened; within a session, steps up still need three
+    clean frames, so the protection against oscillation on a steady link
+    is unchanged.
+  supersedes:
+    adr: 0013-settle-the-link-layer-implementation-findings
+    decision: adaptation-rules-multi-rung
+  tags: [adaptation, v0.5]

@@ -1,5 +1,5 @@
 //! Link adaptation (SPEC §6.2, §10.1, §10.3; ADR 0013
-//! `adaptation-rules-multi-rung`, `reprobe-request-cadence`, ADR 0011 `mask-id`,
+//! `adaptation-rules-multi-rung`, ADR 0015 `step-up-after-reply-rule`, `reprobe-request-cadence`, ADR 0011 `mask-id`,
 //! `mask-in-every-session-ack`): the receiver's choice of requested rung,
 //! and its tone-mask tracker with mask IDs.
 
@@ -8,7 +8,7 @@ use std::time::Duration;
 use crate::params::{
     ALL_TONES, DISTORTION_EXCLUDE_INDEX, MASK_DROP_DB, MASK_DROP_FRAMES, MASK_ID_MODULUS, READING_MASK_RESTORE_DB,
     REPLY_RULE_MARGIN_DB, REPROBE_INTERVAL, RUNG_THRESHOLDS_DB, RUNGS, STEP_DOWN_FRACTION, STEP_DOWN_TWO_FRACTION,
-    STEP_UP_MARGIN_DB, STEP_UP_MULTI_RUNG, STEP_UP_RUN, UNMASKABLE_TONES,
+    STEP_UP_MARGIN_DB, STEP_UP_MULTI_RUNG, STEP_UP_RUN, STEP_UP_RUN_AFTER_REPLY_RULE, UNMASKABLE_TONES,
 };
 use crate::time::Instant;
 
@@ -71,12 +71,22 @@ pub struct RateAdapter {
     clean_run: u8,
     /// Lowest SNR measured in the current clean run.
     run_min_snr: f64,
+    /// No frame with data blocks has been judged since the last reply-rule
+    /// request, so the run needs only [`STEP_UP_RUN_AFTER_REPLY_RULE`]
+    /// frames (ADR 0015).
+    after_reply_rule: bool,
 }
 
 impl RateAdapter {
     /// An adapter starting at `initial`.
     pub fn new(thr: Thresholds, initial: u8) -> Self {
-        RateAdapter { thr, requested: initial.min(RUNGS as u8 - 1), clean_run: 0, run_min_snr: f64::INFINITY }
+        RateAdapter {
+            thr,
+            requested: initial.min(RUNGS as u8 - 1),
+            clean_run: 0,
+            run_min_snr: f64::INFINITY,
+            after_reply_rule: false,
+        }
     }
 
     /// The rung to request.
@@ -90,16 +100,19 @@ impl RateAdapter {
     }
 
     /// This station is replying to a CONNECT, CONNECT-ACK or SOUND measured
-    /// at `snr_db`: request by the 3 dB rule.
+    /// at `snr_db`: request by the 3 dB rule. The next run needs one clean
+    /// frame (ADR 0015).
     pub fn on_reply_rule(&mut self, snr_db: f64) {
         self.requested = self.thr.reply_rule(snr_db);
         self.clean_run = 0;
+        self.after_reply_rule = true;
     }
 
     fn down(&mut self, n: u8) -> Decision {
         let before = self.requested;
         self.requested = self.requested.saturating_sub(n);
         self.clean_run = 0;
+        self.after_reply_rule = false;
         if before == self.requested { Decision::Hold } else { Decision::Down(before - self.requested) }
     }
 
@@ -132,6 +145,10 @@ impl RateAdapter {
         if frac > STEP_DOWN_FRACTION {
             return self.down(1);
         }
+        // From here the frame is judged: the short run after a reply-rule
+        // request is used up whatever it does (ADR 0015).
+        let run_needed =
+            if std::mem::take(&mut self.after_reply_rule) { STEP_UP_RUN_AFTER_REPLY_RULE } else { STEP_UP_RUN };
         if s.failed > 0 {
             self.clean_run = 0;
             return Decision::Hold;
@@ -147,7 +164,7 @@ impl RateAdapter {
         }
         self.clean_run += 1;
         self.run_min_snr = self.run_min_snr.min(s.snr_db);
-        if self.clean_run >= STEP_UP_RUN {
+        if self.clean_run >= run_needed {
             let before = self.requested;
             self.requested = if STEP_UP_MULTI_RUNG {
                 // ADR 0013 `adaptation-rules-multi-rung`: the highest rung whose
@@ -368,6 +385,46 @@ mod tests {
         assert_eq!(a.on_frame(&stats(10, 0, 40.0)), Decision::Up(1));
         assert_eq!(a.requested(), 6);
         assert_eq!(a.on_frame(&stats(10, 0, 60.0)), Decision::Hold, "top rung");
+    }
+
+    #[test]
+    fn first_frame_after_reply_rule_steps_up_alone() {
+        // ADR 0015: after a reply-rule request the first judged frame with
+        // data steps up on its own; later runs need three frames again.
+        // Thresholds + margin: 4.5, 7, 9.5, 13.5, 18.5, 22, 26.5.
+        let mut a = RateAdapter::new(Thresholds::with_margin(1.0), 0);
+        a.on_reply_rule(24.5); // unmasked CONNECT: 22 <= 24.5 - 3 fails, MCS 4
+        assert_eq!(a.requested(), 4);
+        assert_eq!(a.on_frame(&stats(0, 0, 10.0)), Decision::Hold, "no data: not judged");
+        let mut clip = stats(10, 0, 30.0);
+        clip.adc_clipped = true;
+        assert_eq!(a.on_frame(&clip), Decision::ClippedHold, "clipped: not judged");
+        // The first masked DATA frame reads 29 dB: MCS 6 needs 28.5.
+        assert_eq!(a.on_frame(&stats(10, 0, 29.0)), Decision::Up(2));
+        assert_eq!(a.requested(), 6);
+
+        // The short run is used up by a frame that holds, too.
+        for (first, why) in [(stats(10, 1, 30.0), "a block error"), (stats(10, 0, 20.0), "too little SNR")] {
+            let mut a = RateAdapter::new(Thresholds::with_margin(1.0), 0);
+            a.on_reply_rule(20.0); // MCS 3
+            assert_eq!(a.on_frame(&first), Decision::Hold, "{why}");
+            assert_eq!(a.on_frame(&stats(10, 0, 30.0)), Decision::Hold, "after {why}");
+            assert_eq!(a.on_frame(&stats(10, 0, 30.0)), Decision::Hold, "after {why}");
+            assert_eq!(a.on_frame(&stats(10, 0, 30.0)), Decision::Up(3), "after {why}");
+        }
+        // And by a step down, and a lost header.
+        let mut a = RateAdapter::new(Thresholds::with_margin(1.0), 0);
+        a.on_reply_rule(20.0);
+        assert_eq!(a.on_lost_header(), Decision::Down(1));
+        assert_eq!(a.on_frame(&stats(10, 0, 30.0)), Decision::Hold);
+        // After a step up runs need three frames again, until the next
+        // reply-rule request (a keepalive SOUND).
+        let mut a = RateAdapter::new(Thresholds::with_margin(1.0), 0);
+        a.on_reply_rule(20.0);
+        assert_eq!(a.on_frame(&stats(10, 0, 24.5)), Decision::Up(2));
+        assert_eq!(a.on_frame(&stats(10, 0, 40.0)), Decision::Hold);
+        a.on_reply_rule(20.0);
+        assert_eq!(a.on_frame(&stats(10, 0, 40.0)), Decision::Up(3));
     }
 
     #[test]
