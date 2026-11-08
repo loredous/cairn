@@ -83,6 +83,36 @@ def test_offair_frame(direction, long, f):
     assert snr - long["snr_db"] <= SNR_OVER_DB
 
 
+KEPT_TONES = range(3, 24)     # what a mask dropping the radios' lowest tones would keep
+
+
+def _kept_snr(r: frame.RxResult) -> float:
+    """The channel SNR summed from the per-tone powers over KEPT_TONES (what the link layer's reply rule takes)."""
+    s = np.asarray(r.detail["snr_tone_signal"]) * 10 ** ((r.config.clip_db - 7.0) / 10)
+    n = np.asarray(r.detail["snr_tone_noise"])
+    t = [k for k in KEPT_TONES if n[k] > 0]
+    return float(10 * np.log10(s[t].sum() / n[t].sum()))
+
+
+@pytest.mark.parametrize("direction", list(INDEX["directions"]))
+def test_offair_kept_tone_snr_has_no_frame_length_bias(direction):
+    # Every frame here is unmasked, tones 0-2 included. Summed over tones
+    # 3-23, the per-tone powers of each short frame read within
+    # SNR_TOLERANCE_DB of the 4 s frame's (tones 3-7 alike: 13, 16, 18, 20,
+    # 22 dB in both). The 2026-11-08 gap between unmasked short frames and
+    # masked 4 s frames is the masking: the radios delay tones 0-2 past the
+    # prefix, and with them silent the tones beside them carry 2-6 dB less
+    # noise (test_snr.test_short_frames_measure_the_isi_of_tones_past_the_prefix).
+    frames = INDEX["directions"][direction]["frames"]
+    long = _kept_snr(_decode(next(f["wav"] for f in frames if f["kind"] == "4s")))
+    for f in frames:
+        if f["kind"] == "4s" or not f["data_decodable"]:
+            continue
+        r = _decode(f["wav"])
+        assert not r.detail["snr_fallback"]
+        assert abs(_kept_snr(r) - long) <= SNR_TOLERANCE_DB, (f["wav"], _kept_snr(r), long)
+
+
 DATA_FRAMES = [(d, lg, f) for d, lg, f in FRAMES if f["data_decodable"] and f["payload_hex"]]
 LEVEL_TOLERANCE_DB = 0.5      # the tracked data level against the one every known symbol gives
 RAMP_DB = 3.0                 # every captured frame's data sat at least this far above the S2 level
