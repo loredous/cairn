@@ -19,3 +19,42 @@
     count nor break the run. This is how the link-layer implementation
     (PR #22) reads the rule.
   date: 2026-11-07
+
+# --- Findings of the modem run (PR #24), settled with ADR 0014
+# (2026-11-08) -----------------------------------------------------------
+
+- slug: lost-header-is-any-failed-header
+  decision: adaptation-rules-multi-rung
+  question: >-
+    The first row of the table speaks of "a preamble detected while awaiting
+    the peer, then a header that fails". Does it cover every header that
+    fails, whatever the frame type, or only a header of a session frame?
+  interpretation: >-
+    It covers any header that fails while the station is awaiting the peer,
+    whatever frame type it would have described: a header that fails
+    cannot be classified. The receiver requests one rung lower, as for
+    failed data blocks. A header that fails when no frame is due from the
+    peer is not a lost header and does not step down. The runtime of PR #24
+    reports `HeaderFailed` for every failed header and the link layer
+    applies the rule as stated. It is the same condition under which ADR
+    0010 `ack-timer-rules` keeps the ACK timer running (SPEC §9.3, §10.1).
+  date: 2026-11-08
+
+- slug: false-dcd-test-conditions
+  decision: v1-performance-targets-revised
+  question: >-
+    Under what noise is the false carrier-detect row (at most 1 per 10
+    minutes, squelch open, no signal) measured?
+  interpretation: |
+    The row is measured in stationary open-squelch noise: the radio's
+    squelch open, no signal on the channel, and a noise level that holds
+    its mean over each run of at least 10 minutes (a slow drift is
+    allowed, a step is not).
+
+    A sudden step in the noise level of 3 dB or more is a separate
+    robustness case, reported alongside the row and not part of its
+    target: the quieting detector of PR #24 read a drop of that size as a
+    carrier about one time in four. The case is reported as a rate per
+    step, with the step's direction and size, and no target is set for it
+    in v1.0 (SPEC §14.1).
+  date: 2026-11-08

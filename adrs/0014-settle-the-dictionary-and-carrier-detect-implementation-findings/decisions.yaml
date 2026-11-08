@@ -1,0 +1,152 @@
+# yaml-language-server: $schema=../../tools/adrsite/schemas/decisions.schema.json
+#
+# Once merged into main this file is frozen. Change decisions via a new ADR.
+
+# --- Session layer: compression ----------------------------------------------
+
+- slug: zstd-frame-format
+  title: PDU encodings 1 and 2 carry one standard zstd frame with no checksum, in-frame dictionary ID or content size
+  category: session-layer
+  strength: MUST
+  statement: |
+    The body of a PDU with Encoding 1 (zstd) or 2 (zstd with dictionary) is
+    exactly one zstd frame in the standard frame format (RFC 8878), with
+    these settings (SPEC §12.1, §12.2):
+
+    | Frame element | Sender | Receiver |
+    | --- | --- | --- |
+    | Magic number (0xFD2FB528 little-endian: bytes 28 B5 2F FD) | MUST be present | MUST require it; a body without it fails to decode |
+    | Content_Checksum_flag | MUST be 0: the PDU's CRC-32 covers the decoded body | SHOULD accept a frame that sets it |
+    | Dictionary_ID | MUST be omitted (Dictionary_ID_flag 0): encoding 2 names the dictionary in the PDU's 4-byte Dictionary ID | SHOULD accept a frame that carries one, and use the dictionary the PDU's Dictionary ID names |
+    | Frame_Content_Size | SHOULD be omitted | MUST accept either way |
+    | Frames per body | One. No skippable frames, no concatenated frames | MAY reject a body with bytes after the frame |
+
+    A receiver MUST bound the decompressed size of a body, because a frame
+    without a content size does not announce it, and MUST discard a body
+    that exceeds the bound or fails its PDU CRC-32. The dictionary for
+    encoding 2 is the published dictionary file, used unchanged through the
+    library's dictionary loader. The compression level is the sender's
+    choice and is not on the air.
+  rationale: >-
+    SPEC §12.2 said only "zstd", but the frame header decides how many
+    bytes a 100-500 byte message costs. The PDU already carries a length,
+    a CRC-32 over the decoded body and (for encoding 2) a dictionary ID,
+    so the frame's own checksum and dictionary ID repeat them. The
+    dictionary evaluation (PR #25) measured a mean body of 87.4 bytes with
+    library defaults (dictionary ID and content size in the frame) against
+    82.7 with both omitted, about 5 bytes per message, with the 64 kB
+    dictionary on 100-500 byte messages. Keeping the magic number costs 4
+    bytes more (78.7 without it) but keeps every standard zstd tool and
+    binding able to decode a body unchanged. Content size is optional
+    because on small single-segment frames it displaces the window
+    descriptor byte (0.6 bytes measured without a dictionary).
+  tags: [session, compression, interop, v0.5]
+
+# --- Governance ----------------------------------------------------------------
+
+- slug: dictionary-registry-reproducible-training
+  title: The registry records zstd version, parameters and the exact ordered sample set
+  category: versioning-governance
+  strength: MUST
+  statement: >-
+    Dictionaries live in `dictionaries/` in the specification repository
+    with a `REGISTRY.md` listing ID, version, SHA-256, corpus description,
+    reproducible training command and license. The training command is
+    the zstd version, the training parameters, and the exact ordered
+    sample set, given with the corpus seeds (those that fix a split, a
+    chunking or a shuffle) so the set can be rebuilt. libzstd's trainer
+    takes no random seed, so identical samples in identical order, trained
+    single-threaded, are what make a dictionary reproducible. Releases are
+    signed by at least two keyholders (minisign or ssh-sig) with published
+    keys. New dictionaries arrive by pull request with held-out
+    measurements. The dictionary license is CC0. (SPEC §12.2, §15, §20.9)
+  rationale: >-
+    ADR 0002 `dictionary-registry` asked for a "seed", which the trainer
+    does not have. The dictionary evaluation (PR #25) showed that the
+    seeds that matter fix the corpus split, the chunk sizes and the sample
+    order, and that a single-threaded run on identical samples in
+    identical order produced identical files every time. Everything else
+    in the decision is unchanged.
+  supersedes:
+    adr: 0002-adopt-the-cairn-v0-1-protocol-specification
+    decision: dictionary-registry
+  tags: [governance, compression, v0.5]
+
+# --- Channel access ------------------------------------------------------------
+
+- slug: carrier-detect-band-and-hold
+  title: The quieting band starts 100 Hz above the highest active tone's edge; the preamble correlator holds to the frame's end
+  category: channel-access
+  strength: MUST
+  statement: |
+    Carrier detect (DCD) is the OR of the following detectors, each with a
+    hold time (default 100 ms, see `timing-parameters`) that starts when
+    its raw output falls (SPEC §7.2):
+
+    | Detector | How | Catches |
+    | --- | --- | --- |
+    | Quieting | Noise power in a band that starts at least 100 Hz above the upper edge of the highest active tone (the tone's centre + 50 Hz) drops when any carrier is present. Default bands: 2800–3200 Hz on a 24-tone link, 6000–7000 Hz at 56 tones; the band may be moved up at setup from the measured receive roll-off, never down | Any FM signal: voice, legacy packet, other modes, this mode |
+    | Preamble correlator | Autocorrelation of the repeated preamble symbol, confirmed by cross-correlation with the stored sequence. Its raw output stays asserted from the confirmation to the end of the frame the header describes, then falls; when the header fails, it falls a fixed 500 ms after the header's last symbol | This mode, including weak signals near the cliff; never a steady tone |
+    | AFSK detector | Energy at 1200 Hz and 2200 Hz alternating at 1200 baud (Goertzel pair) | Bell 202 packet and APRS |
+    | Radio COS (optional) | Squelch/COS line via the sound interface's GPIO, when wired | Anything the radio's squelch opens for |
+
+    The highest active tone is that of the width the station is
+    receiving at: the negotiated width of the peer's direction in a
+    session, the configured broadcast width otherwise. A masked tone does
+    not lower it. The end of the frame the header describes is the end of
+    its last symbol: the preamble, header, width probe, control blocks and
+    data blocks it declares, each run padded to whole symbols.
+  rationale: >-
+    The 2700–3100 Hz band of a 24-tone link starts exactly at the 2700 Hz
+    edge of the occupied band, with no guard, and a Cairn frame's own
+    spectrum leaks into it about 19 dB below the frame's mean level
+    (PR #24), so quieting released during the peer's own frame unless the
+    squelch noise was 20 dB above that. A band of 2800–3200 Hz measured
+    about 5 dB less leakage. A rule stated against the highest tone (edge
+    at centre + 50 Hz, then a 100 Hz guard) gives those figures at 24
+    tones, and 6000–7000 Hz already satisfies it at 56 tones (edge 5900
+    Hz). Without a stated end, the correlator's raw output either dropped
+    at once (leaving the turn-holder check blind to the frame it follows)
+    or stayed up for an implementation-chosen time; the header gives the
+    end. When the header fails the length is unknown, and a fixed hold
+    bounds how long a false confirmation can block the channel, which
+    holding for the longest frame (4 s) would not.
+  supersedes:
+    adr: 0002-adopt-the-cairn-v0-1-protocol-specification
+    decision: carrier-detect
+  tags: [channel-access, phy, v0.5]
+
+- slug: turn-holder-check-without-quieting
+  title: Without a quieting signal, the turn-holder's 50 ms check runs on the other raw detectors
+  category: channel-access
+  strength: MUST
+  statement: >-
+    These are turn-holder replies: a session station's reply to a peer
+    frame that requires one (`reply-required-frames`), CONNECT-ACK, the
+    initiator's first frame, a reply to a PROBE (ADR 0012), a DISCONNECT
+    reply, and a transmission on ACK-timer expiry. A turn-holder reply is
+    sent without p-persistence. Before keying, the station watches the DCD
+    detectors' outputs without the hold time for 50 ms. The window starts
+    when the quieting detector (or COS, when wired) shows that the peer's
+    carrier has gone, or at the timer expiry. When quieting is not armed
+    (the squelch is closed, or there is no open-squelch noise to measure
+    a floor on) and there is no COS, the window starts when the OR of the
+    raw outputs of the remaining detectors (preamble correlator and AFSK
+    detector, the correlator held to the frame's end by
+    `carrier-detect-band-and-hold`) first reads clear after the peer's
+    frame. If the peer's carrier has not gone 100 ms after its last symbol,
+    the channel counts as busy. If any detector asserts during the window,
+    the station waits until DCD (with hold) is clear and runs the 50 ms
+    check again, still without p-persistence; otherwise it keys at the end
+    of the window. In repeater mode the modulation detector of SPEC §7.2
+    takes the place of quieting. (SPEC §7.2, §7.3, §11.2)
+  rationale: >-
+    ADR 0010 `turn-holder-reply-check` starts the window from quieting or
+    COS, which gives no start event when neither is available: a station
+    on a closed squelch, or a bench setup with no noise, has none. The
+    correlator held to the frame's end (the same instant the turnaround is
+    counted from) gives one. Everything else in the decision is unchanged.
+  supersedes:
+    adr: 0010-run-sessions-on-a-defined-state-machine-and-channel-access-timing
+    decision: turn-holder-reply-check
+  tags: [channel-access, session, timing, v0.5]
