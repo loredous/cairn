@@ -94,3 +94,8 @@ and names it (`READING_*` constants in `params`, `READING:` comments):
   edge; a peer carrier still up 100 ms after its last symbol counts as busy.
 - CSMA slot draws start at the current time, not at past slot boundaries.
 - A graceful disconnect waits until everything queued is acknowledged.
+- After replying to DISCONNECT, "one ACK-timer period" of answering repeats
+  is counted with the responder offset, the maximum jitter, the
+  carrier-gone deadline and one DISCONNECT's air time
+  (`READING_LINGER_EXTRA`); counted literally from the reply it ends before
+  the closer's first resend arrives, which the tests showed.

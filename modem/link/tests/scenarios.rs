@@ -559,3 +559,27 @@ fn connect_from_a_third_station_during_a_session_is_refused() {
     assert_eq!(sim.delivered_bytes(1), data);
     assert_clean(&sim);
 }
+
+#[test]
+fn lost_disconnect_reply_is_answered_again_while_lingering() {
+    let mut sim = pair(101, 25.0);
+    let dropped = Rc::new(Cell::new(false));
+    let d2 = dropped.clone();
+    sim.filter = Some(Box::new(move |_, r, a| {
+        if r == 0 && !d2.get() && a.frame.as_ref().is_some_and(|f| f.ftype == FrameType::Disconnect) {
+            d2.set(true);
+            return Fate::HeaderLost;
+        }
+        Fate::Normal
+    }));
+    connect(&mut sim, 0, 1, t(0.0));
+    sim.host(0, t(10.0), HostCommand::Disconnect { graceful: true });
+    sim.run_until(t(60.0));
+    assert!(dropped.get());
+    assert_eq!(frames_of(&sim, 0, FrameType::Disconnect).len(), 2, "one resend");
+    assert_eq!(frames_of(&sim, 1, FrameType::Disconnect).len(), 2, "the reply, then the lingering answer");
+    assert!(sim.has_event(0, |e| matches!(e, HostEvent::Disconnected { .. })));
+    assert!(sim.has_event(1, |e| matches!(e, HostEvent::Disconnected { .. })));
+    assert!(sim.stations[0].st.session_info().is_none() && sim.stations[1].st.session_info().is_none());
+    assert_clean(&sim);
+}

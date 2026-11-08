@@ -70,6 +70,12 @@ pub const CONNECT_ACK_MAX_RESENDS: u8 = 3;
 /// DISCONNECT resends before the closing station closes anyway
 /// (ADR 0010 `disconnect-handshake`).
 pub const DISCONNECT_MAX_RESENDS: u8 = 3;
+/// After replying to DISCONNECT a station answers repeats for "one ACK-timer
+/// period" (ADR 0010 `disconnect-handshake`). Counted from the reply, that
+/// period ends before the closer's first resend can arrive; this crate adds
+/// the responder offset, the maximum jitter and the carrier-gone deadline
+/// (plus one DISCONNECT's air time, computed by the station).
+pub const READING_LINGER_EXTRA: Duration = Duration::from_millis(500 + 250 + 100);
 
 // --- Session setup (§9.2; ADR 0010 `connect-retry-schedule`) -----------------------
 

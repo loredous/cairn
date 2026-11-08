@@ -854,7 +854,25 @@ impl Station {
                     self.host(HostEvent::Undelivered { peer, ids });
                 }
                 if let Some(frame) = linger {
-                    let until = self.now + self.ack_period(s.peer_max_frame);
+                    // READING (ADR 0010 `disconnect-handshake`): "one
+                    // ACK-timer period" counted from this reply would end
+                    // before the closer's first resend arrives (its timer
+                    // starts earlier, may carry the offset and jitter, and the
+                    // resend takes air time). Linger for the longest such
+                    // period plus the window and one DISCONNECT on the air.
+                    let shape = FrameShape {
+                        mcs: 0,
+                        width: frame.tx.width,
+                        mask: ALL_TONES,
+                        controls: frame.controls.len(),
+                        data: 0,
+                        probe: false,
+                        long_prefix: frame.tx.long_prefix,
+                    };
+                    let until = self.now
+                        + self.ack_period(s.peer_max_frame)
+                        + crate::params::READING_LINGER_EXTRA
+                        + self.model.on_air_time(&shape);
                     self.linger = Some(Linger { peer, until, frame });
                 }
             }
