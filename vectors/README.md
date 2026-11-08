@@ -340,7 +340,8 @@ than readings of their own:
   `width-probe-extent`, `mask-id`); PROBE contents and the SOUND reply:
   ADR 0012.
 
-One reading remains the simulator's own (`sim/cairn_sim/fields.py`): the
-second, dictionary-only B.3 block sends its width cap and maximum frame
+The second, dictionary-only B.3 block sends its width cap and maximum frame
 time as 0, outside their ranges, so a B.3 block with both 0 is read as that
-block and any other out-of-range value is malformed.
+block and any other out-of-range value is malformed. This began as the
+simulator's own reading (`sim/cairn_sim/fields.py`) and is now ADR 0010's
+interpretation `dictionary-only-b3-marker`.
