@@ -90,6 +90,8 @@ pub enum ConfigState {
     Loaded(PathBuf),
     /// No file there (built-in defaults and flags only).
     Missing(Option<PathBuf>),
+    /// Not read on request (`--no-config`): flags and built-in defaults only.
+    Skipped,
     /// Unreadable or invalid.
     Error(String),
 }
@@ -242,6 +244,9 @@ pub fn run(
             format!("none at {}", p.as_ref().map_or("(no home directory)".into(), |p| p.display().to_string())),
         )
         .hint("run `cairn-modem setup` to write one (flags and built-in defaults are used meanwhile)"),
+        ConfigState::Skipped => {
+            Check::new("config file", Status::Skip, "skipped (--no-config); using flags and built-in defaults")
+        }
         ConfigState::Error(e) => {
             Check::new("config file", Status::Fail, e.clone()).hint("fix the file, or rerun setup")
         }
@@ -264,8 +269,9 @@ pub fn run(
             Ok(()) => Check::new("callsign", Status::Pass, c.clone()),
             Err(e) => Check::new("callsign", Status::Fail, e).hint("CALL or CALL-SSID (SSID 0-15)"),
         },
-        None => Check::new("callsign", Status::Fail, "not set")
-            .hint("set station.callsign (every header and ID block carries it; needed to transmit)"),
+        None => Check::new("callsign", Status::Fail, "not set").hint(
+            "give --callsign, or set station.callsign (every header and ID block carries it; needed to transmit)",
+        ),
     });
     if let Some(g) = &cfg.station.grid {
         if !(g.len() == 4 || g.len() == 6) {
@@ -579,6 +585,22 @@ mod tests {
         assert!(by_name(&checks, "receive level").detail.contains("-21.0"));
         assert!(hw.calls.contains(&"port_free 127.0.0.1:8001".to_string()));
         assert!(hw.calls.contains(&"port_free 127.0.0.1:8002".to_string()));
+    }
+
+    #[test]
+    fn skipped_config_says_so_and_is_not_a_missing_home() {
+        let mut hw = MockHw::default();
+        let mut term = ScriptTerm::new(&[]);
+        let checks = run(
+            &ConfigState::Skipped,
+            &owner_like(),
+            &mut hw,
+            &mut term,
+            &Options { transmit: false, level_seconds: 0.0 },
+        );
+        let c = by_name(&checks, "config file");
+        assert_eq!(c.status, Status::Skip);
+        assert!(c.detail.contains("--no-config") && !c.detail.contains("home directory"), "{}", c.detail);
     }
 
     #[test]
