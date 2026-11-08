@@ -212,8 +212,8 @@ fn header_only_frame() {
 fn controls_with_probe_masked_long_prefix() {
     let mut rng = Rng::new(8);
     let usable: Vec<usize> = (0..56).filter(|k| ![1, 9, 25].contains(k)).collect();
-    let tx_link = LinkState { width: 30, usable: Some(usable.clone()), cp: Some(params::CP_LONG) };
-    let rx_link = LinkState { width: 30, usable: Some(usable.clone()), cp: None };
+    let tx_link = LinkState { width: 30, usable: Some(usable.clone()), cp: Some(params::CP_LONG), cap: None };
+    let rx_link = LinkState { width: 30, usable: Some(usable.clone()), cp: None, cap: None };
     // CONNECT-ACK: probe, two control blocks, no data.
     let mut h = Header::new(frame_type::CONNECT_ACK, station(2), station(1));
     (h.n_control, h.session, h.probe) = (2, true, true);
@@ -305,9 +305,14 @@ fn build_frame_checks_counts() {
     let mut tx = Transmitter::new();
     assert!(tx.build_frame(&h, &[], &[vec![0; 1008], vec![0; 1008]], &LinkState::default()).is_err());
     assert!(tx.build_frame(&h, &[ack(1)], &[vec![0; 1008]], &LinkState::default()).is_err());
-    // Wider than 24 tones without the probe flag: no channel estimate above tone 23.
+    // Wider than 24 tones without the probe flag: no channel estimate above
+    // tone 23, so the frame is refused, and build_frame sets the flag itself
+    // (ADR 0007 width-probe-every-wide-frame).
     let wide = LinkState { width: 30, ..Default::default() };
-    assert!(tx.build_frame(&h, &[ack(1)], &[vec![0; 1008], vec![0; 1008]], &wide).is_err());
+    assert_eq!(FrameConfig::from_header(&h, &wide, 60), Err(cairn_phy::ConfigError::NeedsProbe));
+    assert_eq!(FrameConfig::new(30, 2, 2).unwrap().with_probe(false), Err(cairn_phy::ConfigError::NeedsProbe));
+    let f = tx.build_frame(&h, &[ack(1)], &[vec![0; 1008], vec![0; 1008]], &wide).unwrap();
+    assert!(f.config.has_probe && f.header.as_ref().unwrap().probe);
     let cfg = FrameConfig::new(30, 3, 2).unwrap().with_controls(3).unwrap();
     assert_eq!(cfg.control_symbols(), (3 * 512usize).div_ceil(44));
     assert_eq!(FrameConfig::new(24, 0, 0).unwrap().with_controls(1).unwrap().control_symbols(), 12);

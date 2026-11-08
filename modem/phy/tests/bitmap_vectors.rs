@@ -33,7 +33,7 @@ fn link(doc: &Value) -> LinkState {
         Value::Null => None,
         v => Some(usizes(v)),
     };
-    LinkState { width: doc["width"].as_u64().unwrap() as usize, usable, cp: None }
+    LinkState { width: doc["width"].as_u64().unwrap() as usize, usable, cp: None, cap: None }
 }
 
 fn config(doc: &Value) -> FrameConfig {

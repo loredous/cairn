@@ -228,13 +228,79 @@ including the per-tone SNR arrays and the distortion components.
 - The measured SNR varying wildly between frames at the same level: noise bursts or a fading path.
 - A big per-tone SNR hole: an audio filter notch, a CTCSS or tone squelch filter, or hum.
 
+## Two-radio broadcast test with `cairn-modem`
+
+The real-time modem (`modem/`, the `cairn-modem` command; build with
+`cargo build --release -p cairn-modem` in `modem/`) runs the same test live:
+station A transmits broadcast frames with real headers, station B listens
+continuously and decodes each frame header first as it arrives, with no
+manifest and no recording. It is one-way: nothing is acknowledged.
+
+```sh
+M=modem/target/release/cairn-modem
+# Both stations: find the interface and its PTT line.
+$M devices
+$M ptt-test --ptt serial:All-In-One-Cable --seconds 1
+
+# 1. Levels. Station A sends the level-setting tone; set A's drive to 70% of
+#    full deviation (see "Setting levels"). Station B watches its input and
+#    sets the receive level so the tone peaks near -10 dBFS.
+$M tone -d All-In-One-Cable --ptt serial:All-In-One-Cable --seconds 3          # station A
+$M levels -d All-In-One-Cable --seconds 10                                     # station B
+
+# 2. Station B listens (Ctrl-C to stop). Broadcasts need no link settings: a
+#    frame wider than 24 tones tells B its width with its probe (ADR 0007).
+$M listen -d All-In-One-Cable --text --record rx.wav                           # station B
+
+# 3. Station A transmits: UI broadcasts from its callsign, each frame its own
+#    keyed transmission, with the ID control block (B.6) in every frame.
+$M tx -d All-In-One-Cable --ptt serial:All-In-One-Cable --callsign N0CALL-1 \
+    --id --grid FN31 --mcs 0 --count 5 --gap 2                                  # station A
+$M tx ... --callsign N0CALL-1 --mcs 2 --count 5 --message "test de N0CALL"      # more rungs
+$M tx ... --callsign N0CALL-1 --mcs 2 --width 30 --count 5                      # wider (flat ports)
+```
+
+Each frame B decodes prints one line: the time, source and destination
+(`*` for broadcast), the frame type and its flags, the frame counter, the
+rung and width (and "from probe" when the width came from the probe), data
+and control blocks decoded out of those sent, the channel SNR on the 7 dB
+scale (ADR 0006), the sample-clock offset between the two sound cards, the
+detector's rho and the decode time; then a line per control block (`ID
+N0CALL-1 grid FN31`) and, with `--text`, the payload. A detection whose
+header fails prints `not decoded: header did not decode`.
+
+- **Station identification.** Every header carries the source callsign
+  (SPEC 8.3), and `--id` adds the ID control block with the full callsign
+  and locator; `--type beacon` sends a BEACON, which always carries it.
+  That is the modem's own identification; where your rules ask for a CW or
+  voice ID as well, send it between runs. Never use someone else's
+  callsign.
+- **What to vary.** Rungs (`--mcs 0` to `6`; 2 s frames at MCS 0-1 and 4 s
+  above by default, `--blocks` or `--frame-s` to change), width (`--width`,
+  24 by default; above 30 tones only on 25 kHz channels through flat
+  ports), prefix (`--prefix long`, which B detects by itself). B needs no
+  change for any of these. `--type data --to CALL --width W --mask ...`
+  sends session-style frames, which B decodes only with the same `--width`,
+  `--mask` and `--peer-cap` (link state the header does not carry).
+- **Reading it.** Compare B's SNR with the rung thresholds of SPEC 6.2 plus
+  a few dB of margin. Frames that detect but whose header fails, or a
+  clock offset above about 100 ppm, point at levels or the sound cards. The
+  recording (`--record`) can be re-run with `listen --wav rx.wav` at any
+  time, and scored against A's frames with `cairn-bench rx` if A also wrote
+  the same frames with `tx --wav` (same arguments and `--seed`).
+- **Timing.** `listen --wav rx.wav --realtime` replays the recording at
+  real-time pace through the same code as the sound card and reports the
+  receive turnaround (SPEC 7.3: at most 100 ms from a frame's last sample
+  to its decoded result).
+
 ## What this cannot test
 
 The offline decoder tests the waveform on a real audio chain, one direction at a time. It cannot
 test, and does not claim to:
 
-- **ACKs and the control channel.** Nothing is sent back; control blocks are not modelled
-  in the Stage 1 transmitter yet.
+- **ACKs and the control channel.** Nothing is sent back. `cairn-modem tx` sends control
+  blocks (the ID block, and a demonstration ACK block in `--type data` frames) and `listen`
+  decodes them, but no station acts on them.
 - **Link adaptation as a process.** The report says what the thresholds would pick, once per frame,
   without hysteresis, without a Stage 2 margin, and without ever acting on it.
 - **ARQ, sessions, retries and the 7.4 timing budget.**
@@ -246,6 +312,6 @@ test, and does not claim to:
 - **Mobile, fading and multipath channels** beyond what the path you actually run gives.
 
 The Stage 1 receiver is a research receiver, not a real-time one: it decodes each frame knowing
-the rung, width and block count from the manifest (a real receiver would read them from the
-header), so a header that fails to decode does not stop its blocks being tried. `rx` tells you if
-the header decoded.
+the rung, width and block count from the manifest (a real receiver reads them from the header, as
+`cairn-modem listen` does), so a header that fails to decode does not stop its blocks being tried.
+`rx` tells you if the header decoded.

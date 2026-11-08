@@ -25,8 +25,10 @@ pub enum ConfigError {
     Width(usize),
     /// Prefix is neither 60 nor 120 samples.
     Prefix(usize),
-    /// Tones above the base set need the width probe.
+    /// Data blocks on tones above 23 need the width probe (ADR 0007).
     NeedsProbe,
+    /// The probe's extent (the sender's cap) below the width or above 56.
+    Cap(usize),
     /// A mask tone outside 0-55.
     MaskTone(usize),
     /// Pilot 3 or 20 masked.
@@ -47,7 +49,10 @@ impl fmt::Display for ConfigError {
             ConfigError::Mcs(m) => write!(f, "no rung MCS {m}"),
             ConfigError::Width(w) => write!(f, "width {w} outside {BASE_TONES}-{MAX_TONES}"),
             ConfigError::Prefix(c) => write!(f, "prefix {c} is neither {CP_SHORT} nor {CP_LONG}"),
-            ConfigError::NeedsProbe => write!(f, "tones above the base set need the width probe"),
+            ConfigError::NeedsProbe => {
+                write!(f, "data blocks on tones above 23 need the width probe (ADR 0007)")
+            }
+            ConfigError::Cap(c) => write!(f, "cap {c} tones below the width or above {MAX_TONES}"),
             ConfigError::MaskTone(k) => write!(f, "mask tone {k} outside 0-{}", MAX_TONES - 1),
             ConfigError::MaskedBasePilot => write!(f, "pilot tones 3 and 20 cannot be masked (SPEC 5.4)"),
             ConfigError::NoDataTones => write!(f, "the mask leaves no data tones"),
@@ -60,8 +65,11 @@ impl fmt::Display for ConfigError {
 
 impl std::error::Error for ConfigError {}
 
-/// What a receiver must know that the header does not say (SPEC 5.4, 8.2):
-/// the link width and tone mask, and optionally the prefix (None: detect it).
+/// What a receiver in a session must know that the header does not say
+/// (SPEC 5.4, 8.2): the link width, the tone mask, the peer's cap (the width
+/// probe's extent in tones, B.3 width cap + 1; None: the width), and
+/// optionally the prefix (None: detect it). A frame outside a session takes
+/// its width from its own probe instead (ADR 0007).
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct LinkState {
     /// Link width, 24-56 tones.
@@ -70,11 +78,31 @@ pub struct LinkState {
     pub usable: Option<Vec<usize>>,
     /// Prefix, 60 or 120 samples, if known.
     pub cp: Option<usize>,
+    /// The peer's cap in tones (the probe's extent), None: the width.
+    pub cap: Option<usize>,
 }
 
 impl Default for LinkState {
     fn default() -> Self {
-        LinkState { width: BASE_TONES, usable: None, cp: None }
+        LinkState { width: BASE_TONES, usable: None, cp: None, cap: None }
+    }
+}
+
+impl LinkState {
+    /// A link `width` tones wide whose probe reaches the same width.
+    pub fn width(width: usize) -> Self {
+        LinkState { width, ..Default::default() }
+    }
+
+    /// A session whose width is the sender's cap (data on tones up to the
+    /// cap, unusable ones masked) and whose probe reaches the same cap.
+    pub fn from_cap(cap: usize, usable: Option<Vec<usize>>) -> Self {
+        LinkState { width: cap, usable, cp: None, cap: Some(cap) }
+    }
+
+    /// The probe's extent in tones.
+    pub fn probe_extent(&self) -> usize {
+        self.cap.unwrap_or(self.width)
     }
 }
 
@@ -98,6 +126,11 @@ pub struct FrameConfig {
     pub clip_db: f64,
     /// Width probe after the header.
     pub has_probe: bool,
+    /// The probe was forced on or off (None: on exactly when the data uses a
+    /// tone above 23, ADR 0007).
+    probe_request: Option<bool>,
+    /// The probe's extent in tones (the sender's cap), at least the width.
+    pub cap: usize,
     /// Usable-tone mask report (SPEC 5.4), or None for every tone usable.
     pub usable: Option<Vec<usize>>,
     /// Tones below the width that data symbols leave silent.
@@ -118,7 +151,8 @@ pub struct FrameConfig {
 
 impl FrameConfig {
     /// A frame at `width` tones, rung `mcs`, `n_blocks` data blocks, short
-    /// prefix, clipped at the rung's level, probe when wider than 24, no mask.
+    /// prefix, clipped at the rung's level, no mask, the probe (to the
+    /// width) exactly when the data uses a tone above 23 (ADR 0007).
     pub fn new(width: usize, mcs: u8, n_blocks: usize) -> Result<Self, ConfigError> {
         let rung = params::rung(mcs).ok_or(ConfigError::Mcs(mcs))?;
         let mut cfg = FrameConfig {
@@ -130,7 +164,9 @@ impl FrameConfig {
             clip: true,
             // SPEC 7.1: a frame with no data blocks uses 7 dB.
             clip_db: if n_blocks == 0 { params::CLIP_DB_REFERENCE } else { rung.clip_db },
-            has_probe: width > BASE_TONES,
+            has_probe: false,
+            probe_request: None,
+            cap: width,
             usable: None,
             masked: Vec::new(),
             data_tones: Vec::new(),
@@ -152,8 +188,28 @@ impl FrameConfig {
         FrameConfig::new(link.width, mcs, header.n_data)?
             .with_controls(header.n_control)?
             .with_cp(cp)?
-            .with_probe(header.probe)?
-            .with_mask(link.usable.clone())
+            .with_mask(link.usable.clone())?
+            .with_cap(link.probe_extent())?
+            .with_probe(header.probe)
+    }
+
+    /// Probe to `cap` tones (the sender's cap, at least the width).
+    pub fn with_cap(mut self, cap: usize) -> Result<Self, ConfigError> {
+        self.cap = cap;
+        self.derive()?;
+        Ok(self)
+    }
+
+    /// The data uses a tone above 23 (a data tone or an upper pilot), so the
+    /// frame must carry the probe (ADR 0007 `width-probe-every-wide-frame`).
+    pub fn needs_probe(&self) -> bool {
+        self.n_blocks > 0 && self.data_active_tones.last().is_some_and(|&k| k >= BASE_TONES)
+    }
+
+    /// Tones in the frame's grid: the probe's extent with a probe, else the
+    /// base tones (without a probe no symbol uses a tone above 23).
+    pub fn n_tones(&self) -> usize {
+        if self.has_probe { self.cap } else { BASE_TONES }
     }
 
     /// Use `n` control blocks (0-3).
@@ -189,9 +245,10 @@ impl FrameConfig {
         self
     }
 
-    /// Force the width probe on or off.
+    /// Force the width probe on or off (off is refused when the data uses a
+    /// tone above 23).
     pub fn with_probe(mut self, probe: bool) -> Result<Self, ConfigError> {
-        self.has_probe = probe;
+        self.probe_request = Some(probe);
         self.derive()?;
         Ok(self)
     }
@@ -203,8 +260,8 @@ impl FrameConfig {
         if self.cp != CP_SHORT && self.cp != CP_LONG {
             return Err(ConfigError::Prefix(self.cp));
         }
-        if self.width > BASE_TONES && !self.has_probe {
-            return Err(ConfigError::NeedsProbe);
+        if self.cap < self.width || self.cap > MAX_TONES {
+            return Err(ConfigError::Cap(self.cap));
         }
         if self.n_blocks > params::MAX_DATA_BLOCKS {
             return Err(ConfigError::Blocks(self.n_blocks));
@@ -243,6 +300,12 @@ impl FrameConfig {
         let mut act: Vec<usize> = self.control_tones.iter().chain(&base_pilots).copied().collect();
         act.sort_unstable();
         self.control_active_tones = act;
+        let needs = self.needs_probe();
+        self.has_probe = match self.probe_request {
+            None => needs,
+            Some(false) if needs => return Err(ConfigError::NeedsProbe),
+            Some(p) => p,
+        };
         Ok(())
     }
 

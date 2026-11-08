@@ -63,6 +63,8 @@
     10.631583228423324,
     10.563757683727935
    ],
+   "channel_snr_db": 10.279238666279031,
+   "probe_extent_width": null,
    "header_fields_ok": true,
    "control_ok": [],
    "control_correct": []

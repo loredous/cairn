@@ -123,6 +123,7 @@ dependencies = [
  "cairn-phy",
  "cairn-ptt",
  "clap",
+ "libc",
  "signal-hook",
 ]
 

@@ -1,0 +1,96 @@
+{
+ "name": "hdr_mic_w27_ui_broadcast_snr14",
+ "width": 27,
+ "mcs": 1,
+ "n_blocks": 4,
+ "cp": 60,
+ "usable_tones": null,
+ "channel": "mic",
+ "snr_db": 14.0,
+ "sco_ppm": 0.0,
+ "burst_db": null,
+ "seed": 76,
+ "guard": 400,
+ "header_message_hex": "211239b0c130c2ffffffffff00061018",
+ "payload_hex": [
+  "3da1af1ff2cc2faddcfeb46e28d4d68a5c04e3c9e5a5a06f34541e08fd5906f3a2c1754cdcd32818999c5f2b94772df919e8c27f176439e161bd1d04c4d24e7a61b295bb7c2230c412194eb04aaf7eec983cea8e83480db88aa6b89d16ba8f6bdb97ff3b8bf47f8d60762aeca03557fdf66c369242e0b3731ad5b6a5755e",
+  "a33c8d0802b87b06bd4afc97578ea263cd40246afc3272cd9aea3c98de4586148b63d9514d0b826628c179fda31e5ee08ad1a6e07207d6a2a0e29176e8d8b0bf89fec554752ea74dbfc031047266df0f51fb326b99f7fb3e1cd0fbd7e220f70eed4374ee6902563a9acb90ceabd37e405b838e8689c22eb0ad0c1f52c2b4",
+  "5dbaa4df0d765d8fbe1be8507086c4d631072cfb493da4c78fe74391c3ab98a0158051976efe0363089db739c06ea09d8a0ccba8958ccbb95a324033244eeb19a86e28029f1d72af8c5809892adf38802ed2b285fd66d31342e34c6cbd4c49d8e31359c269ef863e19803693fb0a38d2da490c0c22c4d9957d9a274bde60",
+  "94bef52ef52f84fbdb1bdd014a6c567f1cb3650d2700e5b7461571eb5514e5bcf259421e62914c57a38180960bce804b8a73a23b2133d4cbb4cecf9765a69fb865b81f2e588f2942ce06ff527fca4ac7b4719f1da73be2d3bcb6e349281db6c3e3b58a1b85325677be6d575a30543b0692607d20f07de27dfc8b03bf913f"
+ ],
+ "total_symbols": 123,
+ "header_first": true,
+ "n_control": 0,
+ "probe": true,
+ "control_message_hex": [],
+ "wav_scale": 0.5467853337788962,
+ "python": {
+  "detections": [
+   {
+    "start": 429,
+    "cp": 60,
+    "quality": 0.9187453737220281,
+    "autocorr": 0.9484724089422398,
+    "ppm": 100.0,
+    "coarse_start": 429.3928391719403
+   }
+  ],
+  "rx": {
+   "start": 429,
+   "header_ok": true,
+   "header_correct": true,
+   "block_ok": [
+    true,
+    true,
+    true,
+    true
+   ],
+   "block_correct": [
+    true,
+    true,
+    true,
+    true
+   ],
+   "iterations": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "snr_db": [
+    9.751537172919157,
+    10.788065073883343,
+    12.892204019700022,
+    14.994886729285582,
+    15.552791347879092,
+    15.56407516866809,
+    13.567663365313315,
+    13.09805053320391,
+    12.331572950815676,
+    13.578789378837135,
+    13.473904451505918,
+    14.560365710354422,
+    14.431878521796907,
+    14.83607044495111,
+    14.374214383458813,
+    13.55387763080276,
+    12.034497191626887,
+    12.108995960829517,
+    12.14879149496419,
+    13.587238820892244,
+    14.030889115946714,
+    13.570253694195387,
+    13.371058766305525,
+    12.481128464714637,
+    10.666238413832534,
+    9.171886821854955,
+    9.580405351657971
+   ],
+   "channel_snr_db": 13.942407636705035,
+   "probe_extent_width": 27,
+   "header_fields_ok": true,
+   "control_ok": [],
+   "control_correct": []
+  }
+ }
+}

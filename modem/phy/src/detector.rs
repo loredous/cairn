@@ -431,9 +431,10 @@ fn fine_timing(x: &[f64], coarse: f64, cp: usize, search: usize, rf: &[Complex64
     usize::try_from(s).ok()
 }
 
-/// Streaming detector: feed audio with [`Detector::process`]; detections
-/// carry absolute 48 kHz sample indices across calls.
-pub struct Detector {
+/// Streaming detector that rescans a window around every call (4096 samples
+/// of history, 8192 of lookahead): the original streaming form, kept as the
+/// reference [`detect`] uses. [`Detector`] is the incremental one.
+pub struct RescanDetector {
     cfg: DetectorConfig,
     refs: References,
     buf: Vec<f64>,
@@ -446,11 +447,11 @@ pub struct Detector {
 const HISTORY: usize = 4096;
 const LOOKAHEAD: usize = 8192;
 
-impl Detector {
+impl RescanDetector {
     /// A detector with `cfg`.
     pub fn new(cfg: DetectorConfig) -> Self {
         let refs = references(&cfg);
-        Detector { cfg, refs, buf: Vec::new(), buf_start: 0, owned: 0, stats: ScanStats::default() }
+        RescanDetector { cfg, refs, buf: Vec::new(), buf_start: 0, owned: 0, stats: ScanStats::default() }
     }
 
     /// Feed samples; returns detections whose start is now final.
@@ -495,11 +496,357 @@ impl Detector {
 
 /// Detect every preamble in `samples` (real 48 kHz audio), as `preamble.detect`.
 pub fn detect(samples: &[f64], cfg: &DetectorConfig) -> Vec<Detection> {
-    let mut det = Detector::new(cfg.clone());
+    let mut det = RescanDetector::new(cfg.clone());
     let mut out = Vec::new();
     for chunk in samples.chunks(1 << 21) {
         out.extend(det.process(chunk));
     }
     out.extend(det.flush());
     out
+}
+
+/// Front-end taps at 48 kHz: z[m] = sum_n taps[n] x[6 m + c - n], c = (LH - 1) / 2,
+/// the same filter [`analytic_decimate`] applies through its FFT.
+fn front_end_taps() -> &'static [Complex64] {
+    static T: OnceLock<Vec<Complex64>> = OnceLock::new();
+    T.get_or_init(|| {
+        let h = dsp::firwin_kaiser(LH, HALF_BAND_HZ, KAISER_BETA, FS as f64);
+        h.iter()
+            .enumerate()
+            .map(|(n, &v)| {
+                let k = n as f64 - (LH as f64 - 1.0) / 2.0;
+                Complex64::from_polar(2.0 * v, 2.0 * std::f64::consts::PI * BAND_CENTER_HZ * k / FS as f64)
+            })
+            .collect()
+    })
+}
+
+/// Per-position metrics of the incremental detector, indexed from `start`.
+#[derive(Default)]
+struct Metrics {
+    start: usize,
+    score: Vec<f64>,
+    best_cp: Vec<usize>,
+    best_ppm: Vec<f64>,
+    /// Per prefix hypothesis (in `cfg.prefixes` order): rho and M.
+    rho: Vec<Vec<f64>>,
+    m: Vec<Vec<f64>>,
+}
+
+impl Metrics {
+    fn end(&self) -> usize {
+        self.start + self.score.len()
+    }
+
+    fn drain_to(&mut self, from: usize) {
+        if from <= self.start {
+            return;
+        }
+        let n = (from - self.start).min(self.score.len());
+        self.score.drain(..n);
+        self.best_cp.drain(..n);
+        self.best_ppm.drain(..n);
+        for v in self.rho.iter_mut().chain(self.m.iter_mut()) {
+            v.drain(..n);
+        }
+        self.start += n;
+    }
+}
+
+/// Incremental streaming detector: the SPEC 6.1 detector of [`scan`]
+/// computed position by position as audio arrives. Each call filters and
+/// decimates only the new samples (direct FIR, no block FFT), computes the
+/// autocorrelation plateau and the S1 cross-correlations only at the new
+/// 8 kHz positions, and decides a position once the +-3 symbol peak window
+/// around it is complete. A detection is final about 4,100 samples (85 ms)
+/// after the frame's first sample whatever the chunk size, and the work per
+/// sample is constant (no window is rescanned). It finds the same starts,
+/// prefixes and grid points as [`scan`]; rho differs only through the
+/// normalisation floor (a running mean instead of the whole buffer's).
+pub struct Detector {
+    cfg: DetectorConfig,
+    refs: References,
+    /// 48 kHz input from absolute index `x_start`.
+    x: Vec<f64>,
+    x_start: usize,
+    /// Decimated analytic signal from absolute index `z_start`.
+    z: Vec<Complex64>,
+    z_start: usize,
+    met: Metrics,
+    /// Next position to decide.
+    decide: usize,
+    /// Last detection position (decimated), for the half-window spacing.
+    last: Option<usize>,
+    flushed: bool,
+    /// Largest rho and gated rho seen so far.
+    pub stats: ScanStats,
+}
+
+impl Detector {
+    /// A detector with `cfg`.
+    pub fn new(cfg: DetectorConfig) -> Self {
+        let refs = references(&cfg);
+        let n = cfg.prefixes.len();
+        let met = Metrics { rho: vec![Vec::new(); n], m: vec![Vec::new(); n], ..Default::default() };
+        Detector {
+            cfg,
+            refs,
+            x: Vec::new(),
+            x_start: 0,
+            z: Vec::new(),
+            z_start: 0,
+            met,
+            decide: 0,
+            last: None,
+            flushed: false,
+            stats: ScanStats::default(),
+        }
+    }
+
+    fn max_lag(&self) -> usize {
+        self.cfg.prefixes.iter().map(|&cp| stride(cp) / DECIM).max().unwrap_or(0)
+    }
+
+    /// Half the peak window (+-3 symbol periods), decimated samples.
+    fn half(&self) -> usize {
+        3 * self.max_lag()
+    }
+
+    /// Feed samples; returns detections whose start is now final.
+    pub fn process(&mut self, samples: &[f64]) -> Vec<Detection> {
+        self.x.extend_from_slice(samples);
+        self.run()
+    }
+
+    /// End of input: complete every pending position with silence.
+    pub fn flush(&mut self) -> Vec<Detection> {
+        let pad = 2 * LH + DECIM * (2 * self.half() + 4 * self.max_lag() + N_USEFUL) + 8 * stride(CP_LONG);
+        self.x.extend(std::iter::repeat_n(0.0, pad));
+        self.flushed = true;
+        let d = self.run();
+        self.x.clear();
+        self.z.clear();
+        d
+    }
+
+    /// Absolute 48 kHz index one past the last sample fed.
+    pub fn position(&self) -> usize {
+        self.x_start + self.x.len()
+    }
+
+    /// Samples after a frame's first sample before its detection is final
+    /// (the decision window and the S2 fine timing), for the slowest prefix.
+    pub fn latency(&self) -> usize {
+        let c = (LH - 1) / 2;
+        let z_after = self.half() + 2 * self.max_lag() + N_USEFUL / DECIM + 1;
+        (DECIM * z_after + c).max(4 * stride(CP_LONG) + 2 * self.cfg.fine_search + DECIM + 2)
+    }
+
+    fn run(&mut self) -> Vec<Detection> {
+        self.filter();
+        self.metrics();
+        let out = self.peaks();
+        self.trim();
+        out
+    }
+
+    /// Decimated outputs whose inputs have all arrived.
+    fn filter(&mut self) {
+        let taps = front_end_taps();
+        let c = (LH - 1) / 2;
+        let x_end = self.x_start + self.x.len();
+        loop {
+            let m = self.z_start + self.z.len();
+            let newest = DECIM * m + c;
+            if newest >= x_end {
+                break;
+            }
+            // x[newest - n] for n in 0..LH; zero before the stream start.
+            let oldest = newest.saturating_sub(LH - 1).max(self.x_start);
+            let mut acc = Complex64::new(0.0, 0.0);
+            for i in oldest..=newest {
+                acc += taps[newest - i] * self.x[i - self.x_start];
+            }
+            self.z.push(acc);
+        }
+    }
+
+    /// Metrics for every new position with enough of z after it.
+    fn metrics(&mut self) {
+        let n_d = N_USEFUL / DECIM;
+        let span = 2 * self.max_lag();
+        let z_end = self.z_start + self.z.len();
+        let first_u = self.met.end().max(self.z_start);
+        if first_u + span + n_d > z_end {
+            return;
+        }
+        let n_new = z_end - span - n_d + 1 - first_u;
+        // Local window of z from the first new position, with prefix sums.
+        let zl = &self.z[first_u - self.z_start..];
+        let mut czz = Vec::with_capacity(zl.len() + 1);
+        czz.push(0.0);
+        let mut acc = 0.0;
+        for v in zl {
+            acc += v.norm_sqr();
+            czz.push(acc);
+        }
+        let sum = |a: usize, b: usize| czz[b] - czz[a];
+        // Normalisation floor: 1e-6 of the mean power of the retained z
+        // (the one-shot scan takes its whole buffer).
+        let all_mean = self.z.iter().map(|v| v.norm_sqr()).sum::<f64>() / self.z.len() as f64;
+        let floor = (1e-6 * all_mean).max(1e-30);
+        let n_cp = self.cfg.prefixes.len();
+        let mut score = vec![0.0; n_new];
+        let mut best_cp = vec![0usize; n_new];
+        let mut best_ppm = vec![0.0; n_new];
+        let mut rho_all = vec![vec![0.0; n_new]; n_cp];
+        let mut m_all = vec![vec![0.0; n_new]; n_cp];
+        let mut max_rho = 0.0f64;
+        for (ci, &cp) in self.cfg.prefixes.iter().enumerate() {
+            let lag = stride(cp) / DECIM;
+            let plateau = cp / DECIM + 1;
+            let n_prod = zl.len() - lag;
+            let mut cprod = Vec::with_capacity(n_prod + 1);
+            cprod.push(Complex64::new(0.0, 0.0));
+            let mut a = Complex64::new(0.0, 0.0);
+            for i in 0..n_prod {
+                a += zl[i] * zl[i + lag].conj();
+                cprod.push(a);
+            }
+            let refs: Vec<(usize, f64)> = self
+                .cfg
+                .ppm_grid
+                .iter()
+                .map(|&ppm| {
+                    let idx =
+                        self.refs.s1.iter().position(|(key, _, _)| *key == (cp, ppm.to_bits())).expect("reference");
+                    (idx, ppm)
+                })
+                .collect();
+            for u in 0..n_new {
+                let mut p_sum = Complex64::new(0.0, 0.0);
+                let mut r_sum = 0.0;
+                for t in u..u + plateau {
+                    p_sum += cprod[t + n_d] - cprod[t];
+                    r_sum += 0.5 * (sum(t, t + n_d) + sum(t + lag, t + lag + n_d));
+                }
+                let m = p_sum.norm() / (r_sum.max(0.0) + (plateau * n_d) as f64 * floor);
+                let e = sum(u, u + 2 * lag).max(0.0) + (2 * lag) as f64 * floor;
+                let (mut rho, mut rho_ppm) = (0.0f64, 0.0);
+                for &(idx, ppm) in &refs {
+                    let (_, r, ref_e) = &self.refs.s1[idx];
+                    let mut c = Complex64::new(0.0, 0.0);
+                    for (zv, rv) in zl[u..u + r.len()].iter().zip(r) {
+                        c += zv * rv.conj();
+                    }
+                    let val = c.norm() / (e * ref_e).sqrt();
+                    if val > rho {
+                        rho = val;
+                        rho_ppm = ppm;
+                    }
+                }
+                max_rho = max_rho.max(rho);
+                rho_all[ci][u] = rho;
+                m_all[ci][u] = m;
+                let gated = if m >= self.cfg.autocorr_threshold { rho } else { 0.0 };
+                if gated > score[u] {
+                    score[u] = gated;
+                    best_cp[u] = cp;
+                    best_ppm[u] = rho_ppm;
+                }
+            }
+        }
+        self.stats.max_rho = self.stats.max_rho.max(max_rho);
+        self.stats.max_score = self.stats.max_score.max(score.iter().copied().fold(0.0, f64::max));
+        if self.met.score.is_empty() {
+            self.met.start = first_u;
+        }
+        self.met.score.extend(score);
+        self.met.best_cp.extend(best_cp);
+        self.met.best_ppm.extend(best_ppm);
+        for ci in 0..n_cp {
+            self.met.rho[ci].extend(&rho_all[ci]);
+            self.met.m[ci].extend(&m_all[ci]);
+        }
+    }
+
+    /// Decide every position whose peak window is complete.
+    fn peaks(&mut self) -> Vec<Detection> {
+        let half = self.half();
+        let mut out = Vec::new();
+        let x_end = self.x_start + self.x.len();
+        while self.decide + half < self.met.end() {
+            let u = self.decide;
+            if u < self.met.start {
+                self.decide = self.met.start;
+                continue;
+            }
+            let i = u - self.met.start;
+            let s = self.met.score[i];
+            // The one-shot scan's rule: at least the threshold, the maximum of
+            // its +-3 symbol window, and half a window after the last detection.
+            let candidate = s >= self.cfg.xcorr_threshold
+                && self.met.score[u.saturating_sub(half).max(self.met.start) - self.met.start..=i + half]
+                    .iter()
+                    .all(|&v| v <= s)
+                && self.last.is_none_or(|l| u - l >= half);
+            if candidate {
+                let cp = self.met.best_cp[i];
+                let ci = self.cfg.prefixes.iter().position(|&c| c == cp).expect("prefix");
+                // Fine timing reads the 48 kHz input to the end of the S2 pair.
+                let need = DECIM * (u + 1) + 4 * stride(cp) + 2 * self.cfg.fine_search + 2;
+                if need > x_end && !self.flushed {
+                    break;
+                }
+                self.last = Some(u);
+                let rho = &self.met.rho[ci];
+                let mut frac = 0.0;
+                if i > 0 && i + 1 < rho.len() {
+                    let (y0, y1, y2) = (rho[i - 1], rho[i], rho[i + 1]);
+                    let den = y0 - 2.0 * y1 + y2;
+                    if den < 0.0 {
+                        frac = 0.5 * (y0 - y2) / den;
+                    }
+                }
+                let coarse = DECIM as f64 * (u as f64 + frac.clamp(-0.5, 0.5));
+                let s2ref = &self.refs.s2.iter().find(|(c, _)| *c == cp).unwrap().1;
+                let local = coarse - self.x_start as f64;
+                if let Some(st) = fine_timing(&self.x, local, cp, self.cfg.fine_search, s2ref) {
+                    let q = rho[i];
+                    out.push(Detection {
+                        start: st + self.x_start,
+                        cp,
+                        quality: q,
+                        autocorr: self.met.m[ci][i],
+                        snr_db: 10.0 * (q * q / (1.0 - q * q).max(1e-6)).log10(),
+                        ppm: self.met.best_ppm[i],
+                        coarse_start: coarse,
+                    });
+                }
+            }
+            self.decide += 1;
+        }
+        out
+    }
+
+    fn trim(&mut self) {
+        let half = self.half();
+        self.met.drain_to(self.decide.saturating_sub(half + 2));
+        // z: a second of history (the floor's mean) before the first position
+        // still waiting for metrics.
+        let keep_z = self.met.end().min(self.z_start + self.z.len()).saturating_sub(8000);
+        if keep_z > self.z_start + 4000 {
+            self.z.drain(..keep_z - self.z_start);
+            self.z_start = keep_z;
+        }
+        // x: the FIR's history and the fine timing of undecided positions.
+        let next_m = self.z_start + self.z.len();
+        let fir_from = (DECIM * next_m + (LH - 1) / 2).saturating_sub(LH);
+        let fine_from = (DECIM * self.decide.saturating_sub(1)).saturating_sub(self.cfg.fine_search + 8);
+        let keep_x = fir_from.min(fine_from);
+        if keep_x > self.x_start + 48_000 {
+            self.x.drain(..keep_x - self.x_start);
+            self.x_start = keep_x;
+        }
+    }
 }

@@ -198,6 +198,8 @@ pub struct TxFrame {
     pub block_bits: Vec<Vec<u8>>,
     /// Tone values of every symbol before clip-and-filter.
     pub grid: Grid,
+    /// The header's fields, when built from them ([`Transmitter::build_frame`]).
+    pub header: Option<Header>,
 }
 
 impl TxFrame {
@@ -273,8 +275,9 @@ impl Transmitter {
 
         let total = cfg.total_symbols();
         let table = gold::pilot_table(total);
-        let mut grid = Grid::zeros(total, cfg.width);
-        let pre = preamble::grid(cfg.width);
+        // The probe may reach above the width, to the sender's cap (SPEC 5.4).
+        let mut grid = Grid::zeros(total, cfg.n_tones());
+        let pre = preamble::grid(cfg.n_tones());
         grid.data[..pre.data.len()].copy_from_slice(&pre.data);
         let base_pilots = params::pilots_for(BASE_TONES);
         fill_symbols(&mut grid, PREAMBLE_SYMBOLS, &hpoints, &cfg.base_data_tones, &base_pilots, &table, 1.0);
@@ -301,9 +304,11 @@ impl Transmitter {
         self.build_with_controls(cfg, header_msg, &[], payloads)
     }
 
-    /// Build the frame a SPEC 8.2 header describes at the link's width, mask
-    /// and prefix (short unless `link.cp` says otherwise), with its control
-    /// blocks and payloads (1008 bits each).
+    /// Build the frame a SPEC 8.2 header describes at the link's width, mask,
+    /// cap and prefix (short unless `link.cp` says otherwise), with its
+    /// control blocks and payloads (1008 bits each). Header flag bit 4 is set
+    /// when the data uses tones above 23 (ADR 0007); [`TxFrame::header`]
+    /// holds the header as sent.
     pub fn build_frame(
         &mut self,
         header: &Header,
@@ -311,6 +316,15 @@ impl Transmitter {
         payloads: &[Vec<u8>],
         link: &LinkState,
     ) -> Result<TxFrame, BuildError> {
+        let mut header = header.clone();
+        if !header.probe {
+            // ADR 0007: a frame whose data uses tones above 23 carries the probe.
+            let probed = Header { probe: true, ..header.clone() };
+            if FrameConfig::from_header(&probed, link, link.cp.unwrap_or(CP_SHORT))?.needs_probe() {
+                header = probed;
+            }
+        }
+        let header = &header;
         let cfg = FrameConfig::from_header(header, link, link.cp.unwrap_or(CP_SHORT))?;
         if controls.len() != header.n_control {
             return Err(BuildError::Count { what: "control blocks", header: header.n_control, given: controls.len() });
@@ -319,12 +333,14 @@ impl Transmitter {
             return Err(BuildError::Count { what: "data blocks", header: header.n_data, given: payloads.len() });
         }
         let msgs = controls.iter().map(ControlBlock::message_bits).collect::<Result<Vec<_>, _>>()?;
-        Ok(self.build_with_controls(&cfg, &header.message_bits()?, &msgs, payloads))
+        let mut frame = self.build_with_controls(&cfg, &header.message_bits()?, &msgs, payloads);
+        frame.header = Some(header.clone());
+        Ok(frame)
     }
 
     /// Build a frame: grid, then samples with clip-and-filter per segment
     /// (preamble and header on the base tones, the probe on every tone up to
-    /// the width, control blocks on the active base tones, data on the active
+    /// the cap, control blocks on the active base tones, data on the active
     /// tones), all at the width's scale.
     pub fn build_with_controls(
         &mut self,
@@ -338,7 +354,7 @@ impl Transmitter {
         let scale = cfg.width;
         let (fp, fc, fd) = (cfg.first_probe(), cfg.first_control(), cfg.first_data());
         let base: Vec<usize> = (0..BASE_TONES).collect();
-        let all: Vec<usize> = (0..cfg.width).collect();
+        let all: Vec<usize> = (0..cfg.cap).collect();
         let segments: [(usize, usize, &[usize]); 4] = [
             (0, fp, &base),
             (fp, fc, &all),
@@ -352,11 +368,11 @@ impl Transmitter {
             }
             let x = self.ofdm.modulate(&grid.slice_rows(a, b), cfg.cp, scale);
             if cfg.clip {
-                samples.extend(self.ofdm.clip_and_filter(&x, cfg.width, tones, cfg.cp, cfg.clip_db, scale));
+                samples.extend(self.ofdm.clip_and_filter(&x, cfg.n_tones(), tones, cfg.cp, cfg.clip_db, scale));
             } else {
                 samples.extend(x);
             }
         }
-        TxFrame { config: cfg.clone(), samples, header_bits, control_bits, block_bits, grid }
+        TxFrame { config: cfg.clone(), samples, header_bits, control_bits, block_bits, grid, header: None }
     }
 }

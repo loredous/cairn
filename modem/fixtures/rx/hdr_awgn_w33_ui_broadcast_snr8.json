@@ -1,0 +1,104 @@
+{
+ "name": "hdr_awgn_w33_ui_broadcast_snr8",
+ "width": 33,
+ "mcs": 0,
+ "n_blocks": 3,
+ "cp": 60,
+ "usable_tones": null,
+ "channel": "awgn",
+ "snr_db": 8.0,
+ "sco_ppm": 0.0,
+ "burst_db": null,
+ "seed": 75,
+ "guard": 400,
+ "header_message_hex": "211339b0c130c1ffffffffff00050410",
+ "payload_hex": [
+  "bae031491fad35fb9304f2eb1a12f511052b4613653b9e8e7eae55997834493cda07bf7e793d3f84df5620f07cb2defd6db83589bbf973c0a7bb5634901f8d454cb30bff4ebc515c7fcfc0cd8182267dd305463b0f4b92097c4ce3c01ef26048d93e8b6ea700c7ba6b261d466e8cb8f94dfbbc8845803cf3bfa6f6eba271",
+  "33a065799bf5c7ca972ac29a7e1e2e111fb8a8947767b42fb61aa12f173726b64b6219a182f0cc4793b76def737ddb2042260ac4b5d365a2f762bdd4876c2775fe6c228d7b65697719b72093a2e5f9257a6deb094c1e3bffb2096c2112a18b9aa406d3d1e2c0774a6fb04520971196e12bd6c40d925d596979b1917b42e8",
+  "9a7c9c011a903009e55e7aafa9be77e5e6667d54d78ea7f229954c075b52a75dd58f6da5e43c237ffec99dfd76c2d65c49e00db429799136979ea078a4c2d3175d3eaa99c3e774e0e184fb3af43e92c01f263e8be9018cda451ea4ae7a1f101d31c417ee8c8cf57c3b98a14c31a6122de1169e998db2bd1235f7615cc32c"
+ ],
+ "total_symbols": 125,
+ "header_first": true,
+ "n_control": 1,
+ "probe": true,
+ "control_message_hex": [
+  "514e3043414c4c202020201464e333120200000000000000000000000000"
+ ],
+ "wav_scale": 0.08263254172285829,
+ "python": {
+  "detections": [
+   {
+    "start": 400,
+    "cp": 60,
+    "quality": 0.9125976836219531,
+    "autocorr": 0.8952987196816234,
+    "ppm": 100.0,
+    "coarse_start": 399.4731878904803
+   }
+  ],
+  "rx": {
+   "start": 400,
+   "header_ok": true,
+   "header_correct": true,
+   "block_ok": [
+    true,
+    true,
+    true
+   ],
+   "block_correct": [
+    true,
+    true,
+    true
+   ],
+   "iterations": [
+    1,
+    2,
+    2
+   ],
+   "snr_db": [
+    0.3081474319152208,
+    1.6949251042309577,
+    7.096173817692463,
+    8.773451337082765,
+    8.832475146839307,
+    9.159325541981985,
+    8.02710187822355,
+    8.313274267155037,
+    7.240953881413557,
+    7.683495901432651,
+    7.1078456943757695,
+    7.5916432000566045,
+    7.663152645237004,
+    8.373725023976629,
+    7.648438461377517,
+    7.790344817172042,
+    8.062362520950533,
+    8.43068889817994,
+    7.600001428321116,
+    6.453591630592075,
+    5.947598000762127,
+    5.521331094916777,
+    4.962374823961174,
+    4.779769438747897,
+    6.708341868150622,
+    6.641765398851549,
+    5.1494268832232635,
+    5.995932081635091,
+    5.867398870433938,
+    5.937176956020755,
+    7.497475545546547,
+    8.102859969689899,
+    8.883417133360577
+   ],
+   "channel_snr_db": 8.248213872268774,
+   "probe_extent_width": 33,
+   "header_fields_ok": true,
+   "control_ok": [
+    true
+   ],
+   "control_correct": [
+    true
+   ]
+  }
+ }
+}

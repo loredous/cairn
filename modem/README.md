@@ -4,9 +4,11 @@ The real-time modem of SPEC §21.3. Done so far: the physical layer, ported
 from the Stage 1 simulator (`sim/cairn_sim/`) and checked bit for bit
 against the published vectors, and the real-time layer around it (steps
 1-4 without the link layer): audio I/O at 48 kHz, PTT backends with
-measured TXDelay and TXTail, a continuous receiver and a transmitter, in
-the `cairn-modem` command. The link layer and the host interfaces come
-next.
+measured TXDelay and TXTail, a transmitter that sends frames with real
+headers and control blocks, and a continuous receiver that decodes each
+frame header first within the 100 ms turnaround of SPEC 7.3, in the
+`cairn-modem` command. That is enough for a one-way broadcast test between
+two radios (below). The link layer and the host interfaces come next.
 
 ```sh
 cd modem
@@ -36,8 +38,8 @@ $M devices                                   # every ALSA device; 48k = can run 
 $M levels -d All-In-One-Cable --seconds 5    # input RMS (about the mean, and with DC), peak, DC, CLIP/HOT, xruns
 $M ptt-test --ptt serial:All-In-One-Cable --seconds 1      # refuses more than 5 s without --force
 $M tone -d All-In-One-Cable --ptt serial:All-In-One-Cable --seconds 3   # SPEC 7.1 level-setting tone
-$M tx -d All-In-One-Cable --ptt serial:All-In-One-Cable --mcs 2 --blocks 3
-$M listen -d All-In-One-Cable --mcs 2 --blocks 3            # Ctrl-C to stop
+$M tx -d All-In-One-Cable --ptt serial:All-In-One-Cable --callsign N0CALL-1 --mcs 2 --blocks 3
+$M listen -d All-In-One-Cable                               # header first; Ctrl-C to stop
 ```
 
 - **Devices** are chosen by a substring of the ALSA name or its
@@ -55,30 +57,55 @@ $M listen -d All-In-One-Cable --mcs 2 --blocks 3            # Ctrl-C to stop
   sample at the DAC, `--txtail` (ms, default 10) from the last sample at
   the DAC to release (SPEC 7.3). Each transmission prints both as
   measured.
-- **`tx`** builds frames with `cairn-phy`: `--mcs`, `--width`, `--prefix
-  short|long`, `--mask 8-11,30` (tones silenced in data symbols),
-  `--blocks N` or `--frame-s S` (default SPEC 10.2: 2 s at MCS 0-1, 4 s
-  above, block count as `cairn-bench tx` computes it), `--count`, `--gap`
-  (unkeyed seconds between transmissions), `--tone S` (the level-setting
-  tone first), `--seed`. Each frame is its own keyed transmission, peak at
-  -3 dBFS (`TxFrame::output`). Header and payload bits are the
-  simulator's random ones for the seed (`frame.build(cfg,
+- **`tx`** builds frames from SPEC 8.2 header fields with `cairn-phy`:
+  `--callsign CALL[-SSID]` (the source, `CAIRN_CALLSIGN`; required),
+  `--to CALL[-SSID]` (default broadcast), `--type ui|beacon|data|probe`
+  (default UI, the broadcast data frame of SPEC 8.4), `--seq N` (a
+  broadcast's frame counter, +1 per frame; a session frame's first block
+  sequence, + its block count per frame), `--id` and `--grid` (the B.6 ID
+  control block; a BEACON always carries it), `--message TEXT` (the
+  payload, zero-padded; default the seed's random payloads). Flags follow
+  from the frame: control and data present from the counts, session for
+  `--type data` (which also carries an ACK control block first, SPEC 8.4,
+  with demonstration values), and the probe whenever the data uses a tone
+  above 23 (ADR 0007), to the width for a broadcast and to `--cap` for a
+  session frame. Then `--mcs`, `--width`, `--prefix short|long`, `--mask
+  8-11,30` (session frames only: a broadcast is unmasked), `--blocks N`
+  or `--frame-s S` (default SPEC 10.2: 2 s at MCS 0-1, 4 s above, the
+  block count as `cairn-bench tx` computes it, less the control blocks and
+  the probe), `--count`, `--gap` (unkeyed seconds between transmissions),
+  `--tone S` (the level-setting tone first), `--seed`. Each frame is its
+  own keyed transmission, peak at -3 dBFS (`TxFrame::output`).
+  `--random-header` sends the old frames instead: header and payload bits
+  are the simulator's random ones for the seed (`frame.build(cfg,
   default_rng(seed * 1000 + i))`, NumPy's generator reimplemented bit for
-  bit); real header fields wait for the link layer.
+  bit), for `listen --fixed` and `cairn-bench`.
 - **`--wav out.wav`** (tx and tone) writes the signal instead of playing
   it, with a `cairn-bench/1` manifest next to it (`out.json`), so
   `cairn-bench rx out.wav` scores it exactly as its own recordings,
-  header and block bits included.
-- **`listen`** prints one line per frame (time, prefix, MCS and width,
-  header OK, blocks OK/total, the ADR 0006 channel SNR on the 7 dB scale,
-  sample-clock offset in ppm as `cairn-bench rx` reports it, detector rho,
-  decode time) and every `--stats` seconds the input level, capture
-  counters, queue depth and totals. `--wav in.wav` runs the same code on a
-  file as fast as it goes; `--record cap.wav` saves what the sound card
-  captured; `--expect N` fails unless exactly N frames decode completely
-  (for scripts). Until the header carries the frame's fields, the frame
-  configuration comes from the same `--mcs/--width/--blocks/--mask` flags
-  as `tx` (the prefix from the detector unless `--prefix` forces it).
+  header, control and block bits included (the manifest carries a real
+  header's bits).
+- **`listen`** decodes every frame header first: the header once the
+  preamble and header are in, then the frame its fields describe. Session
+  frames (flag bit 3) use the link state on the command line, `--width`,
+  `--mask` and `--peer-cap` (the peer's cap in tones, the extent of its
+  probe; default the width); a frame outside a session takes its width
+  from its own probe (ADR 0007), or is 24 tones without one. It prints one
+  line per frame: time (UTC and stream seconds), source > destination
+  (`*` for broadcast), frame type and flags, sequence, MCS and width
+  ("from probe" for a broadcast), prefix, data and control blocks OK/total,
+  the ADR 0006 channel SNR on the 7 dB scale, sample-clock offset in ppm as
+  `cairn-bench rx` reports it, detector rho, decode time; then one line per
+  control block (`ctrl 1: ID N0CALL-1 grid FN31`, `ctrl 1: ACK base ...`)
+  and, with `--text`, the payload. Every `--stats` seconds: the input
+  level, capture counters, queue depth and totals. `--wav in.wav` runs the
+  same code on a file as fast as it goes (`--realtime`: at real-time pace,
+  reporting the receive turnaround); `--record cap.wav` saves what the
+  sound card captured; `--expect N` fails unless exactly N frames decode
+  completely (for scripts); `--threads` (default 4) decodes data blocks in
+  parallel. `--fixed` takes the whole configuration from
+  `--mcs/--width/--blocks/--mask` instead (the prefix from the detector
+  unless `--prefix` forces it), for `--random-header` frames.
 - Every keyed transmission over 5 s needs `--force` (and 300 s is the
   hard limit).
 
@@ -109,20 +136,95 @@ $M listen -d All-In-One-Cable --mcs 2 --blocks 3            # Ctrl-C to stop
   together inside `open(2)`; the very next call drops both, and DTR+RTS
   high does not key the AIOC. HUPCL is made sure of for active-high lines,
   so the kernel drops DTR if the process dies without cleanup.
-- **Listen** (`listen::run`): the processing thread takes 50 ms chunks
-  (sound card or file, the only difference), runs the streaming detector
-  across chunk boundaries, keeps enough history for every pending frame,
-  and once a frame's last sample has arrived hands it to a decoder thread
-  (never the audio callback). Where the configuration comes from is the
-  `ConfigSource` trait: `FixedConfig` (command line) today; a header-first
-  source returns the configuration the header names, after a lookahead of
-  preamble plus header.
-- On the AIOC at idle, `listen` uses about 9% of one core (the detector
-  rescans its 12k-sample window every chunk); a 4 s MCS 2 frame decodes in
-  about 20 ms clean and 60-90 ms through the FM channel model, so a result
-  follows the frame's last sample by at most one chunk (50 ms), 25 ms of
-  margin and the decode. The 100 ms receive turnaround of SPEC 7.3 will
-  want smaller chunks or an incremental detector.
+- **Listen** (`listen::run`): the processing thread takes 10 ms chunks
+  (the sound card's period; sound card or file, the only difference) and
+  feeds the incremental detector (`detector::Detector`: the front-end FIR,
+  the autocorrelation plateau and the S1 correlations computed only for the
+  new samples, a position decided once its +-3 symbol peak window is
+  complete, so a detection is final 85 ms after the frame's first sample
+  at any chunk size, with the same starts as the one-shot scan). Each
+  detection is resolved by a `ConfigSource` as soon as enough of the frame
+  is in: `HeaderFirst` decodes the header after preamble plus header
+  (11 symbols) and, for a wide broadcast, measures the probe's extent once
+  the data symbols every width has are in (`rx::extent_samples`), which is
+  never later than the frame's end; `FixedConfig` takes the command line.
+  The frame goes to the decoder thread the moment its last sample (plus
+  1e-4 of its length for a clock offset) has arrived, and the decoder
+  spreads the data blocks over `--threads` threads.
+- **Full speed on wake-up** (`boost`): between frames the decoder sleeps
+  and an idle core drops to its lowest clock (600 MHz here under
+  schedutil), possibly an efficiency core; a frame that decodes in 8 ms on
+  a busy performance core then took 30-50 ms. The decoder thread asks the
+  kernel for a utilisation clamp (`sched_setattr`, uclamp min 1024, no
+  privileges needed), so it wakes on a fast core at full clock; its block
+  threads inherit it. `--no-boost` turns it off.
+- **Receive turnaround** (SPEC 7.3: at most 100 ms from a frame's last
+  sample to its decoded result), measured with `modem/tools/turnaround.sh`:
+  10 frames per row with real headers and SPEC 10.2 lengths (2 s at
+  MCS 0, 4 s above), `listen --wav --realtime` (the file played at
+  real-time pace in 10 ms chunks through the same code as the sound card),
+  on this 8-core Apple M2 (Asahi Linux), 4 decoder threads. "FM" is the
+  simulator's FmChannel 3 dB above the rung's threshold (mic path at 24
+  tones, flat25 over the width at 56), +20 ppm. The time includes the
+  chunk wait (up to 10 ms), the clock-offset margin, the decode with the
+  ADR 0006 rebuild, and the worker's wake-up.
+
+  | Width | MCS | Blocks | Clean p50 / p99 (ms) | FM p50 / p99 (ms) | Without the clamp, clean / FM p50 (ms) |
+  | --- | --- | --- | --- | --- | --- |
+  | 24 | 0 | 3 | 10.1 / 15.4 | 8.7 / 14.9 | 34.1 / 33.4 |
+  | 24 | 2 | 14 | 16.4 / 18.9 | 16.9 / 20.1 | 50.8 / 58.1 |
+  | 24 | 4 | 28 | 16.9 / 19.7 | 17.5 / 20.5 | 58.5 / 51.9 |
+  | 24 | 6 | 42 | 17.3 / 20.0 | 18.0 / 21.1 | 52.8 / 52.8 |
+  | 56 | 0 | 7 | 15.5 / 24.2 | 15.1 / 20.3 | 36.2 / 45.0 |
+  | 56 | 2 | 33 | 23.7 / 26.8 | 25.8 / 28.3 | 68.0 / 67.7 |
+  | 56 | 4 | 66 | 23.4 / 31.6 | 25.6 / 29.7 | 64.3 / 69.3 |
+  | 56 | 6 | 99 | 27.0 / 30.1 | 22.9 / 27.9 | 69.0 / 73.2 |
+
+  The worst of all 160 frames was 31.6 ms with the clamp (85 ms without).
+  Every frame was detected and its header decoded; every block decoded
+  except one of 420 at 24 tones MCS 6 through FmChannel and, at 56 tones
+  MCS 6, 9 of 990 clean and 3 of 990 through FmChannel
+  (that rung shows a block error floor near 1% at 56 tones even noise-free,
+  in both receivers; its threshold was measured at 24 tones). Decode
+  alone (`cargo run --release --example rx_cost`, warm core) is 4-10 ms at
+  24 tones and 4-16 ms at 56, about two thirds of it the ADR 0006 rebuild;
+  4 block threads change little 3 dB above threshold, where the LDPC
+  decoder stops after a few iterations, and help near threshold.
+
+- **Idle cost.** The incremental detector costs 1.9% of one core at 10 ms
+  chunks (`cargo run --release --example detector_cost`; the rescanning
+  one cost 5.1% at that chunk size, 1.1% at 50 ms). Live on the AIOC at
+  idle the whole `listen` process used 7-13% of one core in 120-300 s
+  runs (CPU time at the idle cores' low clock, which inflates it), with no
+  detection; 0 xruns on a quiet machine, one 25 ms capture gap in 300 s
+  while four compile jobs and the test suites ran alongside.
+
+### Two-radio broadcast test
+
+One station transmits, the other listens; nothing is acknowledged. The
+full procedure, with level setting and what to vary, is in
+[docs/bench-testing.md](../docs/bench-testing.md#two-radio-broadcast-test-with-cairn-modem).
+
+```sh
+M=target/release/cairn-modem
+# Levels: A sends the tone (drive to 70% deviation); B sets its input so it peaks near -10 dBFS.
+$M tone -d All-In-One-Cable --ptt serial:All-In-One-Cable --seconds 3            # station A
+$M levels -d All-In-One-Cable --seconds 10                                       # station B
+# B listens: header first, broadcast widths from the probe; --record keeps the audio.
+$M listen -d All-In-One-Cable --text --record rx.wav                             # station B
+# A sends UI broadcasts with its callsign in every header and the ID block (B.6).
+$M tx -d All-In-One-Cable --ptt serial:All-In-One-Cable --callsign N0CALL-1 --id --grid FN31 \
+    --mcs 0 --count 5 --gap 2                                                    # station A
+$M tx ... --callsign N0CALL-1 --mcs 2 --count 5 --message "test de N0CALL"       # station A
+```
+
+Station identification is the source callsign in every header (SPEC 8.3)
+and, with `--id` or `--type beacon`, the ID control block; add a CW or
+voice ID between runs where your rules ask for one. B prints each frame
+with its source, type, counter, rung, width, blocks, control blocks
+(`ctrl 1: ID N0CALL-1 grid FN31`), SNR and clock offset; `listen --wav
+rx.wav --realtime` replays the recording through the same code and
+reports the receive turnaround.
 
 ### Testbed notes (AIOC, no radio attached)
 
@@ -165,11 +267,11 @@ One library crate, `phy/` (`cairn-phy`):
 | `mapping` | 38.211 Gray labeling, max-log demapper |
 | `ofdm` | Half-bin OFDM synthesis (negated-tail prefix) and demodulation, clip-and-filter, PAPR, peak scaling |
 | `preamble` | S1, S2 and the preamble grid |
-| `detector` | SPEC 6.1 dual-lag detector with S1 cross-correlation and the ±100 ppm grid, one-shot and streaming |
+| `detector` | SPEC 6.1 dual-lag detector with S1 cross-correlation and the ±100 ppm grid: one-shot (`scan`, `detect`), incremental streaming (`Detector`) and the older rescanning streamer (`RescanDetector`) |
 | `fields` | SPEC 8.2 header, B.1 addresses (with the long-callsign SHA-256 hash) and every Appendix B control block: pack, unpack, CRC and field checks |
-| `frame` | Frame geometry: segments (header, probe, control, data), tones, masks, gains (ADR 0004, 0005); `LinkState` and `FrameConfig::from_header` |
-| `tx` | Frame builder, mirroring `frame.build`; `build_frame` from a header and control blocks |
-| `rx` | Receiver, mirroring `frame.receive` with its defaults (header-noise method "measured", decision-directed noise, burst-aware LLRs), plus the ADR 0006 channel SNR from rebuilt symbols; `receive_header_first` and `detect_and_receive` decode a frame knowing only the link width and mask |
+| `frame` | Frame geometry: segments (header, probe, control, data), tones, masks, gains (ADR 0004, 0005); the ADR 0007 probe rule and the probe's extent (`cap`); `LinkState` and `FrameConfig::from_header` |
+| `tx` | Frame builder, mirroring `frame.build`; `build_frame` from a header and control blocks (sets the probe flag when the data needs it) |
+| `rx` | Receiver, mirroring `frame.receive` with its defaults (header-noise method "measured", decision-directed noise, burst-aware LLRs), plus the ADR 0006 channel SNR from rebuilt symbols; header-first decoding (`receive_header_first`, `detect_and_receive`, and its halves `receive_header` and `receive_frame`), the broadcast width from the probe (`probe_extent`), data blocks on several threads (`RxOptions::threads`) |
 | `dsp` | Savitzky-Golay, convolution, interpolation, unwrap, median, Kaiser FIR with NumPy/SciPy semantics |
 | `channel`, `wav` | AWGN test channel; 16-bit WAV reading and writing |
 
@@ -185,13 +287,64 @@ the pilot track leaves one. `tests/loopback.rs` checks it within 1 dB from
 The receiver decodes header first (`Receiver::receive_header_first`, or
 `detect_and_receive` with the detector in front): it decodes the preamble
 and header on the base tones, unpacks the SPEC 8.2 fields, and takes the
-rung, the control and data block counts and the probe flag from them. The
-caller supplies only what the header does not carry, the link width and
-tone mask (`LinkState`); the prefix comes from the detector. Control
-blocks are decoded before the data and parsed (`RxResult::controls`); a
-header that fails its CRC or has malformed fields stops the decode, with
-the reason in `RxResult::header_error`. `Receiver::receive` with a
-`FrameConfig` still decodes a frame of known geometry.
+rung, the control and data block counts and the probe flag from them. A
+session frame (flag bit 3) needs what the header does not carry, the link
+width, tone mask and the peer's cap (`LinkState`; `LinkState::from_cap`
+for a session whose width is the cap). A frame outside a session takes
+its width from its own probe (`probe_extent`, ADR 0007) or is 24 tones
+without one. The prefix comes from the detector. Control blocks are
+decoded before the data and parsed (`RxResult::controls`); a header that
+fails its CRC or has malformed fields stops the decode, with the reason in
+`RxResult::header_error`. `Receiver::receive` with a `FrameConfig` still
+decodes a frame of known geometry.
+
+ADR 0007 in both implementations (`frame.py`, `frame.rs`):
+
+- **Every wide frame probes.** A frame carries the probe exactly when its
+  data symbols use a tone above 23 (`needs_probe`: a data tone or an upper
+  pilot; a 56-tone link masked to the base tones, or a frame of header and
+  control blocks only, needs none). Forcing the probe off then is refused
+  (`ConfigError::NeedsProbe`), and `build_frame` sets header flag bit 4
+  itself. Without a probe the frame's grid is the base tones.
+- **The probe reaches the sender's cap.** `FrameConfig::cap` (tones, at
+  least the width; the B.3 width cap plus one) is the probe's extent and
+  the grid's width; `LinkState::cap` carries the peer's for session frames.
+  Every symbol keeps the width's per-tone scale, so a probe wider than the
+  data has more power than a data symbol (see the notes below).
+- **Broadcast width from the probe** (`probe_extent`). Each tone above 23
+  is tested: its two probe symbols divided by the known values both measure
+  the channel when the tone carries the probe, so Re{z0 conj z1} estimates
+  its power (clip-and-filter regrowth above the cap is not the probe
+  sequence and averages zero); the power of the data symbols that every
+  width has (the frame's at 56 tones, so they are always present) is added,
+  less the noise measured on the same tone in the silent preamble, header
+  and control symbols. A tone counts when that clears 5 standard deviations
+  of its noise-only value and -18 dB against the base tones (regrowth is
+  about -30 dB, the mic path's leakage -22 to -25 dB); the width is the
+  change point of the run (count of tones that do minus those that do
+  not, from tone 24 up; ties to the higher).
+  If no data block decodes at that width, the neighbouring widths (+1, -1,
+  +2, -2, +3, -3) are tried and the first at which a block decodes is kept,
+  so a weak edge tone on a rolled-off path costs a retry, not the frame.
+- **Detection margin** (`uv run --package cairn-sim python -m
+  cairn_sim.extent_eval --trials 200 --decode`, UI broadcasts at MCS 0
+  with 3 blocks). AWGN, widths 25-56: no width error in 200 frames per
+  point from 2 dB (widths 32-56) or 3.5 dB (all widths); at 1 dB 0.5-4%,
+  at 0 dB 8-24%, while the data's block error rate at the true width is
+  still 44-96% at 1 dB and reaches 1% near 3 dB. So the extent alone is
+  reliable about 1-1.5 dB below the data's 1% point; with the decode retry,
+  header-first decoding loses no frame to the width at or above 3.5 dB
+  (its losses there are header failures: 2-7 of 150 frames at 3.5 dB,
+  none to the width). Noise-free, the edge decisions clear their
+  thresholds by 12-18 dB inside and 13-15 dB outside. Through the mic
+  path (FmChannel, whose 3 kHz filters put tone 29 about 10 dB down):
+  errors persist at 25-26 tones up to 10 dB (2-7%, the edge tone against
+  limiter and filter leakage) and at 29-30 tones up to 3.5-6 dB (the
+  rolled-off edge tones), but with the retry header-first block loss
+  equals the true-width loss from 6 dB up (0-1%).
+- **SNR with a mask** counts the mask's power boost as signal (ADR 0006
+  interpretation); the two receivers agree within 0.07 dB on every
+  fixture (`tests/rx_fixtures.rs`).
 
 ## Verification
 
@@ -202,18 +355,30 @@ Real-time layer:
   within a sample of TXDelay, release TXTail after the last sample's DAC
   time, every sample played while keyed), underrun counting, and release
   on an audio error, a panic and a stop signal.
-- `cli/src/listen.rs`: three frames straddling chunk boundaries at
-  different phases, the last ending 100 samples before the input, all
-  decode; ten seconds of noise give no detection.
+- `cli/src/listen.rs`: three fixed-configuration frames straddling chunk
+  boundaries at different phases, the last ending 100 samples before the
+  input, all decode; frames with real headers (broadcasts at 24 and 40
+  tones, a BEACON with the ID block, a masked session DATA frame at 30
+  tones) decode header first with the header, geometry, blocks and
+  control blocks of the transmitter; ten seconds of noise give no
+  detection.
+- `cli/src/headers.rs`: callsign and frame-type parsing, message payloads,
+  a wide broadcast's probe flag, control-block summaries.
 - `cli/src/nprng.rs`: the NumPy generator against values recorded from
   NumPy 2.5; `cairn-bench rx` scores `tx --wav` output with every header
   and block bit matching.
 - `ptt/`: guard release on drop, error and panic; the rigctld protocol
   against a fake server; serial line bits; CM108 reports.
-- `modem/tools/e2e_wav.sh`: MCS 0, 2 (with the tone), 4, 6 with the long
-  prefix, and 40 tones with a mask: every frame and block decodes from
-  the clean WAV and through FmChannel (mic, 25 dB, +40 ppm, reported as
-  +39 to +40 ppm), and in `cairn-bench rx`.
+- `modem/tools/e2e_wav.sh`: real-header UI broadcasts at MCS 0 (with the
+  ID block), 2 (with the tone and a message), a BEACON, 40 tones at MCS 4
+  and 56 tones at MCS 5 with the long prefix (widths from the probe), a
+  session DATA frame at 40 tones with a mask, and the random-header frames
+  with `listen --fixed`: every frame, block and control block decodes
+  header first from the clean WAV and through FmChannel (mic at 25 dB, or
+  flat25 at 30 dB over the width, +40 ppm), and in `cairn-bench rx` with
+  header bits matching.
+- `modem/tools/turnaround.sh`: the receive turnaround at real-time pace
+  (below).
 
 Physical layer (paths under `phy/`):
 
@@ -237,16 +402,30 @@ Physical layer (paths under `phy/`):
   (real headers and control blocks: control segment geometry, positions,
   stages, grid, samples), builds them from their fields, and decodes the
   published samples header first.
+- `tests/adr0007.rs`: a wide frame without the probe refused; the probe
+  to a cap above the width (24/30, 30/56, 40/48) with the data within the
+  width, decoded with the cap from the link state; wide broadcasts (25,
+  30, 40, 56 tones) decoded with no link state, width from the probe;
+  probe extent at 25-56 tones from 3.5 to 15 dB and noise-free (clip
+  regrowth above the cap ignored); session frames at several widths and
+  masks; block results independent of the decoder threads.
+- `tests/rx_fixtures.rs`: the incremental detector gives the one-shot
+  detections (start, prefix, grid point, rho within 1e-6) at chunk sizes
+  from one sample to a megasample, each final within its stated latency.
 - `tests/rx_fixtures.rs`: fixtures from `tools/gen_rx_fixtures.py` (clean,
   AWGN, mic, repeater with long prefix, masked, ±100 ppm, noise burst) as
   16-bit WAV. The Rust detector finds the simulator's starts, prefixes and
   clock-grid points; the receiver's per-tone SNR agrees to 1e-12 dB and it
-  decodes the same blocks in the same number of LDPC iterations. Four
-  `hdr_*` fixtures (mic and repeater profiles, AWGN at 30 tones with a
-  probe, mask and two control blocks, a header-only PROBE) carry real
-  headers and control blocks and are decoded header first by both
-  receivers: same configuration from the header, same control blocks, SNR
-  within 1e-13 dB. Rust clip-and-filter matches the simulator to 3e-15.
+  decodes the same blocks in the same number of LDPC iterations; the
+  protocol's channel SNR (ADR 0006, mask boost counted) agrees within
+  0.15 dB (measured: 0.07 dB at most, 0.006 dB on the masked 30-tone
+  frame). Six `hdr_*` fixtures (mic and repeater profiles, AWGN at 30
+  tones with a probe, mask and two control blocks, a header-only PROBE,
+  and two wide UI broadcasts, 33 tones in AWGN and 27 through the mic
+  path) carry real headers and control blocks and are decoded header first
+  by both receivers: same configuration from the header (and the same
+  width from the probe for the broadcasts), same control blocks, per-tone
+  SNR within 1e-13 dB. Rust clip-and-filter matches the simulator to 3e-15.
 - `tests/loopback.rs`: Rust TX to Rust RX, every rung at widths 24-56,
   both prefixes, with and without masks; header-only frames; the channel SNR.
 - Block-by-block agreement near the MCS 2 threshold (3,200 blocks at 7.0,

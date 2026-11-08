@@ -51,18 +51,27 @@ impl FrameSpec {
             .map_err(|e| e.to_string())
     }
 
-    /// Blocks per frame, as `cairn-bench tx` counts them (`link_sim.Budget`:
-    /// the frame time less Appendix A's TXDelay and TXTail, preamble and header).
-    pub fn n_blocks(&self) -> Result<usize, String> {
+    /// Blocks per frame, as `cairn-bench tx` counts them (`link_sim.Budget`
+    /// without the ACK block: the frame time less Appendix A's TXDelay and
+    /// TXTail, preamble, header and, when the data uses tones above 23, the
+    /// probe of ADR 0007), less `control_symbols` for control blocks sent.
+    pub fn n_blocks_with(&self, control_symbols: usize) -> Result<usize, String> {
         if let Some(b) = self.blocks {
             return Ok(b);
         }
         let cfg = self.base(1)?;
         let frame_s = self.frame_s.unwrap_or(Self::default_frame_s(self.mcs));
-        let avail = params::block_symbols_available(frame_s, self.cp);
+        let avail = params::block_symbols_available(frame_s, self.cp)
+            .saturating_sub(cfg.probe_symbols() + control_symbols)
+            .max(1);
         let rung = cfg.rung();
         let per_symbol = rung.bits_per_point * cfg.data_tones.len();
         Ok((avail * per_symbol / rung.coded_bits).max(1))
+    }
+
+    /// [`FrameSpec::n_blocks_with`] for a frame without control blocks.
+    pub fn n_blocks(&self) -> Result<usize, String> {
+        self.n_blocks_with(0)
     }
 
     /// The frame configuration.
@@ -147,6 +156,32 @@ pub struct PlacedFrame {
     pub peak_dbfs: f64,
     /// RMS, dBFS.
     pub rms_dbfs: f64,
+    /// A real header (SPEC 8.2), else None (the simulator's random header bits).
+    pub header: Option<PlacedHeader>,
+}
+
+/// What `cairn-bench rx` needs to rebuild a frame with a real header.
+#[derive(Clone, Debug)]
+pub struct PlacedHeader {
+    /// The header's 128 message bits (before the CRC), hex.
+    pub header_hex: String,
+    /// Each control block's 240 message bits, hex.
+    pub control_hex: Vec<String>,
+    /// Each data block's 1008 payload bits, hex, when not the seed's random ones.
+    pub payload_hex: Option<Vec<String>>,
+    /// Source and destination, as text.
+    pub source: String,
+    /// Destination.
+    pub destination: String,
+    /// Frame type name.
+    pub frame_type: String,
+    /// Sequence field.
+    pub sequence: u16,
+}
+
+/// Bits (0/1, a multiple of 8) as hex, MSB first.
+pub fn bits_hex(bits: &[u8]) -> String {
+    bits.chunks(8).map(|c| format!("{:02x}", c.iter().fold(0u8, |a, &b| (a << 1) | b))).collect()
 }
 
 /// A level tone placed in a WAV.
@@ -198,7 +233,8 @@ pub fn manifest_json(
             s,
             "  {{\"index\": {}, \"mcs\": {}, \"width\": {}, \"prefix\": \"{}\", \"cp\": {}, \"silenced\": [{}], \
              \"n_blocks\": {}, \"seed\": {}, \"start_s\": {}, \"start_sample\": {}, \"n_samples\": {}, \
-             \"duration_s\": {}, \"clip_db\": {}, \"peak_dbfs\": {}, \"rms_dbfs\": {}}}",
+             \"duration_s\": {}, \"clip_db\": {}, \"peak_dbfs\": {}, \"rms_dbfs\": {}, \"n_control\": {}, \
+             \"probe\": {}, \"cap\": {}, \"header\": {}}}",
             f.index,
             f.spec.mcs,
             f.spec.width,
@@ -214,11 +250,31 @@ pub fn manifest_json(
             num(f.cfg.clip_db),
             num(f.peak_dbfs),
             num(f.rms_dbfs),
+            f.cfg.n_control,
+            f.cfg.has_probe,
+            f.cfg.cap,
+            header_json(f.header.as_ref()),
         );
         s.push_str(if i + 1 < frames.len() { ",\n" } else { "\n" });
     }
     s.push_str(" ]\n}\n");
     s
+}
+
+fn header_json(h: Option<&PlacedHeader>) -> String {
+    let Some(h) = h else { return "null".into() };
+    let list = |v: &[String]| v.iter().map(|s| format!("\"{s}\"")).collect::<Vec<_>>().join(", ");
+    format!(
+        "{{\"message_hex\": \"{}\", \"control_hex\": [{}], \"payload_hex\": {}, \"source\": \"{}\", \
+         \"destination\": \"{}\", \"type\": \"{}\", \"sequence\": {}}}",
+        h.header_hex,
+        list(&h.control_hex),
+        h.payload_hex.as_ref().map_or("null".into(), |p| format!("[{}]", list(p))),
+        h.source,
+        h.destination,
+        h.frame_type,
+        h.sequence
+    )
 }
 
 /// Peak and RMS of `x`, dBFS.
@@ -238,7 +294,9 @@ mod tests {
         let s = |mcs, width| FrameSpec { mcs, width, cp: CP_SHORT, silenced: vec![], blocks: None, frame_s: Some(4.0) };
         assert_eq!(s(2, 24).n_blocks().unwrap(), 14);
         assert_eq!(s(6, 24).n_blocks().unwrap(), 42);
-        assert_eq!(s(6, 56).n_blocks().unwrap(), 100);
+        // 56 tones: the probe of every wide frame (ADR 0007) costs 2 symbols, as in link_sim.Budget.
+        assert_eq!(s(6, 56).n_blocks().unwrap(), 99);
+        assert_eq!(s(3, 56).n_blocks().unwrap(), 49);
         assert_eq!(parse_tones("8-11, 30").unwrap(), vec![8, 9, 10, 11, 30]);
     }
 

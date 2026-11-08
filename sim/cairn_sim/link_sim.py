@@ -172,6 +172,13 @@ class Budget:
     cp: int = params.CP_SHORT
     mask: frozenset[int] | None = None   # usable tones (SPEC 5.4); None: all
     blocks_override: int | None = field(default=None, repr=False)
+    # SPEC 8.4: every DATA frame in a session carries the ACK control block
+    # for the peer's last frame (12 symbols at MCS 0 on the base tones).
+    # SPEC 7.4 and Appendix A as printed leave it out (ack_block=False).
+    ack_block: bool = True
+    # ADR 0007: every frame whose data uses tones above 23 carries the
+    # 2-symbol width probe. probe=False reproduces the printed Appendix A.
+    probe: bool = True
 
     @property
     def coded_bits_per_symbol(self) -> int:
@@ -183,8 +190,29 @@ class Budget:
         return params.RUNGS[self.mcs].coded_bits / self.coded_bits_per_symbol
 
     @property
+    def active_tones(self) -> tuple[int, ...]:
+        masked = params.masked_tones(self.width, self.mask)
+        return tuple(sorted(params.data_tones_for(self.width, masked)
+                            + tuple(p for p in params.pilots_for(self.width) if p not in masked)))
+
+    @property
+    def probe_symbols(self) -> int:
+        """ADR 0007: the probe in every frame whose data uses a tone above 23."""
+        wide = self.active_tones[-1] >= params.BASE_TONES
+        return params.PROBE_SYMBOLS if self.probe and wide else 0
+
+    @property
+    def control_symbols(self) -> int:
+        """The ACK control block (512 coded bits, QPSK on the 22 base data tones)."""
+        if not self.ack_block:
+            return 0
+        tones = len(params.data_tones_for(params.BASE_TONES, params.masked_tones(self.width, self.mask)))
+        return -(-params.CONTROL_CODE.coded_bits[0] // (2 * tones))
+
+    @property
     def fixed_symbols(self) -> int:
-        return params.PREAMBLE_SYMBOLS + 7   # preamble + header
+        # preamble + header (7) + probe + ACK control block
+        return params.PREAMBLE_SYMBOLS + 7 + self.probe_symbols + self.control_symbols
 
     @property
     def block_symbols_available(self) -> int:
