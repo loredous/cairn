@@ -80,8 +80,8 @@
 //!
 //! Limits. Quieting sees whatever the carrier carries in its band: a Cairn
 //! frame's own spectrum just above its band edge is about 19 dB below its
-//! mean power (about 5 dB less in the default band, which starts 100 Hz
-//! above the edge), so on its own frames quieting asserts only where the
+//! mean power (the default band, which starts 100 Hz above the edge, sees
+//! about 5 dB less of it, about 24 dB below; ADR 0014), so on its own frames quieting asserts only where the
 //! open-squelch band floor is well above that (the preamble correlator covers them), and
 //! bright speech releases it briefly. Release is by the band power coming
 //! back, so a squelch that closes (silence) reads as a carrier until

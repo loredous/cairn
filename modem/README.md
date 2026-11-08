@@ -590,8 +590,8 @@ larger drop in the noise level reads as a carrier about one time in four
 (slow drift does not); bright speech gives 100-180 ms quieting dropouts
 during a voice carrier; a squelch that closes reads as a carrier until the
 60 s re-learn. A Cairn frame's own spectrum leaks into the quieting band
-about 14 dB below its mean (19 dB just at its edge, which the band now
-clears by 100 Hz), so quieting holds through the peer's frame only when
+about 24 dB below its mean (about 19 dB in a band at its edge; ADR 0014
+measured the 100 Hz guard as leaking about 5 dB less), so quieting holds through the peer's frame only when
 the open-squelch noise is well above that; the
 preamble correlator covers the frame in any case. `phy/tests/dcd.rs` has
 the tests (13 in the default run, three 10-minute runs `--ignored`).
