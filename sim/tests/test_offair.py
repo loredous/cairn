@@ -169,3 +169,21 @@ def test_offair_clock_prior_from_the_link(direction, long, f):
     # The same prior given per header, as the link layer knows the sender only then.
     r2 = _decode(f["wav"], clock_prior=lambda header: prior)
     assert r2.detail["drift"] == pytest.approx(r.detail["drift"])
+
+
+WIDE = INDEX["wide"]
+
+
+@pytest.mark.parametrize("f", WIDE, ids=[f["wav"] for f in WIDE])
+def test_offair_wide_broadcast_takes_its_width_from_the_data(f):
+    # A 48-tone UI broadcast through radios that pass audio to about 4.25 kHz:
+    # tones 42-47 arrive 30 dB below the noise and 38-41 fade into it, so the
+    # probe's extent reads 38. Before the fix the receiver kept 38 (and the
+    # neighbours 35-41 it retried), failed the block and reported "x38 from
+    # probe". The block decodes only at the width it was sent at.
+    _, x = read_wav(DIR / f["wav"])
+    r = frame.receive(x[:, 0])
+    ext = r.detail["probe_extent"]
+    assert ext.width == f["probe_extent_width"] < f["width"]
+    assert r.config.width == r.config.cap == ext.data_width == f["width"]
+    _check_content({**f, "data_decodable": True}, r)

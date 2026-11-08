@@ -1400,8 +1400,11 @@ impl Receiver {
     /// frame, or a session frame with no link state, at the width of its
     /// probe (`extent`, from [`Receiver::probe_extent`]; 24 tones without a
     /// probe). If no data block decodes at the probe's width, the widths
-    /// around it are tried ([`width_alternatives`]) and the first at which a
-    /// block decodes is kept. Err if the header describes no decodable frame
+    /// around it and then every wider one are tried ([`width_alternatives`],
+    /// without the channel SNR's rebuild) and the first at which a block
+    /// decodes is kept ([`ProbeExtent::data_width`]; None when none does: the
+    /// frame's width is then unknown, not the probe's). Err if the header
+    /// describes no decodable frame
     /// ([`ConfigError::UnknownMask`] for a mask ID `link` does not hold).
     #[allow(clippy::too_many_arguments)]
     pub fn receive_frame(
@@ -1416,16 +1419,29 @@ impl Receiver {
     ) -> Result<RxResult, ConfigError> {
         let cfg = FrameConfig::from_header(header, &frame_link(header, link, extent.as_ref()), cp)?;
         let mut r = self.receive(rx, &cfg, start, opts);
-        if let Some(ext) = extent.as_ref().filter(|_| cfg.n_blocks > 0 && !r.block_ok.iter().any(|&b| b)) {
-            for w in width_alternatives(ext.width) {
-                let alt = LinkState::from_cap(w, None);
-                let Ok(acfg) = FrameConfig::from_header(header, &alt, cp) else { continue };
-                let ra = self.receive(rx, &acfg, start, opts);
-                if ra.block_ok.iter().any(|&b| b) {
-                    r = ra;
-                    break;
+        let mut extent = extent;
+        if let Some(ext) = extent.as_mut() {
+            if cfg.n_blocks > 0 && !r.block_ok.iter().any(|&b| b) {
+                // A weak edge tone can mislead the extent by a tone or two, and
+                // a channel narrower than the frame hides its top tones
+                // entirely. The data decodes only at the width it was sent at,
+                // so try the neighbours and then every wider width; the search
+                // skips the channel SNR's rebuild, and the width found is
+                // decoded again with it.
+                let quick = RxOptions { rebuild_snr: false, ..opts.clone() };
+                for w in width_alternatives(ext.width) {
+                    let alt = LinkState::from_cap(w, None);
+                    let Ok(acfg) = FrameConfig::from_header(header, &alt, cp) else { continue };
+                    let ra = self.receive(rx, &acfg, start, &quick);
+                    if ra.block_ok.iter().any(|&b| b) {
+                        r = if opts.rebuild_snr { self.receive(rx, &acfg, start, opts) } else { ra };
+                        break;
+                    }
                 }
             }
+            // The width is known only where the data confirms it: without
+            // that, the probe's reading stands in the configuration, unconfirmed.
+            ext.data_width = r.block_ok.iter().any(|&b| b).then(|| r.config.as_ref().map(|c| c.width)).flatten();
         }
         // The header pass decided the geometry; report its header.
         if !r.header_ok {
@@ -1473,6 +1489,7 @@ impl Receiver {
                 threshold: vec![1.0; m - b],
                 present: vec![false; m - b],
                 data_symbols: 0,
+                data_width: None,
             };
         }
         let cfg = extent_geometry(header, cp);
@@ -1526,7 +1543,7 @@ impl Receiver {
                 best_j = i + 1;
             }
         }
-        ProbeExtent { width: b + best_j, signal, threshold, present, data_symbols: n_data }
+        ProbeExtent { width: b + best_j, signal, threshold, present, data_symbols: n_data, data_width: None }
     }
 
     /// Find the strongest frame in `rx` with the SPEC 6.1 detector (blind
@@ -1572,6 +1589,12 @@ pub struct ProbeExtent {
     pub present: Vec<bool>,
     /// Data symbols the estimate used.
     pub data_symbols: usize,
+    /// Set by [`Receiver::receive_frame`]: the width at which a data block
+    /// decoded (its CRC passed), the probe's or one tried after it
+    /// ([`width_alternatives`]); None when the frame has no data blocks, or
+    /// when none decodes at any width tried, so the frame's width is unknown
+    /// and the configuration's (the probe's reading) is unconfirmed.
+    pub data_width: Option<usize>,
 }
 
 impl ProbeExtent {
@@ -1612,14 +1635,25 @@ pub fn extent_samples(header: &Header, cp: usize) -> usize {
     (cfg.first_data() + cfg.data_symbols()) * cfg.stride()
 }
 
-/// Widths to try, nearest first, when nothing decodes at the probe's.
+/// Widths to try when nothing decodes at the probe's: its neighbours,
+/// nearest first (a weak edge tone can mislead the extent by a tone or two),
+/// then every wider width up to 56 in turn.
+///
+/// The extent bounds the width from below only. Tones on which the probe
+/// sequence is received were sent (up to a stray tone or two), but a channel
+/// that rolls off below the sent width hides the probe's top tones under its
+/// noise: the 2026-11-07 radios pass audio to about 4.25 kHz (tone 39), and a
+/// 48-tone broadcast through them reads 38. The probe cannot tell those
+/// widths apart; the data can, as its blocks decode only at the width they
+/// were sent at.
 pub fn width_alternatives(width: usize) -> Vec<usize> {
-    EXTENT_RETRY
+    let near = EXTENT_RETRY
         .iter()
         .map(|d| width as i64 + d)
         .filter(|w| (BASE_TONES as i64..=params::MAX_TONES as i64).contains(w))
-        .map(|w| w as usize)
-        .collect()
+        .map(|w| w as usize);
+    let furthest = EXTENT_RETRY.iter().max().map_or(0, |&d| d as usize);
+    near.chain(width + furthest + 1..=params::MAX_TONES).collect()
 }
 
 /// The link state a frame is decoded with: the caller's for a session frame

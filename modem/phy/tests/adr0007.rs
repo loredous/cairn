@@ -203,3 +203,39 @@ fn link_state_from_cap() {
     let l = LinkState::from_cap(40, None);
     assert_eq!((l.width, l.probe_extent()), (40, 40));
 }
+
+#[test]
+fn width_alternatives_reach_every_wider_width() {
+    assert_eq!(width_alternatives(55), vec![56, 54, 53, 52]);
+    let mut want = vec![39, 37, 40, 36, 41, 35];
+    want.extend(42..=56);
+    assert_eq!(width_alternatives(38), want);
+    let mut want = vec![25, 26, 27];
+    want.extend(28..=56);
+    assert_eq!(width_alternatives(24), want);
+}
+
+#[test]
+fn width_unconfirmed_when_no_block_decodes() {
+    // The data symbols lost (the channel's noise alone after the probe): no
+    // width decodes them, so the width is reported unknown (data_width None),
+    // not taken as the probe's.
+    let mut rng = Rng::new(9);
+    let mut h = Header::new(frame_type::UI, src(), Address::Broadcast);
+    (h.sequence, h.mcs, h.n_data) = (6, 0, 2);
+    let f = Transmitter::new().build_frame(&h, &[], &payloads(2, &mut rng), &LinkState::width(36)).unwrap();
+    let clean = air(&f, None, &mut rng);
+    let mut y = air(&f, Some(20.0), &mut rng);
+    let d0 = LEAD + f.config.first_data() * f.config.stride();
+    for (v, c) in y[d0..].iter_mut().zip(&clean[d0..]) {
+        *v -= c;
+    }
+    let r = Receiver::new().receive_header_first(&y, &LinkState::default(), LEAD, 60, &RxOptions::default());
+    let ext = r.probe_extent.as_ref().unwrap();
+    assert_eq!((ext.width, ext.data_width, r.config.as_ref().unwrap().width), (36, None, 36));
+    assert!(!r.block_ok.iter().any(|&b| b));
+    // A frame whose data decodes confirms its width.
+    let y = air(&f, Some(20.0), &mut rng);
+    let r = Receiver::new().receive_header_first(&y, &LinkState::default(), LEAD, 60, &RxOptions::default());
+    assert_eq!(r.probe_extent.unwrap().data_width, Some(36));
+}

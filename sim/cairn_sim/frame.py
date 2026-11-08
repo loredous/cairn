@@ -1463,12 +1463,18 @@ class ProbeExtent:
 
     ``signal``, ``threshold`` and ``present`` are per tone 24-55; ``width``
     is the highest tone carrying the probe plus one (24 if none does).
+    ``data_width`` is set by the header-first receiver: the width at which a
+    data block decoded (its CRC passed), the probe's or one tried after it
+    (``width_alternatives``); None when the frame has no data blocks, or when
+    none decodes at any width tried, so the frame's width is unknown and the
+    configuration's (the probe's reading) is unconfirmed.
     """
     width: int
     signal: np.ndarray
     threshold: np.ndarray
     present: np.ndarray
     data_symbols: int
+    data_width: int | None = None
 
     def margin_db(self) -> tuple[float, float]:
         """Decision margins at the edge, dB: the last tone in the extent over
@@ -1560,8 +1566,21 @@ EXTENT_RETRY = (1, -1, 2, -2, 3, -3)     # widths tried around the probe's when 
 
 
 def width_alternatives(width: int) -> list[int]:
-    """Widths to try, nearest first, when nothing decodes at the probe's."""
-    return [width + d for d in EXTENT_RETRY if params.BASE_TONES <= width + d <= params.MAX_TONES]
+    """Widths to try when nothing decodes at the probe's: its neighbours,
+    nearest first (a weak edge tone can mislead the extent by a tone or
+    two), then every wider width up to 56 in turn.
+
+    The extent bounds the width from below only. Tones on which the probe
+    sequence is received were sent (up to a stray tone or two), but a
+    channel that rolls off below the sent width hides the probe's top tones
+    under its noise: the 2026-11-07 radios pass audio to about 4.25 kHz
+    (tone 39), and a 48-tone broadcast through them reads 38. The probe
+    cannot tell those widths apart; the data can, as its blocks decode only
+    at the width they were sent at.
+    """
+    b, m = params.BASE_TONES, params.MAX_TONES
+    near = [width + d for d in EXTENT_RETRY if b <= width + d <= m]
+    return near + list(range(width + max(EXTENT_RETRY) + 1, m + 1))
 
 
 def frame_link(header: fields.Header, link: LinkState | None, extent: ProbeExtent | None) -> LinkState:
@@ -1600,8 +1619,10 @@ def receive_header_first(rx: np.ndarray, link: LinkSource = None, *,
     (``link_error``). Any other frame, or a session frame with no link state
     (None), takes its width from its own probe (``probe_extent``, ADR 0007;
     in ``detail["probe_extent"]``), or is 24 tones without one; if no data
-    block decodes at the probe's width, the widths around it are tried
-    (``width_alternatives``) and the first at which a block decodes is kept.
+    block decodes at the probe's width, the widths around it and then every
+    wider one are tried (``width_alternatives``) and the first at which a
+    block decodes is kept (``ProbeExtent.data_width``; None when none does:
+    the frame's width is then unknown, not the probe's).
     Then decode the whole frame with that configuration, and name each data
     block's sequence (``block_sequences``, ADR 0008).
     A frame whose header fails (decode, CRC or fields) comes back with no
@@ -1664,9 +1685,10 @@ def receive_header_first(rx: np.ndarray, link: LinkSource = None, *,
         return head
     r = receive(rx, cfg, start=start, measure_snr=False, **kw)
     if extent is not None and cfg.n_blocks and not r.block_ok.any():
-        # No block decoded at the probe's width: a weak edge tone (a rolled-off
-        # mic path) can mislead the extent by a tone or two. The data decodes
-        # only at the width it was sent at, so try the neighbours.
+        # No block decoded at the probe's width: a weak edge tone can mislead
+        # the extent by a tone or two, and a channel narrower than the frame
+        # hides its top tones entirely. The data decodes only at the width it
+        # was sent at, so try the neighbours and then every wider width.
         for w in width_alternatives(extent.width):
             try:
                 alt = FrameConfig.from_header(head.header, LinkState(width=w, cap=w), cp=cp)
@@ -1679,6 +1701,10 @@ def receive_header_first(rx: np.ndarray, link: LinkSource = None, *,
     # The header pass decided the geometry; report its header.
     r.header_ok, r.header_bits, r.header, r.header_error = True, head.header_bits, head.header, None
     r.block_sequences = _sequences(r.header, r.controls, cfg.n_blocks)
+    if extent is not None:
+        # The width is known only where the data confirms it: without that,
+        # the probe's reading stands in the configuration, unconfirmed.
+        extent.data_width = cfg.width if cfg.n_blocks and r.block_ok.any() else None
     r.detail["probe_extent"] = extent
     if measure_snr:
         _add_channel_snr(rx, cfg, r)

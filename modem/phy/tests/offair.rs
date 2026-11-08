@@ -218,3 +218,27 @@ fn offair_clock_prior_per_peer_from_the_link_source() {
     let (ppm, _) = clock_ppm(&r);
     assert!((ppm - long_ppm).abs() <= PRIOR_CLOCK_TOLERANCE_PPM, "clock {ppm} vs {long_ppm} ppm");
 }
+
+#[test]
+fn offair_wide_broadcast_takes_its_width_from_the_data() {
+    // A 48-tone UI broadcast through radios that pass audio to about 4.25 kHz:
+    // tones 42-47 arrive 30 dB below the noise and 38-41 fade into it, so the
+    // probe's extent reads 38. Before the fix the receiver kept 38 (and the
+    // neighbours 35-41 it retried), failed the block and the listener printed
+    // "x38 from probe". The block decodes only at the width it was sent at.
+    let index = read_json(&dir().join("offair.json"));
+    for f in index["wide"].as_array().unwrap() {
+        let name = f["wav"].as_str().unwrap();
+        let x = wav::read(&dir().join(name)).unwrap();
+        let r = Receiver::new()
+            .detect_and_receive(&x, &LinkState::default(), &RxOptions::default())
+            .unwrap_or_else(|| panic!("{name}: no frame detected"));
+        let width = f["width"].as_u64().unwrap() as usize;
+        let ext = r.probe_extent.as_ref().expect("broadcast with a probe");
+        assert_eq!(ext.width, f["probe_extent_width"].as_u64().unwrap() as usize, "{name}: as the simulator reads");
+        assert!(ext.width < width, "{name}");
+        let cfg = r.config.as_ref().unwrap();
+        assert_eq!((cfg.width, cfg.cap, ext.data_width), (width, width, Some(width)), "{name}");
+        check_content(name, f, &r, true);
+    }
+}

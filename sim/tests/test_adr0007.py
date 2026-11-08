@@ -166,3 +166,51 @@ def test_masked_snr_counts_the_boost():
         r = frame.receive(x + noise, cfg, start=1000)
         out.append(r.detail["snr_db"])
     assert 0.2 < out[1] - out[0] < 0.9
+
+
+def test_width_alternatives_reach_every_wider_width():
+    assert frame.width_alternatives(55) == [56, 54, 53, 52]
+    assert frame.width_alternatives(38) == [39, 37, 40, 36, 41, 35] + list(range(42, 57))
+    assert frame.width_alternatives(24) == [25, 26, 27] + list(range(28, 57))
+
+
+def _lowpass(x: np.ndarray, hz: float) -> np.ndarray:
+    """A brick-wall low-pass, as the radios' audio stops near 4.25 kHz."""
+    f = np.fft.rfft(x)
+    f[np.fft.rfftfreq(x.size, 1 / params.FS) > hz] = 0
+    return np.fft.irfft(f, x.size)
+
+
+def test_broadcast_wider_than_the_channel_decodes_at_its_width():
+    # A 48-tone broadcast through a channel that passes tones 0-38 only (as
+    # the 2026-11-07 radios do, nearly): the probe's extent reads short, and
+    # the data decodes at 48 only.
+    rng = np.random.default_rng(48)
+    hdr = Header(T.UI, SRC, BCAST, sequence=5, mcs=0, n_control=1, n_data=2)
+    tx = frame.build_frame(hdr, [ID], link=frame.LinkState(width=48), rng=rng)
+    y = _lowpass(_air(tx, rng, 25.0), 4220.0)
+    r = frame.receive(y, start=1500)
+    ext = r.detail["probe_extent"]
+    assert ext.width < 42
+    assert r.config.width == ext.data_width == 48 and r.block_ok.all()
+    assert np.array_equal(r.block_bits, tx.block_bits) and r.controls == (ID,)
+
+
+def test_width_unconfirmed_when_no_block_decodes():
+    # The data symbols lost (the channel's noise alone after the control
+    # block): no width decodes them, so the width is reported unknown
+    # (data_width None), not taken as the probe's.
+    rng = np.random.default_rng(9)
+    hdr = Header(T.UI, SRC, BCAST, sequence=6, mcs=0, n_data=2)
+    tx = frame.build_frame(hdr, link=frame.LinkState(width=36), rng=rng)
+    clean = _air(tx, rng)
+    y = _air(tx, rng, 20.0)
+    d0 = 1500 + tx.config.first_data * tx.config.stride
+    y[d0:] -= clean[d0:]
+    r = frame.receive(y, start=1500)
+    ext = r.detail["probe_extent"]
+    assert ext.width == 36 and not r.block_ok.any()
+    assert ext.data_width is None and r.config.width == 36
+    # A frame whose data decodes confirms its width.
+    ok = frame.receive(_air(tx, rng, 20.0), start=1500)
+    assert ok.detail["probe_extent"].data_width == 36

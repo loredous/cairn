@@ -1,8 +1,8 @@
 # Off-air receiver fixtures
 
 Real Cairn frames received over the air, used as regression tests for the
-receivers' clock-offset estimate and channel SNR on short frames, and their
-level tracking
+receivers' clock-offset estimate and channel SNR on short frames, their
+level tracking, and the width of a broadcast wider than the radios pass
 (`modem/phy/tests/offair.rs`, `sim/tests/test_offair.py`).
 
 ## Provenance
@@ -15,7 +15,9 @@ level tracking
   `cap/cap_BtoA.wav` (K0JLB-1 receiving K0JLB-2) of the session folder
   `2026-11-07-two-radio`, recorded by `cairn-modem listen --record` on the
   receiving station: 48 kHz mono 16-bit, idle open-squelch audio and then four
-  frames from one station, sent with `cairn-modem tx`.
+  frames from one station, sent with `cairn-modem tx`. `w48_rxB.wav` of the
+  same folder (K0JLB-2 receiving a 48-tone UI broadcast from K0JLB-1, logged
+  in `w48.log`) for the wide frame.
 - **Cut by** `modem/tools/cut_offair_fixtures.py`: each WAV holds one frame
   exactly as captured, from 0.1 s before its first preamble sample to 0.05 s
   after its end. Nothing is resampled, filtered or rescaled.
@@ -32,8 +34,10 @@ level tracking
 | `BtoA_4s.wav` | DATA, 13 blocks, MCS 2 (3.6 s) | the B to A path's reference; without level tracking 2 of its 13 blocks fail |
 | `BtoA_probe.wav` | PROBE, header only | |
 | `BtoA_ui.wav` | UI, MCS 0, ID control block | |
+| `w48_ui.wav` | UI, MCS 0, 48 tones with the width probe, ID control block, 1 block (0.54 s) | the radios pass audio to about 4.25 kHz: tones 42-47 arrive 30 dB below the noise, so the probe's extent reads 38; the live listener decoded it at 38 and failed the block ("x38 from probe"). It decodes at 48, the only width at which its block does |
+| `w48_ref.json` | the `cairn-bench` manifest of the transmitted wide frame | |
 | `{AtoB,BtoA}_ref{1..4}.json` | the `cairn-bench` manifests of the transmitted frames (ref1 1 block, ref2 4 s, ref3 PROBE, ref4 UI) | the transmitted WAVs are in the session folder |
-| `offair.json` | index: each WAV's frame, its header and control block bits, its payloads (decoded from the clean transmitted reference), each direction's 4 s frame clock offset and SNR (measured on the full capture); per frame the data blocks the simulator decodes with and without level tracking, its level fit (`python_level`, which the Rust receiver must reproduce) and the data symbols' gain against the S2 estimate with every sent symbol known (`data_gain_db`) | 1.2 MB with the B to A 4 s frame, which is the one frame whose decoding the level tracking changes |
+| `offair.json` | index: each WAV's frame, its header and control block bits, its payloads (decoded from the clean transmitted reference), each direction's 4 s frame clock offset and SNR (measured on the full capture); per frame the data blocks the simulator decodes with and without level tracking, its level fit (`python_level`, which the Rust receiver must reproduce) and the data symbols' gain against the S2 estimate with every sent symbol known (`data_gain_db`); under `wide`, the wide frame with the width it was sent at, the probe's extent and the width the simulator decodes it at | 1.2 MB with the B to A 4 s frame, which is the one frame whose decoding the level tracking changes |
 
 ## What they show
 
