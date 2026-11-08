@@ -296,7 +296,17 @@ These notes are informational, not legal advice.
   most. The watchdog releases the line on its own thread, even if the rest
   of the modem has hung. Every keyed transmission is capped at the
   configured maximum frame time. Signals, panics and exits release the line
-  too.
+  too. If the PTT interface itself fails (a write or ioctl error such as
+  "Broken pipe" when a USB interface drops out), software cannot unkey dead
+  hardware, but the modem stops sending audio, retries dropping the line,
+  closes the device and reopens it by its configured path with the idle
+  state set, and prints a `WARNING` that the transmitter may still be
+  keyed. The same warning goes to API clients as a `ptt_fault` warning. It
+  refuses to key until the device has reopened, so frames are reported as
+  not sent (`tx_failed`) while the session layer carries on. An audio output
+  error mid-frame releases the PTT at once. After a `ptt_fault`, check the
+  interface and the radio by hand (power-cycle or unplug the interface if
+  the radio is still keyed).
 - **Predictable limits.** The session limit and the daily budget bound how
   much your station can transmit for others. The log and the captures let
   you account for every transmission afterwards.
@@ -316,6 +326,7 @@ These notes are informational, not legal advice.
 | The station never transmits | `status`: "why waiting" | The channel is busy (carrier detect), the squelch is closed, or the budget is used up (log) |
 | Sessions stay at low rungs | `probe CALL` both ways | Levels at either end. Weak low tones on mic-path radios are expected: masks drop them |
 | "watchdog: PTT keyed …" in the log | The log, `selftest` | A transmission ran long: check the PTT polarity (`ptt.invert`) and the interface. Report it with the log |
+| "WARNING: PTT keying/release failed … MAY STILL BE KEYED" | The log, `ptt_fault` API warning | The PTT interface dropped out (USB reset, cable). Check the radio and the interface now; the modem refuses to key until the device reopens |
 | "watchdog: no audio …" | `selftest`, `dmesg` | The sound card stopped (unplugged, USB reset) or the machine stalled |
 | Audio gaps in the log | The input line and `status` | Real-time priority was not granted. See the setup's real-time step |
 

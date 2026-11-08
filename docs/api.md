@@ -134,6 +134,7 @@ null:
 | `receive_clipping` | event, warning | This receiver's input clipped on frames from `peer`: lower the receive level (SPEC §10.1) |
 | `distortion` | event, warning | `peer` reports a distortion index of 3 or more: lower the transmit drive (SPEC §13.5) |
 | `capture_failed` | event | An automatic capture could not be written |
+| `ptt_fault` | event, warning | The PTT device failed while keying or releasing (for example the USB interface dropped out). The transmitter may still be keyed: check the interface and the radio. The modem retried dropping the line, closed and reopened the device, and refuses to key until it reopens; the message says which |
 
 ## Commands
 

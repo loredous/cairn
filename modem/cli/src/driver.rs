@@ -146,6 +146,8 @@ enum Msg {
         txdelay_ms: f64,
         txtail_ms: f64,
         err: Option<String>,
+        /// Operator warnings from the PTT device (a failed key or release).
+        ptt_warnings: Vec<String>,
     },
     /// A line from another thread (a hook's outcome).
     Note(String),
@@ -320,6 +322,7 @@ pub fn run(
                 let r = txseq::transmit(&mut out, &ptt_tx, &audio, &timing, stop);
                 let port_now = out.now_ns();
                 let wall_now = std::time::Instant::now();
+                let ptt_warnings = ptt_tx.take_warnings();
                 let msg = match r {
                     Ok(rep) => Msg::TxDone {
                         release_wall: wall_now - Duration::from_nanos(port_now.saturating_sub(rep.unkey_ns)),
@@ -327,13 +330,15 @@ pub fn run(
                         txdelay_ms: rep.txdelay_ms(),
                         txtail_ms: rep.txtail_ms(),
                         err: None,
+                        ptt_warnings,
                     },
                     Err(e) => Msg::TxDone {
                         release_wall: wall_now,
                         keyed_ms: 0.0,
                         txdelay_ms: 0.0,
                         txtail_ms: 0.0,
-                        err: Some(e.to_string()),
+                        err: Some(txseq::failure_text(&e, !ptt_warnings.is_empty())),
+                        ptt_warnings,
                     },
                 };
                 if tx_msgs.send(msg).is_err() {
@@ -579,7 +584,11 @@ pub fn run(
                     KissCommand::FullDuplex(_) | KissCommand::SetHardware(_) | KissCommand::Return => {}
                 },
                 Msg::Note(l) => output_line(&l, &clients),
-                Msg::TxDone { release_wall, keyed_ms, txdelay_ms, txtail_ms, err: e } => {
+                Msg::TxDone { release_wall, keyed_ms, txdelay_ms, txtail_ms, err: e, ptt_warnings } => {
+                    for w in &ptt_warnings {
+                        output_line(&format!("WARNING: {w}"), &clients);
+                        api.on_ptt_fault(w, now());
+                    }
                     let release = Instant(release_wall.saturating_duration_since(origin).as_micros() as u64);
                     keyed_total += Duration::from_secs_f64(keyed_ms / 1e3);
                     if let Some(u) = unattended.as_mut() {
@@ -598,8 +607,8 @@ pub fn run(
                             api.on_tx_done(Some((keyed_ms, txdelay_ms, txtail_ms)), now());
                         }
                         Some(e) => {
-                            output_line(&format!("tx failed: {e} (PTT released)"), &clients);
-                            api.on_tx_failed(&format!("transmission failed: {e} (PTT released)"), now());
+                            output_line(&format!("tx failed: {e}"), &clients);
+                            api.on_tx_failed(&format!("transmission failed: {e}"), now());
                         }
                     }
                     modem.tx_done(release, now());

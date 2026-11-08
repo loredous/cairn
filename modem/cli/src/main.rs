@@ -173,11 +173,17 @@ impl PttOpts {
     ) -> Result<SharedPtt, String> {
         let spec =
             PttSpec::parse(&realhw::resolve_ptt_spec(&self.ptt)?, self.ptt_line, self.ptt_invert, self.ptt_gpio)?;
-        let mut ptt = spec.open().map_err(|e| format!("PTT {spec}: {e}"))?;
-        if let Some(w) = watch {
-            ptt = Box::new(cairn_modem::unattended::WatchedPtt::new(ptt, w));
-        }
-        let shared = SharedPtt::new(ptt);
+        // Opened again (by the spec's stable path, with the watchdog still
+        // attached) if the interface fails mid-transmission.
+        let open = move || -> std::io::Result<Box<dyn cairn_ptt::Ptt>> {
+            let ptt = spec.open()?;
+            Ok(match &watch {
+                Some(w) => Box::new(cairn_modem::unattended::WatchedPtt::new(ptt, w.clone())),
+                None => ptt,
+            })
+        };
+        let first = open().map_err(|e| format!("PTT {}: {e}", self.ptt))?;
+        let shared = SharedPtt::with_reopen(first, Box::new(open));
         signals::register_ptt(&shared);
         Ok(shared)
     }
@@ -1102,7 +1108,7 @@ fn play(items: &[Item], a: &AudioOpts, p: &PttOpts, timing: &TxTiming, gap_s: f6
         let audio: Vec<f32> = it.samples.iter().map(|&v| v as f32).collect();
         let r = txseq::transmit(&mut out, &ptt, &audio, timing, &signals::STOP).map_err(|e| match e {
             txseq::TxError::Aborted => "interrupted (PTT released)".to_string(),
-            e => format!("{e} (PTT released)"),
+            e => txseq::failure_text(&e, !ptt.take_warnings().is_empty()),
         })?;
         println!(
             "tx {}/{}: {}; keyed {:.3} s, TXDelay {:.1} ms, TXTail {:.1} ms (measured at the DAC), underruns {}",

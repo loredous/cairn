@@ -100,6 +100,17 @@ impl From<AudioError> for TxError {
     }
 }
 
+/// The operator-facing text of a failed transmission: whether the PTT is
+/// known released, or the device failed (`ptt_warned`) and the transmitter
+/// may still be keyed.
+pub fn failure_text(e: &TxError, ptt_warned: bool) -> String {
+    if ptt_warned {
+        format!("{e} (PTT MAY STILL BE KEYED: check the interface and the radio)")
+    } else {
+        format!("{e} (PTT released)")
+    }
+}
+
 fn samples_ns(n: u64) -> u64 {
     n * NS / SAMPLE_RATE as u64
 }
@@ -451,6 +462,83 @@ mod tests {
         assert!(matches!(r, Err(TxError::Audio(_))));
         assert!(!*line.lock().unwrap());
         assert!(matches!(world.lock().unwrap().log.last().unwrap(), Ev::Unkey(_)));
+    }
+
+    /// A PTT whose interface "drops out" (Broken pipe): dead from the start,
+    /// or, with `die_when_keyed`, the moment it is keyed.
+    struct DroppingPtt {
+        dead: bool,
+        die_when_keyed: bool,
+        line: Arc<Mutex<bool>>,
+    }
+
+    impl cairn_ptt::Ptt for DroppingPtt {
+        fn set(&mut self, keyed: bool) -> std::io::Result<()> {
+            if self.dead {
+                return Err(std::io::Error::from_raw_os_error(32));
+            }
+            *self.line.lock().unwrap() = keyed;
+            self.dead = keyed && self.die_when_keyed;
+            Ok(())
+        }
+        fn describe(&self) -> String {
+            "dropping".into()
+        }
+    }
+
+    /// A PTT that is dead, or dies when keyed; `replugged` says whether
+    /// reopening finds a healthy device.
+    fn dropping(dead: bool, die_when_keyed: bool, replugged: bool) -> (SharedPtt, Arc<Mutex<bool>>) {
+        let line = Arc::new(Mutex::new(false));
+        let l2 = line.clone();
+        let ptt = SharedPtt::with_reopen(
+            Box::new(DroppingPtt { dead, die_when_keyed, line: line.clone() }),
+            Box::new(move || {
+                if replugged {
+                    Ok(Box::new(DroppingPtt { dead: false, die_when_keyed: false, line: l2.clone() }))
+                } else {
+                    Err(std::io::Error::new(std::io::ErrorKind::NotFound, "gone"))
+                }
+            }),
+        );
+        ptt.set_retry_pause(std::time::Duration::from_millis(1));
+        (ptt, line)
+    }
+
+    #[test]
+    fn dead_ptt_sends_no_audio_warns_and_refuses_to_key_until_reopened() {
+        let (_world, mut port, _ptt, _line) = setup(4800);
+        let (ptt, line) = dropping(true, false, false);
+        let r = transmit(&mut port, &ptt, &[0.5f32; 48_000], &TxTiming::default(), &AtomicBool::new(false));
+        assert!(matches!(r, Err(TxError::Ptt(_))), "{r:?}");
+        assert_eq!(port.written(), 0, "no audio after a PTT failure");
+        assert!(ptt.is_faulted());
+        let w = ptt.take_warnings();
+        assert!(w.len() == 1 && w[0].contains("MAY STILL BE KEYED"), "{w:?}");
+        assert!(failure_text(&r.unwrap_err(), true).contains("MAY STILL BE KEYED"));
+        // Refused while the device stays lost.
+        let r = transmit(&mut port, &ptt, &[0.5f32; 4800], &TxTiming::default(), &AtomicBool::new(false));
+        assert!(matches!(&r, Err(TxError::Ptt(e)) if e.to_string().contains("not keying")), "{r:?}");
+        assert_eq!(port.written(), 0);
+        assert!(!*line.lock().unwrap());
+    }
+
+    #[test]
+    fn audio_error_with_a_dying_ptt_releases_by_reopening() {
+        // The incident: the interface drops out as the frame starts and the
+        // audio device errors mid-frame. The release fails, the device is
+        // reopened idle, a warning is raised, and keying works again.
+        let (_world, mut port, _ptt, _line) = setup(4800);
+        let (ptt, line) = dropping(false, true, true);
+        port.fail_write_after = Some(3);
+        let r = transmit(&mut port, &ptt, &[0.5f32; 48_000], &TxTiming::default(), &AtomicBool::new(false));
+        assert!(matches!(r, Err(TxError::Audio(_))), "{r:?}");
+        assert!(!*line.lock().unwrap(), "line idle after the reopen");
+        assert!(!ptt.is_faulted());
+        let w = ptt.take_warnings();
+        assert!(w.len() == 1 && w[0].contains("MAY HAVE BEEN LEFT KEYED"), "{w:?}");
+        let r = transmit(&mut port, &ptt, &[0.5f32; 480], &TxTiming::default(), &AtomicBool::new(false));
+        assert!(!matches!(r, Err(TxError::Ptt(_))), "keys again once reopened: {r:?}");
     }
 
     #[test]

@@ -1167,6 +1167,13 @@ impl HostApi {
         self.error(Code::TxFailed, message, false, None, None);
     }
 
+    /// The PTT device failed or came back (a warning: the transmitter may
+    /// still be keyed and the interface must be checked).
+    pub fn on_ptt_fault(&mut self, message: &str, now: Instant) {
+        self.tick(now);
+        self.error(Code::PttFault, message, true, None, None);
+    }
+
     fn error(&mut self, code: Code, message: &str, warning: bool, r: Option<u64>, peer: Option<Address>) {
         self.push(
             "error",
