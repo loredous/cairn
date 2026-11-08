@@ -245,3 +245,76 @@
     2 s anyway. A CAL-REQUEST and its bursts follow ADR 0010
     `calibration-transmission-limit` instead.
   date: 2026-11-07
+
+# --- Findings of the dictionary evaluation (PR #25) and the modem run
+# (PR #24), settled with ADR 0014 (2026-11-08) ---------------------------
+
+- slug: control-blocks-pack-by-the-run
+  decision: fixed-per-frame-costs
+  errata: true
+  question: >-
+    Appendix A.1 gives a control block as 12 symbols, 135 ms, and frame
+    arithmetic that multiplies it gives 36 symbols for three blocks (a
+    CONNECT, or a DATA frame with ACK, block map and ID blocks). The PHY
+    packs three blocks into 35.
+  interpretation: |
+    The 12 symbols are one block rounded up to whole symbols. Control
+    blocks, like the header and the data blocks, are packed back to back
+    into one run that ends at a symbol boundary (ADR 0005
+    `bit-to-tone-order`), so n blocks take ⌈512 n ÷ 44⌉ symbols at MCS 0
+    on the 22 data tones of the base set (44 coded bits per symbol):
+
+    | Control blocks | Symbols | Time at 11.25 ms |
+    | --- | --- | --- |
+    | 1 | 12 (11.64 before padding) | 135 ms |
+    | 2 | 24 (23.27) | 270 ms |
+    | 3 | 35 (34.91) | 393.75 ms |
+
+    SPEC §7.4 and Appendix A.2 count one ACK block, or the ACK block with
+    a block map (exactly 12 more symbols); those figures are unchanged. A
+    frame with three control blocks has 23 fewer data-block symbols than
+    one with the ACK block only (295 against 318 in a 4 s frame), not 24.
+    The table assumes no masked tone among the 22; the control run is
+    masked like the data run (SPEC §5.4), so with k masked base tones n
+    blocks take ⌈512 n ÷ (2 × (22 − k))⌉ symbols. SPEC Appendix A.1 and
+    A.2 carry the corrected wording.
+  date: 2026-11-08
+
+- slug: measured-compression-gains
+  decision: reference-dictionary-set
+  question: >-
+    SPEC §12.2 states expected gains of 2.5-4× on short text and 5-20× on
+    structured forms, to be measured before v0.2. What did the measurement
+    show?
+  interpretation: |
+    The dictionary evaluation (PR #25) measured, on held-out 100-500 byte
+    messages with dictionaries of 32, 64 and 112 kB:
+
+    - natural text (FEMA form text, 47 CFR 97 and NWS products from
+      documents the dictionary never saw): 1.9-3.1× by body size, 2.4-2.7×
+      over the whole size range (1.5× with zstd and no dictionary), the
+      larger ratios for longer messages and larger dictionaries;
+    - synthetic form and report messages: about 5×, but they share their
+      templates with the training data, so that is an upper bound for
+      layouts the dictionary has seen;
+    - 5-20× needs schema encoding (type 3, v1.x or v2), which sends field
+      values against a published schema and is not in v1.
+
+    SPEC §12.2 states these ranges in place of the earlier expectation.
+    Winlink B2F and other already-compressed traffic still gains nothing
+    and is sent raw (`send-precompressed-raw`).
+  date: 2026-11-08
+
+- slug: receive-guard-after-ptt-release
+  decision: timing-parameters
+  question: >-
+    A half-duplex modem's receive path may hear its own transmitter's last
+    audio and the audio chain settling for a moment after PTT release. How
+    long should the receiver ignore its input?
+  interpretation: >-
+    Non-normative guidance, not a requirement and not on the air: the
+    implementation of PR #24 ignores its receive audio for 5 ms after PTT
+    release, and an implementation may use whatever guard suits its audio
+    path. Keep it short against the receive turnaround (7.3) so that it
+    does not delay the decode of a fast reply.
+  date: 2026-11-08
