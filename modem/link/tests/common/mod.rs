@@ -140,6 +140,11 @@ pub struct Sim {
     /// SNR), as the receiver measures it: an impaired tone in use then
     /// drags the reported SNR down, as the radios' dead low tones do.
     pub tone_powers: bool,
+    /// With `tone_powers`: a frame that uses any of tones 0-2 adds noise at
+    /// this SNR (dB) to tones 3-7, as the radios' high-pass, which delays
+    /// tones 0-2 past the cyclic prefix, spills them onto their neighbours
+    /// (2026-11-08 on 1.25 m). Masking tones 0-2 removes it.
+    pub low_tone_spill_db: Option<f64>,
     pub csma_violations: Vec<String>,
     pub turn_holder_overlaps: Vec<String>,
     pub mask_mismatches: usize,
@@ -163,6 +168,7 @@ impl Sim {
             rng: Rng::new(seed ^ 0xA1A1),
             meas_noise_db: 0.25,
             tone_powers: false,
+            low_tone_spill_db: None,
             csma_violations: Vec::new(),
             turn_holder_overlaps: Vec::new(),
             mask_mismatches: 0,
@@ -496,8 +502,15 @@ impl Sim {
             }
         }
         let (snr_db, tone_powers) = if self.tone_powers {
-            let p: Vec<(f64, f64)> = tones.iter().map(|&t| (1.0, 10f64.powf(-t / 10.0))).collect();
+            let mut p: Vec<(f64, f64)> = tones.iter().map(|&t| (1.0, 10f64.powf(-t / 10.0))).collect();
             let w = usize::from(frame.tx.width).min(tones.len());
+            if let Some(spill) = self.low_tone_spill_db {
+                if frame.tx.mask & 0b111 != 0 {
+                    for q in p.iter_mut().take(8).skip(3) {
+                        q.1 += 10f64.powf(-spill / 10.0);
+                    }
+                }
+            }
             let (s, n) =
                 (0..w).filter(|&k| frame.tx.mask >> k & 1 == 1).fold((0.0, 0.0), |(s, n), k| (s + p[k].0, n + p[k].1));
             (10.0 * (s / n).log10(), Some(p))

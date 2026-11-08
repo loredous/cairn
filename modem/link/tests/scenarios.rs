@@ -85,6 +85,37 @@ fn first_rung_counts_only_the_tones_the_mask_keeps() {
 }
 
 #[test]
+fn first_masked_data_frame_steps_up_alone() {
+    // ADR 0015, from 2026-11-08 on 1.25 m: the radios delay tones 0-2 past
+    // the cyclic prefix, so an unmasked frame (CONNECT, CONNECT-ACK) carries
+    // their spill on tones 3-7 and reads 2-4 dB below the masked frames that
+    // follow. The reply rule opens a rung low; the first masked DATA frame,
+    // measured as the session sends it, steps up on its own instead of
+    // after three.
+    for seed in [31u64, 32, 33] {
+        let mut sim = pair_with(seed, 30.0, |c| c.track_masks = true);
+        sim.tone_powers = true;
+        sim.low_tone_spill_db = Some(22.0);
+        for (a, b) in [(0, 1), (1, 0)] {
+            sim.impair(t(0.0), a, b, vec![(0, 45.0), (1, 27.0), (2, 20.0)]);
+        }
+        connect(&mut sim, 0, 1, t(0.1));
+        send_chunks(&mut sim, 0, t(0.2), &payload(100_000, seed), 1000);
+        send_chunks(&mut sim, 1, t(6.0), &payload(100_000, seed + 100), 1000);
+        sim.run_until(t(60.0));
+        for st in [0, 1] {
+            let frames = data_frames(&sim, st);
+            let rungs: Vec<u8> = frames.iter().take(5).map(|f| f.1).collect();
+            eprintln!("seed {seed} station {st}: first DATA rungs {rungs:?}");
+            assert!(rungs[0] < 6, "station {st} should open below MCS 6: {rungs:?}");
+            let top = frames.iter().position(|f| f.1 == 6).expect("reaches MCS 6");
+            assert!(top <= 1, "station {st}: MCS 6 from DATA frame {top}: {rungs:?}");
+        }
+        assert_clean(&sim);
+    }
+}
+
+#[test]
 fn rung_climbs_within_four_frames_after_6db_rise() {
     // ADR 0013: §14.1 asks for the correct rung within 4 frames of a rise.
     // The step-up still needs 3 clean frames (§10.1), but then requests the

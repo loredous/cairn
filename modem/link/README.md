@@ -93,6 +93,12 @@ responder ran the initiator's 30 s keepalive clock until the first frame
 from its peer; the idle clock now restarts by role when CONNECT-ACK opens
 the session.
 
+## ADR 0015
+
+| Decision | Where | Test |
+| --- | --- | --- |
+| `step-up-after-reply-rule`: the first judged frame with data after a reply-rule request steps up alone (a run of 1); it uses up the short run whatever it does | `adapt::RateAdapter`, `params::STEP_UP_RUN_AFTER_REPLY_RULE` | `adapt::tests::first_frame_after_reply_rule_steps_up_alone`, `scenarios::first_masked_data_frame_steps_up_alone` |
+
 ## Readings
 
 Where the SPEC and ADRs leave room the crate takes the conservative reading

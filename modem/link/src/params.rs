@@ -216,6 +216,11 @@ pub const STEP_DOWN_FRACTION: f64 = 0.20;
 pub const STEP_DOWN_TWO_FRACTION: f64 = 0.50;
 /// Clean frames with data needed before a step up.
 pub const STEP_UP_RUN: u8 = 3;
+/// ADR 0015 `step-up-after-reply-rule`: clean frames needed in the first run
+/// after a reply-rule request (a reply to CONNECT, CONNECT-ACK or SOUND).
+/// That request was measured on an unmasked frame of another type; the first
+/// data frame is measured as the session will send it.
+pub const STEP_UP_RUN_AFTER_REPLY_RULE: u8 = 1;
 /// SNR margin above the next rung's threshold needed to step up.
 pub const STEP_UP_MARGIN_DB: f64 = 2.0;
 /// ADR 0013 `adaptation-rules-multi-rung`: after the clean run, request the

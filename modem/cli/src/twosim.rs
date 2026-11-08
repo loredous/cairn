@@ -355,6 +355,8 @@ pub struct SimStation {
     pub heard: Vec<FrameInfo>,
     /// Log lines.
     pub log: Vec<(Instant, String)>,
+    /// Carrier-detect changes (raw, no hold), each detector's state.
+    pub dcd: Vec<(Instant, cairn_phy::dcd::DcdState)>,
     /// Transmission in progress: (air index, release time).
     tx: Option<(usize, Instant)>,
     /// Commands to issue.
@@ -461,6 +463,7 @@ impl Sim {
             broadcasts: Vec::new(),
             heard: Vec::new(),
             log: Vec::new(),
+            dcd: Vec::new(),
             tx: None,
             pending: Vec::new(),
             auto_resume: None,
@@ -740,6 +743,7 @@ impl Sim {
                     if self.trace {
                         eprintln!("{at} [{st}] dcd {state:?}");
                     }
+                    self.stations[st].dcd.push((at, state));
                 }
                 Output::Log(l) => {
                     if self.trace {
