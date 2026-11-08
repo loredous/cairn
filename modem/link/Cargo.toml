@@ -1,0 +1,13 @@
+[package]
+name = "cairn-link"
+version = "0.1.0"
+description = "Cairn link layer: sans-IO sessions, selective-repeat ARQ, channel access, adaptation and broadcast (SPEC 8-12, ADRs 0008-0012)"
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+publish = false
+
+[dependencies]
+
+[dev-dependencies]
+proptest = { version = "1", default-features = false, features = ["std"] }
