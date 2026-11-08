@@ -578,6 +578,12 @@ pub struct Detector {
     /// Last detection position (decimated), for the half-window spacing.
     last: Option<usize>,
     flushed: bool,
+    /// Early confirmation not yet taken ([`Detector::take_early`]), 48 kHz.
+    early: Option<usize>,
+    /// Decimated position of the last early confirmation, and whether the
+    /// previous position's gated score was at or above the threshold.
+    early_last: Option<usize>,
+    early_above: bool,
     /// Largest rho and gated rho seen so far.
     pub stats: ScanStats,
 }
@@ -599,6 +605,9 @@ impl Detector {
             decide: 0,
             last: None,
             flushed: false,
+            early: None,
+            early_last: None,
+            early_above: false,
             stats: ScanStats::default(),
         }
     }
@@ -627,6 +636,19 @@ impl Detector {
         self.x.clear();
         self.z.clear();
         d
+    }
+
+    /// Early confirmation for carrier detect (SPEC 7.2 preamble correlator):
+    /// the absolute 48 kHz index (`DECIM * u`, the coarse start of a frame) of
+    /// the first metric position computed since the last call where the gated
+    /// score rose to the threshold (plateau M >= the autocorrelation threshold
+    /// and S1 cross-correlation rho >= the cross-correlation threshold), taken
+    /// once. It is available as soon as that position's metrics are, about
+    /// 2,300 samples (47 ms) after the frame's first sample instead of the
+    /// final [`Detection`]'s 85 ms. A crossing within six symbol periods of
+    /// the previous one is not reported again. Detections are unaffected.
+    pub fn take_early(&mut self) -> Option<usize> {
+        self.early.take()
     }
 
     /// Absolute 48 kHz index one past the last sample fed.
@@ -758,6 +780,16 @@ impl Detector {
         }
         self.stats.max_rho = self.stats.max_rho.max(max_rho);
         self.stats.max_score = self.stats.max_score.max(score.iter().copied().fold(0.0, f64::max));
+        let holdoff = 2 * self.half();
+        for (j, &s) in score.iter().enumerate() {
+            let u = first_u + j;
+            let above = s >= self.cfg.xcorr_threshold;
+            if above && !self.early_above && self.early.is_none() && self.early_last.is_none_or(|l| u - l >= holdoff) {
+                self.early = Some(DECIM * u);
+                self.early_last = Some(u);
+            }
+            self.early_above = above;
+        }
         if self.met.score.is_empty() {
             self.met.start = first_u;
         }

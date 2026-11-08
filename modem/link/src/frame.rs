@@ -635,13 +635,24 @@ impl LinkFrame {
                     return Err(FrameError::ControlOrder("PROBE carries nothing or one B.3"));
                 }
             }
-            T::Beacon => {
-                if !is(0, id) || c[1..].iter().any(|b| ack(b) || map(b) || conn(b) || id(b)) {
+            T::Beacon | T::Ui => {
+                // ADR 0013 `broadcast-control-block-order`: the ID block when
+                // present (always in a BEACON), the path block when present,
+                // then others; never session blocks.
+                let path = |b: &C| matches!(b, C::Opaque { ctype: PATH_CONTROL_TYPE, .. });
+                let mut i = 0;
+                if is(0, id) {
+                    i = 1;
+                } else if self.ftype == T::Beacon {
                     return Err(FrameError::ControlOrder("BEACON leads with its ID block"));
                 }
-            }
-            T::Ui => {
-                if c.iter().any(|b| ack(b) || map(b) || conn(b) || id(b)) || self.data.is_empty() {
+                if is(i, path) {
+                    i += 1;
+                }
+                if c[i..].iter().any(|b| ack(b) || map(b) || conn(b) || id(b) || path(b)) {
+                    return Err(FrameError::ControlOrder("broadcast control blocks go ID, path, others"));
+                }
+                if self.ftype == T::Ui && self.data.is_empty() {
                     return Err(FrameError::ControlOrder("UI carries PDUs"));
                 }
             }
@@ -653,6 +664,9 @@ impl LinkFrame {
 }
 
 // --- Received frames ---------------------------------------------------------------
+
+/// Control type of the B.7 path block (carried opaquely).
+pub const PATH_CONTROL_TYPE: u8 = 6;
 
 /// A decoded header as the link layer uses it (§8.2).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -824,6 +838,40 @@ mod tests {
         let f = session_frame(vec![ack, map], 3);
         assert_eq!(f.data_seqs(), vec![Seq(10), Seq(11), Seq(13)]);
         assert_eq!(f.flag_bits(), 0b1000_1011);
+    }
+
+    #[test]
+    fn broadcast_control_order() {
+        // ADR 0013 `broadcast-control-block-order`: ID, then path, then others.
+        let id = ControlBlock::Id(IdBlock::new("N0AAA", 0, None).unwrap());
+        let path = ControlBlock::Opaque { ctype: PATH_CONTROL_TYPE, message: [0; 30] };
+        let cal = ControlBlock::Opaque { ctype: 4, message: [0; 30] };
+        let frame = |ftype, controls: Vec<ControlBlock>| LinkFrame {
+            ftype,
+            src: call("N0AAA"),
+            dst: Address::BROADCAST,
+            flags: Flags { first_fragment: true, ..Default::default() },
+            seq: Seq(1),
+            mcs: 0,
+            mask_id: 0,
+            controls,
+            data: if ftype == FrameType::Ui { vec![[0u8; BLOCK_PAYLOAD]] } else { vec![] },
+            tx: TxParams::default(),
+        };
+        for ok in [vec![id.clone()], vec![id.clone(), path.clone()], vec![id.clone(), path.clone(), cal.clone()]] {
+            assert!(frame(FrameType::Beacon, ok.clone()).validate().is_ok(), "{ok:?}");
+            assert!(frame(FrameType::Ui, ok).validate().is_ok());
+        }
+        for ok in [vec![], vec![path.clone()], vec![cal.clone()], vec![path.clone(), cal.clone()]] {
+            assert!(frame(FrameType::Ui, ok.clone()).validate().is_ok(), "UI {ok:?}");
+        }
+        for bad in
+            [vec![path.clone(), id.clone()], vec![id.clone(), cal.clone(), path.clone()], vec![cal.clone(), id.clone()]]
+        {
+            assert!(frame(FrameType::Ui, bad.clone()).validate().is_err(), "UI {bad:?}");
+            assert!(frame(FrameType::Beacon, bad).validate().is_err());
+        }
+        assert!(frame(FrameType::Beacon, vec![path]).validate().is_err(), "a BEACON always carries its ID");
     }
 
     #[test]

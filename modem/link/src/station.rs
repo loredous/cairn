@@ -393,7 +393,19 @@ enum Intent {
 struct Linger {
     peer: Address,
     until: Instant,
+    /// L (ADR 0013 `disconnect-handshake-linger`), restarted after each reply.
+    period: Duration,
     frame: LinkFrame,
+}
+
+/// How a session frame is decoded ([`Station::rx_link`]).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct RxLink {
+    /// The sender's session width in tones (its probe reaches the same).
+    pub width: u8,
+    /// The tone mask the header's Mask ID names; `None` when it names
+    /// neither the current nor the pending mask.
+    pub mask: Option<u64>,
 }
 
 /// A snapshot of the session for monitoring and tests.
@@ -547,6 +559,38 @@ impl Station {
         }
     }
 
+    /// How the receiver should decode the frame this header describes: a
+    /// session frame from the peer at the session's receive width with the
+    /// mask its Mask ID names (`mask` `None`: an ID neither current nor
+    /// pending, so every control and data block counts as failed, ADR 0011),
+    /// or, for CONNECT, CONNECT-ACK and every frame outside a session,
+    /// `None`: the receiver takes the width from the frame's own probe
+    /// (ADR 0007) and decodes unmasked. The `cairn_phy::LinkSource` a modem
+    /// hands its receiver is built from this.
+    pub fn rx_link(&self, header: &RxHeader) -> Option<RxLink> {
+        if matches!(header.ftype, FrameType::Connect | FrameType::ConnectAck) || !header.flags.session {
+            return None;
+        }
+        match &self.session {
+            Some(s) if s.peer() == header.src && !matches!(s.phase(), Phase::Connecting { .. }) => {
+                Some(RxLink { width: s.rx_width(&self.cfg), mask: s.rx_mask_for(header.mask_id) })
+            }
+            _ => None,
+        }
+    }
+
+    /// The configuration, for changes the host makes while running (KISS
+    /// persistence and slot time, SPEC 13.1). Changing the address or the ID
+    /// block mid-session is not supported.
+    pub fn config_mut(&mut self) -> &mut Config {
+        &mut self.cfg
+    }
+
+    /// Replace the frame model (a new TXDelay or TXTail, SPEC 13.1).
+    pub fn set_frame_model(&mut self, model: Box<dyn FrameModel + Send>) {
+        self.model = model;
+    }
+
     /// Process one event at `now`.
     pub fn handle(&mut self, ev: Event, now: Instant) -> Vec<Action> {
         if now > self.now {
@@ -680,8 +724,8 @@ impl Station {
                     s.answer_connect(&f, &mut c);
                     return;
                 }
-                // READING: crossing new CONNECTs are refused; the other
-                // station's own attempt then proceeds.
+                // ADR 0013 `crossing-new-connects`: the station already
+                // connecting refuses the peer's CONNECT and keeps its own.
                 Phase::Connecting { .. } => return self.refuse(&f),
                 _ => {
                     // A new session from the peer of a live one ends it, as a
@@ -854,12 +898,9 @@ impl Station {
                     self.host(HostEvent::Undelivered { peer, ids });
                 }
                 if let Some(frame) = linger {
-                    // READING (ADR 0010 `disconnect-handshake`): "one
-                    // ACK-timer period" counted from this reply would end
-                    // before the closer's first resend arrives (its timer
-                    // starts earlier, may carry the offset and jitter, and the
-                    // resend takes air time). Linger for the longest such
-                    // period plus the window and one DISCONNECT on the air.
+                    // ADR 0013 `disconnect-handshake-linger`: answer repeats
+                    // until L = T + 0.5 + 0.25 + 0.1 s + the reply's air time
+                    // has passed since the end of the latest reply.
                     let shape = FrameShape {
                         mcs: 0,
                         width: frame.tx.width,
@@ -869,16 +910,18 @@ impl Station {
                         probe: false,
                         long_prefix: frame.tx.long_prefix,
                     };
-                    let until = self.now
-                        + self.ack_period(s.peer_max_frame)
-                        + crate::params::READING_LINGER_EXTRA
+                    let period = self.ack_period(s.peer_max_frame)
+                        + crate::params::LINGER_EXTRA
                         + self.model.on_air_time(&shape);
-                    self.linger = Some(Linger { peer, until, frame });
+                    self.linger = Some(Linger { peer, until: self.now + period, period, frame });
                 }
             }
             End::ConnectFailed(reason) => {
                 self.host(HostEvent::ConnectFailed { peer, reason });
-                if s.had_state {
+                // ADR 0013 `duplicate-connect-and-half-open-retention`: a
+                // responder giving up on a half-open session keeps its state
+                // for resume, as after a link loss.
+                if s.had_state || reason == ConnectFailure::HalfOpenTimeout {
                     let r = s.into_retained(self.now);
                     self.retained.insert(r);
                 } else {
@@ -1073,7 +1116,15 @@ impl Station {
                     }
                 }
             }
-            Intent::Owed => {}
+            Intent::Owed => {
+                // A lingering DISCONNECT answer restarts the linger time
+                // (ADR 0013 `disconnect-handshake-linger`).
+                if let Some(l) = self.linger.as_mut() {
+                    if frame.ftype == FrameType::Disconnect && frame.flags.session && frame.dst == l.peer {
+                        l.until = self.now + l.period;
+                    }
+                }
+            }
             Intent::Broadcast => {
                 let ids = self.bcast.on_tx_done(self.now, &mut self.rng);
                 if !ids.is_empty() {

@@ -1,14 +1,14 @@
-//! Link adaptation (SPEC §6.2, §10.1, §10.3; ADR 0010
-//! `adaptation-rules-revised`, ADR 0011 `mask-id`,
+//! Link adaptation (SPEC §6.2, §10.1, §10.3; ADR 0013
+//! `adaptation-rules-multi-rung`, `reprobe-request-cadence`, ADR 0011 `mask-id`,
 //! `mask-in-every-session-ack`): the receiver's choice of requested rung,
 //! and its tone-mask tracker with mask IDs.
 
 use std::time::Duration;
 
 use crate::params::{
-    ALL_TONES, DISTORTION_EXCLUDE_INDEX, MASK_DROP_DB, MASK_DROP_FRAMES, MASK_ID_MODULUS, READING_REPROBE_INTERVAL,
-    REPLY_RULE_MARGIN_DB, RUNG_THRESHOLDS_DB, RUNGS, STEP_DOWN_FRACTION, STEP_DOWN_TWO_FRACTION, STEP_UP_MARGIN_DB,
-    STEP_UP_RUN, UNMASKABLE_TONES,
+    ALL_TONES, DISTORTION_EXCLUDE_INDEX, MASK_DROP_DB, MASK_DROP_FRAMES, MASK_ID_MODULUS, REPLY_RULE_MARGIN_DB,
+    REPROBE_INTERVAL, RUNG_THRESHOLDS_DB, RUNGS, STEP_DOWN_FRACTION, STEP_DOWN_TWO_FRACTION, STEP_UP_MARGIN_DB,
+    STEP_UP_MULTI_RUNG, STEP_UP_RUN, UNMASKABLE_TONES,
 };
 use crate::time::Instant;
 
@@ -56,8 +56,9 @@ pub enum Decision {
     Hold,
     /// Stepped down this many rungs.
     Down(u8),
-    /// Stepped up one rung.
-    Up,
+    /// Stepped up this many rungs (more than one under ADR 0013's
+    /// multi-rung step-up).
+    Up(u8),
     /// Held because this receiver clipped: warn the operator.
     ClippedHold,
 }
@@ -68,12 +69,14 @@ pub struct RateAdapter {
     thr: Thresholds,
     requested: u8,
     clean_run: u8,
+    /// Lowest SNR measured in the current clean run.
+    run_min_snr: f64,
 }
 
 impl RateAdapter {
     /// An adapter starting at `initial`.
     pub fn new(thr: Thresholds, initial: u8) -> Self {
-        RateAdapter { thr, requested: initial.min(RUNGS as u8 - 1), clean_run: 0 }
+        RateAdapter { thr, requested: initial.min(RUNGS as u8 - 1), clean_run: 0, run_min_snr: f64::INFINITY }
     }
 
     /// The rung to request.
@@ -108,8 +111,8 @@ impl RateAdapter {
     /// A frame from the peer whose header decoded.
     pub fn on_frame(&mut self, s: &FrameStats) -> Decision {
         if s.adc_clipped {
-            // Hold and warn; the run restarts (READING: a clipped frame's
-            // measurements are unreliable, so it does not count toward a step up).
+            // Hold and warn; the run restarts (ADR 0013: a clipped frame
+            // neither steps down nor up).
             self.clean_run = 0;
             return Decision::ClippedHold;
         }
@@ -118,8 +121,8 @@ impl RateAdapter {
         }
         let frac = s.failed as f64 / s.data as f64;
         if s.distortion >= DISTORTION_EXCLUDE_INDEX {
-            // Excluded from the step-down count; READING: nor does it count
-            // toward a step up, since the peer is expected to change its drive.
+            // Excluded from the step-down count, and (ADR 0013) it restarts
+            // the run: the peer is expected to change its drive.
             self.clean_run = 0;
             return Decision::Hold;
         }
@@ -134,16 +137,31 @@ impl RateAdapter {
             return Decision::Hold;
         }
         let next = self.requested as usize + 1;
-        // READING: every frame of the run must meet the SNR condition.
+        // Every frame of the run must meet the SNR condition (ADR 0013).
         if next >= RUNGS || s.snr_db < self.thr.0[next] + STEP_UP_MARGIN_DB {
             self.clean_run = 0;
             return Decision::Hold;
         }
+        if self.clean_run == 0 {
+            self.run_min_snr = f64::INFINITY;
+        }
         self.clean_run += 1;
+        self.run_min_snr = self.run_min_snr.min(s.snr_db);
         if self.clean_run >= STEP_UP_RUN {
-            self.requested += 1;
+            let before = self.requested;
+            self.requested = if STEP_UP_MULTI_RUNG {
+                // ADR 0013 `adaptation-rules-multi-rung`: the highest rung whose
+                // threshold is at least STEP_UP_MARGIN_DB below the lowest SNR
+                // of the run, never less than one rung up (every frame of the
+                // run cleared the next rung's threshold by the margin).
+                let snr = self.run_min_snr;
+                let top = (0..RUNGS).rev().find(|&m| self.thr.0[m] + STEP_UP_MARGIN_DB <= snr).unwrap_or(0) as u8;
+                top.max(before + 1)
+            } else {
+                before + 1
+            };
             self.clean_run = 0;
-            return Decision::Up;
+            return Decision::Up(self.requested - before);
         }
         Decision::Hold
     }
@@ -257,22 +275,22 @@ impl MaskTracker {
     }
 
     /// Ask for a re-probe (ACK flag bit 2): a tone is dropped and no probe
-    /// has been seen for [`READING_REPROBE_INTERVAL`].
+    /// has been seen for [`REPROBE_INTERVAL`].
     pub fn wants_reprobe(&self, now: Instant) -> bool {
         let (mask, _) = self.reported();
         let any_dropped = (0..self.width.min(56)).any(|t| maskable(t, self.width) && mask >> t & 1 == 0);
-        any_dropped && self.last_probe.is_none_or(|p| now.saturating_since(p) >= READING_REPROBE_INTERVAL)
+        any_dropped && self.last_probe.is_none_or(|p| now.saturating_since(p) >= REPROBE_INTERVAL)
     }
 
     /// When a re-probe will next be wanted, if a tone is dropped.
     pub fn reprobe_due(&self) -> Option<Instant> {
         let (mask, _) = self.reported();
         let any_dropped = (0..self.width.min(56)).any(|t| maskable(t, self.width) && mask >> t & 1 == 0);
-        if any_dropped { self.last_probe.map(|p| p + READING_REPROBE_INTERVAL) } else { None }
+        if any_dropped { self.last_probe.map(|p| p + REPROBE_INTERVAL) } else { None }
     }
 
     /// Interval constant re-exported for callers.
-    pub const REPROBE_INTERVAL: Duration = READING_REPROBE_INTERVAL;
+    pub const REPROBE_INTERVAL: Duration = REPROBE_INTERVAL;
 }
 
 fn average(snr: &[f64], mask: u64, width: u8) -> f64 {
@@ -310,7 +328,7 @@ mod tests {
         assert_eq!(a.on_frame(&stats(10, 0, 12.0)), Decision::Hold);
         assert_eq!(a.on_frame(&stats(0, 0, 12.0)), Decision::Hold); // no data: neither counts nor breaks
         assert_eq!(a.on_frame(&stats(10, 0, 12.0)), Decision::Hold);
-        assert_eq!(a.on_frame(&stats(10, 0, 12.0)), Decision::Up);
+        assert_eq!(a.on_frame(&stats(10, 0, 12.0)), Decision::Up(1));
         assert_eq!(a.requested(), 2);
         let mut d = stats(10, 9, 5.0);
         d.distortion = 3;
@@ -320,6 +338,79 @@ mod tests {
         c.adc_clipped = true;
         assert_eq!(a.on_frame(&c), Decision::ClippedHold);
         assert_eq!(a.requested(), 1);
+    }
+
+    #[test]
+    fn multi_rung_step_up() {
+        // ADR 0013: after three clean frames, the highest rung whose
+        // threshold (with the 1 dB margin) is at least 2 dB below the SNR.
+        let mut a = RateAdapter::new(Thresholds::with_margin(1.0), 0);
+        // Thresholds + margin: 4.5, 7, 9.5, 13.5, 18.5, 22, 26.5.
+        assert_eq!(a.on_frame(&stats(3, 0, 25.0)), Decision::Hold);
+        assert_eq!(a.on_frame(&stats(3, 0, 21.0)), Decision::Hold);
+        // The run's lowest SNR, 21 dB, allows MCS 4 (18.5 + 2 <= 21).
+        assert_eq!(a.on_frame(&stats(3, 0, 30.0)), Decision::Up(4));
+        assert_eq!(a.requested(), 4);
+        // Just enough for the next rung only: one rung.
+        for _ in 0..2 {
+            assert_eq!(a.on_frame(&stats(10, 0, 24.0)), Decision::Hold);
+        }
+        assert_eq!(a.on_frame(&stats(10, 0, 24.5)), Decision::Up(1));
+        assert_eq!(a.requested(), 5);
+        // A frame below the next rung's condition restarts the run, and the
+        // run's minimum restarts with it.
+        assert_eq!(a.on_frame(&stats(10, 0, 40.0)), Decision::Hold);
+        assert_eq!(a.on_frame(&stats(10, 0, 20.0)), Decision::Hold);
+        for _ in 0..2 {
+            assert_eq!(a.on_frame(&stats(10, 0, 40.0)), Decision::Hold);
+        }
+        assert_eq!(a.on_frame(&stats(10, 0, 40.0)), Decision::Up(1));
+        assert_eq!(a.requested(), 6);
+        assert_eq!(a.on_frame(&stats(10, 0, 60.0)), Decision::Hold, "top rung");
+    }
+
+    #[test]
+    fn clipped_or_distorted_frames_restart_the_run() {
+        // ADR 0013: neither steps down nor up, and the clean run restarts.
+        for bad in [0, 1] {
+            let mut a = RateAdapter::new(Thresholds::with_margin(1.0), 2);
+            assert_eq!(a.on_frame(&stats(10, 0, 30.0)), Decision::Hold);
+            assert_eq!(a.on_frame(&stats(10, 0, 30.0)), Decision::Hold);
+            let mut b = stats(10, 9, 30.0);
+            if bad == 0 {
+                b.adc_clipped = true;
+                assert_eq!(a.on_frame(&b), Decision::ClippedHold);
+            } else {
+                b.distortion = 3;
+                assert_eq!(a.on_frame(&b), Decision::Hold);
+            }
+            assert_eq!(a.requested(), 2, "no step down");
+            // Two more clean frames are not enough: the run restarted.
+            assert_eq!(a.on_frame(&stats(10, 0, 30.0)), Decision::Hold);
+            assert_eq!(a.on_frame(&stats(10, 0, 30.0)), Decision::Hold);
+            assert_eq!(a.on_frame(&stats(10, 0, 30.0)), Decision::Up(4));
+        }
+    }
+
+    #[test]
+    fn reprobe_requested_after_10s_without_a_probe_while_a_tone_is_dropped() {
+        // ADR 0013 `reprobe-request-cadence`.
+        let mut m = MaskTracker::new(24, true);
+        m.setup(Some(&[20.0; 24]), Instant::ZERO);
+        let t = |s: f64| Instant::from_secs_f64(s);
+        assert!(!m.wants_reprobe(t(30.0)), "nothing dropped, nothing to restore");
+        let mut snr = [20.0; 24];
+        snr[9] = 5.0;
+        m.on_measurement(Some(&snr), false, t(31.0));
+        m.on_measurement(Some(&snr), false, t(32.0));
+        assert_ne!(m.reported().0 & (1 << 9), 1 << 9, "tone 9 dropped");
+        // The last probe was the setup at 0 s: more than 10 s ago.
+        assert!(m.wants_reprobe(t(33.0)));
+        assert!(m.wants_reprobe(t(40.0)), "kept until a probe decodes");
+        m.on_measurement(Some(&snr), true, t(41.0));
+        assert!(!m.wants_reprobe(t(45.0)));
+        assert!(!m.wants_reprobe(t(50.9)));
+        assert!(m.wants_reprobe(t(51.0)));
     }
 
     #[test]

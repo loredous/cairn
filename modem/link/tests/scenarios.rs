@@ -58,11 +58,12 @@ fn rung_settles_within_two_frames_after_6db_drop() {
 }
 
 #[test]
-fn rung_climbs_after_6db_rise() {
-    // The step-up rule needs 3 clean frames per rung (§10.1), so a rise
-    // takes 3 frames per rung climbed; the §14.1 "2 frames" cannot hold
-    // upward (see the README, "Readings").
-    for (seed, from, to) in [(14u64, 19.0, 25.0), (15, 8.0, 14.0)] {
+fn rung_climbs_within_four_frames_after_6db_rise() {
+    // ADR 0013: §14.1 asks for the correct rung within 4 frames of a rise.
+    // The step-up still needs 3 clean frames (§10.1), but then requests the
+    // highest rung 2 dB below the measured SNR, so a 6 dB rise is climbed in
+    // one step: 3 frames to see the run, the 4th at the new rung.
+    for (seed, from, to) in [(14u64, 19.0, 25.0), (15, 8.0, 14.0), (16, 13.0, 19.0), (17, 6.0, 12.0)] {
         let mut sim = pair(seed, from);
         connect(&mut sim, 0, 1, t(0.0));
         send_chunks(&mut sim, 0, t(0.1), &payload(400_000, seed), 1000);
@@ -74,7 +75,8 @@ fn rung_climbs_after_6db_rise() {
         let climbed = rung.saturating_sub(before) as usize;
         eprintln!("{from} -> {to} dB: MCS {before} -> {rung} after {n} frames");
         assert!(rung > before);
-        assert!(n <= 3 * climbed + 2, "{n} frames for {climbed} rungs");
+        assert!(n <= 4, "{from} -> {to} dB: {n} frames for {climbed} rungs");
+        assert!(bler(to, RUNG_THRESHOLDS_DB[rung as usize]) <= 0.10, "MCS {rung} at {to} dB");
         assert_clean(&sim);
     }
 }
@@ -114,13 +116,14 @@ fn transfer_survives_60s_of_link_loss_without_resending_delivered_blocks() {
 }
 
 #[test]
-fn resume_after_link_loss_resends_no_delivered_block() {
+fn resume_after_120s_link_loss_resends_no_delivered_block() {
+    // ADR 0013: §14.1's session-resume target is tested at a 120 s outage.
     let mut sim = pair(22, 25.0);
     sim.stations[0].auto_resume = Some(Duration::from_secs(1));
     let data = payload(150_000, 22);
     connect(&mut sim, 0, 1, t(0.0));
     send_chunks(&mut sim, 0, t(0.1), &data, 1000);
-    // Long enough for both ends to declare the link lost.
+    // 120 s: long enough for both ends to declare the link lost.
     sim.outage(0, 1, t(20.0), t(140.0));
     sim.run_while(t(900.0), |s| s.delivered_bytes(1).len() < data.len());
     assert_eq!(sim.delivered_bytes(1), data, "exactly once, in order");
@@ -581,5 +584,110 @@ fn lost_disconnect_reply_is_answered_again_while_lingering() {
     assert!(sim.has_event(0, |e| matches!(e, HostEvent::Disconnected { .. })));
     assert!(sim.has_event(1, |e| matches!(e, HostEvent::Disconnected { .. })));
     assert!(sim.stations[0].st.session_info().is_none() && sim.stations[1].st.session_info().is_none());
+    assert_clean(&sim);
+}
+
+// --- ADR 0013 ----------------------------------------------------------------------
+
+#[test]
+fn linger_restarts_after_each_disconnect_reply() {
+    // ADR 0013 `disconnect-handshake-linger`: B's first two replies are lost,
+    // so A resends twice; B answers every resend, the linger time restarting
+    // after each answer (counted once from the first reply it would end
+    // before the second resend arrived).
+    let mut sim = pair(102, 25.0);
+    let dropped = Rc::new(Cell::new(0usize));
+    let d2 = dropped.clone();
+    sim.filter = Some(Box::new(move |_, r, a| {
+        if r == 0 && d2.get() < 2 && a.frame.as_ref().is_some_and(|f| f.ftype == FrameType::Disconnect) {
+            d2.set(d2.get() + 1);
+            return Fate::HeaderLost;
+        }
+        Fate::Normal
+    }));
+    connect(&mut sim, 0, 1, t(0.0));
+    sim.host(0, t(10.0), HostCommand::Disconnect { graceful: true });
+    sim.run_until(t(80.0));
+    assert_eq!(dropped.get(), 2);
+    let a = frames_of(&sim, 0, FrameType::Disconnect);
+    let b = frames_of(&sim, 1, FrameType::Disconnect);
+    let at = |v: &[(Instant, Instant)]| v.iter().map(|x| x.0.to_string()).collect::<Vec<_>>();
+    eprintln!("A DISCONNECT at {:?}, B at {:?}", at(&a), at(&b));
+    assert_eq!(a.len(), 3, "two resends");
+    assert_eq!(b.len(), 3, "the reply, then an answer to each resend");
+    assert!(sim.has_event(0, |e| matches!(e, HostEvent::Disconnected { .. })));
+    assert!(sim.has_event(1, |e| matches!(e, HostEvent::Disconnected { .. })));
+    assert_clean(&sim);
+}
+
+#[test]
+fn half_open_session_is_kept_for_resume() {
+    // ADR 0013 `duplicate-connect-and-half-open-retention`: B never hears A's
+    // frames after the CONNECT until 90 s, gives up on the half-open session
+    // (a failed attempt, not a link loss) and keeps its state; A, which had
+    // the session open, declares the link lost and resumes, and B answers as
+    // a resume, so nothing A queued is reported undelivered.
+    let mut sim = pair(103, 25.0);
+    sim.stations[0].auto_resume = Some(Duration::from_secs(1));
+    sim.filter = Some(Box::new(move |s, r, a| {
+        let connect = a.frame.as_ref().is_some_and(|f| f.ftype == FrameType::Connect);
+        if r == 1 && a.from == 0 && !connect && s.now < t(90.0) { Fate::HeaderLost } else { Fate::Normal }
+    }));
+    let data = payload(8_000, 103);
+    connect(&mut sim, 0, 1, t(0.0));
+    send_chunks(&mut sim, 0, t(0.0), &data, 1000);
+    sim.run_while(t(400.0), |s| s.delivered_bytes(1).len() < data.len());
+    let half_open =
+        |e: &HostEvent| matches!(e, HostEvent::ConnectFailed { reason: ConnectFailure::HalfOpenTimeout, .. });
+    assert!(sim.has_event(1, half_open));
+    assert!(!sim.has_event(1, |e| matches!(e, HostEvent::LinkLost { .. })), "a failed attempt, not a link loss");
+    assert!(sim.has_event(0, |e| matches!(e, HostEvent::LinkLost { .. })));
+    assert!(sim.has_event(1, |e| matches!(e, HostEvent::Connected { resumed: true, .. })), "answered as a resume");
+    assert!(!sim.has_event(0, |e| matches!(e, HostEvent::Undelivered { .. })));
+    assert_eq!(sim.delivered_bytes(1), data);
+    assert_eq!(sim.duplicate_blocks(1), 0);
+    assert_clean(&sim);
+}
+
+#[test]
+fn crossing_new_connects_leave_one_attempt() {
+    // ADR 0013 `crossing-new-connects`: whichever CONNECT goes out first is
+    // refused by the other station, which keeps its own attempt; that one is
+    // then answered normally.
+    for seed in [104u64, 105, 106, 107] {
+        let mut sim = pair(seed, 25.0);
+        connect(&mut sim, 0, 1, t(0.0));
+        connect(&mut sim, 1, 0, t(0.0));
+        sim.run_until(t(30.0));
+        let refusal = |e: &HostEvent| matches!(e, HostEvent::ConnectFailed { reason: ConnectFailure::Refused, .. });
+        let refused: Vec<usize> = (0..2).filter(|&st| sim.has_event(st, refusal)).collect();
+        assert_eq!(refused.len(), 1, "seed {seed}: exactly one attempt refused");
+        let (r, other) = (refused[0], 1 - refused[0]);
+        assert!(sim.has_event(other, |e| matches!(e, HostEvent::Connected { initiator: true, .. })), "seed {seed}");
+        assert!(sim.has_event(r, |e| matches!(e, HostEvent::Connected { initiator: false, .. })));
+        assert_eq!(frames_of(&sim, r, FrameType::Connect).len(), 1, "no retry after the refusal");
+        assert_clean(&sim);
+    }
+}
+
+#[test]
+fn resume_by_the_responder_keeps_the_original_roles() {
+    // ADR 0013 `resume-keeps-roles`: B (the original responder) resumes
+    // after a link loss; A keeps the keepalive duty afterwards.
+    let mut sim = pair(108, 25.0);
+    sim.stations[1].auto_resume = Some(Duration::from_secs(1));
+    connect(&mut sim, 0, 1, t(0.0));
+    send_chunks(&mut sim, 0, t(0.1), &payload(5_000, 108), 1000);
+    sim.outage(0, 1, t(20.0), t(140.0));
+    sim.run_until(t(400.0));
+    let resumed = sim.event_time(1, |e| matches!(e, HostEvent::Connected { resumed: true, .. })).expect("B resumed");
+    assert!(sim.has_event(0, |e| matches!(e, HostEvent::Connected { resumed: true, initiator: false, .. })));
+    // After the resume the session idles: A's keepalives every 30 s, B none.
+    let after = resumed + Duration::from_secs(5);
+    let a_ka = frames_of(&sim, 0, FrameType::Sound).into_iter().filter(|x| x.0 > after).count();
+    let b_ka = frames_of(&sim, 1, FrameType::Sound).into_iter().filter(|x| x.0 > after).count();
+    eprintln!("after the resume at {resumed}: A sent {a_ka} keepalives, B {b_ka}");
+    assert!(a_ka >= 5, "{a_ka}");
+    assert_eq!(b_ka, 0, "B keeps the responder's fallback role");
     assert_clean(&sim);
 }

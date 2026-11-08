@@ -1179,6 +1179,23 @@ pub fn check_controls(header: &Header, controls: &[ControlBlock]) -> Result<(), 
                 _ => return Err(FieldError::Rule("a link-test PROBE carries one link-test B.3 block (ADR 0012)")),
             }
         }
+        frame_type::BEACON | frame_type::UI if !header.session => {
+            // ADR 0013 `broadcast-control-block-order`: the ID block when
+            // present (always in a BEACON), the path block when present, then
+            // others; no session blocks.
+            let mut i = 0;
+            if types.first() == Some(&ct::ID) {
+                i = 1;
+            } else if t == frame_type::BEACON {
+                return Err(FieldError::Rule("a BEACON leads with its ID block (B.6)"));
+            }
+            if types.get(i) == Some(&ct::PATH) {
+                i += 1;
+            }
+            if types[i..].iter().any(|ty| [ct::ACK, ct::BLOCK_MAP, ct::ID, ct::CONNECT, ct::PATH].contains(ty)) {
+                return Err(FieldError::Rule("BEACON and UI control blocks go ID, path, then others (ADR 0013)"));
+            }
+        }
         _ if header.session => {
             if types.first() != Some(&ct::ACK) {
                 return Err(FieldError::Rule("a session frame leads with its ACK block (SPEC 8.4)"));

@@ -8,8 +8,8 @@
 mod common;
 
 use cairn_phy::fields::{
-    self, ALL_TONES, AckBlock, BlockMapBlock, ConnectBlock, ControlBlock, FieldError, Header, IdBlock, capability,
-    frame_type,
+    self, ALL_TONES, AckBlock, BlockMapBlock, CalReportBlock, ConnectBlock, ControlBlock, FieldError, Header, IdBlock,
+    PathBlock, capability, frame_type,
 };
 use cairn_phy::pdu::{self, Block, Pdu, Reassembler};
 use cairn_phy::{ConfigError, FrameConfig, LinkState, Receiver, RxOptions, Transmitter, params};
@@ -249,6 +249,42 @@ fn control_orders() {
     for (h, c) in &bad {
         assert!(fields::check_controls(h, c).is_err(), "{h:?} {c:?}");
     }
+}
+
+#[test]
+fn broadcast_control_order() {
+    // ADR 0013 `broadcast-control-block-order`: ID, then path, then others.
+    let id = ControlBlock::Id(IdBlock { callsign: "N0CALL".into(), ssid: 1, grid: None });
+    let path = ControlBlock::Path(PathBlock { entries: vec![station(3)], hops: 1, ..Default::default() });
+    let cal = ControlBlock::CalReport(CalReportBlock {
+        amplitudes: [0; 8],
+        distortion: [0; 8],
+        clipped: [false; 8],
+        sweep_valid: true,
+    });
+    let bc = |t: u8, c: &[ControlBlock]| Header { first_fragment: true, n_data: 1, ..hdr(t, c.len()) };
+    let ok: Vec<Vec<ControlBlock>> =
+        vec![vec![id.clone()], vec![id.clone(), path.clone()], vec![id.clone(), path.clone(), cal.clone()]];
+    for c in &ok {
+        for t in [frame_type::BEACON, frame_type::UI] {
+            fields::check_controls(&bc(t, c), c).unwrap_or_else(|e| panic!("{t} {c:?}: {e}"));
+        }
+    }
+    for c in [vec![], vec![path.clone(), cal.clone()], vec![cal.clone()]] {
+        fields::check_controls(&bc(frame_type::UI, &c), &c).unwrap_or_else(|e| panic!("UI {c:?}: {e}"));
+    }
+    let bad: Vec<Vec<ControlBlock>> = vec![
+        vec![path.clone(), id.clone()],
+        vec![id.clone(), cal.clone(), path.clone()],
+        vec![cal.clone(), id.clone()],
+    ];
+    for c in &bad {
+        for t in [frame_type::BEACON, frame_type::UI] {
+            assert!(fields::check_controls(&bc(t, c), c).is_err(), "{t} {c:?}");
+        }
+    }
+    let only_path = [path];
+    assert!(fields::check_controls(&bc(frame_type::BEACON, &only_path), &only_path).is_err());
 }
 
 // --- frames: block maps, masks by ID, width and probe extent (ADR 0008, ADR 0011) ----------

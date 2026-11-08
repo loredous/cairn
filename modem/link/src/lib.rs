@@ -33,5 +33,7 @@ pub use frame::{
 };
 pub use pdu::Pdu;
 pub use seq::Seq;
-pub use station::{Action, Config, ConnectFailure, Event, HostCommand, HostEvent, Station};
+pub use station::{
+    Action, Config, ConnectFailure, Event, HostCommand, HostEvent, RxLink, SessionInfo, Station, Warning,
+};
 pub use time::Instant;

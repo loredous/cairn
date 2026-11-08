@@ -294,10 +294,83 @@ header fails prints `not decoded: header did not decode`.
   receive turnaround (SPEC 7.3: at most 100 ms from a frame's last sample
   to its decoded result).
 
+## Two-station session with `cairn-modem run`
+
+`cairn-modem run` is the whole modem: the link layer (sessions with
+selective-repeat ARQ, rate adaptation, resume, link test, broadcast; SPEC
+8-12, ADRs 0008-0013), carrier detect (SPEC 7.2: quieting, the preamble
+correlator, the Bell 202 detector), a KISS server on TCP port 8001 and a
+line-based control interface on stdin (and optionally a TCP port). Each
+station runs one; the operators type commands. Before going on the air,
+run the same session in simulation (`cargo test --release -p cairn-modem
+--test two_station -- --nocapture` in `modem/`: two complete modems on a
+simulated FM channel) so you know what a good run looks like.
+
+```sh
+M=modem/target/release/cairn-modem
+# 0. Levels and TXDelay exactly as for the broadcast test above (tone, levels).
+#    Open the squelch on both radios: carrier detect watches the noise above
+#    the signal band (2700-3100 Hz on a 24-tone link) and needs it.
+
+# 1. Both stations start the modem (Ctrl-C or "quit" stops it).
+$M run -d All-In-One-Cable --ptt serial:All-In-One-Cable --callsign N0CALL-1 --grid FN31 --status 30   # A
+$M run -d All-In-One-Cable --ptt serial:All-In-One-Cable --callsign N0CALL-2 --status 30               # B
+#    Each prints its devices, PTT, "KISS server on 127.0.0.1:8001" and waits.
+#    Leave both idle for a minute: "status" should show the quieting floor
+#    armed (a level in dBFS, not "unarmed") and no carrier-detect rises
+#    (rises q/p/a/c [0, 0, 0, 0]). A rise with nobody on the air is a false
+#    detection: raise the receive level or move the band (--quieting LO-HI).
+
+# 2. A link test first (about 1 s of air): both directions' SNR, rung and expected kbps.
+probe N0CALL-2                                   # at A
+# -> link test N0CALL-2: forward SNR 24.8 dB MCS 5 7.59 kbps; reverse SNR ...
+
+# 3. A session: connect, send text and a file each way, disconnect.
+connect N0CALL-2                                 # at A -> "connected to N0CALL-2 (session ..., initiator)"
+send hello de N0CALL-1                           # at A; B prints "rx from N0CALL-1: ..."
+send @/path/to/file                              # at A: FILE-CHUNK PDUs; "delivered to N0CALL-2: file ..."
+send @/path/to/other                             # at B, at the same time: both directions share the turns
+status                                           # either: rung each way, sequences, counters
+disconnect                                       # at A, after the deliveries
+```
+
+What to look for:
+
+- **Turns.** Every frame prints `tx DATA ... turn-holder` on the sender
+  and, with `-v`, `rx ...` with the SNR on the 7 dB scale at the receiver.
+  The replies alternate without gaps of more than a few hundred ms; a reply
+  that waits seconds means the turn-holder's carrier check saw a carrier
+  (with `-v`, the `dcd` lines show which detector) or a frame was lost and
+  the ACK timer (about 6.6 s) brought it back.
+- **Adaptation.** The rung each way (`status`) settles within a few
+  frames and stays put at a constant level. Turn the attenuator by 6 dB
+  during a transfer: the rung follows within 2 frames down and 4 up
+  (ADR 0013).
+- **Throughput.** "delivered" lines with byte counts over the elapsed
+  time, against Appendix A.2 at the rung in use (one way, 24 tones: MCS 3
+  4.55 kbps, MCS 4 6.09, MCS 5 7.61, MCS 6 9.11 kbps; both ways at once
+  share that total).
+- **Resume.** Switch one radio off for two minutes mid-transfer: both
+  ends print "link lost" (after about a minute), then `connect N0CALL-2`
+  at A resumes ("connected ..., resumed") and the transfer completes with
+  nothing delivered twice.
+- **Sharing.** A packet station keying during the session (or `beacon` from a
+  third modem) holds both stations off until it is done; with `-v` its
+  carrier shows as `afsk: true` (Bell 202) or `quieting: true`.
+- **KISS.** Any KISS client (e.g. a beacon from an APRS program) on port
+  8001 of one station sends its AX.25 frames as UI broadcasts; the other
+  station's KISS clients receive them unchanged.
+- **Safety.** `--tx-budget SECONDS` caps the total keyed time of a run, and
+  `--seconds` stops it; PTT is released on every exit path. Identification
+  is the callsign in every header plus the ID control block in CONNECT,
+  CONNECT-ACK, DISCONNECT, every BEACON and at least every 9 minutes in a
+  session.
+
 ## What this cannot test
 
-The offline decoder tests the waveform on a real audio chain, one direction at a time. It cannot
-test, and does not claim to:
+The offline decoder and the broadcast test above test the waveform on a real audio chain, one
+direction at a time (the two-station session above covers sessions, ARQ, adaptation, DCD and
+channel sharing). They cannot test, and do not claim to:
 
 - **ACKs and the control channel.** Nothing is sent back. `cairn-modem tx` sends control
   blocks (the ID block, and a demonstration ACK block in `--type data` frames) and `listen`

@@ -323,6 +323,11 @@ struct Pending {
 
 /// Something the listener has to say.
 pub enum Event {
+    /// A preamble was detected (its start is final).
+    Detected(Detection),
+    /// A detection's configuration is known: the frame is `n_samples` long
+    /// from its start.
+    Resolved(Detection, usize),
     /// A frame went to the decoder.
     Queued(Detection),
     /// A detection whose configuration could not be resolved.
@@ -362,6 +367,19 @@ impl Listener {
     /// Samples taken so far.
     pub fn position(&self) -> usize {
         self.end()
+    }
+
+    /// The detector's early confirmation of a preamble (gated plateau and
+    /// cross-correlation over threshold), once, as its 48 kHz index: the
+    /// preamble correlator of SPEC 7.2's carrier detect, ahead of the final
+    /// detection.
+    pub fn take_early(&mut self) -> Option<usize> {
+        self.detector.take_early()
+    }
+
+    /// Frames detected and not yet sent to the decoder or given up.
+    pub fn pending(&self) -> usize {
+        self.pending.len()
     }
 
     fn slice_from(&self, start: usize, len: usize) -> (Vec<f64>, usize) {
@@ -406,12 +424,14 @@ impl Listener {
     }
 
     fn take(&mut self, dets: Vec<Detection>) -> Vec<Event> {
+        let mut ev = Vec::new();
         for d in dets {
             self.detections += 1;
             let need = self.config.lookahead(&d);
+            ev.push(Event::Detected(d.clone()));
             self.pending.push_back(Pending { det: d, phase: Phase::Config(need) });
         }
-        let ev = self.advance();
+        ev.extend(self.advance());
         self.trim();
         ev
     }
@@ -428,7 +448,10 @@ impl Listener {
                 }
                 let (seg, off) = self.slice_from(p.det.start, end - p.det.start);
                 p.phase = match self.config.resolve(&p.det, &seg[off..]) {
-                    Resolution::Ready(plan) => Phase::Frame(plan),
+                    Resolution::Ready(plan) => {
+                        ev.push(Event::Resolved(p.det.clone(), plan.cfg.n_samples()));
+                        Phase::Frame(plan)
+                    }
                     Resolution::More(n) => Phase::Config(n.max(need + 1)),
                     Resolution::Fail(e) => {
                         ev.push(Event::Unresolved(p.det.clone(), e));

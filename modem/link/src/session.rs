@@ -224,6 +224,7 @@ impl Session {
         let init = ctx.cfg.initial_sequence as u64;
         let mut s = match retained {
             Some(r) => {
+                // ADR 0013 `resume-keeps-roles`: the original setup's roles.
                 let mut s = Session::base(ctx.cfg, peer, r.role, r.session_id, r.tx, r.rx, now);
                 s.resume = true;
                 s.had_state = true;
@@ -247,6 +248,7 @@ impl Session {
         let init = ctx.cfg.initial_sequence as u64;
         let mut s = match state {
             Some(r) => {
+                // ADR 0013 `resume-keeps-roles`: the original setup's roles.
                 let mut s = Session::base(ctx.cfg, f.header.src, r.role, r.session_id, r.tx, r.rx, ctx.now);
                 s.resume = true;
                 s.had_state = true;
@@ -370,7 +372,7 @@ impl Session {
 
     /// The peer's session width: its cap + 1 when this station advertised
     /// capability bit 0.
-    fn rx_width(&self, cfg: &Config) -> u8 {
+    pub(crate) fn rx_width(&self, cfg: &Config) -> u8 {
         if cfg.capabilities & caps::WIDE != 0 { self.peer_width_cap + 1 } else { BASE_WIDTH }
     }
 
@@ -709,6 +711,9 @@ impl Session {
         self.fresh = true;
         self.phase = Phase::Open;
         self.expiries = 0;
+        // The idle clock by the original role (ADR 0013 `resume-keeps-roles`):
+        // a resuming original responder keeps the 35 s fallback.
+        self.restart_idle(ctx);
         self.owed = Some(Owed { what: SessTx::FirstFrame, trigger: Trigger::PeerFrame(f.ended_at) });
         ctx.host(HostEvent::Connected { peer: self.peer, session_id: self.session_id, resumed, initiator: true });
         None

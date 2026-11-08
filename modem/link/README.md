@@ -46,7 +46,7 @@ table.
 | `pdu` | ADR 0009 packing and parsing, filler, CRC-32/ISO-HDLC, broadcast fragmentation, reassembly with duplicate suppression. Kept alongside `cairn_phy::pdu` because the ARQ needs per-PDU completion ids, priority queues and lost-block parsing; `tests/pdu_vectors.rs` shows it byte-identical with `vectors/link/pdu_*.json` and, by property test, with `cairn_phy::pdu` |
 | `seq` | RFC 1982 16-bit sequences |
 | `arq` | Sender (window, retransmissions lowest first, block map, frame filling against a capacity), receiver (cumulative ACK, reassembly buffer, in-order delivery) |
-| `adapt` | §10.1 rules as revised by ADR 0010, thresholds = §6.2 + margin, mask tracker with IDs |
+| `adapt` | §10.1 rules as revised by ADR 0010 and ADR 0013 (multi-rung step-up), thresholds = §6.2 + margin, mask tracker with IDs |
 | `access` | DCD hold, p-persistent CSMA, slot draws, turn-holder 50 ms raw-DCD check, yield windows |
 | `session` | The ADR 0010 state machine |
 | `resume` | State retained 10 minutes after link loss |
@@ -72,31 +72,38 @@ any transmission keyed while the station could hear a carrier, any frame
 breaking the layout rules, and any mask mismatch between sender and
 receiver.
 
+## ADR 0013
+
+ADR 0013 settled the findings of the first version of this crate; each is
+implemented with a test:
+
+| Decision | Where | Test |
+| --- | --- | --- |
+| `adaptation-rules-multi-rung`: after 3 clean frames, the highest rung whose threshold is ≥ 2 dB below the lowest SNR of the three; clipped or distortion-index-≥3 frames neither step down nor up and restart the run | `adapt::RateAdapter`, `params::STEP_UP_MULTI_RUNG` | `adapt::tests::multi_rung_step_up`, `clipped_or_distorted_frames_restart_the_run` |
+| `v1-performance-targets-revised`: right rung within 2 frames of a 6 dB drop and 4 of a rise; a 60 s outage recovers in the session, a 120 s one resumes | | scenarios `rung_settles_within_two_frames_after_6db_drop`, `rung_climbs_within_four_frames_after_6db_rise`, `transfer_survives_60s_...`, `resume_after_120s_link_loss_...` |
+| `reprobe-request-cadence` (SHOULD): re-probe flag 10 s after the last probe while a tone is dropped, until a probe decodes | `adapt::MaskTracker`, `params::REPROBE_INTERVAL` | `adapt::tests::reprobe_requested_after_10s_...` |
+| `duplicate-connect-and-half-open-retention`: a responder giving up on a half-open session keeps its state 10 minutes for resume | `station::end_session` | scenario `half_open_session_is_kept_for_resume` |
+| `crossing-new-connects`: the station already connecting refuses the peer's CONNECT and keeps its own | `station::on_connect` | scenario `crossing_new_connects_leave_one_attempt` |
+| `resume-keeps-roles`: roles (keepalive duty, responder offset) survive a resume by either station | `session::new_initiator`, `new_responder`, the idle clock restarted by role when CONNECT-ACK opens the session | scenario `resume_by_the_responder_keeps_the_original_roles` |
+| `disconnect-handshake-linger`: L = T + 0.5 + 0.25 + 0.1 s + the reply's air time, restarted after each reply | `station::end_session`, `on_tx_done`, `params::LINGER_EXTRA` | scenarios `lost_disconnect_reply_is_answered_again_while_lingering`, `linger_restarts_after_each_disconnect_reply` |
+| `broadcast-control-block-order`: BEACON and UI control blocks go ID, path, others | `LinkFrame::validate` (and `cairn_phy::fields::check_controls`) | `frame::tests::broadcast_control_order` (and `phy/tests/link_vectors.rs`) |
+
+The resume-by-the-responder scenario found that a resuming original
+responder ran the initiator's 30 s keepalive clock until the first frame
+from its peer; the idle clock now restarts by role when CONNECT-ACK opens
+the session.
+
 ## Readings
 
 Where the SPEC and ADRs leave room the crate takes the conservative reading
 and names it (`READING_*` constants in `params`, `READING:` comments):
 
-- The re-probe cadence is unspecified: a receiver with dropped tones asks
-  for a probe when it has seen none for 10 s.
 - The §10.2 per-rung frame limit also applies to broadcast frames.
-- Step-up needs the SNR condition on each of the three clean frames; a
-  clipped or distortion-index-≥3 frame neither steps up nor down and
-  restarts the run.
 - A resend on ACK-timer expiry without data blocks after a DATA frame goes
   out as SOUND (a DATA frame cannot be empty).
-- Crossing *new* CONNECTs (each station connecting to the other) are
-  refused by the station already connecting; the other attempt proceeds.
-- After a resume the original roles stay (keepalive duty, the +0.5 s ACK
-  timer offset).
 - A yield window before a transmission from idle is followed by the full
   carrier sense; the yield window starts after held DCD is clear.
 - The turn-holder's window and the yield window fail on any raw-DCD rising
   edge; a peer carrier still up 100 ms after its last symbol counts as busy.
 - CSMA slot draws start at the current time, not at past slot boundaries.
 - A graceful disconnect waits until everything queued is acknowledged.
-- After replying to DISCONNECT, "one ACK-timer period" of answering repeats
-  is counted with the responder offset, the maximum jitter, the
-  carrier-gone deadline and one DISCONNECT's air time
-  (`READING_LINGER_EXTRA`); counted literally from the reply it ends before
-  the closer's first resend arrives, which the tests showed.
