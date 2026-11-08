@@ -65,17 +65,19 @@ pub const ACK_EXPIRY_LAST_SOUND: u8 = 7;
 /// The expiration that declares the link lost.
 pub const ACK_EXPIRY_LINK_LOST: u8 = 8;
 /// CONNECT-ACK resends on ACK-timer expiry before the responder gives up
-/// (ADR 0010 `duplicate-connect-handling`).
+/// (ADR 0013 `duplicate-connect-and-half-open-retention`), keeping the
+/// half-open session's state for resume.
 pub const CONNECT_ACK_MAX_RESENDS: u8 = 3;
 /// DISCONNECT resends before the closing station closes anyway
-/// (ADR 0010 `disconnect-handshake`).
+/// (ADR 0013 `disconnect-handshake-linger`).
 pub const DISCONNECT_MAX_RESENDS: u8 = 3;
-/// After replying to DISCONNECT a station answers repeats for "one ACK-timer
-/// period" (ADR 0010 `disconnect-handshake`). Counted from the reply, that
-/// period ends before the closer's first resend can arrive; this crate adds
-/// the responder offset, the maximum jitter and the carrier-gone deadline
-/// (plus one DISCONNECT's air time, computed by the station).
-pub const READING_LINGER_EXTRA: Duration = Duration::from_millis(500 + 250 + 100);
+/// After replying to DISCONNECT a station answers repeats until the linger
+/// time L = T + 0.5 s + 0.25 s + 0.1 s + A has passed since the end of its
+/// latest DISCONNECT (ADR 0013 `disconnect-handshake-linger`): T is the
+/// ACK-timer period without offset or jitter and A the DISCONNECT's air
+/// time (both computed by the station); this is the sum of the responder
+/// offset, the maximum jitter and the carrier-gone deadline.
+pub const LINGER_EXTRA: Duration = Duration::from_millis(500 + 250 + 100);
 
 // --- Session setup (§9.2; ADR 0010 `connect-retry-schedule`) -----------------------
 
@@ -187,10 +189,10 @@ pub const ALL_TONES: u64 = (1u64 << 56) - 1;
 pub const MASK_DROP_DB: f64 = 6.0;
 /// ... for this many consecutive frames.
 pub const MASK_DROP_FRAMES: u8 = 2;
-/// A receiver with dropped tones asks for a re-probe (ACK flag bit 2) when
-/// it has not seen a width probe for this long. The SPEC leaves the cadence
-/// open (§10.3); this is the crate's choice.
-pub const READING_REPROBE_INTERVAL: Duration = Duration::from_secs(10);
+/// A receiver with dropped tones asks for a re-probe (ACK flag bit 2) once
+/// it has not received a width probe for this long, and keeps asking until
+/// one decodes (ADR 0013 `reprobe-request-cadence`, SHOULD).
+pub const REPROBE_INTERVAL: Duration = Duration::from_secs(10);
 
 // --- Link adaptation (§6.2, §10; ADR 0010 `adaptation-rules-revised`) --------------
 
@@ -209,15 +211,12 @@ pub const STEP_DOWN_TWO_FRACTION: f64 = 0.50;
 pub const STEP_UP_RUN: u8 = 3;
 /// SNR margin above the next rung's threshold needed to step up.
 pub const STEP_UP_MARGIN_DB: f64 = 2.0;
-/// ADR 0013 (multi-rung step-up): after the clean run, request the highest
-/// rung whose threshold is at least [`STEP_UP_MARGIN_DB`] below the measured
-/// SNR, not just the next rung (ADR 0010 `adaptation-rules-revised` stepped
-/// one rung per run). `false` restores the one-rung rule.
+/// ADR 0013 `adaptation-rules-multi-rung`: after the clean run, request the
+/// highest rung whose threshold is at least [`STEP_UP_MARGIN_DB`] below the
+/// lowest SNR measured on the run's frames, not just the next rung (ADR 0010
+/// `adaptation-rules-revised` stepped one rung per run). `false` restores
+/// the one-rung rule.
 pub const STEP_UP_MULTI_RUNG: bool = true;
-/// READING (ADR 0013 names "the measured SNR" without saying which frame's):
-/// the multi-rung target is taken from the lowest SNR of the frames in the
-/// clean run, the conservative choice when the SNR moved during the run.
-pub const READING_STEP_UP_SNR_IS_RUN_MINIMUM: bool = true;
 /// A reply to CONNECT, CONNECT-ACK or SOUND requests the highest rung whose
 /// threshold is at least this far below the measured SNR (also the link-test
 /// suggestion, ADR 0012 `probe-link-test-reply`).
