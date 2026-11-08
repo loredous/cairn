@@ -141,6 +141,54 @@ fn quieting_level_changes() {
     assert_eq!(small, 0);
 }
 
+/// Receive AGC steps (SPEC 13.5): the gain moves 3 dB at a time between
+/// frames and the modem tells carrier detect (`Dcd::level_step`) at the
+/// moment it sets the mixer; the step reaches the samples a little later
+/// (here 30 ms, the device's buffer). Returns quieting asserts.
+fn agc_steps(notify: bool, step_db: f64, kind: NoiseKind) -> usize {
+    let mut ns = OpenSquelchNoise::new(kind, Rng::new(91));
+    let mut dcd = Dcd::new(DcdConfig::default());
+    let mut chunk = vec![0.0; HOP];
+    let mut gain_db = 0.0;
+    let mut count = 0;
+    let delay_hops = 3;
+    let mut pending: Option<(usize, f64)> = None;
+    for h in 0..(120 * FS / HOP) {
+        // Every 5 s after the first 2: down, down, up, up, ...
+        let t = h * HOP;
+        if t >= 2 * FS && (t - 2 * FS) % (5 * FS) == 0 {
+            let k = (t - 2 * FS) / (5 * FS);
+            let d = if k % 4 < 2 { -step_db } else { step_db };
+            if notify {
+                dcd.level_step(d);
+            }
+            pending = Some((h + delay_hops, d));
+        }
+        if let Some((_, d)) = pending.take_if(|p| p.0 == h) {
+            gain_db += d;
+        }
+        let g = NOISE_RMS * 10f64.powf(gain_db / 20.0);
+        ns.fill(&mut chunk);
+        chunk.iter_mut().for_each(|v| *v *= g);
+        count += ups(&dcd.process(&chunk), DcdSource::Quieting).len();
+    }
+    count
+}
+
+#[test]
+fn quieting_follows_agc_gain_steps() {
+    for kind in [NoiseKind::White, NoiseKind::Tilted] {
+        let told = agc_steps(true, 3.0, kind);
+        let told6 = agc_steps(true, 6.0, kind);
+        let blind = agc_steps(false, 6.0, kind);
+        println!(
+            "{kind:?}: 3 dB AGC steps told {told}, 6 dB told {told6}, 6 dB not told {blind} quieting asserts (2 min)"
+        );
+        assert_eq!(told + told6, 0, "{kind:?}: a gain step the detector was told about is no carrier");
+        assert!(blind > 0, "{kind:?}: the test steps are big enough to matter");
+    }
+}
+
 /// Steps of 1-4 dB down and back up every 30 s for 10 minutes (10 downward
 /// steps), white and tilted noise.
 #[test]

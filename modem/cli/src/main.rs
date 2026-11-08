@@ -7,14 +7,17 @@ use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 use clap::{Args, Parser, Subcommand};
 
-use cairn_audio::{InputStats, InputStream, LevelMeter, Levels, OutputPort, OutputStream, StreamOptions};
+use cairn_audio::{
+    CaptureBackend, InputStats, InputStream, LevelMeter, Levels, OutputPort, OutputStream, RtConfig, StreamOptions,
+};
 use cairn_modem::frames::{
     FrameSpec, PlacedFrame, PlacedHeader, PlacedTone, bits_hex, build_frame, level_tone, manifest_json, parse_prefix,
     parse_tones, peak_rms_dbfs,
 };
 use cairn_modem::headers::{self, HeaderSpec};
 use cairn_modem::listen::{
-    self, BufferSource, CHUNK, ChunkSource, ConfigSource, FixedConfig, HeaderFirst, ListenOptions, Output, PacedSource,
+    self, BufferSource, ChunkSource, ConfigSource, FixedConfig, HeaderFirst, InputSource, ListenOptions, Output,
+    PacedSource,
 };
 use cairn_modem::txseq::{self, TxTiming};
 use cairn_phy::detector::DetectorConfig;
@@ -60,15 +63,45 @@ struct AudioOpts {
     /// Audio device: a substring of the ALSA name or description (e.g. All-In-One-Cable), or "default"
     #[arg(short = 'd', long, env = "CAIRN_DEVICE", default_value = "default")]
     device: String,
-    /// Callback period in frames (480 = 10 ms)
+    /// Device period in frames: how often the audio threads wake (480 = 10 ms)
     #[arg(long, default_value_t = 480)]
     period: u32,
+    /// Capture buffer, ms: headroom for an audio thread that wakes late, at no cost in latency (native ALSA;
+    /// cpal capture has two periods)
+    #[arg(long, default_value_t = 200.0)]
+    buffer_ms: f64,
+    /// Capture backend: auto (native ALSA, else cpal), alsa or cpal
+    #[arg(long, default_value = "auto")]
+    audio_backend: CaptureBackend,
+    /// Do not ask for real-time priority for the audio and processing threads
+    #[arg(long)]
+    no_rt: bool,
+    /// Real-time priority of the audio threads, 1-99 (processing threads 20 below; capped by RLIMIT_RTPRIO or rtkit)
+    #[arg(long, default_value_t = 60, value_parser = clap::value_parser!(u8).range(1..=99))]
+    rt_prio: u8,
 }
 
 impl AudioOpts {
     fn stream(&self) -> StreamOptions {
-        StreamOptions { period_frames: Some(self.period), ..Default::default() }
+        StreamOptions {
+            period_frames: Some(self.period),
+            buffer_ms: self.buffer_ms.clamp(5.0, 2000.0),
+            backend: self.audio_backend,
+            rt: self.rt(),
+            ..Default::default()
+        }
     }
+
+    fn rt(&self) -> RtConfig {
+        RtConfig { enabled: !self.no_rt, audio_priority: self.rt_prio }
+    }
+}
+
+/// The input's opening line and any real-time warning.
+fn input_banner(input: &InputStream) -> String {
+    let g = input.rt.clone().unwrap_or(cairn_audio::RtGrant::Denied("no callback yet".into()));
+    let w = cairn_audio::rt::warning("the capture thread", &g).map(|w| format!("\n{w}")).unwrap_or_default();
+    format!("input {} ({}); capture thread {g}{w}", input.id, input.format)
 }
 
 #[derive(Args, Clone)]
@@ -402,6 +435,13 @@ struct RunArgs {
     /// Print every decoded header and every carrier-detect change
     #[arg(short, long)]
     verbose: bool,
+    /// Receive AGC (SPEC 13.5): set the input's capture gain between frames for open-squelch noise near -20 dBFS
+    /// and peaks under -3 dBFS, in 3 dB steps (ALSA mixer; never touches the output volume)
+    #[arg(long)]
+    rx_agc: bool,
+    /// The capture-volume control for --rx-agc (default: the card's input control, e.g. 'AIOC Audio In')
+    #[arg(long)]
+    rx_agc_control: Option<String>,
 }
 
 fn run_cmd(a: RunArgs) -> Result<(), String> {
@@ -446,6 +486,9 @@ fn run_cmd(a: RunArgs) -> Result<(), String> {
         st.capabilities |= cairn_link::frame::caps::WIDE;
     }
     st.track_masks = !a.no_mask;
+    if a.rx_agc_control.is_some() && !a.rx_agc {
+        return Err("--rx-agc-control needs --rx-agc".into());
+    }
     let timing = a.timing.timing()?;
     let mut cfg = ModemConfig::new(st);
     cfg.dcd = cairn_phy::dcd::DcdConfig::for_width(a.cap as usize);
@@ -499,6 +542,7 @@ fn run_cmd(a: RunArgs) -> Result<(), String> {
         capture_dir: a.capture_dir.clone(),
         heard_file: a.heard_file.clone(),
         capture_on_failure: a.capture_on_failure,
+        rx_agc: a.rx_agc.then(|| a.rx_agc_control.clone()),
     };
     let summary = cairn_modem::driver::run(cfg, &opts, ptt, &signals::STOP)?;
     println!("{summary}");
@@ -569,12 +613,14 @@ fn devices() -> Result<(), String> {
 
 fn stats_text(s: &InputStats) -> String {
     format!(
-        "xruns {} gaps {} ({:.1} ms) overflow {} errors {}",
+        "xruns {} gaps {} ({:.1} ms) overflow {} errors {} ring high-water {:.0}/{:.0} ms",
         s.xruns,
         s.gaps,
         s.gap_ns as f64 / 1e6,
         s.overflow_samples,
-        s.errors
+        s.errors,
+        s.ring_high_ms(),
+        s.ring_ms()
     )
 }
 
@@ -592,7 +638,7 @@ fn levels_text(l: &Levels) -> String {
 
 fn levels(a: LevelsArgs) -> Result<(), String> {
     let mut input = InputStream::open(&a.audio.device, &a.audio.stream()).map_err(|e| e.to_string())?;
-    println!("input {} ({})", input.id, input.format);
+    println!("{}", input_banner(&input));
     let mut meter = LevelMeter::new();
     let mut total = LevelMeter::new();
     let mut buf = vec![0f32; 9600];
@@ -897,51 +943,8 @@ fn tx(a: TxArgs) -> Result<(), String> {
 
 // --- listen -------------------------------------------------------------------------
 
-/// The sound card in [`CHUNK`]s.
-struct AudioSource {
-    input: InputStream,
-    buf: Vec<f32>,
-    limit: Option<usize>,
-    taken: usize,
-    error: Option<String>,
-    record: Option<Vec<f64>>,
-}
-
 /// Longest `--record`, samples.
 const MAX_RECORD: usize = 600 * FS as usize;
-
-impl ChunkSource for AudioSource {
-    fn next_chunk(&mut self, out: &mut Vec<f64>) -> Option<()> {
-        out.clear();
-        loop {
-            if stopped() || self.limit.is_some_and(|l| self.taken >= l) {
-                return None;
-            }
-            let want = CHUNK - out.len();
-            match self.input.read(&mut self.buf[..want]) {
-                Ok(n) => out.extend(self.buf[..n].iter().map(|&v| v as f64)),
-                Err(e) => {
-                    self.error = Some(e.to_string());
-                    return None;
-                }
-            }
-            if out.len() == CHUNK {
-                self.taken += CHUNK;
-                if let Some(r) = self.record.as_mut().filter(|r| r.len() < MAX_RECORD) {
-                    r.extend_from_slice(out);
-                }
-                return Some(());
-            }
-            std::thread::sleep(Duration::from_millis(5));
-        }
-    }
-    fn input_stats(&self) -> Option<InputStats> {
-        Some(self.input.stats())
-    }
-    fn backlog(&self) -> usize {
-        self.input.available()
-    }
-}
 
 fn listen_cmd(a: ListenArgs) -> Result<(), String> {
     let spec = a.frame.spec()?;
@@ -999,12 +1002,17 @@ fn listen_cmd(a: ListenArgs) -> Result<(), String> {
         rx: rx_opts,
         stats_every: (a.stats * FS as f64).round() as usize,
         boost: !a.no_boost,
+        rt: if a.wav.is_some() && !a.realtime {
+            RtConfig { enabled: false, ..Default::default() }
+        } else {
+            a.audio.rt()
+        },
     };
     let limit = (a.seconds > 0.0).then_some((a.seconds * FS as f64) as usize);
 
     let live = a.wav.is_none();
     let t_open = SystemTime::now();
-    let mut audio_src: Option<AudioSource> = None;
+    let mut audio_src: Option<InputSource> = None;
     let mut file_src: Option<BufferSource> = None;
     let mut paced_src: Option<PacedSource> = None;
     let source: &mut dyn ChunkSource = match &a.wav {
@@ -1023,9 +1031,11 @@ fn listen_cmd(a: ListenArgs) -> Result<(), String> {
         }
         None => {
             let input = InputStream::open(&a.audio.device, &a.audio.stream()).map_err(|e| e.to_string())?;
-            println!("listening on {} ({}); Ctrl-C to stop", input.id, input.format);
-            let record = a.record.as_ref().map(|_| Vec::new());
-            audio_src.insert(AudioSource { input, buf: vec![0.0; CHUNK], limit, taken: 0, error: None, record })
+            println!("{}; Ctrl-C to stop", input_banner(&input));
+            let mut src = InputSource::new(input, Some(&signals::STOP));
+            src.limit = limit;
+            src.record = a.record.as_ref().map(|_| (Vec::new(), MAX_RECORD));
+            audio_src.insert(src)
         }
     };
     let t0 = Instant::now();
@@ -1057,9 +1067,11 @@ fn listen_cmd(a: ListenArgs) -> Result<(), String> {
                 println!("    text: {text:?}{}", if f.complete() { "" } else { " (blocks missing)" });
             }
         }
-        Output::Unresolved(d, why) => {
-            println!("{} detection (rho {:.2}) not decoded: {why}", stamp(d.start), d.quality)
+        Output::Unresolved(d, why, gap) => {
+            let gap = gap.map(|g| format!(" ({})", g.text())).unwrap_or_default();
+            println!("{} detection (rho {:.2}) not decoded: {why}{gap}", stamp(d.start), d.quality)
         }
+        Output::Note(n) => println!("{n}"),
         Output::Stats(s) => {
             let input = s.input.map(|i| format!(" | in: {}", stats_text(&i))).unwrap_or_default();
             let backlog =
@@ -1101,7 +1113,10 @@ fn listen_cmd(a: ListenArgs) -> Result<(), String> {
     }
     if let Some(src) = audio_src.as_mut() {
         println!("input: {}", stats_text(&src.input.stats()));
-        if let (Some(path), Some(r)) = (&a.record, &src.record) {
+        if totals.gapped > 0 {
+            println!("frames with a capture gap: {}", totals.gapped);
+        }
+        if let (Some(path), Some((r, _))) = (&a.record, &src.record) {
             cairn_phy::wav::write(path, r).map_err(|e| format!("{}: {e}", path.display()))?;
             println!("recorded {:.1} s to {}", r.len() as f64 / FS as f64, path.display());
         }

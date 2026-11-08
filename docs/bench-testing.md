@@ -403,6 +403,103 @@ What to look for:
   CONNECT-ACK, DISCONNECT, every BEACON and at least every 9 minutes in a
   session.
 
+## Real-time priority, capture gaps and receive gain
+
+In the first session a capture lost 26.6 ms of audio inside a frame
+(`input: xruns 2 gaps 2 (64.8 ms)`) while the laptop ran parallel compiles,
+and the frame was lost. Three things now stand against that; check them on
+both machines before a session.
+
+**Real-time priority.** `cairn-modem` asks for it for its audio threads
+(`SCHED_FIFO`) and its processing threads (detection, decoding, the event
+loop, transmit) without root, and prints what it got when it starts:
+
+```
+input plughw:CARD=AllInOneCable,DEV=0 (S16 x1 @ 48000 Hz, period 480 (10.0 ms), buffer 9600 (200.0 ms), alsa); capture thread SCHED_RR 20 via rtkit
+event loop nice -10 via rtkit
+```
+
+A `warning: the capture thread runs without real-time priority (...)` line
+means neither way below worked. Either is enough:
+
+- **rtkit** (nothing to configure on a desktop that runs PipeWire or
+  PulseAudio: it is the same daemon they use). Check it is there with
+  `busctl status org.freedesktop.RealtimeKit1`; if not, install it (Arch:
+  `pacman -S rtkit`; Ubuntu: `apt install rtkit`) and start it (`systemctl
+  start rtkit-daemon`). It gives audio threads priority up to 20 and
+  processing threads nice -10. Over SSH without a desktop session polkit may
+  refuse it; use the limits below there.
+- **Limits** (the classic audio setup; gives the full priorities: audio 60,
+  processing `SCHED_RR` 40, `--rt-prio` changes them). Put the user in the
+  `audio` group and allow the group real-time scheduling:
+
+  ```sh
+  # Arch: the realtime-privileges package does exactly this for the realtime group
+  #   sudo pacman -S realtime-privileges && sudo usermod -aG realtime $USER
+  # Ubuntu (and Arch by hand):
+  sudo usermod -aG audio $USER
+  printf '@audio - rtprio 95\n@audio - nice -19\n' | sudo tee /etc/security/limits.d/95-audio.conf
+  # log out and in again (or reboot); then
+  ulimit -r    # 95
+  ```
+
+  The limits apply to new login sessions only; `ulimit -r` printing 0 means
+  the session predates them.
+
+`--no-rt` turns all of it off (for comparisons).
+
+**Capture buffer.** Capture now runs on ALSA directly with 10 ms periods
+in a 200 ms buffer (`--period`, `--buffer-ms`); before, it had two periods
+(20 ms), so any wake-up more than about 10 ms late lost audio. The buffer
+costs no latency: the modem still takes each period as it completes. The
+input line prints the sizes ALSA granted. `--audio-backend cpal` goes back
+to the old path (two periods); `auto` (the default) falls back to it by
+itself, with a note, if the native open fails.
+
+**Capture gaps.** If audio is still lost, the modem puts exactly as many
+zero samples in its place, so the frames after it keep their timing and
+decode; it prints `audio gap: 26.6 ms lost (xrun) at 123.456 s, filled with
+zeros (timing kept)`, and a frame that spans the gap is printed (also
+without `-v`) with `AUDIO GAP 26.6 ms at +1.234 s`, or `rx preamble, header
+failed (AUDIO GAP ...)` when its header was lost. The API flags them
+(`audio_gap` in `link` and `rx` events, `link` `header_failed`), and
+`status` shows the counters and the capture ring's high-water mark (how far
+processing ever lagged; it should stay at a few tens of ms):
+
+```
+capture xruns 0 gaps 0 (0.0 ms, 0 samples filled) overflows 0 ring high-water 30/8000 ms
+```
+
+To see what a loaded machine does before going on the air, run the
+receiver under load against the mock sound card (no audio hardware is
+touched):
+
+```sh
+cd modem && cargo run --release -p cairn-modem --example rx_load -- --burn 16 --seconds 60 --matrix
+```
+
+It prints xruns, gaps, the ring high-water mark and decode latency without
+real-time priority and a 20 ms buffer (the old path), with each change, and
+with both.
+
+**Receive gain (`run --rx-agc`).** Off by default. With it the modem sets the
+interface's capture gain itself (SPEC 13.5): open-squelch noise near
+-20 dBFS RMS, frame peaks never above -3 dBFS, no clipping, the data inside
+-30 to -3 dBFS; 3 dB steps, only between frames (never while carrier detect
+is up, a frame is detected or decoding, or the station is keyed, and not
+within 300 ms of a frame's end), at most one every 10 s (2 s after
+clipping), after the level has been out of range for two 0.5 s windows in a
+row. Each change is printed (`rx gain -0.0 -> -3.0 dB: open-squelch noise
+-13.1 dBFS, above -17`) and `status` and the API's `status`/`config` show
+the gain. It only ever touches a capture control: on the AIOC that is
+'AIOC Audio In' (`--rx-agc-control NAME` picks another); the output
+(transmit) volume, 'AIOC Audio Out Volume', is never changed. Leave the
+radio's volume where the first session left it (noise about -12 to
+-14 dBFS, data about -14 dBFS): the AGC will step the input down to bring
+the noise to about -20 dBFS and stop. It needs a real card (`hw:` or
+`plughw:`), not the `default`/`pipewire` device; without one it prints a
+warning and leaves the gain alone.
+
 ## What this cannot test
 
 The offline decoder and the broadcast test above test the waveform on a real audio chain, one
@@ -419,7 +516,8 @@ channel sharing). They cannot test, and do not claim to:
 - **Real TXDelay.** The WAV is played with whatever lead you set. Radio keying time
   (the time from PTT to a stable carrier and audio path) is only observable here as a
   clipped preamble. Measuring it needs a separate keying-to-carrier test with a scope or SDR.
-- **Receive-side AGC and automatic level control** (SPEC §13.5): the levels are set once by hand.
+- **Automatic level control** (SPEC §13.5): the WAV tools set levels once by hand; `cairn-modem run
+  --rx-agc` sets the receive gain (above), and transmit drive calibration is v1.0.
 - **Mobile, fading and multipath channels** beyond what the path you actually run gives.
 
 The Stage 1 receiver is a research receiver, not a real-time one: it decodes each frame knowing

@@ -7,7 +7,11 @@
 //! runs each keyed transmission (`txseq::transmit`: key, TXDelay, audio,
 //! drain, TXTail, unkey), reporting the measured release time; the KISS
 //! server, the API server and the control readers send commands over
-//! channels. The
+//! channels. The audio threads ask for real-time priority, the event loop
+//! and the transmit thread for the processing threads' (`cairn_audio::rt`);
+//! capture gaps come back as zeros at their place and flag the frames they
+//! fall in; with `--rx-agc` the capture gain follows the receive levels
+//! between frames ([`crate::agc`]). The
 //! station's clock is the monotonic clock since start; capture sample times
 //! come from a running estimate of when each sample arrived (the earliest
 //! arrival over the last few seconds, which tracks drift between the
@@ -21,7 +25,8 @@ use std::sync::mpsc::{Receiver as ChanRx, Sender, channel};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
-use cairn_audio::{InputStream, OutputPort, OutputStream, StreamOptions};
+use cairn_audio::rt::{self, ThreadRole};
+use cairn_audio::{InputStats, InputStream, MixerControl, OutputPort, OutputStream, StreamOptions};
 use cairn_link::pdu::pdu_type;
 use cairn_link::{HostCommand, Instant};
 use cairn_phy::params::FS;
@@ -31,8 +36,9 @@ use cairn_api::proto::{ApiError, Code, Rejected};
 use cairn_api::server::{ApiServer, Inbound};
 use serde_json::Value;
 
+use crate::agc::{AgcConfig, RxAgc};
 use crate::control::{self, Control, HostState};
-use crate::hostapi::{HostApi, HostApiConfig};
+use crate::hostapi::{AudioStatus, HostApi, HostApiConfig, RxGainStatus};
 use crate::kiss::{self, KissCommand};
 use crate::runtime::{DecodeTime, Modem, ModemConfig, Output};
 use crate::txseq::{self, TxTiming};
@@ -77,6 +83,31 @@ pub struct RunOptions {
     /// Capture automatically after a frame from the session peer fails
     /// (a header failure, or data blocks lost), at most once a minute.
     pub capture_on_failure: bool,
+    /// Receive AGC (SPEC 13.5): Some(control name, or None for the best
+    /// capture-volume control of the input's card).
+    pub rx_agc: Option<Option<String>>,
+}
+
+/// The input's counters, for the status line.
+pub fn input_text(s: &InputStats) -> String {
+    format!(
+        "capture xruns {} gaps {} ({:.1} ms, {} samples filled) overflows {} ring high-water {:.0}/{:.0} ms",
+        s.xruns,
+        s.gaps,
+        s.gap_ns as f64 / 1e6,
+        s.filled_samples,
+        s.overflow_events,
+        s.ring_high_ms(),
+        s.ring_ms()
+    )
+}
+
+/// The receive AGC in the event loop.
+struct Agc {
+    ctl: Box<dyn MixerControl>,
+    agc: RxAgc,
+    gain_db: f64,
+    range: (f64, f64),
 }
 
 /// What the event loop hears from other threads.
@@ -151,8 +182,50 @@ pub fn run(
     let (msg_tx, msg_rx): (Sender<Msg>, ChanRx<Msg>) = channel();
     let clients: Arc<Mutex<Vec<TcpStream>>> = Arc::new(Mutex::new(Vec::new()));
 
+    let loop_rt = rt::promote_current(ThreadRole::Processing, &opts.stream.rt);
     let mut input = InputStream::open(&opts.device, &opts.stream).map_err(|e| e.to_string())?;
-    println!("input {} ({})", input.id, input.format);
+    let in_rt = input.rt.clone().unwrap_or(cairn_audio::RtGrant::Denied("no callback yet".into()));
+    println!("input {} ({}); capture thread {in_rt}", input.id, input.format);
+    println!("event loop {loop_rt}");
+    if let Some(w) = rt::warning("the capture thread", &in_rt) {
+        eprintln!("{w}");
+    }
+    let mut agc = match &opts.rx_agc {
+        None => None,
+        Some(control) => match cairn_audio::mixer::open_capture_gain(&input.id, control.as_deref()) {
+            Ok(mut ctl) => {
+                let gain_db = ctl.get_db()?;
+                let range = ctl.range_db();
+                println!(
+                    "rx AGC on {}: gain {gain_db:+.1} dB (range {:+.1} to {:+.1}); targets: open-squelch noise -20 dBFS RMS, peaks under -3 dBFS, 3 dB steps between frames",
+                    ctl.name(),
+                    range.0,
+                    range.1
+                );
+                Some(Agc { ctl, agc: RxAgc::new(AgcConfig::default()), gain_db, range })
+            }
+            Err(e) => {
+                eprintln!("warning: --rx-agc: {e}; receive gain stays as set (watch the level in `status`)");
+                None
+            }
+        },
+    };
+    let audio_status = |input: &InputStream, agc: &Option<Agc>| AudioStatus {
+        input: input.stats(),
+        backend: input.backend,
+        period_frames: input.period_frames,
+        buffer_frames: input.buffer_frames,
+        rt: input.rt.as_ref().map(|g| g.to_string()),
+        rx_gain: agc.as_ref().map(|a| RxGainStatus {
+            control: a.ctl.name(),
+            gain_db: a.gain_db,
+            min_db: a.range.0,
+            max_db: a.range.1,
+            changes: a.agc.changes,
+            last_reason: a.agc.last_reason.clone(),
+        }),
+    };
+    api.set_audio(audio_status(&input, &agc));
 
     // Transmit thread: the playback stream and the PTT.
     let (job_tx, job_rx) = channel::<(Vec<f32>, TxTiming)>();
@@ -164,6 +237,7 @@ pub fn run(
     let tx_thread = std::thread::Builder::new()
         .name("cairn-tx".into())
         .spawn(move || {
+            let tx_rt = rt::promote_current(ThreadRole::Processing, &stream_opts.rt);
             let mut out = match OutputStream::open(&device, &stream_opts) {
                 Ok(o) => o,
                 Err(e) => {
@@ -176,11 +250,13 @@ pub fn run(
                 return;
             }
             std::thread::sleep(Duration::from_millis(100));
+            let out_rt = out.rt.clone().unwrap_or(cairn_audio::RtGrant::Denied("no callback yet".into()));
             let _ = ready_tx.send(Ok(format!(
-                "output {} ({}), latency {:.1} ms",
+                "output {} ({}), latency {:.1} ms; playback thread {out_rt}, transmit thread {tx_rt}{}",
                 out.id,
                 out.format,
-                out.latency_ns() as f64 / 1e6
+                out.latency_ns() as f64 / 1e6,
+                rt::warning("the playback thread", &out_rt).map(|w| format!("\n{w}")).unwrap_or_default()
             )));
             for (audio, timing) in job_rx {
                 let r = txseq::transmit(&mut out, &ptt_tx, &audio, &timing, stop);
@@ -286,6 +362,8 @@ pub fn run(
         std::thread::spawn(move || {
             for s in l.incoming().flatten() {
                 if let Ok(w) = s.try_clone() {
+                    // A client that stops reading must not stall the event loop.
+                    let _ = w.set_write_timeout(Some(Duration::from_millis(200)));
                     cl.lock().expect("clients").push(w);
                 }
                 let m = m.clone();
@@ -313,6 +391,7 @@ pub fn run(
     // KISS frames' host ids, apart from the control interface's.
     let mut kiss_id: u64 = 1 << 40;
     let mut err = None;
+    let mut audio_published = std::time::Instant::now();
     while !quit && !stop.load(Ordering::Relaxed) {
         if opts.seconds.is_some_and(|s| origin.elapsed().as_secs_f64() >= s) {
             break;
@@ -343,7 +422,10 @@ pub fn run(
                 }
                 Msg::Control(line) => match control::parse(&line) {
                     Ok(Control::Quit) => quit = true,
-                    Ok(Control::Status) => output_line(&control::status(&modem), &clients),
+                    Ok(Control::Status) => {
+                        output_line(&control::status(&modem), &clients);
+                        output_line(&audio_line(&input.stats(), &agc), &clients);
+                    }
                     Ok(Control::Heard) => {
                         let list = api.heard().list(None, None);
                         if list.is_empty() {
@@ -457,6 +539,23 @@ pub fn run(
                     break;
                 }
             }
+            // Zeros that stand in for lost audio: noted before the chunk
+            // that holds them goes in.
+            for g in input.take_gaps() {
+                output_line(
+                    &format!(
+                        "audio gap: {:.1} ms {} at {:.3} s, filled with zeros (timing kept)",
+                        g.ms(),
+                        match g.cause {
+                            cairn_audio::GapCause::Lost => "lost (xrun)",
+                            cairn_audio::GapCause::Overflow => "dropped (processing fell behind)",
+                        },
+                        g.at as f64 / FS as f64
+                    ),
+                    &clients,
+                );
+                modem.note_gap(g.at as usize, g.samples as usize);
+            }
             if chunk.len() == CHUNK {
                 let w = origin.elapsed().as_secs_f64();
                 let zero = clock.note(w, taken + CHUNK + input.available());
@@ -471,6 +570,33 @@ pub fn run(
         }
         if modem.next_wakeup().is_some_and(|w| w <= now()) {
             modem.tick(now());
+        }
+        // Receive AGC: levels in, a step between frames out.
+        let levels = modem.take_levels();
+        if let Some(a) = agc.as_mut() {
+            levels.into_iter().for_each(|l| a.agc.observe(l));
+            let t = now().as_secs_f64();
+            if let Some(step) = a.agc.decide(t, modem.rx_idle(), a.gain_db, a.range) {
+                match a.ctl.set_db(step.to_db) {
+                    Ok(set) => {
+                        modem.level_step(set - a.gain_db);
+                        output_line(
+                            &format!("rx gain {:+.1} -> {set:+.1} dB: {}", step.from_db, step.reason),
+                            &clients,
+                        );
+                        a.gain_db = set;
+                        api.set_audio(audio_status(&input, &agc));
+                    }
+                    Err(e) => {
+                        output_line(&format!("error: rx gain: {e}; AGC off"), &clients);
+                        agc = None;
+                    }
+                }
+            }
+        }
+        if audio_published.elapsed() >= Duration::from_millis(250) {
+            audio_published = std::time::Instant::now();
+            api.set_audio(audio_status(&input, &agc));
         }
         // Outputs.
         for o in modem.drain() {
@@ -549,9 +675,14 @@ pub fn run(
                         output_line(&l, &clients);
                     }
                 }
-                Output::Heard(f) if opts.verbose => output_line(&format!("rx {}", f.line()), &clients),
+                Output::Heard(f) if opts.verbose || f.audio_gap.is_some() => {
+                    output_line(&format!("rx {}", f.line()), &clients)
+                }
                 Output::Dcd { at, state } if opts.verbose => {
                     output_line(&format!("dcd {:.3} {state:?}", at.as_secs_f64()), &clients)
+                }
+                Output::HeaderFailed { audio_gap: Some(g), .. } => {
+                    output_line(&format!("rx preamble, header failed ({})", g.text()), &clients)
                 }
                 Output::HeaderFailed { .. } if opts.verbose => output_line("rx preamble, header failed", &clients),
                 Output::Log(l) => output_line(&format!("note: {l}"), &clients),
@@ -575,6 +706,7 @@ pub fn run(
         if let Some(t) = next_status {
             if std::time::Instant::now() >= t {
                 output_line(&control::status(&modem), &clients);
+                output_line(&audio_line(&input.stats(), &agc), &clients);
                 next_status = Some(t + opts.status_every.expect("interval"));
             }
         }
@@ -600,19 +732,30 @@ pub fn run(
     if let Ok(Some(true)) = ptt.read_back() {
         return Err("PTT still reads keyed after release".into());
     }
-    let s = input.stats();
     let summary = format!(
-        "{}\ncapture: xruns {} overflows {} gaps {}; decode p50 {:.1} ms",
+        "{}\n{}; frames with a gap {}; decode p50 {:.1} ms",
         control::status(&modem),
-        s.xruns,
-        s.overflow_events,
-        s.gaps,
+        audio_line(&input.stats(), &agc),
+        modem.stats.gapped_frames,
         median(&modem.stats.decode_ms)
     );
     if let Some(e) = err {
         return Err(format!("{e}\n{summary}"));
     }
     Ok(summary)
+}
+
+fn audio_line(s: &InputStats, agc: &Option<Agc>) -> String {
+    let gain = match agc {
+        Some(a) => format!(
+            "; rx gain {:+.1} dB (AGC, {} changes{})",
+            a.gain_db,
+            a.agc.changes,
+            a.agc.last_reason.as_ref().map(|r| format!(", last: {r}")).unwrap_or_default()
+        ),
+        None => String::new(),
+    };
+    format!("{}{gain}", input_text(s))
 }
 
 fn median(v: &[f64]) -> f64 {

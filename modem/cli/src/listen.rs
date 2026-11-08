@@ -15,11 +15,13 @@
 //! [`FixedConfig`] takes everything from the command line.
 
 use std::collections::{HashMap, VecDeque};
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::{Receiver as ChanRx, Sender, channel};
 use std::thread::JoinHandle;
 use std::time::{Duration, Instant};
 
-use cairn_audio::{InputStats, LevelMeter, Levels};
+use cairn_audio::rt::{self, RtConfig, ThreadRole};
+use cairn_audio::{AudioGap, InputStats, InputStream, LevelMeter, Levels};
 use cairn_phy::detector::{Detection, Detector, DetectorConfig};
 use cairn_phy::fields::Header;
 use cairn_phy::params::{CP_LONG, FS, PREAMBLE_SYMBOLS};
@@ -41,6 +43,58 @@ const KEEP: usize = FS as usize;
 /// of up to 100 ppm (SPEC 6.1's grid) stretches the frame by 1e-4 of its length.
 pub fn post_samples(n_samples: usize) -> usize {
     n_samples.div_ceil(10_000) + 8
+}
+
+/// Capture gaps inside a frame: samples that never reached the modem and
+/// are zeros in the stream (the timing of later samples is kept, see
+/// `cairn_audio::AudioGap`).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct FrameGap {
+    /// From the frame's start to the first missing sample, samples (0 when
+    /// the gap began before the frame).
+    pub offset: usize,
+    /// Missing samples within the frame.
+    pub samples: usize,
+    /// Gaps that touch the frame.
+    pub count: usize,
+}
+
+impl FrameGap {
+    /// Missing time within the frame, ms.
+    pub fn ms(&self) -> f64 {
+        self.samples as f64 * 1e3 / FS as f64
+    }
+
+    /// From the frame's start to the gap, ms.
+    pub fn offset_ms(&self) -> f64 {
+        self.offset as f64 * 1e3 / FS as f64
+    }
+
+    /// For log lines, e.g. `AUDIO GAP 26.6 ms at +1.234 s`.
+    pub fn text(&self) -> String {
+        format!(
+            "AUDIO GAP {:.1} ms at +{:.3} s{}",
+            self.ms(),
+            self.offset as f64 / FS as f64,
+            if self.count > 1 { format!(" ({} gaps)", self.count) } else { String::new() }
+        )
+    }
+}
+
+/// The gaps among `gaps` (start, length) that touch `[start, end)`.
+pub fn gap_within(gaps: &VecDeque<(usize, usize)>, start: usize, end: usize) -> Option<FrameGap> {
+    let mut g: Option<FrameGap> = None;
+    for &(a, n) in gaps {
+        let (lo, hi) = (a.max(start), (a + n).min(end));
+        if lo >= hi {
+            continue;
+        }
+        let e = g.get_or_insert(FrameGap { offset: lo - start, samples: 0, count: 0 });
+        e.offset = e.offset.min(lo - start);
+        e.samples += hi - lo;
+        e.count += 1;
+    }
+    g
 }
 
 /// How to decode a resolved frame.
@@ -217,6 +271,8 @@ pub struct Job {
     pub offset: usize,
     /// When the last sample reached the processing thread.
     pub ready_at: Instant,
+    /// Capture gaps inside the frame.
+    pub gap: Option<FrameGap>,
 }
 
 /// A decoded frame.
@@ -236,6 +292,8 @@ pub struct FrameReport {
     /// From the frame's last sample at the input (where the source knows its
     /// time) to the result, ms: the receive turnaround of SPEC 7.3.
     pub turnaround_ms: Option<f64>,
+    /// Capture gaps inside the frame (flagged `audio_gap`).
+    pub gap: Option<FrameGap>,
 }
 
 impl FrameReport {
@@ -279,8 +337,9 @@ impl FrameReport {
             None => format!("x{}", self.cfg.width),
         };
         let turnaround = self.turnaround_ms.map(|t| format!("  turnaround {t:.0} ms")).unwrap_or_default();
+        let gap = self.gap.map(|g| format!("  {}", g.text())).unwrap_or_default();
         format!(
-            "{who}  MCS {} {width} {} prefix  blocks {}/{}  ctrl {}/{}  SNR {:5.1} dB  clock {:+6.1} ppm  rho {:.2}  decode {:.0} ms{turnaround}",
+            "{who}  MCS {} {width} {} prefix  blocks {}/{}  ctrl {}/{}  SNR {:5.1} dB  clock {:+6.1} ppm  rho {:.2}  decode {:.0} ms{turnaround}{gap}",
             self.cfg.mcs,
             if self.det.cp == CP_LONG { "long" } else { "short" },
             self.blocks_ok(),
@@ -330,8 +389,9 @@ pub enum Event {
     Resolved(Detection, usize),
     /// A frame went to the decoder.
     Queued(Detection),
-    /// A detection whose configuration could not be resolved.
-    Unresolved(Detection, String),
+    /// A detection whose configuration could not be resolved, and any
+    /// capture gap between its start and now.
+    Unresolved(Detection, String, Option<FrameGap>),
 }
 
 /// The processing-thread half: detector, history and pending frames.
@@ -342,6 +402,8 @@ pub struct Listener {
     pending: VecDeque<Pending>,
     config: Box<dyn ConfigSource>,
     jobs: Sender<Job>,
+    /// Capture gaps (stream index, length) still in the history.
+    gaps: VecDeque<(usize, usize)>,
     /// Detections so far.
     pub detections: u64,
 }
@@ -356,8 +418,23 @@ impl Listener {
             pending: VecDeque::new(),
             config,
             jobs,
+            gaps: VecDeque::new(),
             detections: 0,
         }
+    }
+
+    /// A capture gap: `samples` zeros from stream index `at` stand in for
+    /// lost audio. Tell the listener before pushing the chunk that holds
+    /// them; frames across it are flagged.
+    pub fn note_gap(&mut self, at: usize, samples: usize) {
+        if samples > 0 {
+            self.gaps.push_back((at, samples));
+        }
+    }
+
+    /// Capture gaps touching `[start, end)`.
+    pub fn gap_in(&self, start: usize, end: usize) -> Option<FrameGap> {
+        gap_within(&self.gaps, start, end)
     }
 
     fn end(&self) -> usize {
@@ -454,7 +531,8 @@ impl Listener {
                     }
                     Resolution::More(n) => Phase::Config(n.max(need + 1)),
                     Resolution::Fail(e) => {
-                        ev.push(Event::Unresolved(p.det.clone(), e));
+                        let gap = gap_within(&self.gaps, p.det.start, end);
+                        ev.push(Event::Unresolved(p.det.clone(), e, gap));
                         continue 'next;
                     }
                 };
@@ -469,8 +547,9 @@ impl Listener {
             let (samples, offset) = self.slice_from(p.det.start, len);
             let Phase::Frame(plan) = p.phase else { unreachable!() };
             ev.push(Event::Queued(p.det.clone()));
+            let gap = gap_within(&self.gaps, p.det.start, p.det.start + n);
             // A closed decoder only happens at shutdown; dropping the job is fine then.
-            let _ = self.jobs.send(Job { det: p.det, plan: *plan, samples, offset, ready_at: Instant::now() });
+            let _ = self.jobs.send(Job { det: p.det, plan: *plan, samples, offset, ready_at: Instant::now(), gap });
         }
         self.pending = keep;
         ev
@@ -484,6 +563,9 @@ impl Listener {
         if keep_from > self.hist_start + KEEP {
             self.hist.drain(..keep_from - self.hist_start);
             self.hist_start = keep_from;
+        }
+        while self.gaps.front().is_some_and(|&(a, n)| a + n < self.hist_start) {
+            self.gaps.pop_front();
         }
     }
 }
@@ -500,11 +582,23 @@ pub fn decode_job(rx: &mut Receiver, job: &Job, opts: &RxOptions) -> RxResult {
 }
 
 /// Start the decoder thread: one [`Receiver`] decoding jobs in order. With
-/// `boost`, it asks the scheduler to run it at full speed ([`crate::boost`]).
-pub fn spawn_decoder(jobs: ChanRx<Job>, reports: Sender<FrameReport>, opts: RxOptions, boost: bool) -> JoinHandle<()> {
+/// `boost`, it asks the scheduler to run it at full speed ([`crate::boost`]);
+/// it asks for the processing threads' real-time priority under `rt_cfg`
+/// (what it got goes to `granted`).
+pub fn spawn_decoder(
+    jobs: ChanRx<Job>,
+    reports: Sender<FrameReport>,
+    opts: RxOptions,
+    boost: bool,
+    rt_cfg: RtConfig,
+    granted: Sender<rt::RtGrant>,
+) -> JoinHandle<()> {
     std::thread::Builder::new()
         .name("cairn-decode".into())
         .spawn(move || {
+            if rt_cfg.enabled {
+                let _ = granted.send(rt::promote_current(ThreadRole::Processing, &rt_cfg));
+            }
             if boost && let Err(e) = crate::boost::boost_current_thread() {
                 eprintln!("note: decoder runs without a utilisation clamp ({e}); turnaround may suffer");
             }
@@ -516,8 +610,16 @@ pub fn spawn_decoder(jobs: ChanRx<Job>, reports: Sender<FrameReport>, opts: RxOp
                 let decode_ms = (done_at - t0).as_secs_f64() * 1e3;
                 let latency_ms = (done_at - job.ready_at).as_secs_f64() * 1e3;
                 let cfg = res.config.clone().unwrap_or(job.plan.cfg);
-                let report =
-                    FrameReport { det: job.det, cfg, rx: res, decode_ms, latency_ms, done_at, turnaround_ms: None };
+                let report = FrameReport {
+                    det: job.det,
+                    cfg,
+                    rx: res,
+                    decode_ms,
+                    latency_ms,
+                    done_at,
+                    turnaround_ms: None,
+                    gap: job.gap,
+                };
                 if reports.send(report).is_err() {
                     break;
                 }
@@ -542,6 +644,11 @@ pub trait ChunkSource {
     /// When sample `index` was at the input, if the source knows.
     fn sample_time(&self, _index: usize) -> Option<Instant> {
         None
+    }
+    /// Capture gaps reported since the last call (live input): zeros in
+    /// the stream in place of lost samples.
+    fn take_gaps(&mut self) -> Vec<AudioGap> {
+        Vec::new()
     }
 }
 
@@ -613,6 +720,74 @@ impl ChunkSource for PacedSource {
     }
 }
 
+/// A capture stream (a sound card or the mock device) in [`CHUNK`]s.
+pub struct InputSource {
+    /// The stream.
+    pub input: InputStream,
+    buf: Vec<f32>,
+    /// Stop after this many samples.
+    pub limit: Option<usize>,
+    taken: usize,
+    /// Why the stream stopped, if it failed.
+    pub error: Option<String>,
+    /// What was captured, kept up to the given number of samples.
+    pub record: Option<(Vec<f64>, usize)>,
+    stop: Option<&'static AtomicBool>,
+}
+
+impl InputSource {
+    /// Read `input`; stop when `stop` is set.
+    pub fn new(input: InputStream, stop: Option<&'static AtomicBool>) -> Self {
+        InputSource { input, buf: vec![0.0; CHUNK], limit: None, taken: 0, error: None, record: None, stop }
+    }
+}
+
+impl ChunkSource for InputSource {
+    fn next_chunk(&mut self, out: &mut Vec<f64>) -> Option<()> {
+        out.clear();
+        loop {
+            if self.stop.is_some_and(|s| s.load(Ordering::Relaxed)) || self.limit.is_some_and(|l| self.taken >= l) {
+                return None;
+            }
+            let want = CHUNK - out.len();
+            match self.input.read(&mut self.buf[..want]) {
+                Ok(n) => out.extend(self.buf[..n].iter().map(|&v| v as f64)),
+                Err(e) => {
+                    self.error = Some(e.to_string());
+                    return None;
+                }
+            }
+            let ended = self.input.ended();
+            if out.len() == CHUNK || (ended && !out.is_empty()) {
+                self.taken += out.len();
+                if let Some((r, max)) = self.record.as_mut().filter(|(r, max)| r.len() < *max) {
+                    let room = *max - r.len();
+                    r.extend_from_slice(&out[..out.len().min(room)]);
+                }
+                return Some(());
+            }
+            if ended {
+                return None;
+            }
+            if self.input.available() == 0 {
+                std::thread::sleep(Duration::from_millis(2));
+            }
+        }
+    }
+    fn input_stats(&self) -> Option<InputStats> {
+        Some(self.input.stats())
+    }
+    fn backlog(&self) -> usize {
+        self.input.available()
+    }
+    fn take_gaps(&mut self) -> Vec<AudioGap> {
+        self.input.take_gaps()
+    }
+    fn sample_time(&self, index: usize) -> Option<Instant> {
+        self.input.capture_start().map(|t0| t0 + Duration::from_secs_f64(index as f64 / FS as f64))
+    }
+}
+
 /// Periodic status.
 pub struct Stats {
     /// Stream position, samples.
@@ -635,10 +810,12 @@ pub struct Stats {
 pub enum Output {
     /// A decoded frame.
     Frame(Box<FrameReport>),
-    /// A detection without a configuration.
-    Unresolved(Detection, String),
+    /// A detection without a configuration, and any capture gap after its start.
+    Unresolved(Detection, String, Option<FrameGap>),
     /// Periodic status.
     Stats(Stats),
+    /// A one-off note (scheduling, warnings).
+    Note(String),
 }
 
 /// Listener settings.
@@ -651,6 +828,9 @@ pub struct ListenOptions {
     pub stats_every: usize,
     /// Run the decoder at full speed when it wakes ([`crate::boost`]).
     pub boost: bool,
+    /// Real-time priority for the processing thread (the caller's, which
+    /// keeps it) and the decoder.
+    pub rt: RtConfig,
 }
 
 /// Totals at the end of a run.
@@ -670,6 +850,8 @@ pub struct Totals {
     pub blocks: u64,
     /// Frames with the header and every block decoded.
     pub complete: u64,
+    /// Detections (decoded or not) with a capture gap inside.
+    pub gapped: u64,
 }
 
 /// Run until the source ends: detect, decode on the worker, report.
@@ -681,7 +863,17 @@ pub fn run(
 ) -> Totals {
     let (job_tx, job_rx) = channel();
     let (rep_tx, rep_rx) = channel();
-    let worker = spawn_decoder(job_rx, rep_tx, opts.rx.clone(), opts.boost);
+    let (rt_tx, rt_rx) = channel();
+    if opts.rt.enabled {
+        let g = rt::promote_current(ThreadRole::Processing, &opts.rt);
+        out(Output::Note(format!("processing thread: {g}")));
+    }
+    let worker = spawn_decoder(job_rx, rep_tx, opts.rx.clone(), opts.boost, opts.rt.clone(), rt_tx);
+    if opts.rt.enabled
+        && let Ok(g) = rt_rx.recv_timeout(Duration::from_secs(5))
+    {
+        out(Output::Note(format!("decoder thread: {g}")));
+    }
     let mut listener = Listener::new(config, opts.detector.clone(), job_tx);
     let mut meter = LevelMeter::new();
     let mut totals = Totals::default();
@@ -696,14 +888,19 @@ pub fn run(
         totals.blocks_ok += r.blocks_ok() as u64;
         totals.blocks += r.cfg.n_blocks as u64;
         totals.complete += r.complete() as u64;
+        totals.gapped += r.gap.is_some() as u64;
         out(Output::Frame(Box::new(r)));
     };
 
     while source.next_chunk(&mut chunk).is_some() {
+        for g in source.take_gaps() {
+            listener.note_gap(g.at as usize, g.samples as usize);
+        }
         meter.push_f64(&chunk);
         for e in listener.push(&chunk) {
-            if let Event::Unresolved(d, why) = e {
-                out(Output::Unresolved(d, why));
+            if let Event::Unresolved(d, why, gap) = e {
+                totals.gapped += gap.is_some() as u64;
+                out(Output::Unresolved(d, why, gap));
             }
         }
         while let Ok(r) = rep_rx.try_recv() {
@@ -724,8 +921,9 @@ pub fn run(
     }
     totals.samples = listener.position();
     for e in listener.finish() {
-        if let Event::Unresolved(d, why) = e {
-            out(Output::Unresolved(d, why));
+        if let Event::Unresolved(d, why, gap) = e {
+            totals.gapped += gap.is_some() as u64;
+            out(Output::Unresolved(d, why, gap));
         }
     }
     totals.detections = listener.detections;
@@ -768,6 +966,7 @@ mod tests {
             rx: RxOptions { threads: 2, ..Default::default() },
             stats_every: 0,
             boost: false,
+            rt: RtConfig { enabled: false, ..Default::default() },
         };
         let t = run(&mut src, cfg, opts, &mut |o| {
             if let Output::Frame(f) = o {
