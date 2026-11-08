@@ -718,6 +718,37 @@ def burst_noise(eq: np.ndarray, nv: np.ndarray, h: np.ndarray) -> np.ndarray:
     return excess[:, None] * (inv / inv.mean())[None, :]
 
 
+PILOT_EXCESS_RATIO = 6.0   # a symbol's pilot error this many times its assumed noise is distortion
+MIN_PILOTS = 3             # fewer pilots (24 tones: two) scatter too much to single out a symbol
+
+
+def symbol_distortion(eq: np.ndarray, nv: np.ndarray, pilots: tuple[int, ...], known: np.ndarray,
+                      act: list[int]) -> np.ndarray:
+    """Noise variance on the active tones of each data symbol, raised to the
+    symbol's own pilot error where that is far above what ``nv`` assumes.
+
+    The noise estimate is an average over the frame, but clip-and-filter
+    distortion is not spread evenly: most symbols are clean (EVM below
+    -50 dB) and the few whose peaks were clipped carry -15 to -25 dB, flat
+    across the symbol's tones. LLRs scaled by the frame average trust those
+    symbols far too much and a block that spans only a few wide symbols
+    (3.3 at 56 tones, MCS 6) fails: a noise-free error floor near 1%. The
+    pilots of the symbol itself measure its distortion. ``eq`` and ``nv``
+    are the data rows over all tones, ``known`` the pilots' transmitted
+    values per row. Only errors beyond ``PILOT_EXCESS_RATIO`` times the
+    assumed noise count, so a noise-limited symbol (a few pilots scatter
+    widely) keeps the frame estimate.
+    """
+    if len(pilots) < MIN_PILOTS:
+        return nv[:, act]
+    perr = np.mean(np.abs(eq[:, list(pilots)] - known) ** 2, axis=1)
+    assumed = np.mean(nv[:, list(pilots)], axis=1)
+    out = nv[:, act].copy()
+    hit = perr > PILOT_EXCESS_RATIO * assumed
+    out[hit] = np.maximum(out[hit], perr[hit, None])
+    return out
+
+
 def _data_noise(noise: np.ndarray, thermal: np.ndarray, gain: float) -> np.ndarray:
     """Noise plus distortion on data symbols scaled up by ``gain``: the
     additive part drops by gain ** 2 once the receiver divides the gain out;
@@ -842,6 +873,10 @@ def receive(rx: np.ndarray, cfg: FrameConfig | None = None, *, link: LinkState |
     # Data blocks.
     rung = cfg.rung
     dt = list(cfg.data_tones)
+    if body.shape[0] > d0:
+        nv[d0:, list(cfg.data_active_tones)] = symbol_distortion(
+            eq[d0:], nv[d0:], cfg.data_pilots, pilots_on(body.shape[0] + first, cfg.data_pilots)[first:][d0:],
+            list(cfg.data_active_tones))
     if burst_aware and body.shape[0] > d0:
         act = list(cfg.data_active_tones)
         nv[d0:, act] += burst_noise(eq[d0:, act], nv[d0:, act], h[act])
