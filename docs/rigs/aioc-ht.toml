@@ -1,0 +1,54 @@
+# AIOC (All-In-One-Cable) on a handheld's Kenwood-style mic/speaker jack.
+#
+# MEASURED, but on ONE pair of dual-band handhelds in the field tests of
+# 2026-11-07 (two AIOCs, mic/speaker path, simplex, squelch open). Other
+# radios, even other units of the same model, differ: treat every number as a
+# starting point and let `cairn-modem setup` check it.
+
+[profile]
+name = "aioc-ht"
+description = "AIOC USB interface on a handheld (mic/speaker path)"
+status = "measured"
+measured_on = "one pair of dual-band handhelds through AIOCs, field tests 2026-11-07"
+interface = "AIOC"
+# pid.codes VID 1209 / PID 7388 (the AIOC firmware's USB ID)
+usb_ids = ["1209:7388"]
+device_match = ["AllInOneCable", "All-In-One-Cable"]
+serial_match = ["All-In-One-Cable", "AIOC"]
+# Carrier detect watches the receiver's noise above the signal band: keep
+# the squelch open.
+squelch = "open"
+# The radios kept their carrier ~0.7 s after the far end released PTT.
+carrier_tail_ms = 700
+path = "mic"
+# The mic path passed about 350 Hz to 4.25 kHz; tones 0-2 came through
+# poorly and the tone masks dropped them; 32 tones with masks did best.
+passband_hz = [350.0, 4250.0]
+weak_tones = [0, 1, 2]
+notes = """
+PTT: the AIOC's CDC serial port, DTR high with RTS low keys (its default).
+Drive: 'AIOC Audio Out Volume' ended at -9 dB on one radio and -10 dB on
+the other for 70% deviation (SPEC 7.1); the modem never changes it. Receive
+gain: 'AIOC Audio In' (run --rx-agc steps it between frames).
+TXDelay 300 ms and TXTail 20 ms were what these handhelds needed with the
+squelch open; a radio that keys faster can go lower (setup measures it).
+"""
+
+[audio]
+device = "front:CARD=AllInOneCable,DEV=0"
+rx_agc_control = "AIOC Audio In"
+output_control = "AIOC Audio Out Volume"
+output_db = -9.5
+
+[ptt]
+# A substring of the /dev/serial/by-id/ name.
+method = "serial:All-In-One-Cable"
+line = "dtr"
+invert = false
+
+[timing]
+txdelay_ms = 300.0
+txtail_ms = 20.0
+
+[link]
+cap = 32

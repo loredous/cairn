@@ -1,0 +1,41 @@
+# A CM108/CM119-class USB sound card that keys the radio from one of its
+# GPIO pins through the HID interface (DRA-series boards, many homebrew and
+# commercial "USB radio interface" cables).
+#
+# UNVERIFIED: conservative defaults, not measured with Cairn.
+
+[profile]
+name = "cm108-gpio"
+description = "CM108/CM119 USB audio cable with GPIO PTT (HID)"
+status = "unverified"
+interface = "CM108 GPIO"
+# Any C-Media product: CM108 (0d8c:000c), CM108AH (0d8c:013c), CM119
+# (0d8c:0008), CM119A (0d8c:013a) and others.
+usb_ids = ["0d8c:*"]
+device_match = ["USB Audio Device", "USB PnP Sound Device", "C-Media"]
+squelch = "open"
+path = "unknown"
+notes = """
+PTT: GPIO 3 on most boards (the DMK URI and DRA boards); some use 1 or 2.
+`cm108:auto` picks the only C-Media hidraw node; with two such cards give
+the node (cm108:/dev/hidrawN; `cairn-modem devices` lists them). The node
+must be writable: a udev rule such as
+SUBSYSTEM=="hidraw", ATTRS{idVendor}=="0d8c", MODE="0660", GROUP="audio".
+Levels: the mixer's 'Speaker' and 'Mic' controls.
+"""
+
+[audio]
+device = "USB Audio Device"
+rx_agc_control = "Mic"
+output_control = "Speaker"
+
+[ptt]
+method = "cm108:auto"
+gpio = 3
+
+[timing]
+txdelay_ms = 250.0
+txtail_ms = 20.0
+
+[link]
+cap = 24

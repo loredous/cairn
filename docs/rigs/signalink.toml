@@ -1,0 +1,43 @@
+# SignaLink USB: a USB codec with front-panel TX/RX level pots that keys
+# the radio itself from the audio (VOX).
+#
+# UNVERIFIED: conservative defaults, not measured with Cairn.
+#
+# VOX keying is for broadcast mode only (SPEC 13.3): the keying delay and the
+# hang time break session turnaround, so this profile refuses incoming
+# CONNECTs. Use broadcasts (UI frames, BEACONs) and KISS.
+
+[profile]
+name = "signalink"
+description = "SignaLink USB (VOX keying; broadcast only)"
+status = "unverified"
+interface = "SignaLink"
+# Texas Instruments PCM2902/PCM2904 codecs.
+usb_ids = ["08bb:2902", "08bb:2904"]
+device_match = ["USB Audio CODEC"]
+squelch = "open"
+path = "unknown"
+notes = """
+Levels are the front-panel TX and RX pots: there is no software mixer
+control for the AGC, so set receive by hand with `cairn-modem levels` (noise
+near -20 dBFS with the squelch open) and transmit with the level-setting
+tone. Turn the DLY (VOX hang) knob down but long enough to hold the radio
+keyed through a frame. The VOX attack can eat the start of a frame: the
+leading audio is the preamble, so if frames are missed, raise the radio's
+VOX sensitivity or use a PTT interface.
+"""
+
+[audio]
+device = "USB Audio CODEC"
+
+[ptt]
+method = "vox"
+
+[timing]
+# With VOX the modem cannot key early; TXDelay is silence before the audio.
+txdelay_ms = 0.0
+txtail_ms = 50.0
+
+[link]
+cap = 24
+refuse = true

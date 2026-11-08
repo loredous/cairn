@@ -5,11 +5,13 @@ use std::process::ExitCode;
 use std::sync::atomic::Ordering;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
-use clap::{Args, Parser, Subcommand};
+use clap::parser::ValueSource;
+use clap::{ArgMatches, Args, CommandFactory, FromArgMatches, Parser, Subcommand};
 
 use cairn_audio::{
     CaptureBackend, InputStats, InputStream, LevelMeter, Levels, OutputPort, OutputStream, RtConfig, StreamOptions,
 };
+use cairn_modem::config::{self, FileConfig};
 use cairn_modem::frames::{
     FrameSpec, PlacedFrame, PlacedHeader, PlacedTone, bits_hex, build_frame, level_tone, manifest_json, parse_prefix,
     parse_tones, peak_rms_dbfs,
@@ -19,6 +21,7 @@ use cairn_modem::listen::{
     self, BufferSource, ChunkSource, ConfigSource, FixedConfig, HeaderFirst, InputSource, ListenOptions, Output,
     PacedSource,
 };
+use cairn_modem::selftest::ConfigState;
 use cairn_modem::txseq::{self, TxTiming};
 use cairn_phy::detector::DetectorConfig;
 use cairn_phy::fields::{Address, frame_type};
@@ -26,6 +29,7 @@ use cairn_phy::params::{CP_LONG, CP_SHORT, FS};
 use cairn_phy::{LinkState, RxOptions, Transmitter};
 use cairn_ptt::{PttGuard, PttSpec, SerialLineSpec, SharedPtt};
 
+mod realhw;
 mod signals;
 
 /// Longest keyed transmission without `--force`, s.
@@ -36,6 +40,15 @@ const HARD_MAX_KEYED_S: f64 = 300.0;
 #[derive(Parser)]
 #[command(name = "cairn-modem", version, about = "Cairn Stage 2 modem: audio, PTT, transmit and listen (SPEC 21.3)")]
 struct Cli {
+    /// Config file (default ~/.config/cairn/cairn.toml); flags and environment variables override it
+    #[arg(long, global = true, env = "CAIRN_CONFIG")]
+    config: Option<PathBuf>,
+    /// Ignore the config file
+    #[arg(long, global = true)]
+    no_config: bool,
+    /// Rig profile (`cairn-modem rigs`): its settings go under the config file's
+    #[arg(long, global = true)]
+    rig: Option<String>,
     #[command(subcommand)]
     cmd: Cmd,
 }
@@ -56,6 +69,34 @@ enum Cmd {
     Listen(ListenArgs),
     /// Run the modem: link layer, carrier detect, KISS server and control interface (SPEC 21.3 steps 5-6)
     Run(RunArgs),
+    /// List the rig profiles (built in from docs/rigs, and ~/.config/cairn/rigs)
+    Rigs(RigsArgs),
+    /// Guided setup: devices, PTT, rig profile, levels, TXDelay; writes the config (asks before every transmission)
+    Setup,
+    /// Check the station without transmitting (with --transmit: one confirmed ID frame for a loopback check)
+    Selftest(SelftestArgs),
+}
+
+#[derive(Args)]
+struct RigsArgs {
+    /// Print this profile in full
+    name: Option<String>,
+}
+
+#[derive(Args)]
+struct SelftestArgs {
+    /// Audio device (overrides the config)
+    #[arg(short = 'd', long)]
+    device: Option<String>,
+    /// PTT spec (overrides the config)
+    #[arg(long)]
+    ptt: Option<String>,
+    /// Seconds of input to measure for the receive level (0: skip)
+    #[arg(long, default_value_t = 2.0)]
+    level_seconds: f64,
+    /// Also key once with an ID frame and listen for it (asks for 'yes' first)
+    #[arg(long)]
+    transmit: bool,
 }
 
 #[derive(Args, Clone)]
@@ -122,8 +163,20 @@ struct PttOpts {
 
 impl PttOpts {
     fn open(&self) -> Result<SharedPtt, String> {
-        let spec = PttSpec::parse(&self.ptt, self.ptt_line, self.ptt_invert, self.ptt_gpio)?;
-        let ptt = spec.open().map_err(|e| format!("PTT {spec}: {e}"))?;
+        self.open_watched(None)
+    }
+
+    /// Open, with the watchdog told of every key and release when given.
+    fn open_watched(
+        &self,
+        watch: Option<std::sync::Arc<cairn_modem::unattended::WatchState>>,
+    ) -> Result<SharedPtt, String> {
+        let spec =
+            PttSpec::parse(&realhw::resolve_ptt_spec(&self.ptt)?, self.ptt_line, self.ptt_invert, self.ptt_gpio)?;
+        let mut ptt = spec.open().map_err(|e| format!("PTT {spec}: {e}"))?;
+        if let Some(w) = watch {
+            ptt = Box::new(cairn_modem::unattended::WatchedPtt::new(ptt, w));
+        }
         let shared = SharedPtt::new(ptt);
         signals::register_ptt(&shared);
         Ok(shared)
@@ -355,9 +408,9 @@ struct RunArgs {
     ptt: PttOpts,
     #[command(flatten)]
     timing: TimingOpts,
-    /// This station's callsign, CALL[-SSID]
+    /// This station's callsign, CALL[-SSID] (or station.callsign in the config)
     #[arg(long, env = "CAIRN_CALLSIGN")]
-    callsign: String,
+    callsign: Option<String>,
     /// Maidenhead locator for the ID block (4 or 6 characters)
     #[arg(long)]
     grid: Option<String>,
@@ -442,17 +495,42 @@ struct RunArgs {
     /// The capture-volume control for --rx-agc (default: the card's input control, e.g. 'AIOC Audio In')
     #[arg(long)]
     rx_agc_control: Option<String>,
+    /// Unattended operation (SPEC 13.4): allow and deny lists, session and daily keyed-time limits, the ID
+    /// block in UI frames, hooks; settings in the config's [unattended] (docs/operator-guide.md)
+    #[arg(long)]
+    unattended: bool,
+    /// Accept CONNECTs only from these (CALL, CALL-N, CALL-*; comma-separated); with --unattended
+    #[arg(long, value_delimiter = ',')]
+    allow: Vec<String>,
+    /// Refuse CONNECTs from these (CALL, CALL-N, CALL-*, *; comma-separated)
+    #[arg(long, value_delimiter = ',')]
+    deny: Vec<String>,
+    /// Add the ID block (B.6) to UI frames on the 9-minute ID clock (on with --unattended)
+    #[arg(long)]
+    id_broadcasts: bool,
+    /// Log every output line to this file too (rotated at 1 MiB, 5 kept; [host] log_max_kb, log_keep)
+    #[arg(long)]
+    log_file: Option<PathBuf>,
+    /// No watchdog (it releases PTT and stops the modem if a transmission runs long or the audio stalls)
+    #[arg(long)]
+    no_watchdog: bool,
 }
 
-fn run_cmd(a: RunArgs) -> Result<(), String> {
+fn run_cmd(a: RunArgs, file: &FileConfig) -> Result<(), String> {
     use cairn_modem::runtime::ModemConfig;
-    let addr = cairn_modem::control::parse_call(&a.callsign)?;
-    let (call, ssid) = match a.callsign.rsplit_once('-') {
+    use cairn_modem::unattended::{self, Policy};
+    let callsign =
+        a.callsign.clone().ok_or("give --callsign (or station.callsign in the config; `cairn-modem setup`)")?;
+    let addr = cairn_modem::control::parse_call(&callsign)?;
+    let (call, ssid) = match callsign.rsplit_once('-') {
         Some((c, n)) if n.chars().all(|c| c.is_ascii_digit()) && !n.is_empty() => {
             (c.to_ascii_uppercase(), n.parse::<u8>().map_err(|_| "bad SSID")?)
         }
-        _ => (a.callsign.to_ascii_uppercase(), 0),
+        _ => (callsign.to_ascii_uppercase(), 0),
     };
+    if !(24..=56).contains(&a.cap) {
+        return Err("the width cap must be 24-56 tones".into());
+    }
     let grid = match &a.grid {
         None => None,
         Some(g) if g.len() == 4 || g.len() == 6 => {
@@ -486,6 +564,20 @@ fn run_cmd(a: RunArgs) -> Result<(), String> {
         st.capabilities |= cairn_link::frame::caps::WIDE;
     }
     st.track_masks = !a.no_mask;
+    st.id_broadcasts = a.id_broadcasts || a.unattended;
+    // Unattended settings: the config's [unattended], with --allow/--deny on top.
+    let mut u_section = file.unattended.clone();
+    if !a.allow.is_empty() {
+        u_section.allow = a.allow.clone();
+    }
+    if !a.deny.is_empty() {
+        u_section.deny = a.deny.clone();
+    }
+    let policy = Policy::from_section(&u_section)?;
+    unattended::apply_lists(&mut st, &policy.allow, &policy.deny);
+    if a.ptt.ptt.eq_ignore_ascii_case("vox") && st.accept_connects {
+        eprintln!("note: VOX keying is for broadcast mode only (SPEC 13.3); consider --refuse");
+    }
     if a.rx_agc_control.is_some() && !a.rx_agc {
         return Err("--rx-agc-control needs --rx-agc".into());
     }
@@ -519,10 +611,29 @@ fn run_cmd(a: RunArgs) -> Result<(), String> {
         cfg.dcd.quieting_band_hz.1,
         if a.dcd_legacy { " (legacy carrier detect)" } else { "" }
     );
-    let ptt = a.ptt.open()?;
+    let margin =
+        Duration::from_secs_f64(file.unattended.watchdog_margin_s.unwrap_or(unattended::DEFAULT_WATCHDOG_MARGIN_S));
+    let stall = Duration::from_secs_f64(file.unattended.audio_stall_s.unwrap_or(unattended::DEFAULT_AUDIO_STALL_S));
+    if !(0.5..=30.0).contains(&margin.as_secs_f64()) || !(1.0..=120.0).contains(&stall.as_secs_f64()) {
+        return Err("unattended.watchdog_margin_s must be 0.5-30 and audio_stall_s 1-120".into());
+    }
+    let watch = (!a.no_watchdog).then(|| {
+        let longest = cfg.txdelay + Duration::from_secs_f64(a.max_frame) + cfg.txtail + margin;
+        (unattended::WatchState::new(longest), unattended::Watchdog { audio_stall: stall }, margin)
+    });
+    if a.unattended && watch.is_none() {
+        return Err("--unattended needs the watchdog (drop --no-watchdog)".into());
+    }
+    let ptt = a.ptt.open_watched(watch.as_ref().map(|w| w.0.clone()))?;
     if ptt.is_null() {
         println!("note: no PTT line (--ptt); the audio plays unkeyed");
     }
+    if a.unattended && a.seconds.is_none() && !a.no_stdin {
+        println!("note: unattended with the stdin control interface; --no-stdin for a service");
+    }
+    let log = a.log_file.as_ref().map(|p| {
+        (config::expand_home(p), file.host.log_max_kb.unwrap_or(1024).max(1) * 1024, file.host.log_keep.unwrap_or(5))
+    });
     if let Err(e) = cairn_modem::boost::boost_current_thread() {
         eprintln!("note: event loop runs without a utilisation clamp ({e}); turnaround may suffer");
     }
@@ -543,6 +654,9 @@ fn run_cmd(a: RunArgs) -> Result<(), String> {
         heard_file: a.heard_file.clone(),
         capture_on_failure: a.capture_on_failure,
         rx_agc: a.rx_agc.then(|| a.rx_agc_control.clone()),
+        unattended: a.unattended.then_some(policy),
+        watchdog: watch,
+        log,
     };
     let summary = cairn_modem::driver::run(cfg, &opts, ptt, &signals::STOP)?;
     println!("{summary}");
@@ -550,16 +664,47 @@ fn run_cmd(a: RunArgs) -> Result<(), String> {
 }
 
 fn main() -> ExitCode {
-    let cli = Cli::parse();
+    let matches = Cli::command().get_matches();
+    let cli = Cli::from_arg_matches(&matches).unwrap_or_else(|e| e.exit());
+    let sub = matches.subcommand().map(|(_, m)| m.clone()).expect("a subcommand");
+    let src = Src(&sub);
     signals::install();
+    let loaded = Loaded::new(&cli);
     let r = match cli.cmd {
         Cmd::Devices => devices(),
-        Cmd::Levels(a) => levels(a),
-        Cmd::PttTest(a) => ptt_test(a),
-        Cmd::Tone(a) => tone(a),
-        Cmd::Tx(a) => tx(a),
-        Cmd::Listen(a) => listen_cmd(a),
-        Cmd::Run(a) => run_cmd(a),
+        Cmd::Rigs(a) => rigs(a),
+        Cmd::Setup => setup(&loaded),
+        Cmd::Selftest(a) => selftest(a, &loaded),
+        Cmd::Levels(mut a) => loaded.settings().and_then(|c| {
+            apply_audio(&mut a.audio, &c, &src)?;
+            levels(a)
+        }),
+        Cmd::PttTest(mut a) => loaded.settings().and_then(|c| {
+            apply_ptt(&mut a.ptt, &c, &src)?;
+            ptt_test(a)
+        }),
+        Cmd::Tone(mut a) => loaded.settings().and_then(|c| {
+            apply_audio(&mut a.audio, &c, &src)?;
+            apply_ptt(&mut a.ptt, &c, &src)?;
+            apply_timing(&mut a.timing, &c, &src);
+            tone(a)
+        }),
+        Cmd::Tx(mut a) => loaded.settings().and_then(|c| {
+            apply_audio(&mut a.audio, &c, &src)?;
+            apply_ptt(&mut a.ptt, &c, &src)?;
+            apply_timing(&mut a.timing, &c, &src);
+            src.set("callsign", &mut a.callsign, c.station.callsign.clone().map(Some));
+            src.set("grid", &mut a.grid, c.station.grid.clone().map(Some));
+            tx(a)
+        }),
+        Cmd::Listen(mut a) => loaded.settings().and_then(|c| {
+            apply_audio(&mut a.audio, &c, &src)?;
+            listen_cmd(a)
+        }),
+        Cmd::Run(mut a) => loaded.settings().and_then(|c| {
+            apply_run(&mut a, &c, &src)?;
+            run_cmd(a, &c)
+        }),
     };
     match r {
         Ok(()) => ExitCode::SUCCESS,
@@ -572,6 +717,213 @@ fn main() -> ExitCode {
 
 fn stopped() -> bool {
     signals::STOP.load(Ordering::Relaxed)
+}
+
+// --- configuration ----------------------------------------------------------------
+
+/// The config file as found, and the effective settings (rig profile under it).
+struct Loaded {
+    state: ConfigState,
+    file: FileConfig,
+    effective: Result<FileConfig, String>,
+    path: Option<PathBuf>,
+}
+
+impl Loaded {
+    fn new(cli: &Cli) -> Loaded {
+        let path = if cli.no_config {
+            None
+        } else {
+            cli.config.as_deref().map(config::expand_home).or_else(config::default_config_path)
+        };
+        let (state, file) = match &path {
+            None => (ConfigState::Missing(None), FileConfig::default()),
+            Some(p) => match FileConfig::load(p, cli.config.is_none()) {
+                Ok(f) if p.exists() => (ConfigState::Loaded(p.clone()), f),
+                Ok(f) => (ConfigState::Missing(Some(p.clone())), f),
+                Err(e) => (ConfigState::Error(e), FileConfig::default()),
+            },
+        };
+        let effective = config::effective(&file, cli.rig.as_deref(), config::user_rigs_dir().as_deref());
+        Loaded { state, file, effective, path }
+    }
+
+    /// The effective settings, or why there are none; says where they came from.
+    fn settings(&self) -> Result<FileConfig, String> {
+        if let ConfigState::Error(e) = &self.state {
+            return Err(format!("config: {e} (--no-config to ignore it)"));
+        }
+        let c = self.effective.clone()?;
+        let mut from = Vec::new();
+        if let ConfigState::Loaded(p) = &self.state {
+            from.push(format!("config {}", p.display()));
+        }
+        if let Some(r) = &c.station.rig {
+            from.push(format!("rig profile {r}"));
+        }
+        if !from.is_empty() {
+            eprintln!("settings from {} (flags override)", from.join(", "));
+        }
+        Ok(c)
+    }
+}
+
+/// Whether a flag was given (on the command line or in its environment variable).
+struct Src<'a>(&'a ArgMatches);
+
+impl Src<'_> {
+    fn given(&self, id: &str) -> bool {
+        matches!(self.0.value_source(id), Some(ValueSource::CommandLine | ValueSource::EnvVariable))
+    }
+
+    /// Take the config's value unless the flag was given.
+    fn set<T>(&self, id: &str, dst: &mut T, v: Option<T>) {
+        if let Some(v) = v {
+            if !self.given(id) {
+                *dst = v;
+            }
+        }
+    }
+}
+
+fn apply_audio(a: &mut AudioOpts, c: &FileConfig, m: &Src) -> Result<(), String> {
+    m.set("device", &mut a.device, c.audio.device.clone());
+    m.set("period", &mut a.period, c.audio.period);
+    m.set("buffer_ms", &mut a.buffer_ms, c.audio.buffer_ms);
+    m.set("audio_backend", &mut a.audio_backend, c.audio.backend.as_deref().map(str::parse).transpose()?);
+    m.set("no_rt", &mut a.no_rt, c.audio.rt.map(|r| !r));
+    m.set("rt_prio", &mut a.rt_prio, c.audio.rt_prio.map(|p| p.clamp(1, 99)));
+    Ok(())
+}
+
+fn apply_ptt(p: &mut PttOpts, c: &FileConfig, m: &Src) -> Result<(), String> {
+    m.set("ptt", &mut p.ptt, c.ptt.method.clone());
+    m.set("ptt_line", &mut p.ptt_line, c.ptt.line.as_deref().map(str::parse).transpose()?);
+    m.set("ptt_invert", &mut p.ptt_invert, c.ptt.invert);
+    m.set("ptt_gpio", &mut p.ptt_gpio, c.ptt.gpio);
+    Ok(())
+}
+
+fn apply_timing(t: &mut TimingOpts, c: &FileConfig, m: &Src) {
+    m.set("txdelay", &mut t.txdelay, c.timing.txdelay_ms);
+    m.set("txtail", &mut t.txtail, c.timing.txtail_ms);
+}
+
+fn apply_run(a: &mut RunArgs, c: &FileConfig, m: &Src) -> Result<(), String> {
+    apply_audio(&mut a.audio, c, m)?;
+    apply_ptt(&mut a.ptt, c, m)?;
+    apply_timing(&mut a.timing, c, m);
+    let path = |p: &Option<PathBuf>| p.as_deref().map(config::expand_home);
+    m.set("callsign", &mut a.callsign, c.station.callsign.clone().map(Some));
+    m.set("grid", &mut a.grid, c.station.grid.clone().map(Some));
+    m.set("kiss", &mut a.kiss, c.host.kiss.clone());
+    m.set("control", &mut a.control, c.host.control.clone().map(Some));
+    m.set("api", &mut a.api, c.host.api.clone());
+    m.set("api_socket", &mut a.api_socket, path(&c.host.api_socket).map(Some));
+    m.set("ring_seconds", &mut a.ring_seconds, c.host.ring_seconds);
+    m.set("capture_dir", &mut a.capture_dir, path(&c.host.capture_dir));
+    m.set("capture_on_failure", &mut a.capture_on_failure, c.host.capture_on_failure);
+    m.set("heard_file", &mut a.heard_file, path(&c.host.heard_file).map(Some));
+    m.set("rx_dir", &mut a.rx_dir, path(&c.host.rx_dir).map(Some));
+    m.set("log_file", &mut a.log_file, path(&c.host.log_file).map(Some));
+    m.set("persistence", &mut a.persistence, c.link.persistence);
+    m.set("slot_ms", &mut a.slot_ms, c.link.slot_ms);
+    m.set("max_frame", &mut a.max_frame, c.link.max_frame);
+    m.set("broadcast_mcs", &mut a.broadcast_mcs, c.link.broadcast_mcs);
+    m.set("refuse", &mut a.refuse, c.link.refuse);
+    m.set("cap", &mut a.cap, c.link.cap);
+    m.set("no_mask", &mut a.no_mask, c.link.no_mask);
+    m.set("quieting", &mut a.quieting, c.link.quieting.clone().map(Some));
+    m.set("id_broadcasts", &mut a.id_broadcasts, c.link.id_broadcasts);
+    m.set("rx_agc", &mut a.rx_agc, c.audio.rx_agc);
+    // The control name matters only with the AGC on.
+    if a.rx_agc {
+        m.set("rx_agc_control", &mut a.rx_agc_control, c.audio.rx_agc_control.clone().map(Some));
+    }
+    m.set("unattended", &mut a.unattended, c.unattended.enabled);
+    Ok(())
+}
+
+fn rigs(a: RigsArgs) -> Result<(), String> {
+    let dir = config::user_rigs_dir();
+    if let Some(n) = &a.name {
+        let r = config::find_rig(n, dir.as_deref())?;
+        let text = match &r.source {
+            config::RigSource::Builtin => config::BUILTIN_RIGS
+                .iter()
+                .find(|(b, _)| *b == r.profile.profile.name)
+                .map(|(_, t)| t.to_string())
+                .unwrap_or_else(|| r.profile.to_toml()),
+            config::RigSource::User(p) => std::fs::read_to_string(p).map_err(|e| format!("{}: {e}", p.display()))?,
+        };
+        print!("{text}");
+        return Ok(());
+    }
+    let (list, errors) = config::all_rigs(dir.as_deref());
+    println!("{:<12} {:<10} {:<9} description", "name", "status", "source");
+    for r in &list {
+        let p = &r.profile.profile;
+        println!(
+            "{:<12} {:<10} {:<9} {}",
+            p.name,
+            p.status,
+            match r.source {
+                config::RigSource::Builtin => "built-in",
+                config::RigSource::User(_) => "user",
+            },
+            p.description
+        );
+    }
+    for e in errors {
+        eprintln!("error: {e}");
+    }
+    println!(
+        "\nUse one with --rig NAME or station.rig in the config; `cairn-modem rigs NAME` prints it.\nYour own profiles go in {} (same format; a name there replaces a built-in one).",
+        dir.map_or("~/.config/cairn/rigs".into(), |d| d.display().to_string())
+    );
+    Ok(())
+}
+
+fn setup(l: &Loaded) -> Result<(), String> {
+    use cairn_modem::setup::{Outcome, SetupEnv, Wizard};
+    let config_path = l.path.clone().ok_or("no config path: give --config PATH (and not --no-config)")?;
+    if let ConfigState::Error(e) = &l.state {
+        eprintln!("note: the current config is unreadable ({e}); starting from defaults");
+    }
+    let dir = config::user_rigs_dir();
+    let (rigs, errors) = config::all_rigs(dir.as_deref());
+    for e in errors {
+        eprintln!("note: {e}");
+    }
+    let env = SetupEnv { config_path, user_rigs_dir: dir, rigs, existing: l.file.clone() };
+    match Wizard::new(env).run(&mut realhw::StdTerminal, &mut realhw::RealHardware) {
+        Outcome::Aborted => Err("setup stopped".into()),
+        Outcome::NotWritten | Outcome::Written { .. } => Ok(()),
+    }
+}
+
+fn selftest(a: SelftestArgs, l: &Loaded) -> Result<(), String> {
+    use cairn_modem::selftest::{self, Options, Status};
+    let (state, mut cfg) = match &l.effective {
+        Ok(c) => (l.state.clone(), c.clone()),
+        Err(e) => (ConfigState::Error(e.clone()), l.file.clone()),
+    };
+    if let Some(d) = a.device {
+        cfg.audio.device = Some(d);
+    }
+    if let Some(p) = a.ptt {
+        cfg.ptt.method = Some(p);
+    }
+    let checks = selftest::run(
+        &state,
+        &cfg,
+        &mut realhw::RealHardware,
+        &mut realhw::StdTerminal,
+        &Options { transmit: a.transmit, level_seconds: a.level_seconds.clamp(0.0, 30.0) },
+    );
+    let (text, worst) = selftest::report(&checks);
+    println!("{text}");
+    if worst == Status::Fail { Err("self-test failed".into()) } else { Ok(()) }
 }
 
 /// Sleep up to `d`, waking early on a signal.
@@ -608,6 +960,19 @@ fn devices() -> Result<(), String> {
         );
     }
     println!("\nSelect with --device and any part of the name or description, e.g. --device All-In-One-Cable.");
+    let ptts = cairn_modem::detect::ptt_candidates(Path::new("/"));
+    println!("\nPTT candidates (USB serial ports and CM108-class HID devices; nothing opened):");
+    if ptts.is_empty() {
+        println!("  none found");
+    }
+    for c in ptts {
+        println!(
+            "  --ptt {:<70} {}{}",
+            c.spec(),
+            c.known().map_or(c.label.clone(), |k| format!("{} (rig profile {})", k.name, k.rig)),
+            c.usb_text().map(|u| format!(" [{u}]")).unwrap_or_default()
+        );
+    }
     Ok(())
 }
 
