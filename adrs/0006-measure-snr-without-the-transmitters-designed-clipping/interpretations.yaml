@@ -1,0 +1,19 @@
+# Interpretations stay editable after merge. They clarify a decision; they
+# cannot change it.
+
+- slug: mask-boost-counts-as-signal
+  decision: snr-reference-channel
+  question: >-
+    With a tone mask, every active tone of a data or control symbol is scaled
+    up so total power stays constant (ADR 0004 `masked-tone-content`). Does
+    that boost count as signal in the reported SNR, or is the SNR referenced
+    to unboosted tones?
+  interpretation: >-
+    It counts as signal. The reported SNR is signal over noise as received on
+    the active tones, boost included, because that is what the decoder sees
+    and what the rung thresholds were measured against (per active tone, with
+    total power constant). The sender's next frames use the same mask, so the
+    figure predicts their decoding. A 30-tone frame with 4 tones masked reads
+    about 0.4–0.5 dB higher than the same channel unmasked. Found when the
+    Rust and Python receivers disagreed by that amount on a masked fixture.
+  date: 2026-11-07
