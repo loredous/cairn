@@ -1,6 +1,8 @@
-//! Every `vectors/header/` and `vectors/control/` case (SPEC 8.2, Appendix B):
-//! the fields pack to the published bits, the bits unpack to the fields, and
-//! the cases a receiver must refuse or skip are refused or skipped.
+//! Every `vectors/header/` and `vectors/control/` case, and the block map
+//! control blocks of `vectors/link/` (SPEC 8.2, Appendix B, ADRs 0008 and
+//! 0011): the fields pack to the published bits, the bits unpack to the
+//! fields, and the cases a receiver must refuse or skip are refused or
+//! skipped.
 
 mod common;
 
@@ -9,14 +11,7 @@ use common::*;
 use serde_json::Value;
 
 fn cases(kind: &str) -> Vec<Value> {
-    let dir = repo().join("vectors").join(kind);
-    let mut paths: Vec<_> = std::fs::read_dir(&dir)
-        .unwrap_or_else(|e| panic!("{}: {e}", dir.display()))
-        .map(|e| e.unwrap().path())
-        .filter(|p| p.extension().is_some_and(|e| e == "json"))
-        .collect();
-    paths.sort();
-    paths.iter().map(|p| read_json(p)).collect()
+    vector_docs(kind).into_iter().map(|(_, d)| d).collect()
 }
 
 #[test]
@@ -40,8 +35,9 @@ fn every_header_vector() {
 
 #[test]
 fn every_control_vector() {
-    let docs = cases("control");
-    assert!(docs.len() >= 12);
+    let mut docs = cases("control");
+    assert!(docs.len() >= 14);
+    docs.extend(cases("link").into_iter().filter(|d| d["format"] == "cairn-control-vectors"));
     let mut types = std::collections::BTreeSet::new();
     for d in &docs {
         let name = d["name"].as_str().unwrap();
@@ -50,7 +46,9 @@ fn every_control_vector() {
             match d["error"].as_str().unwrap() {
                 "unknown" => {
                     let c = ControlBlock::unpack(&bits).unwrap();
-                    assert!(matches!(c, ControlBlock::Unknown { control_type: 7, .. }), "{name}");
+                    let t = u8::from_str_radix(&d["message_hex"].as_str().unwrap()[..1], 16).unwrap();
+                    assert!(t == 2 || t >= 8, "{name}: type {t} is not reserved (ADR 0008)");
+                    assert!(matches!(c, ControlBlock::Unknown { control_type, .. } if control_type == t), "{name}");
                     // Skipped, but carried through intact.
                     assert_eq!(c.bits().unwrap(), bits);
                 }
@@ -65,7 +63,7 @@ fn every_control_vector() {
         assert_eq!(bits_to_hex(&c.bits().unwrap()), d["info_hex"].as_str().unwrap(), "{name}");
         assert_eq!(ControlBlock::unpack(&bits).unwrap(), c, "{name}");
     }
-    assert_eq!(types.into_iter().collect::<Vec<_>>(), vec![0, 1, 3, 4, 5, 6]);
+    assert_eq!(types.into_iter().collect::<Vec<_>>(), vec![0, 1, 3, 4, 5, 6, 7]);
 }
 
 #[test]

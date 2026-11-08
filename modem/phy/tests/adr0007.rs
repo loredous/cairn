@@ -69,7 +69,7 @@ fn probe_reaches_the_cap() {
     let mut rng = Rng::new(17);
     for (width, cap) in [(24, 30), (30, 56), (40, 48)] {
         let usable: Vec<usize> = (0..cap).filter(|&k| k != 9).collect();
-        let link = LinkState { width, usable: Some(usable.clone()), cp: None, cap: Some(cap) };
+        let link = LinkState { width, usable: Some(usable.clone()), cap: Some(cap), ..Default::default() };
         let mut h = Header::new(frame_type::DATA, src(), dst());
         (h.sequence, h.mcs, h.n_control, h.n_data, h.session, h.probe) = (11, 3, 1, 3, true, true);
         let f = Transmitter::new().build_frame(&h, &[ack()], &payloads(3, &mut rng), &link).unwrap();
@@ -168,7 +168,7 @@ fn header_first_in_session_at_several_widths_and_masks() {
         (56, Some((0..56).filter(|k| ![40, 41].contains(k)).collect())),
     ];
     for (width, usable) in cases {
-        let link = LinkState { width, usable, cp: None, cap: None };
+        let link = LinkState { width, usable, ..Default::default() };
         let mut h = Header::new(frame_type::DATA, src(), dst());
         (h.sequence, h.mcs, h.n_control, h.n_data, h.session) = (0x1234, 2, 1, 4, true);
         let pl = payloads(4, &mut rng);

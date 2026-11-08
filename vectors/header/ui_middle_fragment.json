@@ -1,0 +1,35 @@
+{
+ "format": "cairn-header-vectors",
+ "version": 1,
+ "license": "CC BY 4.0",
+ "name": "ui_middle_fragment",
+ "description": "UI middle fragment of a message: flag bit 2 set, bit 6 clear, frame counter 0",
+ "valid": true,
+ "fields": {
+  "version": 1,
+  "frame_type": 1,
+  "flags": 6,
+  "more_fragments": true,
+  "session": false,
+  "probe": false,
+  "repeat": false,
+  "first_fragment": false,
+  "block_map": false,
+  "source": {
+   "callsign": "N0CALL",
+   "ssid": 15,
+   "value_hex": "39b0c130cf"
+  },
+  "destination": {
+   "broadcast": true,
+   "value_hex": "ffffffffff"
+  },
+  "sequence": 0,
+  "mcs": 1,
+  "control_blocks": 0,
+  "data_blocks": 4,
+  "mask_id": 0
+ },
+ "message_hex": "210639b0c130cfffffffffff00001018",
+ "info_hex": "210639b0c130cfffffffffff000010187f0a"
+}

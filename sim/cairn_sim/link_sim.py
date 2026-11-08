@@ -173,12 +173,18 @@ class Budget:
     mask: frozenset[int] | None = None   # usable tones (SPEC 5.4); None: all
     blocks_override: int | None = field(default=None, repr=False)
     # SPEC 8.4: every DATA frame in a session carries the ACK control block
-    # for the peer's last frame (12 symbols at MCS 0 on the base tones).
-    # SPEC 7.4 and Appendix A as printed leave it out (ack_block=False).
+    # for the peer's last frame (12 symbols at MCS 0 on the base tones);
+    # SPEC 7.4 and Appendix A count it since the 2026-11-07 erratum.
     ack_block: bool = True
     # ADR 0007: every frame whose data uses tones above 23 carries the
-    # 2-symbol width probe. probe=False reproduces the printed Appendix A.
+    # 2-symbol width probe.
     probe: bool = True
+    # A frame with a block map (B.8) or an ID block: 12 more control symbols each.
+    extra_controls: int = 0
+    # SPEC 6.4: the data run is padded to whole symbols, so the frame's air
+    # time counts its last data symbol whole (Appendix A.2). False counts
+    # fractional symbols, as drafts before the 2026-11-07 erratum did.
+    pad_symbols: bool = True
 
     @property
     def coded_bits_per_symbol(self) -> int:
@@ -203,11 +209,13 @@ class Budget:
 
     @property
     def control_symbols(self) -> int:
-        """The ACK control block (512 coded bits, QPSK on the 22 base data tones)."""
-        if not self.ack_block:
+        """The ACK control block and any ``extra_controls`` (512 coded bits
+        each, QPSK on the 22 base data tones less masked ones)."""
+        n = int(self.ack_block) + self.extra_controls
+        if not n:
             return 0
         tones = len(params.data_tones_for(params.BASE_TONES, params.masked_tones(self.width, self.mask)))
-        return -(-params.CONTROL_CODE.coded_bits[0] // (2 * tones))
+        return -(-n * params.CONTROL_CODE.coded_bits[0] // (2 * tones))
 
     @property
     def fixed_symbols(self) -> int:
@@ -227,8 +235,15 @@ class Budget:
                    // params.RUNGS[self.mcs].coded_bits)
 
     @property
+    def data_symbols(self) -> float:
+        """Symbols of the data run: whole symbols (SPEC 6.4), or fractional
+        without ``pad_symbols``."""
+        exact = self.blocks * params.RUNGS[self.mcs].coded_bits / self.coded_bits_per_symbol
+        return float(math.ceil(exact - 1e-9)) if self.pad_symbols else exact
+
+    @property
     def frame_time_s(self) -> float:
-        symbols = self.fixed_symbols + self.blocks * self.symbols_per_block
+        symbols = self.fixed_symbols + self.data_symbols
         return self.txdelay_s + symbols * symbol_s(self.cp) + self.txtail_s
 
     @property

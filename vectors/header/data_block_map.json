@@ -1,0 +1,36 @@
+{
+ "format": "cairn-header-vectors",
+ "version": 1,
+ "license": "CC BY 4.0",
+ "name": "data_block_map",
+ "description": "DATA in session with a block map (flag bit 7) as its second of two control blocks, 5 data blocks at MCS 3, mask ID 3",
+ "valid": true,
+ "fields": {
+  "version": 1,
+  "frame_type": 4,
+  "flags": 139,
+  "more_fragments": false,
+  "session": true,
+  "probe": false,
+  "repeat": false,
+  "first_fragment": false,
+  "block_map": true,
+  "source": {
+   "callsign": "N0CALL",
+   "ssid": 1,
+   "value_hex": "39b0c130c1"
+  },
+  "destination": {
+   "callsign": "N0CALL",
+   "ssid": 2,
+   "value_hex": "39b0c130c2"
+  },
+  "sequence": 65533,
+  "mcs": 3,
+  "control_blocks": 2,
+  "data_blocks": 5,
+  "mask_id": 3
+ },
+ "message_hex": "248b39b0c130c139b0c130c2fffd3826",
+ "info_hex": "248b39b0c130c139b0c130c2fffd38263230"
+}

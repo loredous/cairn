@@ -65,12 +65,16 @@ $M listen -d All-In-One-Cable                               # header first; Ctrl
   sequence, + its block count per frame), `--id` and `--grid` (the B.6 ID
   control block; a BEACON always carries it), `--message TEXT` (the
   payload, zero-padded; default the seed's random payloads). Flags follow
-  from the frame: control and data present from the counts, session for
-  `--type data` (which also carries an ACK control block first, SPEC 8.4,
-  with demonstration values), and the probe whenever the data uses a tone
-  above 23 (ADR 0007), to the width for a broadcast and to `--cap` for a
-  session frame. Then `--mcs`, `--width`, `--prefix short|long`, `--mask
-  8-11,30` (session frames only: a broadcast is unmasked), `--blocks N`
+  from the frame: control and data present from the counts, first
+  fragment (flag bit 6) on every BEACON and UI frame (each a complete
+  message, ADR 0009), session for `--type data` (which also carries an
+  ACK control block first, SPEC 8.4, cumulative with a mask, ADR 0008 and
+  ADR 0011, demonstration values), and the probe whenever the data uses a
+  tone above 23 (ADR 0007), to the frame's width (ADR 0011
+  `width-probe-extent`; `--cap` overrides it for tests). Then `--mcs`,
+  `--width`, `--prefix short|long`, `--mask 8-11,30` and `--mask-id N`
+  (session frames only: the mask and the ID the header names; a broadcast
+  is unmasked), `--blocks N`
   or `--frame-s S` (default SPEC 10.2: 2 s at MCS 0-1, 4 s above, the
   block count as `cairn-bench tx` computes it, less the control blocks and
   the probe), `--count`, `--gap` (unkeyed seconds between transmissions),
@@ -88,9 +92,12 @@ $M listen -d All-In-One-Cable                               # header first; Ctrl
 - **`listen`** decodes every frame header first: the header once the
   preamble and header are in, then the frame its fields describe. Session
   frames (flag bit 3) use the link state on the command line, `--width`,
-  `--mask` and `--peer-cap` (the peer's cap in tones, the extent of its
-  probe; default the width); a frame outside a session takes its width
-  from its own probe (ADR 0007), or is 24 tones without one. It prints one
+  `--mask` under `--mask-id` (a frame naming another Mask ID is reported
+  undecoded, ADR 0011) and `--peer-cap` (the extent of the peer's probe;
+  default the width, as ADR 0011 requires), handed to the receiver as the
+  link state for each decoded header (`cairn_phy::LinkSource`); a frame
+  outside a session takes its width from its own probe (ADR 0007), or is
+  24 tones without one. It prints one
   line per frame: time (UTC and stream seconds), source > destination
   (`*` for broadcast), frame type and flags, sequence, MCS and width
   ("from probe" for a broadcast), prefix, data and control blocks OK/total,

@@ -3,7 +3,7 @@
  "version": 1,
  "license": "CC BY 4.0",
  "name": "connect_ack",
- "description": "CONNECT-ACK in session with a probe and one control block",
+ "description": "CONNECT-ACK in session with a probe and its B.3 and ID blocks; unmasked, mask ID 0",
  "valid": true,
  "fields": {
   "version": 1,
@@ -13,6 +13,8 @@
   "session": true,
   "probe": true,
   "repeat": false,
+  "first_fragment": false,
+  "block_map": false,
   "source": {
    "callsign": "N0CALL",
    "ssid": 2,
@@ -25,9 +27,10 @@
   },
   "sequence": 0,
   "mcs": 0,
-  "control_blocks": 1,
-  "data_blocks": 0
+  "control_blocks": 2,
+  "data_blocks": 0,
+  "mask_id": 0
  },
- "message_hex": "231939b0c130c239b0c130c100000400",
- "info_hex": "231939b0c130c239b0c130c100000400bc0f"
+ "message_hex": "231939b0c130c239b0c130c100000800",
+ "info_hex": "231939b0c130c239b0c130c100000800f962"
 }

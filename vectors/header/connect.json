@@ -3,7 +3,7 @@
  "version": 1,
  "license": "CC BY 4.0",
  "name": "connect",
- "description": "CONNECT with a width probe and two control blocks, no data",
+ "description": "CONNECT with a width probe and two control blocks (B.3, ID), no data, sequence 0 (next unsent block of a new session)",
  "valid": true,
  "fields": {
   "version": 1,
@@ -13,6 +13,8 @@
   "session": false,
   "probe": true,
   "repeat": false,
+  "first_fragment": false,
+  "block_map": false,
   "source": {
    "callsign": "N0CALL",
    "ssid": 1,
@@ -26,7 +28,8 @@
   "sequence": 0,
   "mcs": 0,
   "control_blocks": 2,
-  "data_blocks": 0
+  "data_blocks": 0,
+  "mask_id": 0
  },
  "message_hex": "221139b0c130c139b0c130c200000800",
  "info_hex": "221139b0c130c139b0c130c200000800291e"

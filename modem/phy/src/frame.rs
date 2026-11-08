@@ -7,11 +7,12 @@
 //! symbols on the base data tones less masked ones, with pilots 3 and 20,
 //! every active tone scaled by sqrt(24 / active tones) (ADR 0005).
 //! [`FrameConfig::from_header`] gives the frame a header describes at the
-//! link's width and mask ([`LinkState`]), for header-first reception.
+//! link's width and the mask its Mask ID names ([`LinkState`], ADR 0011),
+//! for header-first reception and for building.
 
 use std::fmt;
 
-use crate::fields::Header;
+use crate::fields::{ConnectBlock, Header, MASK_IDS, frame_type, session_width};
 use crate::params::{
     self, BASE_TONES, CONTROL_CODED_BITS, CP_LONG, CP_SHORT, MAX_TONES, N_USEFUL, PREAMBLE_SYMBOLS, PROBE_SYMBOLS, Rung,
 };
@@ -41,6 +42,11 @@ pub enum ConfigError {
     Controls(usize),
     /// The mask leaves no control tone.
     NoControlTones,
+    /// A session frame's header names a mask ID the link state does not hold
+    /// (ADR 0011 `mask-id`): its control and data blocks count as failed.
+    UnknownMask(u8),
+    /// Mask IDs outside 0-3, or the pending mask with the current mask's ID.
+    MaskIds,
 }
 
 impl fmt::Display for ConfigError {
@@ -59,32 +65,46 @@ impl fmt::Display for ConfigError {
             ConfigError::Blocks(n) => write!(f, "data block count {n} above {}", params::MAX_DATA_BLOCKS),
             ConfigError::Controls(n) => write!(f, "control block count {n} above {}", params::MAX_CONTROL_BLOCKS),
             ConfigError::NoControlTones => write!(f, "the mask leaves no control tones"),
+            ConfigError::UnknownMask(id) => write!(f, "mask ID {id} is not held (ADR 0011)"),
+            ConfigError::MaskIds => write!(f, "mask IDs 0-3, current and pending different"),
         }
     }
 }
 
 impl std::error::Error for ConfigError {}
 
-/// What a receiver in a session must know that the header does not say
-/// (SPEC 5.4, 8.2): the link width, the tone mask, the peer's cap (the width
-/// probe's extent in tones, B.3 width cap + 1; None: the width), and
-/// optionally the prefix (None: detect it). A frame outside a session takes
-/// its width from its own probe instead (ADR 0007).
+/// What a station in a session must know that the header does not say
+/// (SPEC 5.4, 8.2): the width W of the frames (ADR 0011 `session-width`),
+/// the tone masks by ID, the width probe's extent in tones (`cap`; None: the
+/// width, as in every session frame since ADR 0011 `width-probe-extent`),
+/// and optionally the prefix (None: detect it).
+///
+/// Masks (ADR 0011 `mask-id`): `usable` is the current mask, with ID
+/// `mask_id`; `pending` an (ID, mask) reported but not yet named by a
+/// header, so at most two are held. A receiver holds the masks it reported
+/// for its direction; a sender builds with the mask its peer last reported
+/// and names its ID in the header. CONNECT, CONNECT-ACK and frames outside a
+/// session are unmasked ([`LinkState::mask_for`]). A frame outside a session
+/// takes its width from its own probe instead (ADR 0007).
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct LinkState {
-    /// Link width, 24-56 tones.
+    /// Width W, 24-56 tones.
     pub width: usize,
-    /// Usable-tone mask report, or None for every tone usable.
+    /// The current usable-tone mask report, or None for every tone usable.
     pub usable: Option<Vec<usize>>,
     /// Prefix, 60 or 120 samples, if known.
     pub cp: Option<usize>,
-    /// The peer's cap in tones (the probe's extent), None: the width.
+    /// The probe's extent in tones, None: the width.
     pub cap: Option<usize>,
+    /// ID of `usable`, 0-3.
+    pub mask_id: u8,
+    /// A mask reported and not yet named by a header: (ID, usable tones).
+    pub pending: Option<(u8, Option<Vec<usize>>)>,
 }
 
 impl Default for LinkState {
     fn default() -> Self {
-        LinkState { width: BASE_TONES, usable: None, cp: None, cap: None }
+        LinkState { width: BASE_TONES, usable: None, cp: None, cap: None, mask_id: 0, pending: None }
     }
 }
 
@@ -94,15 +114,56 @@ impl LinkState {
         LinkState { width, ..Default::default() }
     }
 
-    /// A session whose width is the sender's cap (data on tones up to the
-    /// cap, unusable ones masked) and whose probe reaches the same cap.
+    /// A link `cap` tones wide (unusable tones masked) whose probe reaches the same tones.
     pub fn from_cap(cap: usize, usable: Option<Vec<usize>>) -> Self {
-        LinkState { width: cap, usable, cp: None, cap: Some(cap) }
+        LinkState { width: cap, usable, cap: Some(cap), ..Default::default() }
+    }
+
+    /// The frames a station sends in a session, from the B.3 blocks of setup
+    /// (ADR 0011 `session-width`, `width-probe-extent`): W = the sender's
+    /// width cap + 1 when the receiver advertised capability bit 0, else 24,
+    /// with the probe to W, and the mask `usable` under `mask_id`. A receiver
+    /// passes its peer's B.3 and its own capabilities; a sender its own B.3
+    /// and the peer's capabilities.
+    pub fn session(sender: &ConnectBlock, receiver_capabilities: u16, usable: Option<Vec<usize>>, mask_id: u8) -> Self {
+        let w = session_width(sender.width_cap, receiver_capabilities);
+        LinkState { width: w, usable, cap: Some(w), mask_id, ..Default::default() }
+    }
+
+    /// CONNECT, a link-test PROBE and its SOUND reply: unmasked, probing
+    /// tones 0 ..= `width_cap` (ADR 0011 `width-probe-extent`).
+    pub fn probe_to(width_cap: u8) -> Self {
+        LinkState::from_cap(width_cap as usize + 1, None)
     }
 
     /// The probe's extent in tones.
     pub fn probe_extent(&self) -> usize {
         self.cap.unwrap_or(self.width)
+    }
+
+    /// The masks held: (ID, usable tones), the current one first.
+    pub fn masks(&self) -> Vec<(u8, Option<Vec<usize>>)> {
+        let mut m = vec![(self.mask_id, self.usable.clone())];
+        m.extend(self.pending.clone());
+        m
+    }
+
+    /// The mask of a frame with this header: the one its Mask ID names in a
+    /// session frame; none in CONNECT, CONNECT-ACK and outside a session.
+    pub fn mask_for(&self, header: &Header) -> Result<Option<Vec<usize>>, ConfigError> {
+        if self.mask_id >= MASK_IDS
+            || self.pending.as_ref().is_some_and(|(id, _)| *id >= MASK_IDS || *id == self.mask_id)
+        {
+            return Err(ConfigError::MaskIds);
+        }
+        if !header.session || header.frame_type == frame_type::CONNECT || header.frame_type == frame_type::CONNECT_ACK {
+            return Ok(None);
+        }
+        self.masks()
+            .into_iter()
+            .find(|(id, _)| *id == header.mask_id)
+            .map(|(_, m)| m)
+            .ok_or(ConfigError::UnknownMask(header.mask_id))
     }
 }
 
@@ -180,15 +241,17 @@ impl FrameConfig {
         Ok(cfg)
     }
 
-    /// The frame `header` describes at the link's width and mask (SPEC 8.2):
-    /// the header's rung when it has data blocks (MCS 0 otherwise; the field
-    /// is then ignored), its block counts and probe flag, prefix `cp`.
+    /// The frame `header` describes at the link's width and the mask its
+    /// Mask ID names (SPEC 8.2, ADR 0011; [`LinkState::mask_for`]): the
+    /// header's rung when it has data blocks (MCS 0 otherwise; the field is
+    /// then ignored), its block counts and probe flag, prefix `cp`.
     pub fn from_header(header: &Header, link: &LinkState, cp: usize) -> Result<Self, ConfigError> {
         let mcs = if header.n_data > 0 { header.mcs } else { 0 };
+        let usable = link.mask_for(header)?;
         FrameConfig::new(link.width, mcs, header.n_data)?
             .with_controls(header.n_control)?
             .with_cp(cp)?
-            .with_mask(link.usable.clone())?
+            .with_mask(usable)?
             .with_cap(link.probe_extent())?
             .with_probe(header.probe)
     }

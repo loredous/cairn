@@ -3,16 +3,18 @@
  "version": 1,
  "license": "CC BY 4.0",
  "name": "beacon",
- "description": "BEACON to broadcast with an ID control block and one data block; sequence is the frame counter",
+ "description": "BEACON to broadcast with an ID control block and one data block: a complete message (flag bit 6 set, bit 2 clear); sequence is the frame counter",
  "valid": true,
  "fields": {
   "version": 1,
   "frame_type": 0,
-  "flags": 3,
+  "flags": 67,
   "more_fragments": false,
   "session": false,
   "probe": false,
   "repeat": false,
+  "first_fragment": true,
+  "block_map": false,
   "source": {
    "callsign": "N0CALL",
    "ssid": 1,
@@ -25,8 +27,9 @@
   "sequence": 513,
   "mcs": 0,
   "control_blocks": 1,
-  "data_blocks": 1
+  "data_blocks": 1,
+  "mask_id": 0
  },
- "message_hex": "200339b0c130c1ffffffffff02010400",
- "info_hex": "200339b0c130c1ffffffffff020104005d42"
+ "message_hex": "204339b0c130c1ffffffffff02010400",
+ "info_hex": "204339b0c130c1ffffffffff02010400774b"
 }

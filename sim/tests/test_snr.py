@@ -113,7 +113,8 @@ def _vector_frame(name, seed=0):
     """A frame-vector case (``frame_vectors.FRAME_CASES``), clipped as sent on air."""
     from cairn_sim.frame_vectors import FRAME_CASES
     case = next(c for c in FRAME_CASES if c.name == name)
-    link = frame.LinkState(case.width, None if case.usable is None else frozenset(case.usable))
+    link = frame.LinkState(case.width, None if case.usable is None else frozenset(case.usable),
+                           mask_id=case.header.mask_id)
     tx = frame.build_frame(case.header, case.controls, link=link, cp=case.cp, rng=np.random.default_rng(seed))
     return link, tx
 

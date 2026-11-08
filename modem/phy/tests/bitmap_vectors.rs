@@ -1,11 +1,14 @@
 //! Every stage of every `vectors/bitmap/` frame (ADR 0005) and every
-//! `vectors/frame/` frame (real SPEC 8.2 headers and Appendix B control
-//! blocks): bits, I/Q levels, segment geometry, the tone grid (to its 9
-//! printed decimals) and, where published, the time-domain samples (to their
-//! 6 printed decimals).
+//! `vectors/frame/` and `vectors/link/` frame (real SPEC 8.2 headers and
+//! Appendix B control blocks): bits, I/Q levels, segment geometry, the tone
+//! grid (to its 9 printed decimals) and, where published, the time-domain
+//! samples (to their 6 printed decimals); for the frames with headers also
+//! the control-block order (ADR 0010, ADR 0012) and the data blocks'
+//! sequences (ADR 0008).
 
 mod common;
 
+use cairn_phy::fields;
 use cairn_phy::frame::{FrameConfig, LinkState};
 use cairn_phy::tx::{Transmitter, block_stages, control_stream, header_stream};
 use cairn_phy::{Receiver, RxOptions, gold, interleave, ldpc, mapping, params};
@@ -33,7 +36,9 @@ fn link(doc: &Value) -> LinkState {
         Value::Null => None,
         v => Some(usizes(v)),
     };
-    LinkState { width: doc["width"].as_u64().unwrap() as usize, usable, cp: None, cap: None }
+    // The mask is the one the header's Mask ID names (ADR 0011).
+    let mask_id = doc["header"].get("fields").map_or(0, |f| f["mask_id"].as_u64().unwrap() as u8);
+    LinkState { width: doc["width"].as_u64().unwrap() as usize, usable, mask_id, ..Default::default() }
 }
 
 fn config(doc: &Value) -> FrameConfig {
@@ -203,9 +208,25 @@ fn check_case(path: &std::path::Path) -> (usize, usize) {
         // The same frame from the header and control block fields.
         let controls: Vec<_> =
             doc["controls"].as_array().map_or(Vec::new(), |a| a.iter().map(|c| control(&c["fields"])).collect());
+        let hdr = header(f);
+        fields::check_controls(&hdr, &controls).unwrap_or_else(|e| panic!("{name}: {e}"));
+        let parsed: Vec<_> = controls.iter().cloned().map(Some).collect();
+        let seqs = fields::block_sequences(&hdr, &parsed).unwrap();
+        match doc.get("block_sequences") {
+            Some(v) => assert_eq!(
+                seqs,
+                v.as_array().unwrap().iter().map(|x| x.as_u64().unwrap() as u16).collect::<Vec<_>>(),
+                "{name}"
+            ),
+            None => assert!(seqs.is_empty(), "{name}"),
+        }
+        if let Some(p) = doc["segments"].as_array().unwrap().iter().find(|s| s["kind"] == "probe") {
+            // ADR 0011 width-probe-extent: the probe covers the frame's width.
+            assert_eq!(usizes(&p["tones"]), (0..cfg.width).collect::<Vec<_>>(), "{name}");
+        }
         let mut l = link(&doc);
         l.cp = Some(cfg.cp);
-        let mut hdr_frame = txr.build_frame(&header(f), &controls, &payloads, &l).unwrap();
+        let mut hdr_frame = txr.build_frame(&hdr, &controls, &payloads, &l).unwrap();
         assert_eq!(hdr_frame.config.clip_db, cfg.clip_db);
         hdr_frame.config.clip = false;
         let unclipped = txr.build_with_controls(&hdr_frame.config, &hmsg, &cmsgs, &payloads);
@@ -237,7 +258,11 @@ fn check_case(path: &std::path::Path) -> (usize, usize) {
             let mut x = vec![0.0; 700];
             x.extend(&want);
             x.extend(vec![0.0; 700]);
-            let r = Receiver::new().detect_and_receive(&x, &link(&doc), &RxOptions::default()).unwrap();
+            // The link state comes once the header has decoded (here: the
+            // published width and mask, under the Mask ID the header names).
+            let l = link(&doc);
+            let source = move |h: &cairn_phy::Header| Some(LinkState { mask_id: h.mask_id, ..l.clone() });
+            let r = Receiver::new().detect_and_receive(&x, &source, &RxOptions::default()).unwrap();
             assert_eq!(r.header.as_ref(), Some(&header(&doc["header"]["fields"])), "{name}");
             assert_eq!(r.config.as_ref().unwrap().cp, cfg.cp);
             assert_eq!(r.control_bits, cinfos, "{name}");
@@ -267,18 +292,24 @@ fn every_bitmap_vector() {
 
 #[test]
 fn every_frame_vector() {
-    let dir = repo().join("vectors/frame");
-    let mut paths: Vec<_> = std::fs::read_dir(&dir)
-        .unwrap()
-        .map(|e| e.unwrap().path())
-        .filter(|p| p.extension().is_some_and(|e| e == "json"))
-        .collect();
-    paths.sort();
-    assert!(paths.len() >= 7);
+    let docs = vector_docs("frame");
+    assert!(docs.len() >= 6);
     let mut with_samples = 0;
-    for p in &paths {
+    for (p, _) in &docs {
         let (_, n) = check_case(p);
         with_samples += (n > 0) as usize;
     }
-    assert!(with_samples >= 2);
+    assert!(with_samples >= 1);
+}
+
+#[test]
+fn every_link_frame_vector() {
+    let docs: Vec<_> = vector_docs("link").into_iter().filter(|(_, d)| d["format"] == "cairn-bitmap-vectors").collect();
+    assert_eq!(docs.len(), 5);
+    let mut with_samples = 0;
+    for (p, _) in &docs {
+        let (_, n) = check_case(p);
+        with_samples += (n > 0) as usize;
+    }
+    assert_eq!(with_samples, 1);
 }
