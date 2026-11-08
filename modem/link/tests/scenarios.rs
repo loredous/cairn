@@ -239,6 +239,64 @@ fn connect_refusal() {
 }
 
 #[test]
+fn allow_list_refuses_unlisted_callers_and_deny_wins() {
+    // Unattended operation (SPEC 13.4): with an allow list only listed
+    // stations get a session; the deny list applies on top.
+    for (allow_a, deny_a, accepted) in [(true, false, true), (false, false, false), (true, true, false)] {
+        let mut sim = Sim::new(43);
+        let a = sim.add(cfg("N0AAA", 1), Duration::from_millis(150));
+        let mut c = cfg("N0BBB", 2);
+        let addr_a = sim.addr(a);
+        let other = cairn_link::Address::callsign("N0ZZZ", 1).unwrap();
+        c.allow = Some(if allow_a { vec![other, addr_a] } else { vec![other] });
+        if deny_a {
+            c.deny = vec![addr_a];
+        }
+        sim.add(c, Duration::from_millis(150));
+        connect(&mut sim, 0, 1, t(0.0));
+        sim.run_until(t(30.0));
+        let refused = |e: &HostEvent| matches!(e, HostEvent::ConnectFailed { reason: ConnectFailure::Refused, .. });
+        let connected = |e: &HostEvent| matches!(e, HostEvent::Connected { .. });
+        assert_eq!(sim.has_event(0, connected), accepted, "allow {allow_a} deny {deny_a}");
+        assert_eq!(sim.has_event(0, refused), !accepted, "allow {allow_a} deny {deny_a}");
+        assert_eq!(sim.has_event(1, |e| matches!(e, HostEvent::Refused { .. })), !accepted);
+        assert_clean(&sim);
+    }
+}
+
+#[test]
+fn ui_frames_carry_the_id_block_when_due_with_id_broadcasts() {
+    // ADR 0010 `session-id-cadence` applied to broadcasts: the first UI frame
+    // and the first after 9 minutes carry the ID block; frames between do not,
+    // and an identical repeat keeps its original's blocks.
+    let mut sim = Sim::new(44);
+    let mut c = cfg("N0AAA", 1);
+    c.id_broadcasts = true;
+    sim.add(c, Duration::from_millis(150));
+    sim.add(cfg("N0BBB", 2), Duration::from_millis(150));
+    for (i, at) in [0.0, 60.0, 300.0, 545.0, 600.0].into_iter().enumerate() {
+        let pdu = Pdu::message(format!("CQ {i}").into_bytes());
+        sim.host(0, t(at), HostCommand::Broadcast { id: i as u64 + 1, pdu, repeats: (i == 0) as u8 });
+    }
+    sim.run_until(t(620.0));
+    let ui: Vec<(Instant, bool)> = sim
+        .frames_from(0)
+        .iter()
+        .filter_map(|a| a.frame.as_ref().filter(|f| f.ftype == FrameType::Ui).map(|f| (a.start, f.clone())))
+        .map(|(at, f)| (at, f.controls.iter().any(|c| matches!(c, ControlBlock::Id(_)))))
+        .collect();
+    let ids: Vec<bool> = ui.iter().map(|(_, id)| *id).collect();
+    // Frame 0 and its repeat, then 60 s, 300 s, 545 s (9 min 5 s after the first ID), 600 s.
+    assert_eq!(ids, [true, true, false, false, true, false], "{ui:?}");
+    // Without the option no UI frame carries one.
+    let mut sim = Sim::new(45);
+    sim.add(cfg("N0AAA", 1), Duration::from_millis(150));
+    sim.host(0, t(0.0), HostCommand::Broadcast { id: 1, pdu: Pdu::message(b"CQ".to_vec()), repeats: 0 });
+    sim.run_until(t(10.0));
+    assert!(sim.frames_from(0).iter().filter_map(|a| a.frame.as_ref()).all(|f| f.controls.is_empty()));
+}
+
+#[test]
 fn connect_retries_exhaust() {
     let mut sim = pair(42, 25.0);
     sim.link(0, 1).audible = false;

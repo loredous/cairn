@@ -25,6 +25,13 @@ with a 200 ms buffer, fills any capture gap with exactly as many zeros
 (later frames keep their timing; the frame across it is flagged), and
 `run --rx-agc` sets the receive gain between frames (SPEC 13.5); see
 [real-time audio](#real-time-audio-priority-buffers-gaps-and-receive-gain).
+The operator's side of v0.5 (SPEC 13.4, 13.6, 16.2) is in: a config file
+with rig profiles, a guided `setup` with transmit steps that each need a
+typed `yes`, a non-transmitting `selftest`, and `run --unattended` with
+allow and deny lists, session and daily keyed-time limits, periodic ID in
+broadcasts, a PTT watchdog, a rotating log and hooks; see
+[operator experience](#operator-experience-config-rig-profiles-setup-self-test-unattended)
+and [docs/operator-guide.md](../docs/operator-guide.md).
 
 ```sh
 cd modem
@@ -56,7 +63,10 @@ adds native ALSA capture and the receive-gain mixer control;
 
 ```sh
 M=target/release/cairn-modem
-$M devices                                   # every ALSA device; 48k = can run at 48 kHz
+$M setup                                     # guided setup: writes ~/.config/cairn/cairn.toml (asks before keying)
+$M selftest                                  # PASS/WARN/FAIL checks, nothing transmitted (--transmit: one ID frame)
+$M rigs                                      # rig profiles; --rig NAME or station.rig uses one
+$M devices                                   # every ALSA device; 48k = can run at 48 kHz; PTT candidates
 $M levels -d All-In-One-Cable --seconds 5    # input RMS (about the mean, and with DC), peak, DC, CLIP/HOT, xruns
 $M ptt-test --ptt serial:All-In-One-Cable --seconds 1      # refuses more than 5 s without --force
 $M tone -d All-In-One-Cable --ptt serial:All-In-One-Cable --seconds 3   # SPEC 7.1 level-setting tone
@@ -65,6 +75,11 @@ $M listen -d All-In-One-Cable                               # header first; Ctrl
 $M run -d All-In-One-Cable --ptt serial:All-In-One-Cable --callsign N0CALL-1   # the modem (below)
 ```
 
+- **Config file and rig profiles**: every command reads
+  `~/.config/cairn/cairn.toml` (`--config PATH`, `CAIRN_CONFIG`,
+  `--no-config`) and the rig profile it names (`--rig NAME`); flags and
+  their environment variables override both. See
+  [operator experience](#operator-experience-config-rig-profiles-setup-self-test-unattended).
 - **Devices** are chosen by a substring of the ALSA name or its
   description, ignoring case and punctuation (`All-In-One-Cable` matches
   `plughw:CARD=3,DEV=0`, whose description is "All-In-One-Cable, USB
@@ -72,7 +87,8 @@ $M run -d All-In-One-Cable --ptt serial:All-In-One-Cable --callsign N0CALL-1   #
   wins, then `hw:`. `CAIRN_DEVICE` sets the default.
 - **PTT** (`--ptt`, or `CAIRN_PTT`): `none` (default), `vox`,
   `serial:PATH` (a path, or a substring of a `/dev/serial/by-id/` name),
-  `cm108:/dev/hidrawN` (`--ptt-gpio`, default 3), `rigctld[:HOST[:PORT]]`.
+  `cm108:/dev/hidrawN` (`--ptt-gpio`, default 3; `cm108:auto` takes the
+  only C-Media-class HID node), `rigctld[:HOST[:PORT]]`.
   Serial keys with `--ptt-line dtr` (default) or `rts`, active high unless
   `--ptt-invert`; the other line is held low. That is the AIOC's wiring
   (DTR high and RTS low keys it). GPIO is not implemented yet.
@@ -312,6 +328,7 @@ $M run -d All-In-One-Cable --ptt serial:All-In-One-Cable --callsign N0CALL-1 --g
 #   --quieting 3600-4150 (Hz; default just above the cap)  --dcd-legacy  --refuse  --status 30
 #   -v (every header and DCD change)  --seconds N  --tx-budget S (never key more than S s in total)
 #   --rx-agc [--rx-agc-control NAME] (receive gain between frames)  --period/--buffer-ms/--no-rt/--rt-prio
+#   --unattended [--allow CALL-*,...] [--deny ...]  --id-broadcasts  --log-file PATH  --no-watchdog
 ```
 
 - **Width** (`--cap N`, 24-56 tones, default 24): the B.3 width cap is
@@ -684,6 +701,82 @@ run (the cable was moved to live radios).
   113/432 ms on the old path, 88/250 ms with the buffer alone, 86/144 ms
   with priority alone and 78/147 ms with both, so real-time priority is
   what keeps the 100 ms budget of SPEC 7.3 in sight under memory pressure.
+
+## Operator experience: config, rig profiles, setup, self-test, unattended
+
+SPEC 13.4 and 13.6 (v0.5 in 16.2). The procedures are in
+[docs/operator-guide.md](../docs/operator-guide.md); this is how it is
+built.
+
+**Config file** (`cli/src/config.rs`). TOML, sections `[station]`
+(callsign, grid, rig), `[audio]` (device, period, buffer_ms, backend, rt,
+rt_prio, rx_agc, rx_agc_control, output_control, output_db), `[ptt]`
+(method as `--ptt`, line, invert, gpio), `[timing]` (txdelay_ms,
+txtail_ms), `[link]` (cap, no_mask, persistence, slot_ms, max_frame,
+broadcast_mcs, quieting, refuse, id_broadcasts), `[host]` (kiss, api,
+api_socket, control, rx_dir, capture_dir, heard_file, ring_seconds,
+capture_on_failure, log_file, log_max_kb, log_keep) and `[unattended]`
+(below). Unknown keys are errors. The layers merge key by key: built-in
+defaults < rig profile < config file < flags and their environment
+variables (clap's value source decides whether a flag was given).
+
+**Rig profiles** (`docs/rigs/*.toml`, compiled in; `~/.config/cairn/rigs/`
+adds or replaces by name). A profile is a `[profile]` table (name,
+description, `status = "measured"` with `measured_on`, or `"unverified"`;
+interface, `usb_ids`, `device_match`, `serial_match`, squelch,
+carrier_tail_ms, path, passband_hz, weak_tones, notes) plus the same
+`[audio]`, `[ptt]`, `[timing]` and `[link]` sections as the config.
+Shipped: `aioc-ht` (the field-test values: `front:CARD=AllInOneCable,DEV=0`,
+serial PTT with DTR high and RTS low, TXDelay 300 ms, TXTail 20 ms, cap 32,
+'AIOC Audio Out Volume' about -9.5 dB, carrier tail 0.7 s, passband
+350 Hz-4.25 kHz, tones 0-2 weak; measured on one pair of handhelds),
+`digirig` (serial RTS), `signalink` (VOX: refuses sessions) and
+`cm108-gpio` (`cm108:auto`, GPIO 3), the last three unverified defaults.
+`cli/src/detect.rs` finds PTT candidates from sysfs and
+`/dev/serial/by-id` without opening anything, and names known interfaces
+by USB ID.
+
+**Setup and self-test** (`cli/src/setup.rs`, `cli/src/selftest.rs`) run
+over two traits (`cli/src/hw.rs`): `Terminal` (say, ask) and `Hardware`
+(list devices, open input and output, measure the input, read the PTT
+line idle, real-time check, capture control, port check, write a file;
+and, taking a `Confirmed`, key the PTT, transmit, transmit and listen).
+`Confirmed` has a private field; `confirm_keying` is the only constructor,
+after stating what goes out, for how long and the identification it
+carries, and only on a typed `yes`. The binary's `realhw.rs` is the real
+implementation; the tests drive the wizard end to end on a scripted
+terminal and a recording mock (all transmissions confirmed, all declined,
+`y` instead of `yes`, end of input, bad answers, a new profile, an
+existing config), and the self-test on good and broken stations, with
+and without `--transmit`. The setup writes only what differs from the
+chosen profile (`FileConfig::minus`). The self-test's reference recording
+(`fixtures/rx/hdr_mic_w27_ui_broadcast_snr14.wav`, compiled in) goes
+through a mock capture device into a `Modem`, the live receive path.
+
+**Unattended operation** (`cli/src/unattended.rs`, wired in `driver.rs`):
+patterns expand to addresses for the link layer's new allow list
+(`cairn_link::Config::allow`) and its deny list; a `SessionClock`
+disconnects a session past `max_session_min` (default 30; a resume keeps
+the clock); a `TxLedger` counts keyed time per UTC day (default 60 min,
+persisted in `budget_file`): under the reserve (30 s, or a quarter of a
+small budget) the station refuses sessions and closes the open one, at
+zero it keys nothing more that day. `id_broadcasts` (the link's
+`Config::id_broadcasts`, on with `--unattended`) puts the ID block in a UI
+frame when 9 minutes have passed since the station's last one; a repeat
+keeps its original's blocks. The watchdog (every `run`, `--no-watchdog`
+to drop it outside unattended mode) wraps the PTT (`WatchedPtt`); its
+thread releases the line itself and stops the modem when a transmission
+stays keyed past its keyed time plus `watchdog_margin_s` (2 s), or no audio
+arrives for `audio_stall_s` (5 s; a hung event loop stops the audio
+clock too). Hooks run the configured program with its configured
+arguments, never through a shell; the event's data go in `CAIRN_EVENT`,
+`CAIRN_TIME`, `CAIRN_STATION`, `CAIRN_PEER`, `CAIRN_SESSION_ID`,
+`CAIRN_RESUMED`, `CAIRN_INITIATOR`, `CAIRN_REASON`, `CAIRN_FILE`,
+`CAIRN_OBJECT`, `CAIRN_BYTES`, `CAIRN_SHA256`, `CAIRN_BROADCAST`
+(printable ASCII only) and a received message's text on stdin; at most four
+run at once, each killed after `timeout_s` (60 s). `--log-file` (or
+`host.log_file`) copies every output line, UTC-stamped, to a file rotated
+by size.
 
 ## Physical layer
 

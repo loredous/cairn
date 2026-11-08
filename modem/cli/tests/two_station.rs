@@ -7,7 +7,7 @@ use std::time::Duration;
 
 use cairn_link::linktest::ProbeKind;
 use cairn_link::pdu::pdu_type;
-use cairn_link::{Config, FrameType, HostCommand, HostEvent, Instant, Pdu};
+use cairn_link::{Config, ConnectFailure, FrameType, HostCommand, HostEvent, Instant, Pdu};
 use cairn_modem::control::HostState;
 use cairn_modem::kiss::ax25_pdu;
 use cairn_modem::runtime::{DecodeTime, ModemConfig};
@@ -676,4 +676,31 @@ fn rx_dir_files_arrive_byte_identical() {
     }
     assert_eq!(std::fs::read(dir.join("N0AAA_msg1.txt")).unwrap(), b"73 de N0AAA");
     let _ = std::fs::remove_dir_all(&dir);
+}
+
+#[test]
+fn unattended_station_ids_its_ui_frames_and_refuses_unlisted_callers() {
+    // Unattended operation through the real PHY: B's first UI broadcast
+    // carries the ID block (ADR 0010 cadence applied to broadcasts) and A
+    // decodes it; B accepts sessions only from N0CCC-*, so A's CONNECT gets
+    // the refusal.
+    let mut sim = Sim::new();
+    sim.add(station("N0AAA", 80), 0.0, 20.0, 80);
+    let mut b = station("N0BBB", 81);
+    let allow = cairn_modem::unattended::parse_patterns(&["N0CCC-*".into()]).unwrap();
+    cairn_modem::unattended::apply_lists(&mut b.station, &allow, &[]);
+    b.station.id_broadcasts = true;
+    sim.add(b, 0.0, 20.0, 81);
+    sim.host(1, t(0.5), HostCommand::Broadcast { id: 1, pdu: Pdu::message(b"QST de N0BBB".to_vec()), repeats: 0 });
+    sim.run_while(t(20.0), |s| s.stations[0].broadcasts.is_empty());
+    assert_eq!(sim.stations[0].broadcasts[0].3.body, b"QST de N0BBB");
+    let ui = sim.stations[0].heard.iter().find(|f| f.header.ftype == FrameType::Ui).expect("the UI frame");
+    assert_eq!((ui.controls, ui.controls_ok), (1, 1), "the ID block, decoded");
+    let at = sim.now() + Duration::from_secs(2);
+    connect(&mut sim, 0, 1, at);
+    sim.run_while(at + Duration::from_secs(30), |s| {
+        !s.stations[0].has(|e| matches!(e, HostEvent::ConnectFailed { .. }))
+    });
+    assert!(sim.stations[0].has(|e| matches!(e, HostEvent::ConnectFailed { reason: ConnectFailure::Refused, .. })));
+    assert!(sim.stations[1].has(|e| matches!(e, HostEvent::Refused { .. })));
 }

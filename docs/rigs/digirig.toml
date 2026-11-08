@@ -1,0 +1,45 @@
+# Digirig Mobile: a CM108-class USB sound card plus a CP2102N USB serial
+# port whose RTS line keys the radio.
+#
+# UNVERIFIED: conservative defaults from the interface's documentation, not
+# measured with Cairn. Run `cairn-modem setup` and correct the timing and
+# levels; please offer measured values back.
+
+[profile]
+name = "digirig"
+description = "Digirig Mobile (CM108-class audio, serial RTS PTT)"
+status = "unverified"
+interface = "Digirig"
+# C-Media audio (vendor 0d8c, product varies by batch) and the Silicon Labs
+# CP2102N bridge (10c4:ea60). Check `lsusb` if detection misses yours.
+usb_ids = ["0d8c:*", "10c4:ea60"]
+device_match = ["USB Audio Device", "C-Media"]
+serial_match = ["CP2102N", "CP2102", "Digirig"]
+squelch = "open"
+path = "unknown"
+notes = """
+PTT is the serial port's RTS line (DTR held low). Some cables and the
+Digirig Lite key from the sound card's GPIO instead: use the cm108-gpio
+profile for those. Levels: the CM108 mixer's 'Speaker' (playback) and 'Mic'
+(capture) controls; set drive with the level-setting tone. Width cap 24
+until the radio's passband is known (setup's receive check and a link test
+show what it passes).
+"""
+
+[audio]
+device = "USB Audio Device"
+rx_agc_control = "Mic"
+output_control = "Speaker"
+
+[ptt]
+method = "serial:CP2102"
+line = "rts"
+invert = false
+
+[timing]
+# Conservative until measured: most mobile radios key in 50-150 ms.
+txdelay_ms = 250.0
+txtail_ms = 20.0
+
+[link]
+cap = 24

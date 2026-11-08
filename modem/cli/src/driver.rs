@@ -42,6 +42,9 @@ use crate::hostapi::{AudioStatus, HostApi, HostApiConfig, RxGainStatus};
 use crate::kiss::{self, KissCommand};
 use crate::runtime::{DecodeTime, Modem, ModemConfig, Output};
 use crate::txseq::{self, TxTiming};
+use crate::unattended::{
+    Budget, HookCall, HookEvent, Policy, RotatingLog, SessionClock, TxLedger, WatchState, Watchdog,
+};
 
 /// Samples per chunk.
 const CHUNK: usize = 480;
@@ -86,6 +89,28 @@ pub struct RunOptions {
     /// Receive AGC (SPEC 13.5): Some(control name, or None for the best
     /// capture-volume control of the input's card).
     pub rx_agc: Option<Option<String>>,
+    /// Unattended operation: session and daily keyed-time limits, hooks
+    /// ([`crate::unattended`]; the allow and deny lists are already in the
+    /// station's configuration).
+    pub unattended: Option<Policy>,
+    /// The watchdog: its state (shared with the PTT wrapper), its limits,
+    /// and the margin over each transmission's keyed time.
+    pub watchdog: Option<(Arc<WatchState>, Watchdog, Duration)>,
+    /// Every output line to this log file too: (path, rotate at bytes, files kept).
+    pub log: Option<(std::path::PathBuf, u64, u32)>,
+}
+
+/// Unattended operation's state in the event loop.
+struct Unattended {
+    policy: Policy,
+    clock: SessionClock,
+    ledger: TxLedger,
+    budget: Budget,
+    accept: bool,
+}
+
+fn unix_s() -> i64 {
+    cairn_api::proto::now_unix_us().div_euclid(1_000_000)
 }
 
 /// The input's counters, for the status line.
@@ -115,8 +140,19 @@ enum Msg {
     Control(String),
     Kiss(SocketAddr, KissCommand),
     Api(Inbound),
-    TxDone { release_wall: std::time::Instant, keyed_ms: f64, txdelay_ms: f64, txtail_ms: f64, err: Option<String> },
+    TxDone {
+        release_wall: std::time::Instant,
+        keyed_ms: f64,
+        txdelay_ms: f64,
+        txtail_ms: f64,
+        err: Option<String>,
+    },
+    /// A line from another thread (a hook's outcome).
+    Note(String),
 }
+
+/// The log file, when one is configured.
+static LOG: std::sync::OnceLock<Mutex<RotatingLog>> = std::sync::OnceLock::new();
 
 /// The earliest-arrival estimate of capture sample times.
 struct SampleClock {
@@ -141,6 +177,11 @@ fn output_line(line: &str, clients: &Arc<Mutex<Vec<TcpStream>>>) {
         return;
     }
     let t = START.get().map_or(0.0, |s| s.elapsed().as_secs_f64());
+    if let Some(l) = LOG.get() {
+        if let Err(e) = l.lock().unwrap_or_else(|e| e.into_inner()).line(line) {
+            eprintln!("warning: log file: {e}");
+        }
+    }
     let line = format!("[{t:9.3}] {line}");
     println!("{line}");
     let _ = std::io::stdout().flush();
@@ -160,7 +201,24 @@ pub fn run(
     let now = move || Instant(origin.elapsed().as_micros() as u64);
     cfg.decode_time = DecodeTime::Wall(origin);
     let ring_seconds = cfg.ring_seconds;
+    if let Some((path, max, keep)) = &opts.log {
+        let l = RotatingLog::open(path, *max, *keep).map_err(|e| format!("log file {}: {e}", path.display()))?;
+        let _ = LOG.set(Mutex::new(l));
+        println!("logging to {}", path.display());
+    }
     let mut modem = Modem::new(cfg);
+    let mut unattended = opts.unattended.clone().map(|policy| {
+        let ledger = TxLedger::new(policy.daily_tx, policy.budget_file.clone(), unix_s());
+        Unattended { policy, clock: SessionClock::default(), ledger, budget: Budget::Open, accept: true }
+    });
+    if let Some(u) = unattended.as_mut() {
+        u.accept = modem.station().config().accept_connects;
+        output_line(&u.policy.describe(), &Arc::new(Mutex::new(Vec::new())));
+        let used = u.ledger.used(unix_s());
+        if used > Duration::ZERO {
+            println!("keyed today (UTC) so far: {:.0} s", used.as_secs_f64());
+        }
+    }
     let mut host = HostState::new();
     let epoch = cairn_api::proto::now_unix_us();
     let mut api = HostApi::new(
@@ -378,8 +436,25 @@ pub fn run(
             }
         });
     }
+    let note_tx = msg_tx.clone();
     drop(msg_tx);
     println!("{} listening; {}", modem.station().address(), control::HELP);
+    // The watchdog starts once the devices run.
+    let watchdog = opts.watchdog.as_ref().map(|(state, w, _)| {
+        state.audio();
+        println!(
+            "watchdog: PTT released and the modem stopped if keyed past a transmission's time + {:.1} s, or with no audio for {:.1} s",
+            opts.watchdog.as_ref().map_or(0.0, |w| w.2.as_secs_f64()),
+            w.audio_stall.as_secs_f64()
+        );
+        w.spawn(state.clone(), ptt.clone(), stop)
+    });
+    let fire = |u: &Unattended, call: HookCall| {
+        let n = note_tx.clone();
+        u.policy.hooks.fire(call, move |l| {
+            let _ = n.send(Msg::Note(l));
+        });
+    };
 
     let mut clock = SampleClock { window: VecDeque::new() };
     let mut taken = 0usize;
@@ -503,9 +578,15 @@ pub fn run(
                     }
                     KissCommand::FullDuplex(_) | KissCommand::SetHardware(_) | KissCommand::Return => {}
                 },
+                Msg::Note(l) => output_line(&l, &clients),
                 Msg::TxDone { release_wall, keyed_ms, txdelay_ms, txtail_ms, err: e } => {
                     let release = Instant(release_wall.saturating_duration_since(origin).as_micros() as u64);
                     keyed_total += Duration::from_secs_f64(keyed_ms / 1e3);
+                    if let Some(u) = unattended.as_mut() {
+                        if let Err(e) = u.ledger.record(Duration::from_secs_f64(keyed_ms / 1e3), unix_s()) {
+                            output_line(&format!("error: budget file: {e}"), &clients);
+                        }
+                    }
                     match e {
                         None => {
                             output_line(
@@ -533,7 +614,14 @@ pub fn run(
             }
             let want = CHUNK - chunk.len();
             match input.read(&mut buf[..want]) {
-                Ok(n) => chunk.extend(buf[..n].iter().map(|&v| v as f64)),
+                Ok(n) => {
+                    if n > 0 {
+                        if let Some((w, _, _)) = &opts.watchdog {
+                            w.audio();
+                        }
+                    }
+                    chunk.extend(buf[..n].iter().map(|&v| v as f64))
+                }
                 Err(e) => {
                     err = Some(e.to_string());
                     break;
@@ -619,6 +707,14 @@ pub fn run(
                 }
             }
             api.on_output(&o, saved.as_ref(), &modem, now());
+            if let Some(u) = unattended.as_mut() {
+                if let Output::Host(e) = &o {
+                    u.clock.on_event(e, now());
+                }
+                for call in crate::unattended::hook_calls(&o, saved.as_ref(), modem.station().address()) {
+                    fire(u, call);
+                }
+            }
             if opts.capture_on_failure && auto_capture.is_none() {
                 let me = modem.station().address();
                 let peer = modem.station().session_info().map(|i| i.peer);
@@ -636,6 +732,19 @@ pub fn run(
             match &o {
                 Output::Transmit(req) => {
                     let keyed = req.keyed(modem.config().txdelay, modem.config().txtail);
+                    let over_day = unattended.as_mut().is_some_and(|u| !u.ledger.may_key(keyed, unix_s()));
+                    if over_day {
+                        output_line(
+                            &format!(
+                                "daily keyed-time budget reached (unattended): {:?} not keyed (PTT stays released) until 00:00 UTC",
+                                req.frame.ftype
+                            ),
+                            &clients,
+                        );
+                        api.on_tx_failed("daily tx budget exhausted: not keyed", now());
+                        modem.tx_done(now(), now());
+                        continue;
+                    }
                     if opts.tx_budget.is_some_and(|b| keyed_total + keyed > b) {
                         output_line(
                             &format!("tx budget exhausted: {:?} not keyed (PTT stays released)", req.frame.ftype),
@@ -663,6 +772,9 @@ pub fn run(
                         txdelay_s: modem.config().txdelay.as_secs_f64(),
                         txtail_s: modem.config().txtail.as_secs_f64(),
                     };
+                    if let Some((w, _, margin)) = &opts.watchdog {
+                        w.expect(keyed + *margin);
+                    }
                     if job_tx.send((req.audio.clone(), timing)).is_err() {
                         err = Some("the transmit thread stopped".into());
                     }
@@ -693,6 +805,50 @@ pub fn run(
                 }
             }
         }
+        // Unattended limits: session length and the daily budget.
+        if let Some(u) = unattended.as_mut() {
+            if let Some(peer) = u.clock.overdue(u.policy.max_session, now()) {
+                output_line(
+                    &format!(
+                        "unattended: session with {peer} reached {:.0} min; disconnecting",
+                        u.policy.max_session.map_or(0.0, |d| d.as_secs_f64() / 60.0)
+                    ),
+                    &clients,
+                );
+                modem.host(HostCommand::Disconnect { graceful: false }, now());
+            }
+            let b = u.ledger.state(unix_s());
+            if b != u.budget {
+                let used = u.ledger.used(unix_s()).as_secs_f64();
+                match b {
+                    Budget::Open => {
+                        modem.station_mut().config_mut().accept_connects = u.accept;
+                        output_line("unattended: a new UTC day; the keyed-time budget is open again", &clients);
+                    }
+                    Budget::Reserve | Budget::Exhausted => {
+                        modem.station_mut().config_mut().accept_connects = false;
+                        let line = format!(
+                            "unattended: keyed-time budget {} ({used:.0} s used today): refusing sessions{}",
+                            if b == Budget::Reserve { "nearly used" } else { "used up" },
+                            if modem.station().session_info().is_some() { ", closing the open one" } else { "" }
+                        );
+                        output_line(&line, &clients);
+                        if modem.station().session_info().is_some() {
+                            modem.host(HostCommand::Disconnect { graceful: false }, now());
+                        }
+                        fire(
+                            u,
+                            HookCall {
+                                event: HookEvent::Alarm,
+                                env: vec![("CAIRN_REASON".into(), line)],
+                                stdin: vec![],
+                            },
+                        );
+                    }
+                }
+                u.budget = b;
+            }
+        }
         api.poll(&modem, now());
         if auto_capture.is_some_and(|t| std::time::Instant::now() >= t) {
             auto_capture = None;
@@ -719,6 +875,18 @@ pub fn run(
     }
     drop(job_tx);
     let _ = tx_thread.join();
+    let mut tripped = None;
+    if let (Some((state, _, _)), Some(h)) = (&opts.watchdog, watchdog) {
+        state.finish();
+        let _ = h.join();
+        tripped = state.tripped();
+    }
+    if let (Some(why), Some(u)) = (&tripped, unattended.as_ref()) {
+        output_line(why, &clients);
+        fire(u, HookCall { event: HookEvent::Alarm, env: vec![("CAIRN_REASON".into(), why.clone())], stdin: vec![] });
+        // Give the alarm hook a moment to start before the process exits.
+        std::thread::sleep(Duration::from_millis(200));
+    }
     if let Err(e) = api.save_heard() {
         eprintln!("error: {e}");
     }
@@ -739,7 +907,7 @@ pub fn run(
         modem.stats.gapped_frames,
         median(&modem.stats.decode_ms)
     );
-    if let Some(e) = err {
+    if let Some(e) = err.or(tripped) {
         return Err(format!("{e}\n{summary}"));
     }
     Ok(summary)
