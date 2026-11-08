@@ -65,6 +65,9 @@ pub struct RxOptions {
     pub max_iter: usize,
     /// Measure the channel SNR by rebuilding the sent symbols (ADR 0006).
     pub rebuild_snr: bool,
+    /// Threads decoding data blocks (1: on the calling thread). Results do
+    /// not depend on it.
+    pub threads: usize,
 }
 
 impl Default for RxOptions {
@@ -78,6 +81,7 @@ impl Default for RxOptions {
             header_noise: HeaderNoise::Measured,
             max_iter: params::LDPC_MAX_ITER,
             rebuild_snr: true,
+            threads: 1,
         }
     }
 }
@@ -117,6 +121,9 @@ pub struct RxResult {
     pub drift: f64,
     /// Channel SNR excluding the designed clipping (ADR 0006), if measured.
     pub channel_snr: Option<ChannelSnr>,
+    /// For a frame outside a session with a probe: which tones carried it
+    /// (ADR 0007), the width it gave, and the width the frame decoded at.
+    pub probe_extent: Option<ProbeExtent>,
 }
 
 impl RxResult {
@@ -297,20 +304,21 @@ impl Receiver {
         }) + N_USEFUL as i64;
         let left = (-lo).max(0) as usize;
         let right = (hi - rx.len() as i64).max(0) as usize;
+        let nt = cfg.n_tones();
         let mut g = if left == 0 && right == 0 {
-            self.ofdm.demodulate(rx, window_start, n_sym, cfg.width, cfg.cp, cfg.width, shifts)
+            self.ofdm.demodulate(rx, window_start, n_sym, nt, cfg.cp, cfg.width, shifts)
         } else {
             let mut padded = vec![0.0; left];
             padded.extend_from_slice(rx);
             padded.extend(std::iter::repeat_n(0.0, right));
-            self.ofdm.demodulate(&padded, window_start + left, n_sym, cfg.width, cfg.cp, cfg.width, shifts)
+            self.ofdm.demodulate(&padded, window_start + left, n_sym, nt, cfg.cp, cfg.width, shifts)
         };
         if let Some(sh) = shifts {
             // Undo each shift's known phase: moving the window d samples later
             // turns tone bin f by 2 pi f d / N.
             for (s, &d) in sh.iter().enumerate() {
                 if d != 0 {
-                    for k in 0..cfg.width {
+                    for k in 0..nt {
                         let f = BIN_OFFSET + k as f64;
                         *g.at_mut(s, k) *= Complex64::from_polar(1.0, -2.0 * PI * f * d as f64 / N_USEFUL as f64);
                     }
@@ -334,7 +342,7 @@ impl Receiver {
 
     fn estimate(&self, tones: &Grid, cfg: &FrameConfig, opts: &RxOptions) -> Estimate {
         let b = BASE_TONES;
-        let w = cfg.width;
+        let w = cfg.n_tones();
         let first = PREAMBLE_SYMBOLS;
         let hs = cfg.header_symbols();
         let s2 = preamble::s2();
@@ -448,7 +456,7 @@ impl Receiver {
         }
         let Estimate { h, mut noise, thermal, excess, mut snr_db, corr, drift } = est;
         let corr_kept = corr.clone();
-        let w = cfg.width;
+        let w = cfg.n_tones();
         let hs = cfg.header_symbols();
         let c0 = cfg.first_control() - first;
         let d0 = cfg.first_data() - first;
@@ -596,16 +604,7 @@ impl Receiver {
             }
         }
         let e = rung.coded_bits;
-        let dcode = ldpc::data_code();
-        let rows = dcode.rows_for_length(e);
-        let mut dec = dcode.decoder();
-        let results: Vec<DecodeResult> = (0..cfg.n_blocks)
-            .map(|i| {
-                let mut l = interleave::deinterleave(&dl[i * e..(i + 1) * e]);
-                gold::descramble_llr(&mut l, (1 + cfg.n_control + i) as u32);
-                dec.decode(&dcode.rate_recover(&l, 0), &rows, opts.max_iter, LDPC_ALPHA)
-            })
-            .collect();
+        let results = decode_data_blocks(&dl, e, 1 + cfg.n_control, cfg.n_blocks, opts);
         let block_ok: Vec<bool> = results.iter().map(|r| r.ok).collect();
         let block_bits: Vec<Vec<u8>> = results.iter().map(|r| r.bits.clone()).collect();
         let control_ok: Vec<bool> = cres.iter().map(|r| r.ok).collect();
@@ -642,6 +641,7 @@ impl Receiver {
             start,
             snr_db,
             drift,
+            probe_extent: None,
         }
     }
 }
@@ -662,31 +662,167 @@ impl Receiver {
         cp: usize,
         opts: &RxOptions,
     ) -> RxResult {
+        let head = self.receive_header(rx, start, cp, opts);
+        let Some(header) = head.header.clone() else {
+            return head;
+        };
+        let extent = (!header.session && header.probe).then(|| self.probe_extent(rx, start, cp, &header, opts));
+        self.receive_frame(rx, &header, link, extent, start, cp, opts).unwrap_or_else(|e| {
+            let mut head = head;
+            head.header = None;
+            head.header_error = Some(HeaderError::Config(e));
+            head
+        })
+    }
+
+    /// Decode the preamble and header alone on the base tones (the first
+    /// half of [`Receiver::receive_header_first`]); `config` is None. The
+    /// channel SNR is measured only if the header fails (the frame's own
+    /// decode measures it otherwise).
+    pub fn receive_header(&mut self, rx: &[f64], start: usize, cp: usize, opts: &RxOptions) -> RxResult {
         let head_cfg = FrameConfig::new(BASE_TONES, 0, 0).and_then(|c| c.with_cp(cp));
         let Ok(head_cfg) = head_cfg else {
             panic!("prefix {cp} is neither {} nor {}", params::CP_SHORT, params::CP_LONG);
         };
-        let mut head = self.receive(rx, &head_cfg, start, opts);
-        let Some(header) = head.header.clone() else {
-            head.config = None;
-            return head;
-        };
-        let cfg = match FrameConfig::from_header(&header, link, cp) {
-            Ok(c) => c,
-            Err(e) => {
-                head.header = None;
-                head.header_error = Some(HeaderError::Config(e));
-                head.config = None;
-                return head;
-            }
-        };
+        let quick = RxOptions { rebuild_snr: false, ..opts.clone() };
+        let mut head = self.receive(rx, &head_cfg, start, &quick);
+        if head.header.is_none() && opts.rebuild_snr {
+            head = self.receive(rx, &head_cfg, start, opts);
+        }
+        head.config = None;
+        head
+    }
+
+    /// Decode the frame a decoded `header` describes (the second half of
+    /// [`Receiver::receive_header_first`]): a session frame at `link`'s
+    /// width, mask and cap; any other frame at the width of its probe
+    /// (`extent`, from [`Receiver::probe_extent`]; 24 tones without a probe).
+    /// If no data block decodes at the probe's width, the widths around it
+    /// are tried ([`width_alternatives`]) and the first at which a block
+    /// decodes is kept. Err if the header describes no decodable frame.
+    #[allow(clippy::too_many_arguments)]
+    pub fn receive_frame(
+        &mut self,
+        rx: &[f64],
+        header: &Header,
+        link: &LinkState,
+        extent: Option<ProbeExtent>,
+        start: usize,
+        cp: usize,
+        opts: &RxOptions,
+    ) -> Result<RxResult, ConfigError> {
+        let cfg = FrameConfig::from_header(header, &frame_link(header, link, extent.as_ref()), cp)?;
         let mut r = self.receive(rx, &cfg, start, opts);
+        if let Some(ext) = extent.as_ref().filter(|_| cfg.n_blocks > 0 && !r.block_ok.iter().any(|&b| b)) {
+            for w in width_alternatives(ext.width) {
+                let alt = LinkState { width: w, usable: None, cp: link.cp, cap: Some(w) };
+                let Ok(acfg) = FrameConfig::from_header(header, &alt, cp) else { continue };
+                let ra = self.receive(rx, &acfg, start, opts);
+                if ra.block_ok.iter().any(|&b| b) {
+                    r = ra;
+                    break;
+                }
+            }
+        }
         // The header pass decided the geometry; report its header.
-        r.header_ok = true;
-        r.header_bits = head.header_bits;
-        r.header = Some(header);
+        if !r.header_ok {
+            r.header_ok = true;
+            r.header_bits = header.bits().expect("a decoded header packs");
+        }
+        r.header = Some(header.clone());
         r.header_error = None;
-        r
+        r.probe_extent = extent;
+        Ok(r)
+    }
+
+    /// Which tones above 23 carry a frame's width probe, and the width they
+    /// give (ADR 0007 `broadcast-width-from-probe`); mirrors the simulator's
+    /// `frame.probe_extent`. Reads [`extent_samples`] samples from `start`
+    /// (zero-padded beyond `rx`).
+    ///
+    /// Each tone's two probe symbols, divided by the known values, both
+    /// measure the channel when the tone carries the probe, so their
+    /// correlation Re{z0 conj(z1)} estimates its signal power; without the
+    /// probe they are unrelated and it averages zero (clip-and-filter
+    /// regrowth above the cap is not the probe sequence). In a broadcast the
+    /// data uses exactly the probed tones, so the power of the data symbols
+    /// every width has adds to the estimate, less the noise measured on the
+    /// same tones in the preamble, header and control symbols (silent above
+    /// tone 23). A tone counts when the estimate clears [`EXTENT_SIGMA`]
+    /// noise deviations and [`EXTENT_FLOOR_DB`] below the base tones' probe
+    /// power; the width is the change point of the run (the count of tones
+    /// that do minus those that do not, from tone 24 up, peaks one past the
+    /// last probed tone; ties to the higher).
+    pub fn probe_extent(
+        &mut self,
+        rx: &[f64],
+        start: usize,
+        cp: usize,
+        header: &Header,
+        opts: &RxOptions,
+    ) -> ProbeExtent {
+        let (b, m) = (BASE_TONES, params::MAX_TONES);
+        if !header.probe {
+            return ProbeExtent {
+                width: b,
+                signal: vec![0.0; m - b],
+                threshold: vec![1.0; m - b],
+                present: vec![false; m - b],
+                data_symbols: 0,
+            };
+        }
+        let cfg = extent_geometry(header, cp);
+        let n_data = cfg.data_symbols();
+        let rows = cfg.first_data() + n_data;
+        let advance = opts.advance.unwrap_or(cp / 4);
+        let ws = (start + cp).saturating_sub(advance);
+        let need = ws + rows * cfg.stride();
+        let y = if rx.len() >= need {
+            self.ofdm.demodulate(rx, ws, rows, m, cp, m, None)
+        } else {
+            let mut padded = rx.to_vec();
+            padded.resize(need, 0.0);
+            self.ofdm.demodulate(&padded, ws, rows, m, cp, m, None)
+        };
+        let p0 = cfg.first_probe();
+        let known = tx::probe_grid(m, p0);
+        let z0: Vec<Complex64> = (0..m).map(|k| y.at(p0, k) / known.at(0, k)).collect();
+        let z1: Vec<Complex64> = (0..m).map(|k| y.at(p0 + 1, k) / known.at(1, k)).collect();
+        let silent: Vec<usize> = (0..p0).chain(cfg.first_control()..cfg.first_data()).collect();
+        let pw: Vec<f64> =
+            (0..m).map(|k| silent.iter().map(|&s| y.at(s, k).norm_sqr()).sum::<f64>() / silent.len() as f64).collect();
+        let half = EXTENT_NOISE_TONES / 2;
+        let nd = n_data as f64;
+        let ref_pw: Vec<f64> = (0..b).map(|k| ((z0[k] + z1[k]) / 2.0).norm_sqr()).collect();
+        let reference = dsp::median(&ref_pw);
+        let floor = reference * 10f64.powf(EXTENT_FLOOR_DB / 10.0);
+        let (mut signal, mut threshold, mut present) = (Vec::new(), Vec::new(), Vec::new());
+        for k in b..m {
+            let (lo, hi) = (k.saturating_sub(half).max(b), (k + half + 1).min(m));
+            let noise = pw[lo..hi].iter().sum::<f64>() / (hi - lo) as f64;
+            let n_ref = ((hi - lo) * silent.len()) as f64;
+            let energy = if n_data > 0 {
+                (cfg.first_data()..rows).map(|s| y.at(s, k).norm_sqr()).sum::<f64>() / nd - noise
+            } else {
+                0.0
+            };
+            let q = (z0[k] * z1[k].conj()).re;
+            let sig = (2.0 * q + nd * energy) / (2.0 + nd);
+            let sd = noise * (2.0 + nd + nd * nd / n_ref).sqrt() / (2.0 + nd);
+            let thr = (EXTENT_SIGMA * sd).max(floor);
+            signal.push(sig);
+            threshold.push(thr);
+            present.push(sig > thr);
+        }
+        let (mut run, mut best, mut best_j) = (0i64, 0i64, 0usize);
+        for (i, &p) in present.iter().enumerate() {
+            run += if p { 1 } else { -1 };
+            if run >= best {
+                best = run;
+                best_j = i + 1;
+            }
+        }
+        ProbeExtent { width: b + best_j, signal, threshold, present, data_symbols: n_data }
     }
 
     /// Find the strongest frame in `rx` with the SPEC 6.1 detector (blind
@@ -699,6 +835,132 @@ impl Receiver {
             .max_by(|a, b| a.quality.total_cmp(&b.quality))?;
         Some(self.receive_header_first(rx, link, best.start, best.cp, opts))
     }
+}
+
+/// A tone carries the probe when its signal estimate clears this many
+/// standard deviations of its noise-only value (ADR 0007 probe extent).
+pub const EXTENT_SIGMA: f64 = 5.0;
+/// ... and this level against the base tones' probe power, dB
+/// (clip-and-filter regrowth just above the cap is about -30 dB).
+pub const EXTENT_FLOOR_DB: f64 = -24.0;
+/// Neighbouring upper tones pooled for each tone's noise reference.
+pub const EXTENT_NOISE_TONES: usize = 11;
+/// Width offsets tried around the probe's when no data block decodes there.
+pub const EXTENT_RETRY: [i64; 6] = [1, -1, 2, -2, 3, -3];
+
+/// Which tones above 23 carry a frame's width probe ([`Receiver::probe_extent`]).
+#[derive(Clone, Debug, PartialEq)]
+pub struct ProbeExtent {
+    /// Highest tone carrying the probe, plus one (24 if none does).
+    pub width: usize,
+    /// Per tone 24-55: signal power estimate.
+    pub signal: Vec<f64>,
+    /// Per tone 24-55: the threshold it was compared with.
+    pub threshold: Vec<f64>,
+    /// Per tone 24-55: counted as carrying the probe.
+    pub present: Vec<bool>,
+    /// Data symbols the estimate used.
+    pub data_symbols: usize,
+}
+
+impl ProbeExtent {
+    /// Decision margins at the edge, dB: the last tone in the extent over its
+    /// threshold, and the threshold over the first tone beyond (infinite
+    /// where there is no such tone).
+    pub fn margin_db(&self) -> (f64, f64) {
+        let b = BASE_TONES;
+        let db = |a: f64, c: f64| 10.0 * (a.max(1e-30) / c.max(1e-30)).log10();
+        let inside = if self.width > b {
+            db(self.signal[self.width - 1 - b], self.threshold[self.width - 1 - b])
+        } else {
+            f64::INFINITY
+        };
+        let outside = if self.width - b < self.signal.len() {
+            db(self.threshold[self.width - b], self.signal[self.width - b])
+        } else {
+            f64::INFINITY
+        };
+        (inside, outside)
+    }
+}
+
+/// The frame a header describes at 56 tones: the rows before the data do not
+/// depend on the width, and its data symbols are the fewest any width gives.
+pub fn extent_geometry(header: &Header, cp: usize) -> FrameConfig {
+    let mcs = if header.n_data > 0 { header.mcs } else { 0 };
+    FrameConfig::new(params::MAX_TONES, mcs.min(6), header.n_data)
+        .and_then(|c| c.with_controls(header.n_control))
+        .and_then(|c| c.with_cp(cp))
+        .and_then(|c| c.with_probe(true))
+        .expect("a 56-tone frame from a decoded header")
+}
+
+/// Samples from a frame's start that [`Receiver::probe_extent`] reads.
+pub fn extent_samples(header: &Header, cp: usize) -> usize {
+    let cfg = extent_geometry(header, cp);
+    (cfg.first_data() + cfg.data_symbols()) * cfg.stride()
+}
+
+/// Widths to try, nearest first, when nothing decodes at the probe's.
+pub fn width_alternatives(width: usize) -> Vec<usize> {
+    EXTENT_RETRY
+        .iter()
+        .map(|d| width as i64 + d)
+        .filter(|w| (BASE_TONES as i64..=params::MAX_TONES as i64).contains(w))
+        .map(|w| w as usize)
+        .collect()
+}
+
+/// The link state a frame is decoded with: the caller's for a session frame
+/// (header flag bit 3); outside a session, the probe's extent as width and
+/// cap with no mask (ADR 0007), or 24 tones without a probe.
+pub fn frame_link(header: &Header, link: &LinkState, extent: Option<&ProbeExtent>) -> LinkState {
+    if header.session {
+        return link.clone();
+    }
+    let width = match extent {
+        Some(e) if header.probe => e.width,
+        _ => BASE_TONES,
+    };
+    LinkState { width, usable: None, cp: link.cp, cap: Some(width) }
+}
+
+/// Decode `n` data blocks of `e` coded bits from their demapped LLRs (the
+/// first at scrambler position `first_position`), on `opts.threads` threads.
+fn decode_data_blocks(llrs: &[f64], e: usize, first_position: usize, n: usize, opts: &RxOptions) -> Vec<DecodeResult> {
+    let dcode = ldpc::data_code();
+    let rows = dcode.rows_for_length(e);
+    let one = |dec: &mut ldpc::Decoder<'_>, i: usize| {
+        let mut l = interleave::deinterleave(&llrs[i * e..(i + 1) * e]);
+        gold::descramble_llr(&mut l, (first_position + i) as u32);
+        dec.decode(&dcode.rate_recover(&l, 0), &rows, opts.max_iter, LDPC_ALPHA)
+    };
+    let threads = opts.threads.clamp(1, n.max(1));
+    if threads == 1 {
+        let mut dec = dcode.decoder();
+        return (0..n).map(|i| one(&mut dec, i)).collect();
+    }
+    // Interleaved assignment: block i to thread i mod threads, so a burst
+    // that slows a run of blocks spreads over the threads.
+    let mut parts: Vec<Vec<(usize, DecodeResult)>> = std::thread::scope(|sc| {
+        let handles: Vec<_> = (0..threads)
+            .map(|t| {
+                let one = &one;
+                sc.spawn(move || {
+                    let mut dec = dcode.decoder();
+                    (t..n).step_by(threads).map(|i| (i, one(&mut dec, i))).collect::<Vec<_>>()
+                })
+            })
+            .collect();
+        handles.into_iter().map(|h| h.join().expect("decoder thread")).collect()
+    });
+    let mut out: Vec<Option<DecodeResult>> = (0..n).map(|_| None).collect();
+    for part in parts.drain(..) {
+        for (i, r) in part {
+            out[i] = Some(r);
+        }
+    }
+    out.into_iter().map(|r| r.expect("every block decoded")).collect()
 }
 
 fn parse_header(ok: bool, bits: &[u8]) -> (Option<Header>, Option<HeaderError>) {
@@ -728,7 +990,7 @@ struct Decoded<'a> {
 /// the designed clipping (which is in the rebuilt reference).
 fn rebuild_snr(tones: &Grid, corr: &Grid, cfg: &FrameConfig, advance: usize, dec: &Decoded) -> ChannelSnr {
     let Decoded { header_ok, header_bits, control_ok, control_bits, block_ok, block_bits } = *dec;
-    let w = cfg.width;
+    let w = cfg.n_tones();
     let n_sym = cfg.total_symbols();
     let first = PREAMBLE_SYMBOLS;
     let hdr: Vec<u8> = header_bits[..params::HEADER_INFO_BITS - params::CRC_BITS].to_vec();
@@ -737,7 +999,7 @@ fn rebuild_snr(tones: &Grid, corr: &Grid, cfg: &FrameConfig, advance: usize, dec
     let payloads: Vec<Vec<u8>> = block_bits.iter().map(|b| b[..params::DATA_PAYLOAD_BITS].to_vec()).collect();
     let frame = tx::Transmitter::new().build_with_controls(cfg, &hdr, &cmsgs, &payloads);
     let mut ofdm = Ofdm::new();
-    let mut reference = ofdm.demodulate(&frame.samples, cfg.cp - advance, n_sym, w, cfg.cp, w, None);
+    let mut reference = ofdm.demodulate(&frame.samples, cfg.cp - advance, n_sym, w, cfg.cp, cfg.width, None);
     let cgain = cfg.control_gain();
     for s in cfg.first_control()..cfg.first_data() {
         for v in reference.row_mut(s) {
@@ -757,7 +1019,7 @@ fn rebuild_snr(tones: &Grid, corr: &Grid, cfg: &FrameConfig, advance: usize, dec
     if header_ok {
         known.extend((cfg.first_header()..cfg.first_probe()).map(|s| (s, &base[..])));
     }
-    known.extend((cfg.first_probe()..cfg.first_control()).map(|s| (s, &all[..])));
+    known.extend((cfg.first_probe()..cfg.first_control()).map(|s| (s, &all[..cfg.cap])));
     let ct = cfg.control_tones.len();
     for cs in 0..cfg.control_symbols() {
         // Points cs*D .. (cs+1)*D; control block i holds points i*256 .. (i+1)*256.

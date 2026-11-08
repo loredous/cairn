@@ -28,5 +28,5 @@ pub mod wav;
 
 pub use fields::{Address, ControlBlock, FieldError, Header};
 pub use frame::{ConfigError, FrameConfig, LinkState};
-pub use rx::{Receiver, RxOptions, RxResult};
+pub use rx::{ProbeExtent, Receiver, RxOptions, RxResult};
 pub use tx::{Transmitter, TxFrame};

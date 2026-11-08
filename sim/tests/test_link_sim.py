@@ -9,8 +9,11 @@ from cairn_sim import link_sim
 from cairn_sim.link_sim import Budget, Point, default_frame_s
 
 
+PRINTED = dict(probe=False, ack_block=False)     # SPEC 7.4 and Appendix A as printed
+
+
 def test_worked_example_7_4_reproduced_within_5_percent():
-    b = Budget(3)          # 24 tones, MCS 3, 4 s frames, TXDelay 150 ms
+    b = Budget(3, **PRINTED)          # 24 tones, MCS 3, 4 s frames, TXDelay 150 ms
     assert b.blocks == 21
     assert b.symbols_per_block == pytest.approx(15.5, abs=0.06)
     assert b.cycle_s == pytest.approx(4.46, rel=0.05)
@@ -23,12 +26,26 @@ def test_worked_example_7_4_reproduced_within_5_percent():
 def test_appendix_a2_blocks_per_frame(mcs, blocks24, blocks56):
     # Appendix A.2 lists 84 blocks for MCS 5 at 56 tones; only 83 fit in the
     # 330 block symbols of a 4 s frame (330 * 312 / 1232 = 83.6).
+    assert Budget(mcs, 24, default_frame_s(mcs), **PRINTED).blocks == blocks24
+    assert Budget(mcs, 56, default_frame_s(mcs), **PRINTED).blocks == blocks56
+
+
+@pytest.mark.parametrize("mcs,blocks24,blocks56", [
+    (0, 3, 7), (1, 4, 10), (2, 13, 32), (3, 20, 48), (4, 27, 64), (5, 34, 80), (6, 40, 96)])
+def test_blocks_with_ack_block_and_probe(mcs, blocks24, blocks56):
+    # SPEC 8.4: every DATA frame carries the ACK control block (12 symbols);
+    # ADR 0007: every frame with data above tone 23 carries the probe (2).
     assert Budget(mcs, 24, default_frame_s(mcs)).blocks == blocks24
     assert Budget(mcs, 56, default_frame_s(mcs)).blocks == blocks56
 
 
 def test_block_symbols_in_a_4s_frame():
-    assert Budget(3).block_symbols_available == 330
+    assert Budget(3, **PRINTED).block_symbols_available == 330
+    assert Budget(3).block_symbols_available == 318                    # less the ACK block
+    assert Budget(3, 56).block_symbols_available == 316                # and the probe
+    assert Budget(3, 56, ack_block=False).block_symbols_available == 328
+    # A 56-tone link masked down to the base tones needs no probe.
+    assert Budget(3, 56, mask=frozenset(range(24))).probe_symbols == 0
 
 
 def test_threshold_interpolates_log_bler():

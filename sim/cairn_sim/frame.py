@@ -36,7 +36,7 @@ unmasked one. The receiver divides that known factor back out.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from functools import cached_property
 
 import numpy as np
@@ -55,13 +55,26 @@ QPSK = 2
 
 @dataclass(frozen=True)
 class LinkState:
-    """What a receiver must know that the header does not say (SPEC 5.4, 8.2):
-    the link width and the tone mask, and optionally the prefix (``None``:
-    detect it, SPEC 6.1)."""
+    """What a receiver in a session must know that the header does not say
+    (SPEC 5.4, 8.2): the link width, the tone mask, the peer's cap (the
+    width probe's extent in tones, B.3 width cap + 1; ``None``: the link
+    width), and optionally the prefix (``None``: detect it, SPEC 6.1).
+
+    It applies to session frames (header flag bit 3). A frame outside a
+    session takes its width from its own probe (ADR 0007
+    ``broadcast-width-from-probe``) or is 24 tones without one.
+    """
 
     width: int = params.BASE_TONES
     mask: frozenset[int] | None = None
     cp: int | None = None
+    cap: int | None = None
+
+    @classmethod
+    def from_cap(cls, cap: int, mask: frozenset[int] | None = None, cp: int | None = None) -> LinkState:
+        """A session whose width is the sender's cap (data on tones up to the
+        cap, unusable ones masked) and whose probe reaches the same cap."""
+        return cls(width=cap, mask=mask, cp=cp, cap=cap)
 
 
 @dataclass(frozen=True)
@@ -76,6 +89,7 @@ class FrameConfig:
     mask: frozenset[int] | None = None  # usable tones (SPEC 5.4); None: every tone usable
     interleaver: str = "linear"         # mapping.INTERLEAVERS; "random" is an evaluation reference
     n_control: int = 0                  # control blocks (0-3), MCS 0 on the base tones
+    cap: int | None = None              # the probe's extent in tones (the sender's cap); None: the width
 
     def __post_init__(self) -> None:
         if not 0 <= self.mcs < len(params.RUNGS):
@@ -93,13 +107,21 @@ class FrameConfig:
                                else params.CLIP_DB_ABOVE_RMS)
         if not params.BASE_TONES <= self.width <= params.MAX_TONES:
             raise ValueError(f"width must be {params.BASE_TONES}-{params.MAX_TONES} tones")
-        if self.width > params.BASE_TONES and self.probe is False:
-            raise ValueError("tones above the base set need the width probe")
+        if self.cap is None:
+            object.__setattr__(self, "cap", self.width)
+        if not self.width <= self.cap <= params.MAX_TONES:
+            raise ValueError(f"cap {self.cap} must be {self.width}-{params.MAX_TONES} tones: neither the "
+                             "data nor the probe exceeds the sender's cap (SPEC 5.4)")
         if self.mask is not None:
             object.__setattr__(self, "mask", frozenset(int(k) for k in self.mask))
         if self.interleaver not in mapping.INTERLEAVERS:
             raise ValueError(f"unknown interleaver {self.interleaver!r}")
         params.masked_tones(self.width, self.mask)          # validates the mask
+        if self.probe is None:
+            object.__setattr__(self, "probe", self.needs_probe)
+        elif self.needs_probe and not self.probe:
+            raise ValueError("data blocks on tones above 23 need the width probe (ADR 0007 "
+                             "width-probe-every-wide-frame)")
         if self.n_control and not self.control_tones:
             raise ValueError("the mask leaves no control tones")
 
@@ -117,11 +139,26 @@ class FrameConfig:
         if header.n_data and not 0 <= header.mcs < len(params.RUNGS):
             raise ValueError(f"header MCS {header.mcs} is a reserved rung")
         return cls(width=link.width, mcs=header.mcs if header.n_data else 0, n_blocks=header.n_data,
-                   n_control=header.n_control, cp=cp, probe=header.probe, mask=link.mask, **kw)
+                   n_control=header.n_control, cp=cp, probe=header.probe, mask=link.mask,
+                   cap=link.cap if link.cap is not None else link.width, **kw)
+
+    @property
+    def needs_probe(self) -> bool:
+        """ADR 0007 ``width-probe-every-wide-frame``: data symbols use a tone
+        above 23 (a data tone or an upper pilot), so the receiver needs the
+        probe of the same frame to estimate it."""
+        return self.n_blocks > 0 and self.data_active_tones[-1] >= params.BASE_TONES
 
     @property
     def has_probe(self) -> bool:
-        return self.width > params.BASE_TONES if self.probe is None else self.probe
+        return bool(self.probe)
+
+    @property
+    def n_tones(self) -> int:
+        """Tones in the frame's grid: the probe's extent (the sender's cap)
+        when it has a probe, else the base tones (without a probe no symbol
+        uses a tone above 23, ``needs_probe``)."""
+        return self.cap if self.has_probe else params.BASE_TONES
 
     @property
     def probe_symbols(self) -> int:
@@ -192,6 +229,11 @@ class FrameConfig:
     def control_symbols(self) -> int:
         e = params.CONTROL_CODE.coded_bits[0]
         return -(-self.n_control * e // (QPSK * len(self.control_tones))) if self.n_control else 0
+
+    @property
+    def first_probe(self) -> int:
+        """Index of the first probe symbol (of the first control or data symbol without a probe)."""
+        return params.PREAMBLE_SYMBOLS + self.header_symbols
 
     @property
     def first_control(self) -> int:
@@ -309,7 +351,7 @@ class TxFrame:
 
 
 def _check_header(cfg: FrameConfig, header: fields.Header) -> None:
-    want = FrameConfig.from_header(header, LinkState(cfg.width, cfg.mask), cp=cfg.cp)
+    want = FrameConfig.from_header(header, LinkState(cfg.width, cfg.mask, cap=cfg.cap), cp=cfg.cp)
     got = (cfg.n_blocks, cfg.n_control, cfg.has_probe, cfg.mcs if cfg.n_blocks else 0)
     if got != (want.n_blocks, want.n_control, want.has_probe, want.mcs):
         raise ValueError("header fields (data and control block counts, probe flag, MCS) "
@@ -385,24 +427,28 @@ def rebuild(cfg: FrameConfig, header_bits: np.ndarray, block_bits: np.ndarray,
 
     p_base = params.pilots_for(params.BASE_TONES)
     first_h = params.PREAMBLE_SYMBOLS
-    hgrid = _fill_symbols(hpoints, cfg.header_symbols, cfg.width, cfg.base_data_tones, p_base, first_h)
+    nt = cfg.n_tones                    # the probe may reach above the width, to the sender's cap
+    hgrid = _fill_symbols(hpoints, cfg.header_symbols, nt, cfg.base_data_tones, p_base, first_h)
     first_p = first_h + cfg.header_symbols
-    pgrid = probe_grid(cfg.width, first_p) if cfg.has_probe else np.zeros((0, cfg.width), complex)
+    pgrid = np.zeros((0, nt), complex)
+    if cfg.has_probe:
+        pgrid = np.zeros((params.PROBE_SYMBOLS, nt), complex)
+        pgrid[:, :cfg.cap] = probe_grid(cfg.cap, first_p)
     first_c, first_d = cfg.first_control, cfg.first_data
-    cgrid = _fill_symbols(cpoints, cfg.control_symbols, cfg.width, cfg.control_tones,
+    cgrid = _fill_symbols(cpoints, cfg.control_symbols, nt, cfg.control_tones,
                           cfg.control_pilots, first_c) * cfg.control_gain
-    dgrid = _fill_symbols(dpoints, cfg.data_symbols, cfg.width, cfg.data_tones,
+    dgrid = _fill_symbols(dpoints, cfg.data_symbols, nt, cfg.data_tones,
                           cfg.data_pilots, first_d) * cfg.data_gain
-    grid = np.concatenate([preamble.grid(cfg.width), hgrid, pgrid, cgrid, dgrid])
+    grid = np.concatenate([preamble.grid(nt), hgrid, pgrid, cgrid, dgrid])
 
     # Every symbol uses the same per-tone scale (SPEC 6.2), set by the link
     # width; a tone mask raises control and data symbols by the known
     # cfg.control_gain and cfg.data_gain. Clip-and-filter projects each
     # symbol back onto the tones it uses, so clipping noise does not refill
-    # masked tones.
+    # masked tones. The probe covers every tone up to the cap (SPEC 5.4).
     scale = cfg.width
     segments = [(grid[:first_p], range(params.BASE_TONES)),
-                (grid[first_p:first_c], range(cfg.width)),
+                (grid[first_p:first_c], range(cfg.cap)),
                 (grid[first_c:first_d], cfg.control_active_tones),
                 (grid[first_d:], cfg.data_active_tones)]
     out = []
@@ -411,7 +457,7 @@ def rebuild(cfg: FrameConfig, header_bits: np.ndarray, block_bits: np.ndarray,
             continue
         x = ofdm.modulate(g, cfg.cp, active=scale)
         if cfg.clip:
-            x = ofdm.clip_and_filter(x, cfg.width, np.array(list(tones)), cfg.cp,
+            x = ofdm.clip_and_filter(x, nt, np.array(list(tones)), cfg.cp,
                                      clip_db=cfg.clip_db, scale_tones=scale)
         out.append(x)
     return TxFrame(cfg, np.concatenate(out), header_bits, block_bits, grid, control_bits)
@@ -421,7 +467,13 @@ def build_frame(header: fields.Header, controls: list | tuple = (), payloads: np
                 link: LinkState | None = None, rng: np.random.Generator | None = None,
                 **kw) -> TxFrame:
     """Build the frame a header describes (SPEC 8.2), at the link's width,
-    mask and prefix; ``kw`` goes to ``FrameConfig`` (for example ``clip``)."""
+    mask, cap and prefix; ``kw`` goes to ``FrameConfig`` (for example
+    ``clip``). Header flag bit 4 is set if the frame's data blocks use tones
+    above 23 (ADR 0007 ``width-probe-every-wide-frame``)."""
+    if not header.probe:
+        with_probe = replace(header, probe=True)
+        if FrameConfig.from_header(with_probe, link, **kw).needs_probe:
+            header = with_probe
     cfg = FrameConfig.from_header(header, link, **kw)
     return build(cfg, rng if rng is not None else np.random.default_rng(0), payloads=payloads,
                  header=header, controls=list(controls))
@@ -588,15 +640,16 @@ def _estimate(tones: np.ndarray, cfg: FrameConfig, smooth_window: int, phase_win
 
     b = params.BASE_TONES
     y2, y3 = tones[2, :b], tones[3, :b]
-    h = np.zeros(cfg.width, dtype=complex)
+    nt = cfg.n_tones
+    h = np.zeros(nt, dtype=complex)
     h[:b] = estimate_channel(y2, y3, preamble.s2(), smooth_window)
-    noise = np.zeros(cfg.width)
+    noise = np.zeros(nt)
     noise[:b] = estimate_noise(y2, y3)
     first = params.PREAMBLE_SYMBOLS
     hs = cfg.header_symbols
     if cfg.has_probe:
         p0 = first + hs
-        known = probe_grid(cfg.width, p0)
+        known = probe_grid(nt, p0)
         hp = estimate_channel(tones[p0], tones[p0 + 1], known[0], smooth_window, second=known[1])
         np_ = estimate_noise(tones[p0] / known[0], tones[p0 + 1] / known[1]) * np.abs(known[0]) ** 2
         h[b:] = hp[b:]
@@ -622,7 +675,7 @@ def _estimate(tones: np.ndarray, cfg: FrameConfig, smooth_window: int, phase_win
         act = list(cfg.data_active_tones)
         power = np.mean(np.abs(body[d0:, act]) ** 2 / np.abs(h[act]) ** 2, axis=1)
         obs[d0:][_outliers(power)] = np.nan
-    corr, drift = track_drift(obs, pilots, cfg.width, s_ref=2.5 - first, window=phase_window)
+    corr, drift = track_drift(obs, pilots, nt, s_ref=2.5 - first, window=phase_window)
 
     # The S2 pair sees only noise: both symbols carry the same clipping
     # distortion, so it cancels in their difference. Data symbols also carry
@@ -637,7 +690,7 @@ def _estimate(tones: np.ndarray, cfg: FrameConfig, smooth_window: int, phase_win
         r2 = r2[~np.isnan(r2).any(axis=1)]
         floor = noise[list(pilots)] / (np.abs(hp) ** 2 * cfg.data_gain ** 2)
         excess = np.maximum(np.mean(r2, axis=0) - floor, 0)
-        noise = noise + np.interp(np.arange(cfg.width), pilots, excess) * np.abs(h) ** 2
+        noise = noise + np.interp(np.arange(nt), pilots, excess) * np.abs(h) ** 2
         snr_db = 10 * np.log10(np.abs(h) ** 2 / noise)
     return h, noise, thermal, excess, snr_db, corr, body, drift
 
@@ -723,7 +776,7 @@ def receive(rx: np.ndarray, cfg: FrameConfig | None = None, *, link: LinkState |
     c_first, d_first = cfg.first_control, cfg.first_data       # first control and data symbols
     if window_start + n_sym * cfg.stride > rx.size:            # a frame cut short: decode what is there
         rx = np.concatenate([rx, np.zeros(window_start + n_sym * cfg.stride - rx.size)])
-    tones = ofdm.demodulate(rx, window_start, n_sym, cfg.width, cfg.cp, active=cfg.width)
+    tones = ofdm.demodulate(rx, window_start, n_sym, cfg.n_tones, cfg.cp, active=cfg.width)
     tones[c_first:d_first] /= cfg.control_gain                 # the mask's known power boost
     tones[d_first:] /= cfg.data_gain
     h, noise, thermal, excess, snr_db, corr, body, drift = _estimate(
@@ -734,12 +787,12 @@ def receive(rx: np.ndarray, cfg: FrameConfig | None = None, *, link: LinkState |
     shifts = np.round(drift * pos).astype(int)
     if np.any(shifts != 0):
         rx = np.concatenate([rx, np.zeros(max(int(shifts.max()), 0) + 1)])
-        tones = ofdm.demodulate(rx, window_start, n_sym, cfg.width, cfg.cp, active=cfg.width,
+        tones = ofdm.demodulate(rx, window_start, n_sym, cfg.n_tones, cfg.cp, active=cfg.width,
                                 shifts=shifts)
         # Undo each shift's known phase (moving the window d samples later
         # turns tone bin f by 2 pi f d / N), so the tracker still sees a
         # smooth drift; the window move itself keeps the prefix centred.
-        f = params.BIN_OFFSET + np.arange(cfg.width)
+        f = params.BIN_OFFSET + np.arange(cfg.n_tones)
         tones = tones * np.exp(-2j * np.pi * f[None, :] * shifts[:, None] / params.N_USEFUL)
         tones[c_first:d_first] /= cfg.control_gain
         tones[d_first:] /= cfg.data_gain
@@ -859,6 +912,130 @@ def locate(rx: np.ndarray, cp: int | None = None,
     return find_start(rx, reference), cp
 
 
+# --- probe extent (ADR 0007 broadcast-width-from-probe) -----------------------
+
+EXTENT_SIGMA = 5.0          # a tone carries the probe when its signal clears this many noise deviations
+EXTENT_FLOOR_DB = -24.0     # ... and this level against the base tones (clip-and-filter regrowth: about -30 dB)
+EXTENT_NOISE_TONES = 11     # neighbouring upper tones pooled for each tone's noise reference
+
+
+@dataclass
+class ProbeExtent:
+    """Which tones above 23 carry a frame's width probe (``probe_extent``).
+
+    ``signal``, ``threshold`` and ``present`` are per tone 24-55; ``width``
+    is the highest tone carrying the probe plus one (24 if none does).
+    """
+    width: int
+    signal: np.ndarray
+    threshold: np.ndarray
+    present: np.ndarray
+    data_symbols: int
+
+    def margin_db(self) -> tuple[float, float]:
+        """Decision margins at the edge, dB: the last tone in the extent over
+        its threshold, and the threshold over the first tone beyond it (inf
+        where there is no such tone)."""
+        b = params.BASE_TONES
+        i_in, i_out = self.width - 1 - b, self.width - b
+        inside = (10 * np.log10(max(self.signal[i_in], 1e-30) / self.threshold[i_in])
+                  if i_in >= 0 else np.inf)
+        outside = (10 * np.log10(self.threshold[i_out] / max(self.signal[i_out], 1e-30))
+                   if i_out < self.signal.size else np.inf)
+        return float(inside), float(outside)
+
+
+def extent_geometry(header: fields.Header, cp: int) -> FrameConfig:
+    """The frame a header describes at 56 tones: the rows before the data do
+    not depend on the width, and its data symbols are the fewest any width
+    gives, so they are present whatever the width turns out to be."""
+    return FrameConfig(width=params.MAX_TONES, mcs=header.mcs if header.n_data else 0,
+                       n_blocks=header.n_data, n_control=header.n_control, cp=cp, probe=True)
+
+
+def extent_samples(header: fields.Header, cp: int) -> int:
+    """Samples from the frame's start that ``probe_extent`` reads."""
+    cfg = extent_geometry(header, cp)
+    return (cfg.first_data + cfg.data_symbols) * cfg.stride
+
+
+def probe_extent(rx: np.ndarray, start: int, cp: int, header: fields.Header, *,
+                 advance: int | None = None) -> ProbeExtent:
+    """A frame's width from its probe (ADR 0007 ``broadcast-width-from-probe``).
+
+    Each tone k above 23 is tested for the probe sequence. Its two probe
+    symbols, divided by the known values, both measure the channel when the
+    tone carries the probe, so their correlation Re{z0 conj(z1)} estimates
+    the tone's signal power; when it does not, the two are unrelated and the
+    correlation averages zero (clip-and-filter regrowth above the cap is not
+    the probe sequence). In a broadcast the data blocks use exactly the
+    probed tones, so the power in the data symbols that every width has
+    (``extent_geometry``) adds to the estimate, less the noise measured on
+    the same tone in the preamble, header and control symbols, which carry
+    nothing above tone 23. A tone counts when that estimate clears
+    ``EXTENT_SIGMA`` standard deviations of its noise-only value and
+    ``EXTENT_FLOOR_DB`` below the base tones' probe power. The width is the
+    change point of the run: the count of tones that do minus tones that do
+    not, summed from tone 24 upward, peaks one past the last probed tone
+    (ties to the higher), so one stray tone on either side does not move it.
+    """
+    b, m = params.BASE_TONES, params.MAX_TONES
+    if not header.probe:
+        z = np.zeros(m - b)
+        return ProbeExtent(b, z, np.ones(m - b), z.astype(bool), 0)
+    cfg = extent_geometry(header, cp)
+    n_data = cfg.data_symbols
+    rows = cfg.first_data + n_data
+    advance = cp // 4 if advance is None else advance
+    ws = start + cp - advance
+    need = ws + rows * cfg.stride
+    if rx.size < need:
+        rx = np.concatenate([rx, np.zeros(need - rx.size)])
+    y = ofdm.demodulate(rx, ws, rows, m, cp, active=m)
+    p0 = cfg.first_probe
+    known = probe_grid(m, p0)
+    z0, z1 = y[p0] / known[0], y[p0 + 1] / known[1]
+    q = np.real(z0 * np.conj(z1))
+    silent = np.r_[0:p0, cfg.first_control:cfg.first_data]
+    pw = np.mean(np.abs(y[silent]) ** 2, axis=0)
+    half = EXTENT_NOISE_TONES // 2
+    upper = np.arange(b, m)
+    lo = np.clip(upper - half, b, m)
+    hi = np.clip(upper + half + 1, b, m)
+    noise = np.array([np.mean(pw[a:c]) for a, c in zip(lo, hi)])
+    n_ref = (hi - lo) * silent.size
+    if n_data:
+        energy = np.mean(np.abs(y[cfg.first_data:rows, b:]) ** 2, axis=0) - noise
+    else:
+        energy = np.zeros(m - b)
+    sig = (2 * q[b:] + n_data * energy) / (2 + n_data)
+    sd = noise * np.sqrt(2 + n_data + n_data ** 2 / n_ref) / (2 + n_data)
+    ref = float(np.median(np.abs((z0[:b] + z1[:b]) / 2) ** 2))
+    thr = np.maximum(EXTENT_SIGMA * sd, ref * 10 ** (EXTENT_FLOOR_DB / 10))
+    present = sig > thr
+    run = np.concatenate([[0], np.cumsum(np.where(present, 1, -1))])
+    j = int(np.flatnonzero(run == run.max())[-1])
+    return ProbeExtent(b + j, sig, thr, present, n_data)
+
+
+EXTENT_RETRY = (1, -1, 2, -2, 3, -3)     # widths tried around the probe's when no block decodes
+
+
+def width_alternatives(width: int) -> list[int]:
+    """Widths to try, nearest first, when nothing decodes at the probe's."""
+    return [width + d for d in EXTENT_RETRY if params.BASE_TONES <= width + d <= params.MAX_TONES]
+
+
+def frame_link(header: fields.Header, link: LinkState, extent: ProbeExtent | None) -> LinkState:
+    """The link state a frame is decoded with: the caller's for a session
+    frame (header flag bit 3); outside a session, the probe's extent as
+    width and cap, with no mask (ADR 0007), or 24 tones without a probe."""
+    if header.session:
+        return link
+    width = extent.width if extent is not None and header.probe else params.BASE_TONES
+    return LinkState(width=width, cp=link.cp, cap=width)
+
+
 def receive_header_first(rx: np.ndarray, link: LinkState | None = None, *,
                          reference: np.ndarray | None = None, start: int | None = None,
                          measure_snr: bool = True, **kw) -> RxResult:
@@ -867,8 +1044,13 @@ def receive_header_first(rx: np.ndarray, link: LinkState | None = None, *,
     Find the frame (``locate``; giving ``start`` skips the search and takes
     the prefix from ``link.cp``, default short), decode the preamble and
     header on the base tones, unpack the header, and take the data rung, the
-    control and data block counts and the probe flag from it; width and mask
-    come from ``link``. Then decode the whole frame with that configuration.
+    control and data block counts and the probe flag from it. A session
+    frame (flag bit 3) takes width, mask and the peer's cap from ``link``;
+    any other frame takes its width from its own probe (``probe_extent``,
+    ADR 0007; in ``detail["probe_extent"]``), or is 24 tones without one;
+    if no data block decodes at the probe's width, the widths around it are
+    tried (``width_alternatives``) and the first at which a block decodes is
+    kept. Then decode the whole frame with that configuration.
     A frame whose header fails (decode, CRC or fields) comes back with no
     blocks, ``header`` None and ``header_error`` saying why. ``measure_snr``
     measures the channel SNR (ADR 0006) once the final header is settled;
@@ -889,8 +1071,11 @@ def receive_header_first(rx: np.ndarray, link: LinkState | None = None, *,
             _add_channel_snr(rx, head_cfg, head)
         head.config = None
         return head
+    extent = None
+    if not head.header.session and head.header.probe:
+        extent = probe_extent(rx, start, cp, head.header, advance=kw.get("advance"))
     try:
-        cfg = FrameConfig.from_header(head.header, link, cp=cp)
+        cfg = FrameConfig.from_header(head.header, frame_link(head.header, link, extent), cp=cp)
     except ValueError as e:
         if measure_snr:
             _add_channel_snr(rx, head_cfg, head)
@@ -898,8 +1083,22 @@ def receive_header_first(rx: np.ndarray, link: LinkState | None = None, *,
         head.header, head.config = None, None
         return head
     r = receive(rx, cfg, start=start, measure_snr=False, **kw)
+    if extent is not None and cfg.n_blocks and not r.block_ok.any():
+        # No block decoded at the probe's width: a weak edge tone (a rolled-off
+        # mic path) can mislead the extent by a tone or two. The data decodes
+        # only at the width it was sent at, so try the neighbours.
+        for w in width_alternatives(extent.width):
+            try:
+                alt = FrameConfig.from_header(head.header, LinkState(width=w, cp=link.cp, cap=w), cp=cp)
+            except ValueError:
+                continue
+            ra = receive(rx, alt, start=start, measure_snr=False, **kw)
+            if ra.block_ok.any():
+                cfg, r = alt, ra
+                break
     # The header pass decided the geometry; report its header.
     r.header_ok, r.header_bits, r.header, r.header_error = True, head.header_bits, head.header, None
+    r.detail["probe_extent"] = extent
     if measure_snr:
         _add_channel_snr(rx, cfg, r)
     return r
@@ -975,9 +1174,10 @@ def channel_snr(rx: np.ndarray, cfg: FrameConfig, res: RxResult) -> ChannelSnr:
     estimate from the preamble is too noisy to leave a 40 dB residue), after
     the pilots' phase and timing tracking already in ``res.detail``. The
     residual is noise plus everything else the channel and radios add;
-    signal is the fitted gain's power on the rebuilt tones, at the scale of
-    unboosted tones (a mask's ``control_gain`` and ``data_gain`` are divided
-    out of the signal; the additive noise is not scaled). The known symbols
+    signal is the fitted gain's power on the rebuilt tones as sent, a mask's
+    power boost (``control_gain``, ``data_gain``) included: that is what
+    the decoder sees and what the rung thresholds were measured against
+    (ADR 0006 interpretation ``mask-boost-counts-as-signal``). The known symbols
     are the preamble and probe, the header once it decoded, and the control
     and data symbols whose blocks decoded (``known_symbols``).
 
@@ -988,7 +1188,7 @@ def channel_snr(rx: np.ndarray, cfg: FrameConfig, res: RxResult) -> ChannelSnr:
     everything they carry.
     """
     det = res.detail
-    n_sym, w = cfg.total_symbols, cfg.width
+    n_sym, w = cfg.total_symbols, cfg.n_tones
     known = known_symbols(cfg, res.header_ok, res.block_ok, res.control_ok)
     off = cfg.clip_db - 7.0
     n_known = int(known.sum())
@@ -1004,7 +1204,7 @@ def channel_snr(rx: np.ndarray, cfg: FrameConfig, res: RxResult) -> ChannelSnr:
         return ChannelSnr(min(fb_snr, SNR_MAX_DB), np.minimum(fb_tone, SNR_MAX_DB), n_known, True)
 
     shifts = det["shifts"]
-    first, c_first, d_first = params.PREAMBLE_SYMBOLS, cfg.first_control, cfg.first_data
+    first = params.PREAMBLE_SYMBOLS
     # Zeros past the end: room for the window shifts, and for a frame cut short.
     need = int(det["window_start"]) + n_sym * cfg.stride + max(int(np.max(shifts)), 0) + 1
     pad = np.concatenate([rx, np.zeros(max(need - rx.size, 0))])
@@ -1020,11 +1220,7 @@ def channel_snr(rx: np.ndarray, cfg: FrameConfig, res: RxResult) -> ChannelSnr:
     sent = rebuild(cfg, res.header_bits, res.block_bits, res.control_bits)
     x = ofdm.demodulate(np.concatenate([sent.samples, np.zeros(1)]), cfg.cp, n_sym, w, cfg.cp, active=w)
     x = x * (sent.grid != 0)             # silent tones carry nothing: leave the rebuild's leakage out
-    gain = np.ones(n_sym)
-    gain[c_first:d_first] = cfg.control_gain
-    gain[d_first:] = cfg.data_gain
-
-    y, x, gain, drift_c = y[known], x[known], gain[known], drift_c[known]
+    y, x, drift_c = y[known], x[known], drift_c[known]
     u = np.flatnonzero(known) - 2.5                     # symbols from the S2 pair, where the channel was set
     fk = params.BIN_OFFSET + np.arange(w)
     live = np.abs(x) > 0
@@ -1053,7 +1249,7 @@ def channel_snr(rx: np.ndarray, cfg: FrameConfig, res: RxResult) -> ChannelSnr:
     noise = resid / np.maximum(n_k - 1, 1)          # one complex gain fitted per tone
     # |h|^2 over-reads by the noise left in the fit (noise / sum |x|^2).
     h2 = np.maximum(np.abs(h) ** 2 - noise / np.maximum(den, 1e-30), 0.05 * np.abs(h) ** 2)
-    sig = h2 * np.sum(np.abs(x / gain[:, None]) ** 2, axis=0) / np.maximum(n_k, 1)
+    sig = h2 * np.sum(np.abs(x) ** 2, axis=0) / np.maximum(n_k, 1)     # the mask's boost counts
     tiny = 1e-12 * max(float(np.max(sig)), 1e-30)
     ok = n_k >= 3
     t = np.array([k for k in cfg.data_active_tones if ok[k]], dtype=int)

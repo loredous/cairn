@@ -7,6 +7,9 @@
 
 mod common;
 
+/// Largest channel-SNR difference allowed between the receivers, dB.
+const CHANNEL_SNR_AGREEMENT_DB: f64 = 0.15;
+
 use cairn_phy::detector::{self, DetectorConfig};
 use cairn_phy::{LinkState, Receiver, RxOptions, Transmitter, wav};
 use common::*;
@@ -104,11 +107,14 @@ fn receiver_matches_simulator() {
         let start = prx["start"].as_u64().unwrap() as usize;
         let header_first = doc.get("header_first").is_some();
         let r = if header_first {
-            let link = LinkState { width: cfg.width, usable: cfg.usable.clone(), cp: Some(cfg.cp) };
+            let link = LinkState { width: cfg.width, usable: cfg.usable.clone(), cp: Some(cfg.cp), cap: None };
             let r = rx.receive_header_first(&samples, &link, start, cfg.cp, &RxOptions::default());
             // The header told the receiver what the fixture's configuration is.
             assert_eq!(r.config.as_ref(), Some(&cfg), "{name}: configuration from the header");
             assert_eq!(r.header.is_some(), prx["header_fields_ok"].as_bool().unwrap(), "{name}");
+            // A broadcast's width from its probe (ADR 0007): the same in both receivers.
+            let py_ext = prx["probe_extent_width"].as_u64().map(|w| w as usize);
+            assert_eq!(r.probe_extent.as_ref().map(|e| e.width), py_ext, "{name}: probe extent");
             let want = hex_to_bits(doc["header_message_hex"].as_str().unwrap(), 128);
             assert_eq!(r.header.as_ref().unwrap().message_bits().unwrap(), want, "{name}: header fields");
             let controls = fixture_controls(&doc);
@@ -152,6 +158,17 @@ fn receiver_matches_simulator() {
             py_iter
         );
         assert!(snr_diff < 1e-6, "{name}: per-tone SNR differs by {snr_diff} dB");
+        // The protocol's SNR (ADR 0006, the mask's boost counted as signal):
+        // the two receivers fit it differently but must agree closely.
+        let py_ch = prx["channel_snr_db"].as_f64().unwrap();
+        let ch = r.snr_7db_equivalent(r.config.as_ref().unwrap_or(&cfg)).min(63.75); // B.2 saturates
+        println!("{name}: channel SNR rust {ch:.3} python {py_ch:.3} dB");
+        if py_ch < 40.0 {
+            assert!((ch - py_ch).abs() < CHANNEL_SNR_AGREEMENT_DB, "{name}: channel SNR {ch} vs {py_ch}");
+        } else {
+            // Above 40 dB SPEC 7.1 asks for no accuracy; both must just see a clean frame.
+            assert!(ch >= 40.0, "{name}: channel SNR {ch} vs {py_ch}");
+        }
         let near_threshold = name.contains("snr7");
         if !near_threshold {
             assert!(correct.iter().all(|&v| v), "{name}: Rust failed a block");

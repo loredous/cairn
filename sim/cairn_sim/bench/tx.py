@@ -46,7 +46,9 @@ class FrameSpec:
         if self.blocks is not None:
             return max(1, self.blocks)
         mask = self.config(1).mask
-        b = Budget(self.mcs, self.width, self.frame_s or default_frame_s(self.mcs), cp=self.cp, mask=mask)
+        # Test frames carry no control block; the probe of a wide frame counts (ADR 0007).
+        b = Budget(self.mcs, self.width, self.frame_s or default_frame_s(self.mcs), cp=self.cp, mask=mask,
+                   ack_block=False)
         return max(1, b.blocks)
 
 

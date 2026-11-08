@@ -101,6 +101,15 @@ HEADER_CASES: tuple[Case, ...] = (
          header=fields.Header(_T.ACK, _S2, _S1, n_control=1, session=True), controls=(_ACK,)),
     Case("hdr_awgn_w24_probe_only_snr10", 24, 0, 0, "awgn", 10.0, seed=74,
          header=fields.Header(_T.PROBE, _S1, _S2)),
+    # Broadcasts wider than 24 tones: the receiver has no link state and takes
+    # the width from the probe (ADR 0007 broadcast-width-from-probe).
+    Case("hdr_awgn_w33_ui_broadcast_snr8", 33, 0, 3, "awgn", 8.0, seed=75,
+         header=fields.Header(_T.UI, _S1, fields.Address.broadcast_address(), sequence=5, mcs=0, n_control=1,
+                              n_data=3, probe=True),
+         controls=(fields.IdBlock("N0CALL", 1, "FN31"),)),
+    Case("hdr_mic_w27_ui_broadcast_snr14", 27, 1, 4, "mic", 14.0, seed=76,
+         header=fields.Header(_T.UI, _S2, fields.Address.broadcast_address(), sequence=6, mcs=1, n_data=4,
+                              probe=True)),
 )
 
 TX_CASES: tuple[Case, ...] = (
@@ -184,8 +193,12 @@ def python_receive(case: Case, cfg: frame.FrameConfig, rx: np.ndarray, tx: frame
                  "block_ok": [bool(v) for v in r.block_ok],
                  "block_correct": [bool(v) for v in correct],
                  "iterations": [int(v) for v in r.iterations],
-                 "snr_db": [float(v) for v in r.snr_db]}
+                 "snr_db": [float(v) for v in r.snr_db],
+                 # ADR 0006 channel SNR on the 7 dB scale (mask boost counted as signal)
+                 "channel_snr_db": float(r.detail["snr_db"])}
     if case.header is not None:
+        ext = r.detail.get("probe_extent")
+        out["rx"]["probe_extent_width"] = None if ext is None else int(ext.width)
         out["rx"]["header_fields_ok"] = r.header == case.header
         out["rx"]["control_ok"] = [bool(v) for v in r.control_ok]
         out["rx"]["control_correct"] = [bool(v) for v in r.control_ok & np.all(r.control_bits == tx.control_bits,

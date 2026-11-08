@@ -51,18 +51,27 @@ impl FrameSpec {
             .map_err(|e| e.to_string())
     }
 
-    /// Blocks per frame, as `cairn-bench tx` counts them (`link_sim.Budget`:
-    /// the frame time less Appendix A's TXDelay and TXTail, preamble and header).
-    pub fn n_blocks(&self) -> Result<usize, String> {
+    /// Blocks per frame, as `cairn-bench tx` counts them (`link_sim.Budget`
+    /// without the ACK block: the frame time less Appendix A's TXDelay and
+    /// TXTail, preamble, header and, when the data uses tones above 23, the
+    /// probe of ADR 0007), less `control_symbols` for control blocks sent.
+    pub fn n_blocks_with(&self, control_symbols: usize) -> Result<usize, String> {
         if let Some(b) = self.blocks {
             return Ok(b);
         }
         let cfg = self.base(1)?;
         let frame_s = self.frame_s.unwrap_or(Self::default_frame_s(self.mcs));
-        let avail = params::block_symbols_available(frame_s, self.cp);
+        let avail = params::block_symbols_available(frame_s, self.cp)
+            .saturating_sub(cfg.probe_symbols() + control_symbols)
+            .max(1);
         let rung = cfg.rung();
         let per_symbol = rung.bits_per_point * cfg.data_tones.len();
         Ok((avail * per_symbol / rung.coded_bits).max(1))
+    }
+
+    /// [`FrameSpec::n_blocks_with`] for a frame without control blocks.
+    pub fn n_blocks(&self) -> Result<usize, String> {
+        self.n_blocks_with(0)
     }
 
     /// The frame configuration.
@@ -238,7 +247,9 @@ mod tests {
         let s = |mcs, width| FrameSpec { mcs, width, cp: CP_SHORT, silenced: vec![], blocks: None, frame_s: Some(4.0) };
         assert_eq!(s(2, 24).n_blocks().unwrap(), 14);
         assert_eq!(s(6, 24).n_blocks().unwrap(), 42);
-        assert_eq!(s(6, 56).n_blocks().unwrap(), 100);
+        // 56 tones: the probe of every wide frame (ADR 0007) costs 2 symbols, as in link_sim.Budget.
+        assert_eq!(s(6, 56).n_blocks().unwrap(), 99);
+        assert_eq!(s(3, 56).n_blocks().unwrap(), 49);
         assert_eq!(parse_tones("8-11, 30").unwrap(), vec![8, 9, 10, 11, 30]);
     }
 
