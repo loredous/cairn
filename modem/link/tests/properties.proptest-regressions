@@ -1,0 +1,14 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+cc e341544bd73bb2bd00439d038b462098c7b49c9fe3588ac33c94c1176d736369 # shrinks to seed = 1191201555, snr = 16.81630631627213, minutes = 22
+cc 7229f63bfa7fddf774789bf7038676eb97de90001b668c197be640c3c62ca49f # shrinks to seed = 2983057445, sizes_ab = [1632, 3673, 982, 2716, 3056, 2860, 1817, 1018, 1766, 1089, 62, 1762, 3851, 2649, 3864], sizes_ba = [2139, 1564, 2710], snr = 29.876666060667212, header_loss = 0.11962173274974643, ack_loss = 0.12678594990580014, block_loss = 0.013534920500787353
+cc a44c7420afced6e6fe7fb5ba21164a3482b1d061f4b06785ee4c421e41084082 # shrinks to seed = 2285476944, outage_start = 10.763724615407202, outage_len = 100.17567785182511, kbytes = 64, snr = 15.387195820140937
+cc 15e4c65c177c9a420fd8c5d070f4586da10c7b74b46d9266fe65ae61894ef95c # shrinks to seed = 876707858, below_wrap = 62, kbytes = 71, block_loss = 0.14737799857930967
+cc 9d642c5d026b2615f6410b5c24b0315b4c5a2830edc5f252f8ededff5b2ca99b # shrinks to seed = 0, outage_start = 3.0, outage_len = 60.0, kbytes = 20, snr = 10.0
+cc 036b8e2b6afefaec61e1a80a3c589e81d81a0eda521afd6a138afbfecb3724aa # shrinks to seed = 4025742451054010148, sizes_ab = [1], sizes_ba = [], snr = 15.088270257691633, header_loss = 0.24191034745446272, ack_loss = 0.0, block_loss = 0.0
+cc 2c9785b00fcc470f167f9f1ec57e53de5aff2677c89879edf4349d9b0b843892 # shrinks to seed = 7912846522227220780, sizes_ab = [], sizes_ba = [1], snr = 6.0, header_loss = 0.19049253759763643, ack_loss = 0.0, block_loss = 0.0
+cc c4e511e32cd253df5919f820129668ed28bdb5a7e2bd59ed0262737b65d7ad29 # shrinks to seed = 17461515564343136154, outage_start = 6.0, outage_len = 60.0, kbytes = 20, snr = 16.910196139367333

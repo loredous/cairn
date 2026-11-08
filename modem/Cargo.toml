@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["phy", "audio", "ptt", "cli"]
+members = ["phy", "audio", "ptt", "cli", "link"]
 
 [workspace.package]
 edition = "2024"
