@@ -1,0 +1,34 @@
+# yaml-language-server: $schema=../../tools/adrsite/schemas/decisions.schema.json
+#
+# Once merged into main this file is frozen. Change decisions via a new ADR.
+
+# --- Session layer: compression ----------------------------------------------
+
+- slug: zstd-decoded-body-bound
+  title: A zstd body decodes to at most 65,528 bytes, the largest raw PDU body
+  category: session-layer
+  strength: MUST
+  statement: |
+    The decoded body of a PDU with Encoding 1 (zstd) or 2 (zstd with
+    dictionary) is at most 65,528 bytes: the largest body a PDU with
+    Encoding 0 can carry (a Length of 65,535 less the Type, Stream and
+    Encoding bytes and the CRC-32; SPEC §12.1). This sets the bound of ADR
+    0014 `zstd-frame-format`:
+
+    | | Rule |
+    | --- | --- |
+    | Sender | MUST NOT send an encoding 1 or 2 PDU whose decoded body exceeds 65,528 bytes |
+    | Receiver | MUST decode any body up to 65,528 bytes, and MUST stop decoding and discard the PDU, reporting the error to the host, as soon as the decoded output would exceed it |
+
+    A body larger than this is sent as more PDUs: FILE-CHUNK already splits
+    objects, and a MESSAGE larger than 65,528 bytes cannot be sent raw
+    either.
+  rationale: >-
+    ADR 0014 required receivers to bound the decompressed size, because a
+    frame without a content size does not announce it, but gave no number,
+    so a sender could not know what every receiver accepts. Tying the bound
+    to the raw limit means compression never lets a sender deliver what a
+    raw PDU could not, and a receiver needs no more buffer for a compressed
+    body than for a raw one. The reference implementation (PR #37) already
+    uses this bound.
+  tags: [compression, framing, v1.0]
