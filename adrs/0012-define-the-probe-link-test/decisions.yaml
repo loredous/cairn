@@ -1,0 +1,73 @@
+# yaml-language-server: $schema=../../tools/adrsite/schemas/decisions.schema.json
+#
+# Once merged into main this file is frozen. Change decisions via a new ADR.
+
+- slug: probe-frame-contents
+  title: A PROBE with a B.3 block asks for a link test; one without asks for a BEACON
+  category: link-layer
+  strength: MUST
+  statement: >-
+    A PROBE (frame type 8) names its target in the destination address,
+    with the session-frame flag clear and the sender's frame counter in the
+    Sequence field (ADR 0010 `broadcast-frame-counter`). A link-test PROBE
+    carries exactly one control block: a connect-parameters block (B.3)
+    with flags 0, session ID 0, the sender's capabilities, width cap and
+    maximum frame time, requested MCS 0, the all-ones tone mask and no
+    dictionary IDs. It carries a width probe to its cap (ADR 0011
+    `width-probe-extent`) when its width cap is above 23. A BEACON-request
+    PROBE carries no control blocks and no width probe. Neither carries data
+    blocks. (SPEC §8.4, §9.6)
+  rationale: >-
+    The control-block count tells the two requests apart without a new
+    field. The probe lets the target measure the upper tones; at 24 tones
+    the preamble already measures every tone used.
+  tags: [framing, adaptation, v0.5]
+
+- slug: probe-link-test-reply
+  title: The link-test reply is a SOUND with the target's measurements
+  category: link-layer
+  strength: MUST
+  statement: >-
+    The target of a link-test PROBE replies with a SOUND frame as a
+    turn-holder reply (ADR 0010 `turn-holder-reply-check`): session-frame
+    flag clear, Sequence 0, a width probe to its own cap, and one ACK
+    control block holding its measurements of the PROBE. In that block the
+    base sequence and the bitmap are 0, the requested MCS is the rung it
+    suggests (the highest whose threshold is at least 3 dB below the
+    measured SNR), the block errors are 0, flag bit 0 is set with the
+    measured tone mask and mask ID 0, and the measured SNR, distortion index
+    and own-ADC-clipped bit are filled in. The initiator measures the reply
+    for the reverse direction, and its host presents both directions as
+    expected net kbps. The exchange is two transmissions, under 3 s of air
+    time. A PROBE with no reply within 5 s of the initiator releasing PTT
+    is reported as unreachable; it may be repeated after a 1–5 s backoff
+    (ADR 0010 `retry-backoff-uniform`) and the carrier sense of SPEC §11.1.
+    (SPEC §9.6, B.2)
+  supersedes:
+    adr: 0002-adopt-the-cairn-v0-1-protocol-specification
+    decision: link-test
+  tags: [session, adaptation, host-interface, v0.5]
+
+- slug: probe-beacon-request-reply
+  title: A BEACON request is answered with a BEACON
+  category: link-layer
+  strength: MUST
+  statement: >-
+    The target of a BEACON-request PROBE replies with a BEACON, carrying its
+    ID block as every BEACON does, as a turn-holder reply (ADR 0010
+    `turn-holder-reply-check`). (SPEC §8.4, §9.6)
+  tags: [framing, v0.5]
+
+- slug: probe-not-answered-in-session
+  title: A station in a session does not answer PROBEs
+  category: link-layer
+  strength: MUST_NOT
+  statement: >-
+    A station that has a session open, or is setting one up, MUST NOT
+    answer a PROBE of either kind; the prober reports the target as
+    unreachable. A station MAY also leave PROBEs unanswered for other
+    reasons, such as a deny list. (SPEC §9.6, §11.2)
+  rationale: >-
+    An answer would take the channel in the middle of the session's
+    ping-pong and leave the peer waiting.
+  tags: [session, channel-access, v0.5]

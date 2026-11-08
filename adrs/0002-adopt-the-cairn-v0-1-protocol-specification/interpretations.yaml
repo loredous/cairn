@@ -189,3 +189,41 @@
     grant for anyone who sues over the code. The specification, ADRs and
     test vectors remain CC BY 4.0 (SPEC §2, §15).
   date: 2026-11-07
+
+- slug: data-frames-count-the-ack-block
+  decision: fixed-per-frame-costs
+  errata: true
+  question: >-
+    SPEC §7.4 and Appendix A.2 fill the 330 block symbols of a 4 s frame
+    (152 of a 2 s frame) with data blocks, but every DATA frame in a session
+    carries the ACK control block for the peer's last frame first (SPEC
+    §8.4, `session-frames-lead-with-ack`), and every frame with data above
+    tone 23 carries the 2-symbol width probe (ADR 0007). Appendix A's
+    preamble also gives the peer's ACK cycle as 0.46 s, where §7.4's own
+    table gives 250 ms of turnaround and TXDelay plus a 259 ms ACK frame.
+  interpretation: |
+    The 330 and 152 symbols of this decision's table are for all blocks,
+    control and data. A DATA frame's data blocks get 330 − 12 = 318 symbols
+    (316 with a probe) in a 4 s frame and 140 (138) in a 2 s frame, where
+    the frame time is PTT-on time, TXDelay 150 ms and TXTail 10 ms included
+    (ADR 0010 `frame-time-definition`). Data blocks per frame are
+    ⌊symbols × coded bits per symbol ÷ coded block length⌋, and net kbps is
+    blocks × 1,008 bits divided by the cycle. The cycle is the frame (data
+    run padded to whole symbols) plus the 0.25 s peer turnaround and
+    TXDelay plus the 258.75 ms peer ACK frame, about 0.51 s in all:
+
+    | MCS | Data blocks per frame 24 / 56 | Net kbps 24 / 56 |
+    | --- | --- | --- |
+    | 0 | 3 / 7 (2 s frame) | 1.21 / 2.82 |
+    | 1 | 4 / 10 (2 s frame) | 1.73 / 4.14 |
+    | 2 | 13 / 32 | 3.02 / 7.16 |
+    | 3 | 20 / 48 | 4.55 / 10.74 |
+    | 4 | 27 / 64 | 6.09 / 14.32 |
+    | 5 | 34 / 80 | 7.61 / 17.90 |
+    | 6 | 40 / 96 | 9.11 / 21.48 |
+
+    The §7.4 example (24 tones, MCS 3, 4 s frame) carries 20 data blocks
+    (2,520 payload bytes) in a 3.92 s frame with a 4.43 s cycle: 4.55 kbps
+    net, 78% of the 5,867 bps raw rate. SPEC §7.4 and Appendix A carry these
+    corrected figures.
+  date: 2026-11-07
