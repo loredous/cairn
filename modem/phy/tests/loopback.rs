@@ -92,6 +92,30 @@ fn channel_snr_excludes_designed_clipping() {
     }
 }
 
+/// The per-tone powers behind the channel SNR (what the link layer sums over
+/// the tones a mask keeps): over the data's active tones they give it back,
+/// as the simulator's `snr_tone_signal` / `snr_tone_noise` do.
+#[test]
+fn tone_powers_sum_to_the_channel_snr() {
+    let mut rng = Rng::new(31);
+    let cfg = FrameConfig::new(32, 4, 6).unwrap().with_mask(Some((3..32).collect())).unwrap();
+    let header = rng.bits(128);
+    let payloads: Vec<Vec<u8>> = (0..cfg.n_blocks).map(|_| rng.bits(params::DATA_PAYLOAD_BITS)).collect();
+    let frame = Transmitter::new().build(&cfg, &header, &payloads);
+    let mut x = vec![0.0; 500];
+    x.extend_from_slice(&frame.samples);
+    x.extend(vec![0.0; 500]);
+    let y = awgn(&x, 25.0, cfg.width, &mut rng, None);
+    let r = Receiver::new().receive(&y, &cfg, 500, &RxOptions::default());
+    assert!(r.block_ok.iter().all(|&v| v) && !r.channel_snr.as_ref().unwrap().fallback);
+    let p = r.tone_powers_7db_equivalent(&cfg).unwrap();
+    assert_eq!(p.len(), cfg.n_tones());
+    assert!(p.iter().all(|&(s, n)| s >= 0.0 && n >= 0.0 && (s > 0.0) == (n > 0.0)));
+    let (s, n) = cfg.data_active_tones.iter().fold((0.0, 0.0), |(a, b), &k| (a + p[k].0, b + p[k].1));
+    let snr7 = r.snr_7db_equivalent(&cfg);
+    assert!((10.0 * (s / n).log10() - snr7).abs() < 1e-9, "{} vs {snr7}", 10.0 * (s / n).log10());
+}
+
 #[test]
 fn header_only_frames() {
     // No data blocks: preamble, header (and probe) only, clipped at 7 dB (SPEC 7.1).

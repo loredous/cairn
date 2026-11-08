@@ -58,6 +58,33 @@ fn rung_settles_within_two_frames_after_6db_drop() {
 }
 
 #[test]
+fn first_rung_counts_only_the_tones_the_mask_keeps() {
+    // 2026-11-08 on 1.25 m: tones 0-2 sat 20-45 dB below the rest, so a
+    // CONNECT measured over all 24 tones read about 13 dB while the other
+    // tones carried 28 dB. The reply rule took the 13 dB and the session
+    // opened at MCS 2, taking about 90 s to climb to MCS 6. The receiver
+    // drops those tones in the same CONNECT-ACK, so the first rung must
+    // come from the tones it keeps.
+    for seed in [21u64, 22, 23] {
+        let mut sim = pair_with(seed, 30.0, |c| c.track_masks = true);
+        sim.tone_powers = true;
+        for (a, b) in [(0, 1), (1, 0)] {
+            sim.impair(t(0.0), a, b, vec![(0, 45.0), (1, 27.0), (2, 20.0)]);
+        }
+        connect(&mut sim, 0, 1, t(0.1));
+        send_chunks(&mut sim, 0, t(0.2), &payload(100_000, seed), 1000);
+        send_chunks(&mut sim, 1, t(6.0), &payload(100_000, seed + 100), 1000);
+        sim.run_until(t(40.0));
+        for st in [0, 1] {
+            let first = data_frames(&sim, st).first().expect("data frames").1;
+            eprintln!("seed {seed} station {st}: first DATA at MCS {first}");
+            assert!(first >= 5, "station {st} opened at MCS {first}");
+        }
+        assert_clean(&sim);
+    }
+}
+
+#[test]
 fn rung_climbs_within_four_frames_after_6db_rise() {
     // ADR 0013: §14.1 asks for the correct rung within 4 frames of a rise.
     // The step-up still needs 3 clean frames (§10.1), but then requests the

@@ -928,7 +928,7 @@ impl Modem {
             distortion: 0,
             adc_clipped: clipped,
             tone_snr_db: Some(tone_snr(&res)),
-
+            tone_powers: res.tone_powers_7db_equivalent(&cfg),
             probe: cfg.has_probe,
         };
         let Ok(mut f) = self.codec.to_link(&res, meas, ended_at) else {

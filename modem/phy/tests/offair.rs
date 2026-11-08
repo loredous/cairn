@@ -108,6 +108,41 @@ fn offair_frames_decode_with_consistent_clock_and_snr() {
     }
 }
 
+/// The channel SNR summed from the per-tone powers over tones 3-23 (what a
+/// mask dropping the radios' lowest tones keeps, and what the link layer's
+/// reply rule takes).
+fn kept_snr(r: &RxResult) -> f64 {
+    let p = r.tone_powers_7db_equivalent(r.config.as_ref().unwrap()).unwrap();
+    let (s, n) = (3..24).filter(|&k| p[k].1 > 0.0).fold((0.0, 0.0), |(a, b), k| (a + p[k].0, b + p[k].1));
+    10.0 * (s / n).log10()
+}
+
+#[test]
+fn offair_kept_tone_snr_has_no_frame_length_bias() {
+    // Every frame here is unmasked, tones 0-2 included. Summed over tones
+    // 3-23, each short frame's per-tone powers read within SNR_TOLERANCE_DB
+    // of the 4 s frame's. The 2026-11-08 gap between unmasked short frames
+    // and masked 4 s frames is the masking, not the frame length: the radios
+    // delay tones 0-2 past the prefix, and with them silent the tones beside
+    // them carry 2-6 dB less noise (the simulator's
+    // test_short_frames_measure_the_isi_of_tones_past_the_prefix).
+    let index = read_json(&dir().join("offair.json"));
+    let opts = RxOptions::default();
+    for (direction, d) in index["directions"].as_object().unwrap() {
+        let frames = d["frames"].as_array().unwrap();
+        let long_name = frames.iter().find(|f| f["kind"] == "4s").unwrap()["wav"].as_str().unwrap();
+        let long = kept_snr(&decode(long_name, &opts));
+        for f in frames.iter().filter(|f| f["kind"] != "4s" && f["data_decodable"].as_bool().unwrap()) {
+            let name = f["wav"].as_str().unwrap();
+            let r = decode(name, &opts);
+            assert!(!r.channel_snr.as_ref().unwrap().fallback, "{name}");
+            let k = kept_snr(&r);
+            eprintln!("{direction} {name}: tones 3-23 {k:.2} dB (4 s frame {long:.2})");
+            assert!((k - long).abs() <= SNR_TOLERANCE_DB, "{name}: tones 3-23 {k} vs {long} dB");
+        }
+    }
+}
+
 /// The tracked data level against the one every known symbol gives, dB.
 const LEVEL_TOLERANCE_DB: f64 = 0.5;
 /// Every captured frame's data sat at least this far above the S2 level, dB.

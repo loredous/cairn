@@ -1834,6 +1834,12 @@ class ChannelSnr:
     per_tone_db: np.ndarray   # (width,) same scale; measured on tones with 2+ known symbols (probed tones), else interpolated
     known_symbols: int        # symbols whose content the receiver knew
     fallback: bool            # the estimate counts the designed clipping (errs low)
+    # Per tone, linear and average-referenced (no 7 dB-equivalent offset): the
+    # signal and noise powers that snr_db sums over the data's active tones,
+    # both 0 on a tone not measured. Summed over another set of tones they give
+    # the channel SNR that set would see (the tones a mask keeps).
+    tone_signal: np.ndarray | None = None
+    tone_noise: np.ndarray | None = None
 
 
 def known_symbols(cfg: FrameConfig, header_ok: bool, block_ok: np.ndarray,
@@ -1865,9 +1871,10 @@ def known_symbols(cfg: FrameConfig, header_ok: bool, block_ok: np.ndarray,
     return known
 
 
-def _clip_included_snr(res: RxResult, cfg: FrameConfig) -> tuple[float, np.ndarray]:
+def _clip_included_snr(res: RxResult, cfg: FrameConfig) -> tuple[float, np.ndarray, np.ndarray, np.ndarray]:
     """Fallback: the measured SNR over the data tones, which counts the
-    designed clipping as noise (errs low), on the 7 dB-equivalent scale."""
+    designed clipping as noise (errs low), on the 7 dB-equivalent scale, and
+    per tone the signal (margin taken off) and noise powers behind it."""
     h, noise, thermal = res.detail["h_s2"], res.detail["noise"], res.detail["thermal"]
     t = [k for k in cfg.data_active_tones if k < cfg.n_tones]     # a frame without a probe: the base tones
     off = cfg.clip_db - 7.0
@@ -1876,7 +1883,8 @@ def _clip_included_snr(res: RxResult, cfg: FrameConfig) -> tuple[float, np.ndarr
     p = np.maximum(np.abs(h) ** 2 - thermal * FALLBACK_H_BIAS, 0.1 * np.abs(h) ** 2)
     off -= FALLBACK_MARGIN_DB
     overall = 10 * np.log10(np.sum(p[t]) / np.sum(noise[t])) + off
-    return float(overall), 10 * np.log10(p / np.maximum(noise, 1e-30)) + off
+    return (float(overall), 10 * np.log10(p / np.maximum(noise, 1e-30)) + off,
+            p * 10 ** (-FALLBACK_MARGIN_DB / 10), np.asarray(noise, dtype=float).copy())
 
 
 def channel_snr(rx: np.ndarray, cfg: FrameConfig, res: RxResult) -> ChannelSnr:
@@ -1915,7 +1923,7 @@ def channel_snr(rx: np.ndarray, cfg: FrameConfig, res: RxResult) -> ChannelSnr:
     known = known_symbols(cfg, res.header_ok, res.block_ok, res.control_ok)
     off = cfg.clip_db - 7.0
     n_known = int(known.sum())
-    fb_snr, fb_tone = _clip_included_snr(res, cfg)
+    fb_snr, fb_tone, fb_sig, fb_noise = _clip_included_snr(res, cfg)
     d0 = cfg.first_data
     # A frame with data whose data symbols all failed is weak, and its header
     # decoding at all selects for a lucky, low-noise header: measured over the
@@ -1924,7 +1932,7 @@ def channel_snr(rx: np.ndarray, cfg: FrameConfig, res: RxResult) -> ChannelSnr:
     # everything they carry.
     no_data_known = cfg.data_symbols > 0 and not known[d0:].any()
     if n_known < MIN_KNOWN_SYMBOLS or no_data_known:
-        return ChannelSnr(min(fb_snr, SNR_MAX_DB), np.minimum(fb_tone, SNR_MAX_DB), n_known, True)
+        return ChannelSnr(min(fb_snr, SNR_MAX_DB), np.minimum(fb_tone, SNR_MAX_DB), n_known, True, fb_sig, fb_noise)
 
     shifts = det["shifts"]
     first = params.PREAMBLE_SYMBOLS
@@ -2002,7 +2010,7 @@ def channel_snr(rx: np.ndarray, cfg: FrameConfig, res: RxResult) -> ChannelSnr:
     ok = n_k >= 3
     t = np.array([k for k in cfg.data_active_tones if k < w and ok[k]], dtype=int)
     if t.size == 0:
-        return ChannelSnr(min(fb_snr, SNR_MAX_DB), np.minimum(fb_tone, SNR_MAX_DB), n_known, True)
+        return ChannelSnr(min(fb_snr, SNR_MAX_DB), np.minimum(fb_tone, SNR_MAX_DB), n_known, True, fb_sig, fb_noise)
     overall = 10 * np.log10(np.sum(sig[t]) / max(np.sum(noise[t]), tiny)) + off
     per = np.full(w, np.nan)
     # A tone with one degree of freedom left (a probed tone above 23 in a
@@ -2019,7 +2027,8 @@ def channel_snr(rx: np.ndarray, cfg: FrameConfig, res: RxResult) -> ChannelSnr:
         noise_tone[k] = np.sum(resid[js]) / np.sum(dof[js])
     per[meas] = 10 * np.log10(sig[meas] / np.maximum(noise_tone[meas], tiny)) + off
     per = np.interp(np.arange(w), np.flatnonzero(meas), per[meas])
-    return ChannelSnr(float(min(overall, SNR_MAX_DB)), np.minimum(per, SNR_MAX_DB), n_known, False)
+    return ChannelSnr(float(min(overall, SNR_MAX_DB)), np.minimum(per, SNR_MAX_DB), n_known, False,
+                      np.where(ok, sig, 0.0), np.where(ok, noise, 0.0))
 
 
 def _fit_gains(y: np.ndarray, x: np.ndarray, a: np.ndarray, settle: np.ndarray,
@@ -2046,4 +2055,5 @@ def _add_channel_snr(rx: np.ndarray, cfg: FrameConfig, res: RxResult) -> None:
     """Put the ADR 0006 channel SNR (``channel_snr``) into ``res.detail``."""
     m = channel_snr(rx, cfg, res)
     res.detail.update(snr_db=m.snr_db, snr_per_tone_db=m.per_tone_db, snr_known_symbols=m.known_symbols,
-                      snr_total_symbols=cfg.total_symbols, snr_fallback=m.fallback)
+                      snr_total_symbols=cfg.total_symbols, snr_fallback=m.fallback,
+                      snr_tone_signal=m.tone_signal, snr_tone_noise=m.tone_noise)
