@@ -213,3 +213,56 @@ fn short_frames_clock_and_snr_with_the_level_settling() {
         assert!(got.iter().all(|&s| s <= snr + 1.5), "{cfg:?}: {got:?}");
     }
 }
+
+/// The capture-like ramp of `sim/scripts/level_eval.py`: g0 -30 dB, tau 40 ms
+/// from the first preamble sample, which leaves the S2 pair 4.9 dB low (the
+/// 2026-11-07 captures: 3.3-6.3 dB).
+fn capture_ramp(n: usize, start: usize) -> Vec<f64> {
+    let g0 = 10f64.powf(-30.0 / 20.0);
+    (0..n).map(|i| 1.0 - (1.0 - g0) * (-(i.saturating_sub(start) as f64 / 48_000.0) / 0.040).exp()).collect()
+}
+
+/// 64-QAM frames (MCS 4 and 5, 24 and 32 tones) 2 dB above their 1%
+/// threshold, through white noise with the capture-like ramp on signal and
+/// noise: the S2 estimate is 4.9 dB low, so without level tracking nothing
+/// decodes; with it every block does, and the tracked data level is the
+/// ramp's. Without a ramp, tracking changes no block (the simulator's
+/// `test_level.py`).
+#[test]
+fn level_ramp_64qam() {
+    let mut rng = Rng::new(21);
+    let guard = 400;
+    for (mcs, width, snr) in [(4u8, 24usize, 18.0), (5, 24, 21.0), (4, 32, 18.0)] {
+        let cfg = FrameConfig::new(width, mcs, 4).unwrap().with_probe(width > 24).unwrap();
+        for trial in 0..2 {
+            let header = rng.bits(128);
+            let payloads: Vec<Vec<u8>> = (0..4).map(|_| rng.bits(params::DATA_PAYLOAD_BITS)).collect();
+            let frame = Transmitter::new().build(&cfg, &header, &payloads);
+            let mut x = vec![0.0; guard];
+            x.extend(frame.output());
+            x.extend(vec![0.0; guard]);
+            let p = frame.output().iter().map(|v| v * v).sum::<f64>() / frame.samples.len() as f64;
+            let noisy = awgn(&x, snr, width, &mut rng, Some(p));
+            let ramped: Vec<f64> = noisy.iter().zip(capture_ramp(x.len(), guard)).map(|(v, g)| v * g).collect();
+            let off = RxOptions { level_tracking: false, ..Default::default() };
+            let good = |r: &cairn_phy::RxResult| {
+                r.block_ok
+                    .iter()
+                    .zip(&r.block_bits)
+                    .zip(&frame.block_bits)
+                    .filter(|((ok, b), t)| **ok && b == t)
+                    .count()
+            };
+            let mut rx = Receiver::new();
+            let on = rx.receive(&ramped, &cfg, guard, &RxOptions::default());
+            assert_eq!(good(&on), 4, "mcs {mcs} x{width} trial {trial}: tracked");
+            assert_eq!(good(&rx.receive(&ramped, &cfg, guard, &off)), 0, "mcs {mcs} x{width} trial {trial}");
+            assert!(on.level.applied && on.level.settle < 0.0);
+            assert!((on.level.data_db() - 4.9).abs() < 0.6, "level {} dB", on.level.data_db());
+            // No ramp: the same blocks with and without tracking.
+            let plain = rx.receive(&noisy, &cfg, guard, &RxOptions::default());
+            assert_eq!(good(&plain), good(&rx.receive(&noisy, &cfg, guard, &off)), "mcs {mcs} x{width}");
+            assert_eq!(good(&plain), 4);
+        }
+    }
+}

@@ -576,7 +576,9 @@ class RxResult:
     iterations: np.ndarray
     # Receiver internals for measurement tools (bench rx): channel ``h`` and
     # ``noise`` per tone, equalized symbols ``eq`` (rows after the preamble),
-    # ``d0`` (first data row of ``eq``), ``window_start``, ``shifts``, ``drift``.
+    # ``d0`` (first data row of ``eq``), ``window_start``, ``shifts``, ``drift``,
+    # the level tracker's ``level`` (``LevelFit``) and the noise variance ``nv``
+    # each cell of ``eq`` was demapped with (header rows: the S2 estimate's).
     detail: dict = field(default_factory=dict, repr=False)
     control_ok: np.ndarray = field(default_factory=lambda: np.zeros(0, dtype=bool))
     control_bits: np.ndarray = field(default_factory=lambda: np.zeros((0, params.CONTROL_INFO_BITS), np.uint8))
@@ -797,10 +799,12 @@ def _estimate(tones: np.ndarray, cfg: FrameConfig, smooth_window: int, phase_win
     """Channel, noise and drift estimates from demodulated tones.
 
     ``tones`` has the control and data symbols already divided by
-    ``cfg.control_gain`` and ``cfg.data_gain``.
-    Returns ``noise`` (noise plus distortion per tone, at the preamble's
-    scale) and ``thermal``, its additive-noise part, which a data symbol
-    raised by the mask gain sees reduced by ``data_gain ** 2``. With
+    ``cfg.control_gain`` and ``cfg.data_gain``. Returns the channel ``h``,
+    ``thermal`` (the additive noise per tone the S2 pair and the probe
+    measure, at the preamble's scale; a data symbol raised by the mask gain
+    sees it reduced by ``data_gain ** 2``; ``pilot_excess`` adds the
+    distortion), the phase correction ``corr``, the rows after the preamble,
+    the drift and its standard deviation, and the pilot observations. With
     ``robust``, data symbols whose power shows a noise burst are left out of
     the pilots' phase tracking and distortion estimate.
     """
@@ -823,7 +827,6 @@ def _estimate(tones: np.ndarray, cfg: FrameConfig, smooth_window: int, phase_win
         noise[b:] = np_[b:]
     noise = np.maximum(noise, 1e-6 * np.mean(np.abs(h) ** 2))
     thermal = noise.copy()
-    snr_db = 10 * np.log10(np.abs(h) ** 2 / noise)
 
     body = tones[first:]
     pilots = cfg.data_pilots          # masked pilots are absent from data symbols
@@ -850,23 +853,298 @@ def _estimate(tones: np.ndarray, cfg: FrameConfig, smooth_window: int, phase_win
     s_ref = np.full(nt, 2.5 - first)
     s_ref[b:] = hs + 0.5
     corr, drift, drift_sd = track_drift(obs, pilots, nt, s_ref=s_ref, window=phase_window, prior=prior)
+    return h, thermal, corr, body, drift, drift_sd, obs
 
-    # The S2 pair sees only noise: both symbols carry the same clipping
-    # distortion, so it cancels in their difference. Data symbols also carry
-    # distortion (clipping, a radio limiter) and inter-symbol interference,
-    # which the pilots in the data symbols measure; add it, as a fraction of
-    # signal power interpolated between pilots, to every tone.
+
+def pilot_excess(obs: np.ndarray, cfg: FrameConfig, h: np.ndarray, corr: np.ndarray, level: np.ndarray,
+                 thermal: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """The pilots' distortion in the data symbols, and the noise with it.
+
+    The S2 pair sees only noise: both symbols carry the same clipping
+    distortion, so it cancels in their difference. Data symbols also carry
+    distortion (clipping, a radio limiter) and inter-symbol interference,
+    which the pilots in the data symbols measure; it is added, as a fraction
+    of signal power interpolated between pilots, to every tone. ``obs`` are
+    the pilot observations of ``_estimate`` and ``level`` the level tracker's
+    gain per row and tone (``level_matrix``): a level the S2 estimate missed
+    is not distortion. Returns (excess per data pilot, noise per tone).
+    """
+    pilots = list(cfg.data_pilots)
+    d0 = cfg.first_data - params.PREAMBLE_SYMBOLS
     excess = np.zeros(len(pilots))
-    if body.shape[0] > d0:
-        hp = h[list(pilots)]
-        resid = obs[d0:] / (hp[None, :] * corr[d0:, list(pilots)]) - 1
+    noise = thermal.copy()
+    if obs.shape[0] > d0:
+        hp = h[pilots]
+        resid = obs[d0:] / (hp[None, :] * corr[d0:, pilots] * level[d0:, pilots]) - 1
         r2 = np.abs(resid) ** 2
         r2 = r2[~np.isnan(r2).any(axis=1)]
-        floor = noise[list(pilots)] / (np.abs(hp) ** 2 * cfg.data_gain ** 2)
+        floor = thermal[pilots] / (np.abs(hp) ** 2 * cfg.data_gain ** 2)
         excess = np.maximum(np.mean(r2, axis=0) - floor, 0)
-        noise = noise + np.interp(np.arange(nt), pilots, excess) * np.abs(h) ** 2
-        snr_db = 10 * np.log10(np.abs(h) ** 2 / noise)
-    return h, noise, thermal, excess, snr_db, corr, body, drift, drift_sd
+        noise = noise + np.interp(np.arange(cfg.n_tones), pilots, excess) * np.abs(h) ** 2
+    return excess, noise
+
+
+# --- level tracking -----------------------------------------------------------
+#
+# Over the air the received level is not what the S2 pair measured: the
+# 2026-11-07 captures show it rising from 13-22 dB below its steady value at
+# the first preamble sample (likely the radios' transmit audio AGC), which
+# leaves the S2 estimate 3-6 dB low, and settling after S2 with a 19-26 ms
+# time constant; on links without that ramp the low-crest preamble escapes
+# the radios' limiters and reads 0.5-2 dB above the data. Equalised by the
+# S2 estimate alone, the data symbols sit off unit power, which moves QAM
+# decision regions and mis-scales the LLRs.
+
+LEVEL_TAUS_S = (0.012, 0.019, 0.027, 0.038, 0.054)  # settling time constants tried (captures: 19-26 ms)
+LEVEL_MISMATCH = 0.035      # sd of the data's level against the header's, relative (captures: 0.2-0.5 dB)
+LEVEL_K_SIGMA = 3.0         # a level term is applied only this many standard errors from no change
+LEVEL_BOUNDS = (0.1, 10.0)  # a fitted level outside this (-20..+20 dB) is not believed: no tracking
+LEVEL_MIN_SETTLE = 0.05     # the settling term is fitted only with two rows or more where it is above this
+LEVEL_SETTLED = 0.02        # data rows whose settling term is below this measure the data's own power
+
+
+@dataclass
+class LevelFit:
+    """The level tracker's common gain (``track_level``)."""
+    level: np.ndarray            # (rows after the preamble,) gain against the S2 estimate; 1 if not tracked
+    reference: float             # the level at the probe rows, which the tones above 23 are referenced to
+    segments: tuple[float, ...]  # steady level per segment (header and control; probe and data); 1 if held
+    settle: float                # the settling term at the first header row; 0 if held
+    tau: float                   # the settling term's time constant, s
+    sd: tuple[float, ...]        # standard errors of the segment levels and the settling term (inf if held)
+    applied: bool                # any term applied
+
+
+def level_cells(cfg: FrameConfig, header_known: np.ndarray | None) -> tuple[np.ndarray, np.ndarray]:
+    """What the receiver knows of the base tones of each row after the
+    preamble, for ``track_level``: the transmitted values (0 where unknown),
+    as the equalised symbols see them (mask gains divided out), and which
+    rows are known on every base tone (the probe, and the header given its
+    decoded points ``header_known``). The other rows know their pilots."""
+    first = params.PREAMBLE_SYMBOLS
+    b = params.BASE_TONES
+    nb = cfg.total_symbols - first
+    hs = cfg.header_symbols
+    x = np.zeros((nb, b), dtype=complex)
+    full = np.zeros(nb, dtype=bool)
+    bp = params.pilots_for(b)
+    x[:hs, list(bp)] = pilots_on(first + hs, bp)[first:]
+    if header_known is not None:
+        x[:hs, list(cfg.base_data_tones)] = np.asarray(header_known).reshape(hs, -1)
+        full[:hs] = True
+    if cfg.has_probe:
+        p0 = cfg.first_probe - first
+        x[p0:p0 + params.PROBE_SYMBOLS] = probe_grid(cfg.n_tones, cfg.first_probe)[:, :b]
+        full[p0:p0 + params.PROBE_SYMBOLS] = True
+    c0, d0 = cfg.first_control - first, cfg.first_data - first
+    cp = tuple(p for p in cfg.control_pilots if p < b)
+    if d0 > c0:
+        x[c0:d0, list(cp)] = pilots_on(cfg.first_data, cp)[cfg.first_control:]
+    dp = tuple(p for p in cfg.data_pilots if p < b)
+    if nb > d0:
+        x[d0:, list(dp)] = pilots_on(cfg.total_symbols, dp)[cfg.first_data:]
+    return x, full
+
+
+def _no_level(nb: int, n_seg: int) -> LevelFit:
+    return LevelFit(np.ones(nb), 1.0, (1.0,) * n_seg, 0.0, LEVEL_TAUS_S[0], (np.inf,) * (n_seg + 1), False)
+
+
+def _qam_fourth_moment(bits_per_symbol: int) -> float:
+    """E|x|^4 of the unit-power square QAM constellation."""
+    m = 2 ** (bits_per_symbol // 2)                 # levels per axis
+    norm2 = 2 * (m * m - 1) / 3                     # per-axis power of the odd-integer levels, twice
+    return 2 * (3 * m ** 4 - 10 * m * m + 7) / 15 / norm2 ** 2 + 0.5
+
+
+def track_level(eq: np.ndarray, x: np.ndarray, full: np.ndarray, nv: np.ndarray, cfg: FrameConfig) -> LevelFit:
+    """The common (all-tone) gain of each row after the preamble against the
+    S2 channel estimate.
+
+    ``eq`` holds the base tones' equalised symbols (rows after the
+    preamble), ``x`` and ``full`` the known values and the fully known rows
+    (``level_cells``), ``nv`` each base tone's noise variance as the S2 pair
+    measured it (equalised units). Each row's known cells give its gain z,
+    the real part of a noise-weighted projection on the known values (the
+    level changes without turning the phase, which the pilots track), with
+    a variance from the cells' own scatter. The gains are fitted by weighted
+    least squares with
+
+        a(row) = A_segment + B exp(-t / tau),
+
+    t from the first header row: a steady level per segment and the radios'
+    settling, tau the one of ``LEVEL_TAUS_S`` that fits best. The segments
+    are the rows before the data (header, control) and the data rows; with
+    a probe, the rows from the probe on (wider than the header, the data may
+    sit lower in a limiter). Each kind of row measures the data's level with
+    an error of its own, which the fit carries:
+
+    * A row known on every base tone (the header once decoded, the probe)
+      measures its own segment's level precisely.
+    * A row that knows only its pilots measures it through the S2 estimate
+      of two or three tones, whose error does not average out over rows:
+      those rows share an offset with the spread the S2 noise predicts
+      (``FALLBACK_H_BIAS``) as its prior.
+    * Without a probe, the data's level is tied to the header's with the
+      spread ``LEVEL_MISMATCH``, the difference the captures show.
+    * Once the header is known, the data symbols' own power over the settled
+      data rows: E|eq|^2 = A^2 (1 + r), r the noise the header measured,
+      constellation power 1; its error is the statistical scatter plus the
+      header's noise estimate being wrong by as much as itself, so it leads
+      at high SNR and counts for little at low SNR.
+
+    A term is applied only if it stands ``LEVEL_K_SIGMA`` standard errors from
+    no change (a segment level from 1, the settling term from 0), else it is
+    held there and the rest refitted: a frame whose level did not change, or
+    one too noisy to tell, is equalised as before. Where any term is
+    applied, a fully known row takes its own measured gain.
+    """
+    nb = eq.shape[0]
+    first = params.PREAMBLE_SYMBOLS
+    hs, d0 = cfg.header_symbols, cfg.first_data - first
+    seg = np.zeros(nb, dtype=int)
+    if cfg.has_probe:
+        seg[cfg.first_probe - first:] = 1
+    elif d0 < nb:
+        seg[d0:] = 1
+    n_seg = int(seg.max()) + 1 if nb else 1
+    known = np.abs(x) > 0
+    w = 1 / np.maximum(nv, 1e-12)
+    info = np.sum(w[None, :] * np.abs(x) ** 2, axis=1)
+    rows = np.flatnonzero(info > 0)
+    if rows.size < 2:
+        return _no_level(nb, n_seg)
+    xr, er, kr = x[rows], eq[rows], known[rows]
+    z = np.sum(w[None, :] * np.real(np.conj(xr) * er), axis=1) / info[rows]
+    # The cells' scatter against what the S2 noise predicts (one real
+    # parameter per row fitted from its complex cells).
+    resid = float(np.sum(w[None, :] * np.abs(er - z[:, None] * xr) ** 2 * kr))
+    scale = resid / max(float(np.sum(kr)) - 0.5 * rows.size, 1.0)
+    var = np.maximum(scale, 1e-12) / (2 * info[rows])
+    pilot_only = ~full[rows]
+    has_d = bool(pilot_only.any())
+    static = 0.0
+    if has_d:
+        pw = w * kr[pilot_only].any(axis=0)
+        static = float(np.sum(pw ** 2 * nv * FALLBACK_H_BIAS / 2) / max(float(np.sum(pw)) ** 2, 1e-30))
+    level0 = float(np.median(z))
+    sr = seg[rows]
+    data_seg = n_seg - 1 if d0 < nb else -1
+
+    # The data symbols' power needs the header's noise: each header row at its own gain.
+    noise_hdr = None
+    if full[:hs].all() and cfg.n_blocks and d0 < nb:
+        bt = [k for k in cfg.base_data_tones if k in set(cfg.data_tones)]
+        if bt:
+            r_k = np.mean(np.abs(eq[:hs, bt] / z[:hs, None] - x[:hs, bt]) ** 2, axis=0)
+            noise_hdr = (bt, r_k)
+
+    def data_power(phi: np.ndarray) -> tuple[float, float] | None:
+        if noise_hdr is None:
+            return None
+        bt, r_k = noise_hdr
+        settled = d0 + np.flatnonzero(phi[d0:] < LEVEL_SETTLED)
+        if not settled.size:
+            return None
+        wk = 1 / np.maximum(r_k, 1e-6)
+        p_k = np.mean(np.abs(eq[np.ix_(settled, bt)]) ** 2, axis=0)
+        q = max(float(np.sum(wk * p_k / (1 + r_k)) / np.sum(wk)), 1e-12)
+        n_eff = float(np.sum(wk * r_k) / np.sum(wk))
+        spread = _qam_fourth_moment(cfg.rung.bits_per_symbol) - 1
+        vq = float(np.sum(wk ** 2 * (spread + 2 * r_k + r_k ** 2) / (1 + r_k) ** 2) / np.sum(wk) ** 2 / settled.size)
+        zp = float(np.sqrt(q))
+        return zp, vq / (4 * q) + (zp * n_eff / (2 * (1 + n_eff))) ** 2
+
+    def fit(free_a: list[bool], free_b: bool, phi: np.ndarray):
+        """Weighted least squares with the priors: {name: (value, sd)} and the objective."""
+        cols, names = [], []
+        for s in range(n_seg):
+            if free_a[s]:
+                cols.append((sr == s).astype(float))
+                names.append(f"a{s}")
+        if free_b:
+            cols.append(phi[rows])
+            names.append("b")
+        if has_d:
+            cols.append(pilot_only.astype(float))
+            names.append("d")
+        held = np.array([0.0 if free_a[s] else 1.0 for s in range(n_seg)])
+        target = z - held[sr]
+        m = np.stack(cols, axis=1)
+        nmat = m.T @ (m / var[:, None])
+        rhs = m.T @ (target / var)
+        # Pseudo-observations: (row of coefficients, value, variance).
+        pseudo = []
+        if has_d:
+            pseudo.append(({"d": 1.0}, 0.0, max(static * level0 ** 2, 1e-12)))
+        if n_seg == 2 and not cfg.has_probe:
+            coef = {f"a{s}": sign for s, sign in ((0, -1.0), (1, 1.0)) if free_a[s]}
+            value = -sum(sign * held[s] for s, sign in ((0, -1.0), (1, 1.0)))
+            pseudo.append((coef, value, (LEVEL_MISMATCH * level0) ** 2))
+        power = data_power(phi)
+        if power is not None and data_seg >= 0 and free_a[data_seg]:
+            pseudo.append(({f"a{data_seg}": 1.0}, power[0], power[1]))
+        objective = 0.0
+        for coef, value, v in pseudo:
+            row = np.array([coef.get(n, 0.0) for n in names])
+            nmat += np.outer(row, row) / v
+            rhs += row * value / v
+        try:
+            cov = np.linalg.inv(nmat)
+        except np.linalg.LinAlgError:
+            return None, np.inf
+        theta = cov @ rhs
+        objective = float(np.sum((target - m @ theta) ** 2 / var))
+        for coef, value, v in pseudo:
+            objective += (value - sum(c * theta[names.index(n)] for n, c in coef.items())) ** 2 / v
+        return {n: (float(theta[i]), float(np.sqrt(max(cov[i, i], 0.0)))) for i, n in enumerate(names)}, objective
+
+    t_rows = np.arange(nb) * cfg.stride / params.FS
+    free_a = [bool(np.any(sr == s)) for s in range(n_seg)]
+    best = None
+    for tau in LEVEL_TAUS_S:
+        phi = np.exp(-t_rows / tau)
+        can_b = bool(np.sum(phi[rows] > LEVEL_MIN_SETTLE) >= 2)
+        t, objective = fit(free_a, can_b, phi)
+        if t is not None and (best is None or objective < best[0]):
+            best = (objective, tau, phi, can_b, t)
+    if best is None:
+        return _no_level(nb, n_seg)
+    _, tau, phi, can_b, t = best
+    keep_a = [free_a[s] and abs(t[f"a{s}"][0] - 1) > LEVEL_K_SIGMA * t[f"a{s}"][1] for s in range(n_seg)]
+    keep_b = can_b and abs(t["b"][0]) > LEVEL_K_SIGMA * t["b"][1]
+    if not any(keep_a) and not keep_b:
+        return _no_level(nb, n_seg)
+    if keep_a != free_a or keep_b != can_b:
+        t, _ = fit(keep_a, keep_b, phi)
+        if t is None:
+            return _no_level(nb, n_seg)
+    a = tuple(t[f"a{s}"][0] if keep_a[s] else 1.0 for s in range(n_seg))
+    settle = t["b"][0] if keep_b else 0.0
+    level = np.array(a)[seg] + settle * phi
+    # A fully known row is measured on every base tone: it keeps its own
+    # gain (the settling need not follow the exponential exactly, and the
+    # header's decision-directed noise would count the misfit).
+    level[rows[~pilot_only]] = z[~pilot_only]
+    if np.any(level < LEVEL_BOUNDS[0]) or np.any(level > LEVEL_BOUNDS[1]):
+        return _no_level(nb, n_seg)
+    ref = 1.0
+    if cfg.has_probe:
+        p0 = cfg.first_probe - first
+        ref = float(np.mean(level[p0:p0 + params.PROBE_SYMBOLS]))
+    sd = tuple(t[f"a{s}"][1] if keep_a[s] else np.inf for s in range(n_seg)) + (t["b"][1] if keep_b else np.inf,)
+    return LevelFit(level, ref, a, settle, tau, sd, True)
+
+
+def level_matrix(fit: LevelFit, n_tones: int) -> np.ndarray:
+    """The tracked gain per row and tone: the level on the base tones (whose
+    channel is the S2 estimate), the level over the probe's on the tones
+    above 23 (whose channel is the probe's)."""
+    b = params.BASE_TONES
+    m = np.empty((fit.level.size, n_tones))
+    m[:, :b] = fit.level[:, None]
+    m[:, b:] = (fit.level / fit.reference)[:, None]
+    return m
 
 
 def _outliers(m: np.ndarray, k_sigma: float = 6.0) -> np.ndarray:
@@ -942,7 +1220,8 @@ def receive(rx: np.ndarray, cfg: FrameConfig | None = None, *, link: LinkSource 
             phase_window: int = 15, smooth_window: int = 7,
             decision_directed: bool = True, burst_aware: bool = True,
             header_noise: str = "measured", measure_snr: bool = True,
-            clock_prior: ClockPrior | Callable[[fields.Header], ClockPrior | None] | None = None) -> RxResult:
+            clock_prior: ClockPrior | Callable[[fields.Header], ClockPrior | None] | None = None,
+            track_levels: bool = True) -> RxResult:
     """Decode one frame from real samples ``rx``.
 
     Give ``start`` (index of the frame's first sample) or ``reference`` (the
@@ -963,6 +1242,12 @@ def receive(rx: np.ndarray, cfg: FrameConfig | None = None, *, link: LinkSource 
     default 0 +- 50 ppm; see ``track_drift``); header first, it may be a
     callable giving the prior for the decoded header (None: the default),
     e.g. what the link layer has measured of the sender on long frames.
+    With ``track_levels``, the common gain of the rows after the preamble is
+    tracked against the S2 estimate (``track_level``: the radios' level
+    settling at the start of a transmission, a preamble that a limiter
+    leaves louder than the data), from the pilots and probe and then the
+    decoded header, and divided out of the equalised symbols; the noise
+    estimates are then made on them (``detail["level"]``).
 
     Without ``cfg`` the header is decoded first and the frame's geometry
     taken from its fields (``receive_header_first``), with width and mask
@@ -976,7 +1261,7 @@ def receive(rx: np.ndarray, cfg: FrameConfig | None = None, *, link: LinkSource 
                                     phase_window=phase_window, smooth_window=smooth_window,
                                     decision_directed=decision_directed, burst_aware=burst_aware,
                                     header_noise=header_noise, measure_snr=measure_snr,
-                                    clock_prior=clock_prior)
+                                    clock_prior=clock_prior, track_levels=track_levels)
     if callable(clock_prior):
         raise ValueError("a clock prior per header needs the header-first receiver (no cfg)")
     if start is None:
@@ -993,7 +1278,7 @@ def receive(rx: np.ndarray, cfg: FrameConfig | None = None, *, link: LinkSource 
     tones = ofdm.demodulate(rx, window_start, n_sym, cfg.n_tones, cfg.cp, active=cfg.width)
     tones[c_first:d_first] /= cfg.control_gain                 # the mask's known power boost
     tones[d_first:] /= cfg.data_gain
-    h, noise, thermal, excess, snr_db, corr, body, drift, drift_sd = _estimate(
+    h, thermal, corr, body, drift, drift_sd, obs = _estimate(
         tones, cfg, smooth_window, phase_window, burst_aware, clock_prior)
     # Follow sample-clock drift: if the windows would wander by a sample or
     # more over the frame, move each symbol's window and estimate again.
@@ -1010,14 +1295,33 @@ def receive(rx: np.ndarray, cfg: FrameConfig | None = None, *, link: LinkSource 
         tones = tones * np.exp(-2j * np.pi * f[None, :] * shifts[:, None] / params.N_USEFUL)
         tones[c_first:d_first] /= cfg.control_gain
         tones[d_first:] /= cfg.data_gain
-        h, noise, thermal, excess, snr_db, corr, body, drift, drift_sd = _estimate(
+        h, thermal, corr, body, drift, drift_sd, obs = _estimate(
             tones, cfg, smooth_window, phase_window, burst_aware, clock_prior)
     hs = cfg.header_symbols
     c0, d0 = c_first - first, d_first - first                  # rows of ``body`` and ``eq``
-    eq = body / (h[None, :] * corr)
-    nv = noise[None, :] / np.abs(h[None, :]) ** 2 * np.ones_like(body.real)
-    nv[c0:d0] = (_data_noise(noise, thermal, cfg.control_gain) / np.abs(h) ** 2)[None, :]
-    nv[d0:] = (_data_noise(noise, thermal, cfg.data_gain) / np.abs(h) ** 2)[None, :]
+    b = params.BASE_TONES
+    nv_s2 = thermal[:b] / np.abs(h[:b]) ** 2
+
+    def equalise(lev: LevelFit):
+        """Equalised symbols, the pilots' excess and the noise with it, and
+        the noise variances, for a level fit."""
+        lm = level_matrix(lev, cfg.n_tones)
+        ex, nz = pilot_excess(obs, cfg, h, corr, lm, thermal)
+        e = body / (h[None, :] * corr * lm)
+        v = nz[None, :] / np.abs(h[None, :]) ** 2 * np.ones_like(body.real)
+        v[c0:d0] = (_data_noise(nz, thermal, cfg.control_gain) / np.abs(h) ** 2)[None, :]
+        v[d0:] = (_data_noise(nz, thermal, cfg.data_gain) / np.abs(h) ** 2)[None, :]
+        return e, ex, nz, v
+
+    # Level tracking, first from the pilots and the probe alone (the header
+    # is still unknown): a large level change (the radios' ramp at the start
+    # of a transmission) would otherwise count as noise in the header.
+    level = _no_level(body.shape[0], 2 if cfg.has_probe else 1)
+    if track_levels:
+        x_known, full = level_cells(cfg, None)
+        level = track_level(body[:, :b] / (h[None, :b] * corr[:, :b]), x_known, full, nv_s2, cfg)
+    eq, excess, noise, nv = equalise(level)
+    snr_db = 10 * np.log10(np.abs(h) ** 2 / noise)
 
     # Header.
     hcode = ldpc.code_for(params.HEADER_CODE)
@@ -1033,11 +1337,18 @@ def receive(rx: np.ndarray, cfg: FrameConfig | None = None, *, link: LinkSource 
     hl = mapping.descramble_llr(mapping.deinterleave(hl[:e_h], cfg.interleaver, HEADER_POSITION),
                                 HEADER_POSITION)
     hres = ldpc.decode(hcode, hcode.rate_recover(hl, e_h), rows=hcode.rows_needed(hcode.tx_positions(e_h)))
-    if hres.ok[0] and decision_directed:
+    known = header_points(cfg, hres.bits[0]).reshape(hs, len(btones)) if hres.ok[0] else None
+    if track_levels and known is not None:
+        # The decoded header is known on every base tone: the level again,
+        # with it.
+        x_known, full = level_cells(cfg, known)
+        level = track_level(body[:, :b] / (h[None, :b] * corr[:, :b]), x_known, full, nv_s2, cfg)
+        eq, excess, noise, nv = equalise(level)
+        snr_db = 10 * np.log10(np.abs(h) ** 2 / noise)
+    if known is not None and decision_directed:
         # The decoded header is a known signal on every base data tone: its
         # error per tone is noise plus distortion plus ISI, measured where
         # it happens rather than interpolated between two pilots.
-        known = header_points(cfg, hres.bits[0]).reshape(hs, len(btones))
         err = np.mean(np.abs(eq[:hs, btones] - known) ** 2, axis=0)
         rel = np.interp(np.arange(params.BASE_TONES), btones, err)
         rel = np.convolve(rel, np.ones(3) / 3, mode="same") / np.convolve(
@@ -1067,7 +1378,7 @@ def receive(rx: np.ndarray, cfg: FrameConfig | None = None, *, link: LinkSource 
                           cfg.n_blocks, 1 + cfg.n_control, cfg.interleaver)
     detail = {"h": h, "noise": noise, "thermal": thermal, "eq": eq, "d0": d0, "c0": c0,
               "window_start": window_start, "shifts": shifts, "drift": drift, "drift_sd": drift_sd,
-              "corr": corr}
+              "corr": corr, "level": level, "nv": nv}
     header, header_error = parse_header(bool(hres.ok[0]), hres.bits[0])
     controls = parse_controls(cres.ok, cres.bits)
     out = RxResult(bool(hres.ok[0]), hres.bits[0], dres.ok, dres.bits, start, snr_db, dres.iterations, detail,

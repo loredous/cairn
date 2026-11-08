@@ -10,8 +10,11 @@ sample to ``TAIL_S`` after its end), the reference manifests, and
 ``offair.json`` indexing them with what each frame carried (header and
 control block bits, payloads decoded from the clean reference) and the
 direction's long-frame reference (clock offset and SNR of the 4 s frame,
-measured on the full capture). The B->A 4 s frame is left out to keep the
-fixtures under 1 MB; its reference values come from the full capture.
+measured on the full capture). Each frame also records how many data blocks
+the Python receiver decodes from the fixture with and without level
+tracking, its level fit (``python_level``, for the Rust receiver to agree
+with) and the data symbols' gain against the S2 estimate measured with
+every sent symbol known (``data_gain_db``, what the tracker should find).
 """
 
 from __future__ import annotations
@@ -23,15 +26,16 @@ from pathlib import Path
 
 import numpy as np
 
-from cairn_sim import frame, preamble
+from cairn_sim import frame, params, preamble
 from cairn_sim.bench.audio import read_wav
+from cairn_sim.crc import append_crc
 
 ROOT = Path(__file__).resolve().parents[1]
 LEAD_S = 0.1
 TAIL_S = 0.05
 FS = 48_000
 NAMES = {1: "1blk", 2: "4s", 3: "probe", 4: "ui"}
-KEEP = {"AtoB": (1, 2, 3, 4), "BtoA": (1, 3, 4)}
+KEEP = {"AtoB": (1, 2, 3, 4), "BtoA": (1, 2, 3, 4)}
 # The capture lost 1276 samples (26.6 ms, an input xrun the live session
 # logged as "xruns 2 gaps 2 (64.8 ms)") inside the B->A one-block frame's
 # data block, at this capture sample: the data block cannot decode.
@@ -57,8 +61,36 @@ def write_wav(path: Path, q: np.ndarray) -> None:
         w.writeframes(q.astype("<i2").tobytes())
 
 
-def decode(x: np.ndarray) -> list[frame.RxResult]:
-    return [frame.receive_header_first(x, LINK, start=int(d.start), cp=int(d.cp)) for d in preamble.detect(x)]
+def decode(x: np.ndarray, **kw) -> list[frame.RxResult]:
+    return [frame.receive_header_first(x, LINK, start=int(d.start), cp=int(d.cp), **kw) for d in preamble.detect(x)]
+
+
+def data_gain_db(r: frame.RxResult, payloads: list[str]) -> float | None:
+    """The data symbols' common gain against the S2 channel estimate, dB,
+    measured with every transmitted symbol known: the real part of the
+    noise-weighted projection of the S2-equalised data symbols (``r``
+    decoded without level tracking) on the sent ones, over all data rows.
+    What the level tracker should find; None for a frame without data."""
+    cfg = r.config
+    if not cfg.n_blocks:
+        return None
+    bits = np.array([np.unpackbits(np.frombuffer(bytes.fromhex(p), np.uint8))[:1008] for p in payloads], np.uint8)
+    sent = frame.rebuild(cfg, r.header_bits, append_crc(bits), r.control_bits if cfg.n_control else None)
+    d0 = cfg.first_data
+    dt = list(cfg.data_tones)
+    x = sent.grid[d0:, dt] / cfg.data_gain
+    e = r.detail["eq"][d0 - params.PREAMBLE_SYMBOLS:, dt]
+    g0 = np.sum(np.real(np.conj(x) * e)) / np.sum(np.abs(x) ** 2)
+    w = 1 / np.maximum(np.mean(np.abs(e - g0 * x) ** 2, axis=0), 1e-9)      # each tone by its own error
+    g = np.sum(w * np.real(np.conj(x) * e)) / np.sum(w * np.abs(x) ** 2)
+    return float(20 * np.log10(g))
+
+
+def level_entry(r: frame.RxResult) -> dict:
+    """The Python receiver's level fit, for the Rust receiver to agree with."""
+    lv = r.detail["level"]
+    return {"applied": bool(lv.applied), "segments": [float(v) for v in lv.segments], "settle": float(lv.settle),
+            "reference": float(lv.reference), "level": [float(v) for v in lv.level]}
 
 
 def main() -> None:
@@ -99,6 +131,11 @@ def main() -> None:
             assert len(sent) == 1 and sent[0].block_ok.all() and sent[0].header is not None
             payloads = [bytes(np.packbits(b[:1008])).hex() for b in sent[0].block_bits]
             gap = GAPS.get((direction, i))
+            # The fixture decoded as the tests decode it: header first, with
+            # and without level tracking.
+            _, xf = mono16(a.out / name)
+            on = frame.receive(xf, link=LINK)
+            off = frame.receive(xf, link=LINK, track_levels=False)
             entry["frames"].append({
                 "wav": name, "manifest": ref_json.name, "kind": NAMES[i], "type": man["header"]["type"],
                 "data_decodable": gap is None,
@@ -107,6 +144,8 @@ def main() -> None:
                 "mcs": man["mcs"], "n_blocks": man["n_blocks"], "n_control": man["n_control"],
                 "header_message_hex": man["header"]["message_hex"],
                 "control_hex": man["header"]["control_hex"], "payload_hex": payloads,
+                "blocks_ok": int(on.block_ok.sum()), "blocks_ok_untracked": int(off.block_ok.sum()),
+                "data_gain_db": data_gain_db(off, payloads), "python_level": level_entry(on),
             })
             print(f"{name}: {(hi - lo) / FS:.2f} s, blocks {int(r.block_ok.sum())}/{r.block_ok.size}, "
                   f"clock {-r.detail['drift'] / r.config.stride * 1e6:+.1f} ppm, SNR {r.detail['snr_db']:.1f} dB")

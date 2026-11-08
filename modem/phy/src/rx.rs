@@ -5,6 +5,9 @@
 //! the two S2 symbols (base tones) and the width probe (tones above);
 //! tracks common phase and sample-clock drift with the continuous pilots,
 //! re-placing the FFT windows if the clock drifts by a sample or more;
+//! tracks the common level of the rows after the preamble against the S2
+//! estimate ([`LevelFit`]: the radios' level still settling under the
+//! preamble), from the pilots and probe and again with the decoded header;
 //! measures the pilots' distortion; decodes the header with the
 //! header-noise method ("measured", the simulator's default); re-estimates
 //! the base tones' noise from the decoded header (decision-directed);
@@ -75,6 +78,11 @@ pub struct RxOptions {
     /// ([`ClockPrior`]; default 0 +- 50 ppm). A [`LinkSource`] can give a
     /// per-peer prior for the frame once its header names the sender.
     pub clock_prior: ClockPrior,
+    /// Track the common gain of the rows after the preamble against the S2
+    /// estimate ([`LevelFit`]: the radios' level settling at the start of a
+    /// transmission, a preamble a limiter leaves louder than the data) and
+    /// divide it out before the noise is estimated and the blocks demapped.
+    pub level_tracking: bool,
 }
 
 impl Default for RxOptions {
@@ -90,6 +98,7 @@ impl Default for RxOptions {
             rebuild_snr: true,
             threads: 1,
             clock_prior: ClockPrior::default(),
+            level_tracking: true,
         }
     }
 }
@@ -145,6 +154,9 @@ pub struct RxResult {
     /// `mask-id`): the frame's control and data blocks were not decoded and
     /// count as failed.
     pub unknown_mask: Option<u8>,
+    /// The level tracker's gain per row after the preamble
+    /// ([`RxOptions::level_tracking`]; all 1 when off or not applied).
+    pub level: LevelFit,
 }
 
 impl RxResult {
@@ -226,14 +238,14 @@ pub struct ChannelSnr {
 
 struct Estimate {
     h: Vec<Complex64>,
-    noise: Vec<f64>,
+    /// Additive noise per tone from the S2 pair and the probe.
     thermal: Vec<f64>,
-    excess: Vec<f64>,
-    snr_db: Vec<f64>,
     /// (body rows) x width phase correction.
     corr: Grid,
     drift: f64,
     drift_sd: f64,
+    /// Pilot observations (body rows x data pilots; None where left out).
+    obs: Vec<Vec<Option<Complex64>>>,
 }
 
 fn snr_of(h: &[Complex64], noise: &[f64]) -> Vec<f64> {
@@ -410,6 +422,466 @@ fn data_noise(noise: &[f64], thermal: &[f64], gain: f64) -> Vec<f64> {
     noise.iter().zip(thermal).map(|(&n, &t)| (n - t * (1.0 - gain.powi(-2))).max(n / (gain * gain))).collect()
 }
 
+/// The pilots' distortion in the data symbols (per data pilot) and the noise
+/// per tone with it (the sim's `pilot_excess`): the S2 pair sees only noise
+/// (both symbols carry the same clipping, which cancels in their
+/// difference); data symbols also carry distortion and inter-symbol
+/// interference, which the pilots in them measure, added as a fraction of
+/// signal power interpolated between pilots. `level` is the level tracker's
+/// gain per body row and tone ([`level_matrix`]): a level the S2 estimate
+/// missed is not distortion.
+fn pilot_excess(
+    obs: &[Vec<Option<Complex64>>],
+    cfg: &FrameConfig,
+    h: &[Complex64],
+    corr: &Grid,
+    level: &[Vec<f64>],
+    thermal: &[f64],
+) -> (Vec<f64>, Vec<f64>) {
+    let pilots = &cfg.data_pilots;
+    let d0 = cfg.first_data() - PREAMBLE_SYMBOLS;
+    let w = cfg.n_tones();
+    let mut excess = vec![0.0; pilots.len()];
+    let mut noise = thermal.to_vec();
+    if obs.len() > d0 {
+        let gain = cfg.data_gain();
+        let mut sums = vec![0.0; pilots.len()];
+        let mut count = 0usize;
+        for (s, row) in obs.iter().enumerate().skip(d0) {
+            if row.iter().any(Option::is_none) {
+                continue;
+            }
+            count += 1;
+            for (j, &p) in pilots.iter().enumerate() {
+                let r = row[j].unwrap() / (h[p] * corr.at(s, p) * level[s][p]) - 1.0;
+                sums[j] += r.norm_sqr();
+            }
+        }
+        if count > 0 {
+            for (j, &p) in pilots.iter().enumerate() {
+                let floor = thermal[p] / (h[p].norm_sqr() * gain * gain);
+                excess[j] = (sums[j] / count as f64 - floor).max(0.0);
+            }
+        }
+        let pf: Vec<f64> = pilots.iter().map(|&p| p as f64).collect();
+        for k in 0..w {
+            noise[k] += dsp::interp(k as f64, &pf, &excess) * h[k].norm_sqr();
+        }
+    }
+    (excess, noise)
+}
+
+/// Time constants the level tracker's settling term is tried with, seconds
+/// (the 2026-11-07 captures settle after S2 with 19-26 ms).
+pub const LEVEL_TAUS_S: [f64; 5] = [0.012, 0.019, 0.027, 0.038, 0.054];
+/// Standard deviation of the data's level against the header's, relative
+/// (the captures: 0.2-0.5 dB).
+pub const LEVEL_MISMATCH: f64 = 0.035;
+/// A level term is applied only this many standard errors from no change.
+pub const LEVEL_K_SIGMA: f64 = 3.0;
+/// A fitted level outside these bounds (-20 to +20 dB) is not believed.
+pub const LEVEL_BOUNDS: (f64, f64) = (0.1, 10.0);
+/// The settling term is fitted only with two rows or more where it exceeds this.
+const LEVEL_MIN_SETTLE: f64 = 0.05;
+/// Data rows whose settling term is below this measure the data's own power.
+const LEVEL_SETTLED: f64 = 0.02;
+
+/// The level tracker's common gain (`track_level`, [`RxResult::level`]).
+///
+/// Over the air the received level is not what the S2 pair measured: the
+/// 2026-11-07 captures show it rising from 13-22 dB below its steady value
+/// at the first preamble sample (likely the radios' transmit audio AGC),
+/// which leaves the S2 estimate 3-6 dB low, and settling after S2 with a
+/// 19-26 ms time constant; on links without that ramp the low-crest preamble
+/// escapes the radios' limiters and reads 0.5-2 dB above the data. Equalised
+/// by the S2 estimate alone, the data symbols sit off unit power, which
+/// moves QAM decision regions and mis-scales the LLRs.
+#[derive(Clone, Debug, PartialEq)]
+pub struct LevelFit {
+    /// Gain per row after the preamble against the S2 estimate (1 where not tracked).
+    pub level: Vec<f64>,
+    /// The level at the probe rows, which the tones above 23 are referenced to (1 without a probe).
+    pub reference: f64,
+    /// Steady level per segment (header and control; probe and data), 1 where held.
+    pub segments: Vec<f64>,
+    /// The settling term at the first header row (0 where held).
+    pub settle: f64,
+    /// The settling term's time constant, seconds.
+    pub tau: f64,
+    /// Standard errors of the segment levels and the settling term (infinite where held).
+    pub sd: Vec<f64>,
+    /// Any term applied.
+    pub applied: bool,
+}
+
+impl LevelFit {
+    /// No tracking: every row at the S2 level.
+    pub fn none(rows: usize, segments: usize) -> Self {
+        LevelFit {
+            level: vec![1.0; rows],
+            reference: 1.0,
+            segments: vec![1.0; segments],
+            settle: 0.0,
+            tau: LEVEL_TAUS_S[0],
+            sd: vec![f64::INFINITY; segments + 1],
+            applied: false,
+        }
+    }
+
+    /// The steady level of the data (the last segment), dB.
+    pub fn data_db(&self) -> f64 {
+        20.0 * self.segments.last().copied().unwrap_or(1.0).log10()
+    }
+}
+
+/// What the receiver knows of the base tones of each body row, for
+/// [`track_level`] (the sim's `level_cells`): the transmitted values (zero
+/// where unknown) as the equalised symbols see them, and which rows are known
+/// on every base tone (the probe, and the header given its decoded points).
+/// The other rows know their pilots.
+fn level_cells(cfg: &FrameConfig, header_known: Option<&[Complex64]>) -> (Grid, Vec<bool>) {
+    let first = PREAMBLE_SYMBOLS;
+    let b = BASE_TONES;
+    let n_sym = cfg.total_symbols();
+    let nb = n_sym - first;
+    let hs = cfg.header_symbols();
+    let table = gold::pilot_table(n_sym);
+    let mut x = Grid::zeros(nb, b);
+    let mut full = vec![false; nb];
+    let put_pilots = |x: &mut Grid, rows: std::ops::Range<usize>, pilots: &[usize]| {
+        for s in rows {
+            for &p in pilots.iter().filter(|&&p| p < b) {
+                *x.at_mut(s, p) = Complex64::new(gold::pilot_value(&table, first + s, p), 0.0);
+            }
+        }
+    };
+    put_pilots(&mut x, 0..hs, &params::pilots_for(b));
+    if let Some(known) = header_known {
+        let d = cfg.base_data_tones.len();
+        for s in 0..hs {
+            for (slot, &k) in cfg.base_data_tones.iter().enumerate() {
+                *x.at_mut(s, k) = known[s * d + slot];
+            }
+            full[s] = true;
+        }
+    }
+    if cfg.has_probe {
+        let p0 = cfg.first_probe() - first;
+        let probe = tx::probe_grid(cfg.n_tones(), cfg.first_probe());
+        for r in 0..params::PROBE_SYMBOLS {
+            for k in 0..b {
+                *x.at_mut(p0 + r, k) = probe.at(r, k);
+            }
+            full[p0 + r] = true;
+        }
+    }
+    let c0 = cfg.first_control() - first;
+    let d0 = cfg.first_data() - first;
+    put_pilots(&mut x, c0..d0, &cfg.control_pilots());
+    put_pilots(&mut x, d0..nb, &cfg.data_pilots);
+    (x, full)
+}
+
+/// Solve the symmetric system `n theta = rhs` by Gauss-Jordan elimination
+/// with partial pivoting; returns (theta, the inverse's diagonal), or None if
+/// singular.
+fn solve_normal(mut n: Vec<Vec<f64>>, rhs: &[f64]) -> Option<(Vec<f64>, Vec<f64>)> {
+    let m = rhs.len();
+    let mut inv: Vec<Vec<f64>> = (0..m).map(|i| (0..m).map(|j| if i == j { 1.0 } else { 0.0 }).collect()).collect();
+    for c in 0..m {
+        let p = (c..m).max_by(|&a, &b| n[a][c].abs().total_cmp(&n[b][c].abs()))?;
+        if n[p][c].abs() < 1e-300 {
+            return None;
+        }
+        n.swap(c, p);
+        inv.swap(c, p);
+        let d = n[c][c];
+        for j in 0..m {
+            n[c][j] /= d;
+            inv[c][j] /= d;
+        }
+        for r in 0..m {
+            if r != c {
+                let f = n[r][c];
+                if f != 0.0 {
+                    for j in 0..m {
+                        n[r][j] -= f * n[c][j];
+                        inv[r][j] -= f * inv[c][j];
+                    }
+                }
+            }
+        }
+    }
+    let theta = (0..m).map(|i| (0..m).map(|j| inv[i][j] * rhs[j]).sum()).collect();
+    let diag = (0..m).map(|i| inv[i][i]).collect();
+    Some((theta, diag))
+}
+
+/// E|x|^4 of the unit-power square QAM constellation with `bits` bits per point.
+fn qam_fourth_moment(bits: usize) -> f64 {
+    let m = (1u64 << (bits / 2)) as f64; // levels per axis
+    let norm2 = 2.0 * (m * m - 1.0) / 3.0;
+    2.0 * (3.0 * m.powi(4) - 10.0 * m * m + 7.0) / 15.0 / (norm2 * norm2) + 0.5
+}
+
+/// One weighted least-squares fit of the level model: the free terms'
+/// (value, standard error) and the objective (weighted residual plus priors).
+struct LevelSolve {
+    a: Vec<Option<(f64, f64)>>,
+    b: Option<(f64, f64)>,
+    objective: f64,
+}
+
+/// The common (all-tone) gain of each body row against the S2 channel
+/// estimate (the sim's `track_level`).
+///
+/// `eq` holds the base tones' equalised symbols (body rows x 24), `x` and
+/// `full` the known values and the fully known rows ([`level_cells`]), `nv`
+/// each base tone's noise variance as the S2 pair measured it (equalised
+/// units). Each row's known cells give its gain z, the real part of a
+/// noise-weighted projection on the known values (the level changes without
+/// turning the phase, which the pilots track), with a variance from the
+/// cells' own scatter. The gains are fitted by weighted least squares with
+/// a(row) = A_segment + B exp(-t / tau), t from the first header row: a
+/// steady level per segment and the radios' settling, tau the one of
+/// [`LEVEL_TAUS_S`] that fits best. The segments are the rows before the data
+/// (header, control) and the data rows; with a probe, the rows from the probe
+/// on (wider than the header, the data may sit lower in a limiter). Each kind
+/// of row measures the data's level with an error of its own, which the fit
+/// carries: a row known on every base tone (the decoded header, the probe)
+/// measures its segment precisely; rows that know only their pilots measure
+/// it through the S2 estimate of two or three tones, whose error does not
+/// average out over rows, so they share an offset with the spread the S2
+/// noise predicts ([`FALLBACK_H_BIAS`]) as its prior; without a probe the
+/// data's level is tied to the header's with the spread [`LEVEL_MISMATCH`];
+/// and, once the header is known, the data symbols' own power over the
+/// settled data rows, E|eq|^2 = A^2 (1 + r) with r the noise the header
+/// measured, counts with its statistical scatter plus the header's noise
+/// being wrong by as much as itself (it leads at high SNR). A term is applied
+/// only if it stands [`LEVEL_K_SIGMA`] standard errors from no change (a
+/// segment level from 1, the settling term from 0), else it is held there
+/// and the rest refitted: a frame whose level did not change, or one too
+/// noisy to tell, is equalised as before. Where any term is applied, a fully
+/// known row takes its own measured gain.
+fn track_level(eq: &Grid, x: &Grid, full: &[bool], nv: &[f64], cfg: &FrameConfig) -> LevelFit {
+    let nb = eq.rows;
+    let b = x.cols;
+    let first = PREAMBLE_SYMBOLS;
+    let hs = cfg.header_symbols();
+    let d0 = cfg.first_data() - first;
+    let seg: Vec<usize> = (0..nb)
+        .map(|s| usize::from(if cfg.has_probe { s + first >= cfg.first_probe() } else { d0 < nb && s >= d0 }))
+        .collect();
+    let n_seg = seg.iter().max().map_or(1, |&m| m + 1);
+    let w: Vec<f64> = nv.iter().map(|v| 1.0 / v.max(1e-12)).collect();
+    let info: Vec<f64> = (0..nb).map(|s| (0..b).map(|k| w[k] * x.at(s, k).norm_sqr()).sum()).collect();
+    let rows: Vec<usize> = (0..nb).filter(|&s| info[s] > 0.0).collect();
+    if rows.len() < 2 {
+        return LevelFit::none(nb, n_seg);
+    }
+    let known = |s: usize, k: usize| x.at(s, k).norm_sqr() > 0.0;
+    let z: Vec<f64> = rows
+        .iter()
+        .map(|&s| (0..b).map(|k| w[k] * (x.at(s, k).conj() * eq.at(s, k)).re).sum::<f64>() / info[s])
+        .collect();
+    // The cells' scatter against what the S2 noise predicts (one real
+    // parameter per row fitted from its complex cells).
+    let mut resid = 0.0;
+    let mut cells = 0usize;
+    for (i, &s) in rows.iter().enumerate() {
+        for k in (0..b).filter(|&k| known(s, k)) {
+            resid += w[k] * (eq.at(s, k) - z[i] * x.at(s, k)).norm_sqr();
+            cells += 1;
+        }
+    }
+    let scale = resid / (cells as f64 - 0.5 * rows.len() as f64).max(1.0);
+    let var: Vec<f64> = rows.iter().map(|&s| scale.max(1e-12) / (2.0 * info[s])).collect();
+    let pilot_only: Vec<bool> = rows.iter().map(|&s| !full[s]).collect();
+    let has_d = pilot_only.iter().any(|&p| p);
+    let mut stat = 0.0;
+    if has_d {
+        let pw: Vec<f64> = (0..b)
+            .map(|k| if rows.iter().zip(&pilot_only).any(|(&s, &p)| p && known(s, k)) { w[k] } else { 0.0 })
+            .collect();
+        let spw: f64 = pw.iter().sum();
+        stat = (0..b).map(|k| pw[k] * pw[k] * nv[k] * FALLBACK_H_BIAS / 2.0).sum::<f64>() / (spw * spw).max(1e-30);
+    }
+    let level0 = dsp::median(&z);
+    let data_seg = (d0 < nb).then_some(n_seg - 1);
+
+    // The data symbols' power needs the header's noise: each header row at its own gain.
+    let noise_hdr: Option<(Vec<usize>, Vec<f64>)> = (full[..hs].iter().all(|&f| f) && cfg.n_blocks > 0 && d0 < nb)
+        .then(|| {
+            let bt: Vec<usize> = cfg.base_data_tones.iter().copied().filter(|k| cfg.data_tones.contains(k)).collect();
+            let r: Vec<f64> = bt
+                .iter()
+                .map(|&k| (0..hs).map(|s| (eq.at(s, k) / z[s] - x.at(s, k)).norm_sqr()).sum::<f64>() / hs as f64)
+                .collect();
+            (bt, r)
+        })
+        .filter(|(bt, _)| !bt.is_empty());
+    let spread = qam_fourth_moment(cfg.rung().bits_per_point) - 1.0;
+    let data_power = |phi: &[f64]| -> Option<(f64, f64)> {
+        let (bt, r) = noise_hdr.as_ref()?;
+        let settled: Vec<usize> = (d0..nb).filter(|&s| phi[s] < LEVEL_SETTLED).collect();
+        if settled.is_empty() {
+            return None;
+        }
+        let wk: Vec<f64> = r.iter().map(|v| 1.0 / v.max(1e-6)).collect();
+        let sw: f64 = wk.iter().sum();
+        let ns = settled.len() as f64;
+        let mut q = 0.0;
+        let mut n_eff = 0.0;
+        let mut vq = 0.0;
+        for (j, &k) in bt.iter().enumerate() {
+            let p = settled.iter().map(|&s| eq.at(s, k).norm_sqr()).sum::<f64>() / ns;
+            q += wk[j] * p / (1.0 + r[j]);
+            n_eff += wk[j] * r[j];
+            vq += wk[j] * wk[j] * (spread + 2.0 * r[j] + r[j] * r[j]) / (1.0 + r[j]).powi(2);
+        }
+        let q = (q / sw).max(1e-12);
+        let n_eff = n_eff / sw;
+        let vq = vq / (sw * sw) / ns;
+        let zp = q.sqrt();
+        Some((zp, vq / (4.0 * q) + (zp * n_eff / (2.0 * (1.0 + n_eff))).powi(2)))
+    };
+
+    // Columns: free segment levels, the settling term, the pilot rows' offset.
+    let fit = |free_a: &[bool], free_b: bool, phi: &[f64]| -> Option<LevelSolve> {
+        let mut cols: Vec<Vec<f64>> = Vec::new();
+        let mut col_a = vec![None; n_seg];
+        for (sgi, &fa) in free_a.iter().enumerate() {
+            if fa {
+                col_a[sgi] = Some(cols.len());
+                cols.push(rows.iter().map(|&s| f64::from(u8::from(seg[s] == sgi))).collect());
+            }
+        }
+        let col_b = free_b.then(|| {
+            cols.push(rows.iter().map(|&s| phi[s]).collect());
+            cols.len() - 1
+        });
+        let col_d = has_d.then(|| {
+            cols.push(pilot_only.iter().map(|&p| f64::from(u8::from(p))).collect());
+            cols.len() - 1
+        });
+        let held: Vec<f64> = free_a.iter().map(|&fa| if fa { 0.0 } else { 1.0 }).collect();
+        let target: Vec<f64> = rows.iter().zip(&z).map(|(&s, &zi)| zi - held[seg[s]]).collect();
+        let m = cols.len();
+        let mut n = vec![vec![0.0; m]; m];
+        let mut rhs = vec![0.0; m];
+        for i in 0..rows.len() {
+            for a in 0..m {
+                rhs[a] += cols[a][i] * target[i] / var[i];
+                for c in 0..m {
+                    n[a][c] += cols[a][i] * cols[c][i] / var[i];
+                }
+            }
+        }
+        // Pseudo-observations: (coefficients by column, value, variance).
+        type Pseudo = (Vec<(usize, f64)>, f64, f64);
+        let mut pseudo: Vec<Pseudo> = Vec::new();
+        if let Some(cd) = col_d {
+            pseudo.push((vec![(cd, 1.0)], 0.0, (stat * level0 * level0).max(1e-12)));
+        }
+        if n_seg == 2 && !cfg.has_probe {
+            let mut coef = Vec::new();
+            let mut value = 0.0;
+            for (sgi, sign) in [(0usize, -1.0), (1usize, 1.0)] {
+                match col_a[sgi] {
+                    Some(c) => coef.push((c, sign)),
+                    None => value -= sign * held[sgi],
+                }
+            }
+            pseudo.push((coef, value, (LEVEL_MISMATCH * level0).powi(2)));
+        }
+        if let (Some(ds), Some((zp, vp))) = (data_seg, data_power(phi)) {
+            if let Some(c) = col_a[ds] {
+                pseudo.push((vec![(c, 1.0)], zp, vp));
+            }
+        }
+        for (coef, value, v) in &pseudo {
+            for &(i, ci) in coef {
+                rhs[i] += ci * value / v;
+                for &(j, cj) in coef {
+                    n[i][j] += ci * cj / v;
+                }
+            }
+        }
+        let (theta, diag) = solve_normal(n, &rhs)?;
+        let mut objective: f64 = (0..rows.len())
+            .map(|i| {
+                let fitted: f64 = (0..m).map(|a| cols[a][i] * theta[a]).sum();
+                (target[i] - fitted).powi(2) / var[i]
+            })
+            .sum();
+        for (coef, value, v) in &pseudo {
+            let fitted: f64 = coef.iter().map(|&(i, c)| c * theta[i]).sum();
+            objective += (value - fitted).powi(2) / v;
+        }
+        let pick = |c: Option<usize>| c.map(|i| (theta[i], diag[i].max(0.0).sqrt()));
+        Some(LevelSolve { a: col_a.iter().map(|&c| pick(c)).collect(), b: pick(col_b), objective })
+    };
+
+    let t_rows: Vec<f64> = (0..nb).map(|s| s as f64 * cfg.stride() as f64 / params::FS as f64).collect();
+    let free_a: Vec<bool> = (0..n_seg).map(|sgi| rows.iter().any(|&s| seg[s] == sgi)).collect();
+    let mut best: Option<(f64, Vec<f64>, bool, LevelSolve)> = None;
+    for &tau in &LEVEL_TAUS_S {
+        let phi: Vec<f64> = t_rows.iter().map(|t| (-t / tau).exp()).collect();
+        let can_b = rows.iter().filter(|&&s| phi[s] > LEVEL_MIN_SETTLE).count() >= 2;
+        if let Some(sol) = fit(&free_a, can_b, &phi) {
+            if best.as_ref().is_none_or(|bst| sol.objective < bst.3.objective) {
+                best = Some((tau, phi, can_b, sol));
+            }
+        }
+    }
+    let Some((tau, phi, can_b, sol)) = best else { return LevelFit::none(nb, n_seg) };
+    let keep_a: Vec<bool> =
+        sol.a.iter().map(|v| v.is_some_and(|(val, sd)| (val - 1.0).abs() > LEVEL_K_SIGMA * sd)).collect();
+    let keep_b = sol.b.is_some_and(|(val, sd)| val.abs() > LEVEL_K_SIGMA * sd);
+    if !keep_a.iter().any(|&k| k) && !keep_b {
+        return LevelFit::none(nb, n_seg);
+    }
+    let sol = if keep_a != free_a || keep_b != can_b {
+        match fit(&keep_a, keep_b, &phi) {
+            Some(s) => s,
+            None => return LevelFit::none(nb, n_seg),
+        }
+    } else {
+        sol
+    };
+    let segments: Vec<f64> = sol.a.iter().map(|v| v.map_or(1.0, |(val, _)| val)).collect();
+    let settle = sol.b.map_or(0.0, |(val, _)| val);
+    let mut level: Vec<f64> = (0..nb).map(|s| segments[seg[s]] + settle * phi[s]).collect();
+    // A fully known row is measured on every base tone: it keeps its own gain.
+    for (i, &s) in rows.iter().enumerate() {
+        if !pilot_only[i] {
+            level[s] = z[i];
+        }
+    }
+    if level.iter().any(|&v| !(LEVEL_BOUNDS.0..=LEVEL_BOUNDS.1).contains(&v)) {
+        return LevelFit::none(nb, n_seg);
+    }
+    let reference = if cfg.has_probe {
+        let p0 = cfg.first_probe() - first;
+        level[p0..p0 + params::PROBE_SYMBOLS].iter().sum::<f64>() / params::PROBE_SYMBOLS as f64
+    } else {
+        1.0
+    };
+    let mut sd: Vec<f64> = sol.a.iter().map(|v| v.map_or(f64::INFINITY, |(_, s)| s)).collect();
+    sd.push(sol.b.map_or(f64::INFINITY, |(_, s)| s));
+    LevelFit { level, reference, segments, settle, tau, sd, applied: true }
+}
+
+/// The tracked gain per body row and tone: the level on the base tones
+/// (whose channel is the S2 estimate), the level over the probe's on the
+/// tones above 23 (whose channel is the probe's).
+fn level_matrix(fit: &LevelFit, n_tones: usize) -> Vec<Vec<f64>> {
+    fit.level
+        .iter()
+        .map(|&l| (0..n_tones).map(|k| if k < BASE_TONES { l } else { l / fit.reference }).collect())
+        .collect()
+}
+
 /// Receiver with reusable FFT plans.
 pub struct Receiver {
     ofdm: Ofdm,
@@ -502,8 +974,7 @@ impl Receiver {
         for n in noise.iter_mut() {
             *n = n.max(1e-6 * mean_h2);
         }
-        let thermal = noise.clone();
-        let mut snr_db = snr_of(&h, &noise);
+        let thermal = noise;
 
         let n_body = tones.rows - first;
         let pilots = &cfg.data_pilots;
@@ -548,35 +1019,7 @@ impl Receiver {
         // two, 18 degrees at tone 50 and 100 ppm).
         let s_ref: Vec<f64> = (0..w).map(|k| if k < b { 2.5 - first as f64 } else { hs as f64 + 0.5 }).collect();
         let (corr, drift, drift_sd) = track_drift(&obs, pilots, w, &s_ref, opts.phase_window, prior);
-
-        let mut excess = vec![0.0; pilots.len()];
-        if n_body > d0 {
-            let gain = cfg.data_gain();
-            let mut sums = vec![0.0; pilots.len()];
-            let mut count = 0usize;
-            for (s, row) in obs.iter().enumerate().skip(d0) {
-                if row.iter().any(Option::is_none) {
-                    continue;
-                }
-                count += 1;
-                for (j, &p) in pilots.iter().enumerate() {
-                    let r = row[j].unwrap() / (h[p] * corr.at(s, p)) - 1.0;
-                    sums[j] += r.norm_sqr();
-                }
-            }
-            if count > 0 {
-                for (j, &p) in pilots.iter().enumerate() {
-                    let floor = noise[p] / (h[p].norm_sqr() * gain * gain);
-                    excess[j] = (sums[j] / count as f64 - floor).max(0.0);
-                }
-            }
-            let pf: Vec<f64> = pilots.iter().map(|&p| p as f64).collect();
-            for k in 0..w {
-                noise[k] += dsp::interp(k as f64, &pf, &excess) * h[k].norm_sqr();
-            }
-            snr_db = snr_of(&h, &noise);
-        }
-        Estimate { h, noise, thermal, excess, snr_db, corr, drift, drift_sd }
+        Estimate { h, thermal, corr, drift, drift_sd, obs }
     }
 
     /// Decode one frame from real samples `rx` starting at sample `start`
@@ -595,7 +1038,7 @@ impl Receiver {
             tones = self.demodulate(rx, window_start, cfg, Some(&shifts));
             est = self.estimate(&tones, cfg, opts);
         }
-        let Estimate { h, mut noise, thermal, excess, mut snr_db, corr, drift, drift_sd } = est;
+        let Estimate { h, thermal, corr, drift, drift_sd, obs } = est;
         let corr_kept = corr.clone();
         let w = cfg.n_tones();
         let hs = cfg.header_symbols();
@@ -606,31 +1049,56 @@ impl Receiver {
         let cgain = cfg.control_gain();
         let h2: Vec<f64> = h.iter().map(|v| v.norm_sqr()).collect();
         let mean_h2 = dsp::mean(&h2);
-
-        let mut eq = Grid::zeros(n_body, w);
+        let b = BASE_TONES;
+        let nv_s2: Vec<f64> = (0..b).map(|k| thermal[k] / h2[k]).collect();
+        // The base tones equalised by the S2 estimate alone, for the level tracker.
+        let mut eq_s2 = Grid::zeros(n_body, b);
         for s in 0..n_body {
-            for (k, hk) in h.iter().enumerate() {
-                *eq.at_mut(s, k) = tones.at(first + s, k) / (hk * corr.at(s, k));
+            for (k, hk) in h.iter().enumerate().take(b) {
+                *eq_s2.at_mut(s, k) = tones.at(first + s, k) / (hk * corr.at(s, k));
             }
         }
-        let mut nv = vec![0.0; n_body * w];
-        let dn = data_noise(&noise, &thermal, gain);
-        let cn = data_noise(&noise, &thermal, cgain);
-        for s in 0..n_body {
-            for k in 0..w {
-                nv[s * w + k] = if s < c0 {
-                    noise[k]
-                } else if s < d0 {
-                    cn[k]
-                } else {
-                    dn[k]
-                } / h2[k];
+        // Equalised symbols, the pilots' excess, the noise with it and the
+        // noise variances, for a level fit.
+        let equalise = |lev: &LevelFit| -> (Grid, Vec<f64>, Vec<f64>, Vec<f64>) {
+            let lm = level_matrix(lev, w);
+            let (excess, noise) = pilot_excess(&obs, cfg, &h, &corr, &lm, &thermal);
+            let mut eq = Grid::zeros(n_body, w);
+            for (s, lrow) in lm.iter().enumerate() {
+                for (k, hk) in h.iter().enumerate() {
+                    *eq.at_mut(s, k) = tones.at(first + s, k) / (hk * corr.at(s, k) * lrow[k]);
+                }
             }
+            let mut nv = vec![0.0; n_body * w];
+            let dn = data_noise(&noise, &thermal, gain);
+            let cn = data_noise(&noise, &thermal, cgain);
+            for s in 0..n_body {
+                for k in 0..w {
+                    nv[s * w + k] = if s < c0 {
+                        noise[k]
+                    } else if s < d0 {
+                        cn[k]
+                    } else {
+                        dn[k]
+                    } / h2[k];
+                }
+            }
+            (eq, excess, noise, nv)
+        };
+        // Level tracking, first from the pilots and the probe alone (the
+        // header is still unknown): a large level change (the radios' ramp at
+        // the start of a transmission) would otherwise count as noise in the
+        // header.
+        let mut level = LevelFit::none(n_body, if cfg.has_probe { 2 } else { 1 });
+        if opts.level_tracking {
+            let (x, full) = level_cells(cfg, None);
+            level = track_level(&eq_s2, &x, &full, &nv_s2, cfg);
         }
+        let (mut eq, excess, mut noise, mut nv) = equalise(&level);
+        let mut snr_db = snr_of(&h, &noise);
 
         // Header.
         let btones = &cfg.base_data_tones;
-        let b = BASE_TONES;
         if opts.header_noise == HeaderNoise::Measured {
             let floor = header_noise_floor(&tones, &h[..b], &thermal[..b], &excess);
             let bp = params::pilots_for(b);
@@ -671,9 +1139,17 @@ impl Receiver {
             opts.max_iter,
             LDPC_ALPHA,
         );
-        if hres.ok && opts.decision_directed {
+        let known = hres.ok.then(|| tx::header_points(cfg, &hres.bits));
+        if let (Some(known), true) = (&known, opts.level_tracking) {
+            // The decoded header is known on every base tone: the level
+            // again, with it.
+            let (x, full) = level_cells(cfg, Some(known));
+            level = track_level(&eq_s2, &x, &full, &nv_s2, cfg);
+            (eq, _, noise, nv) = equalise(&level);
+            snr_db = snr_of(&h, &noise);
+        }
+        if let (Some(known), true) = (&known, opts.decision_directed) {
             // The decoded header is a known signal on every base data tone.
-            let known = tx::header_points(cfg, &hres.bits);
             let d = btones.len();
             let err: Vec<f64> = (0..d)
                 .map(|slot| {
@@ -810,6 +1286,7 @@ impl Receiver {
             drift,
             drift_sd,
             probe_extent: None,
+            level,
         }
     }
 }

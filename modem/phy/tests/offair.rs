@@ -108,6 +108,73 @@ fn offair_frames_decode_with_consistent_clock_and_snr() {
     }
 }
 
+/// The tracked data level against the one every known symbol gives, dB.
+const LEVEL_TOLERANCE_DB: f64 = 0.5;
+/// Every captured frame's data sat at least this far above the S2 level, dB.
+const RAMP_DB: f64 = 3.0;
+
+#[test]
+fn offair_level_tracking() {
+    // The captured frames' data sat 3-6 dB above the level the S2 pair
+    // measured (the radios' level still rising under the preamble). The level
+    // tracker finds it as the simulator's does (the same fit, to rounding),
+    // within LEVEL_TOLERANCE_DB of what every known symbol gives.
+    let index = read_json(&dir().join("offair.json"));
+    for d in index["directions"].as_object().unwrap().values() {
+        for f in d["frames"].as_array().unwrap() {
+            let name = f["wav"].as_str().unwrap();
+            let r = decode(name, &RxOptions::default());
+            let want = &f["python_level"];
+            let lv = &r.level;
+            assert_eq!(lv.applied, want["applied"].as_bool().unwrap(), "{name}");
+            let close = |a: f64, b: f64| (a - b).abs() <= 1e-6 * b.abs().max(1.0);
+            let segs = f64s(&want["segments"]);
+            assert_eq!(lv.segments.len(), segs.len(), "{name}");
+            for (a, b) in lv.segments.iter().zip(&segs) {
+                assert!(close(*a, *b), "{name}: segment level {a} vs simulator {b}");
+            }
+            assert!(close(lv.settle, want["settle"].as_f64().unwrap()), "{name}: settling term");
+            for (a, b) in lv.level.iter().zip(&f64s(&want["level"])) {
+                assert!(close(*a, *b), "{name}: row level {a} vs simulator {b}");
+            }
+            assert_eq!(r.block_ok.iter().filter(|&&b| b).count() as u64, f["blocks_ok"].as_u64().unwrap(), "{name}");
+            eprintln!(
+                "{name}: data level {:+.2} dB (known symbols {:?}), settling {:+.3}, tau {} ms",
+                lv.data_db(),
+                f["data_gain_db"].as_f64(),
+                lv.settle,
+                lv.tau * 1e3
+            );
+            if f["data_decodable"].as_bool().unwrap() && f["data_gain_db"].is_f64() {
+                let truth = f["data_gain_db"].as_f64().unwrap();
+                assert!(truth > RAMP_DB, "{name}");
+                assert!(lv.settle < 0.0, "{name}: the level was still rising after S2");
+                assert!(
+                    (lv.data_db() - truth).abs() < LEVEL_TOLERANCE_DB,
+                    "{name}: level {} vs {truth} dB",
+                    lv.data_db()
+                );
+            }
+        }
+    }
+}
+
+#[test]
+fn offair_level_tracking_decodes_the_long_frame() {
+    // B to A: the 4 s frame's data sat 6.2 dB above the S2 level. Untracked,
+    // two of its 13 MCS 2 (16-QAM) blocks fail; tracked, all decode.
+    let index = read_json(&dir().join("offair.json"));
+    let f = index["directions"]["BtoA"]["frames"].as_array().unwrap().iter().find(|f| f["kind"] == "4s").unwrap();
+    let name = f["wav"].as_str().unwrap();
+    let r = decode(name, &RxOptions::default());
+    check_content(name, f, &r, true);
+    let off = decode(name, &RxOptions { level_tracking: false, ..Default::default() });
+    let ok = off.block_ok.iter().filter(|&&b| b).count();
+    assert_eq!(ok as u64, f["blocks_ok_untracked"].as_u64().unwrap());
+    assert_eq!(ok, 11);
+    assert!(!off.level.applied);
+}
+
 #[test]
 fn offair_clock_prior_from_the_link() {
     // A link layer that measured the peer on a long frame supplies it as the
