@@ -503,6 +503,7 @@ mod tests {
     }
 
     /// A flaky PTT whose reopen works only while `usb_back` is set.
+    #[allow(clippy::type_complexity)]
     fn flaky() -> (SharedPtt, Arc<AtomicBool>, Arc<AtomicBool>, Arc<AtomicBool>, Arc<Mutex<usize>>) {
         let dead = Arc::new(AtomicBool::new(false));
         let line = Arc::new(AtomicBool::new(false));
