@@ -358,9 +358,23 @@ struct RunArgs {
     /// Refuse incoming CONNECTs
     #[arg(long)]
     refuse: bool,
-    /// Quieting band for carrier detect, Hz (default from the 24-tone width: 2700-3100)
+    /// Width cap in tones, 24-56: this station sends at most this many tones (B.3 width cap N - 1). Above 24
+    /// it also advertises the wide capability; in a session each station sends at its own cap when its
+    /// peer advertised the wide capability, else 24 tones (ADR 0011)
+    #[arg(long, default_value_t = 24, value_parser = clap::value_parser!(u8).range(24..=56))]
+    cap: u8,
+    /// Report the all-ones tone mask instead of tracking per-tone SNR (ADR 0011 v0.5 behaviour)
+    #[arg(long)]
+    no_mask: bool,
+    /// Save received files (FILE-CHUNK objects) and text messages in this directory
+    #[arg(long)]
+    rx_dir: Option<PathBuf>,
+    /// Quieting band for carrier detect, Hz (default just above the cap: 2700-3100 at 24 tones, 3600-4150 at 32)
     #[arg(long)]
     quieting: Option<String>,
+    /// Carrier detect as first built (no quieting hysteresis or recovery after own PTT), for comparisons
+    #[arg(long)]
+    dcd_legacy: bool,
     /// Decoder threads for data blocks
     #[arg(long, default_value_t = 4)]
     threads: usize,
@@ -407,8 +421,19 @@ fn run_cmd(a: RunArgs) -> Result<(), String> {
     }
     st.broadcast_mcs = a.broadcast_mcs;
     st.accept_connects = !a.refuse;
+    // B.3: the width cap is the highest tone index; a station without
+    // capability bit 0 advertises 23 (SPEC 5.4, ADR 0011 `session-width`).
+    st.width_cap = a.cap - 1;
+    if a.cap > 24 {
+        st.capabilities |= cairn_link::frame::caps::WIDE;
+    }
+    st.track_masks = !a.no_mask;
     let timing = a.timing.timing()?;
     let mut cfg = ModemConfig::new(st);
+    cfg.dcd = cairn_phy::dcd::DcdConfig::for_width(a.cap as usize);
+    if a.dcd_legacy {
+        cfg.dcd = cfg.dcd.legacy();
+    }
     cfg.txdelay = Duration::from_secs_f64(timing.txdelay_s);
     cfg.txtail = Duration::from_secs_f64(timing.txtail_s);
     cfg.rx.threads = a.threads.clamp(1, 4);
@@ -418,6 +443,16 @@ fn run_cmd(a: RunArgs) -> Result<(), String> {
         let hi: f64 = hi.trim().parse().map_err(|_| "--quieting LO-HI (Hz)")?;
         cfg.dcd.quieting_band_hz = (lo, hi);
     }
+    println!(
+        "cap {} tones (B.3 width cap {}{}), tone masks {}, quieting {:.0}-{:.0} Hz{}",
+        a.cap,
+        a.cap - 1,
+        if a.cap > 24 { ", wide" } else { "" },
+        if a.no_mask { "off (all-ones)" } else { "tracked" },
+        cfg.dcd.quieting_band_hz.0,
+        cfg.dcd.quieting_band_hz.1,
+        if a.dcd_legacy { " (legacy carrier detect)" } else { "" }
+    );
     let ptt = a.ptt.open()?;
     if ptt.is_null() {
         println!("note: no PTT line (--ptt); the audio plays unkeyed");
@@ -435,6 +470,7 @@ fn run_cmd(a: RunArgs) -> Result<(), String> {
         tx_budget: a.tx_budget.map(Duration::from_secs_f64),
         verbose: a.verbose,
         status_every: (a.status > 0.0).then(|| Duration::from_secs_f64(a.status)),
+        rx_dir: a.rx_dir.clone(),
     };
     let summary = cairn_modem::driver::run(cfg, &opts, ptt, &signals::STOP)?;
     println!("{summary}");

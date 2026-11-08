@@ -19,5 +19,6 @@ pub mod listen;
 pub mod nprng;
 pub mod phymodel;
 pub mod runtime;
+pub mod rxdir;
 pub mod twosim;
 pub mod txseq;
