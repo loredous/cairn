@@ -228,6 +228,66 @@ including the per-tone SNR arrays and the distortion components.
 - The measured SNR varying wildly between frames at the same level: noise bursts or a fading path.
 - A big per-tone SNR hole: an audio filter notch, a CTCSS or tone squelch filter, or hum.
 
+## Setting up a station with `cairn-modem setup`
+
+Before the `cairn-modem` tests below, each station can run the guided setup
+once. It writes `~/.config/cairn/cairn.toml`, which every later command
+reads (flags still override it), so the long `-d ... --ptt ... --txdelay ...`
+lines shrink to `cairn-modem run`. The full walk-through is in the
+[operator guide](operator-guide.md); in short:
+
+```sh
+M=modem/target/release/cairn-modem
+$M rigs                 # the rig profiles: aioc-ht (measured on one pair of handhelds), digirig, signalink, cm108-gpio
+$M setup                # interactive; Ctrl-D at any prompt stops without writing
+$M selftest             # PASS/WARN/FAIL, nothing transmitted
+```
+
+The setup goes through these steps, in order:
+
+1. **Station**: callsign and SSID (every header and ID block carries it),
+   grid locator.
+2. **Audio device**: the cards that capture and play at 48 kHz, with the
+   rig profiles each matches.
+3. **Rig profile**: suggested from the device; pick one, make a new one
+   (saved in `~/.config/cairn/rigs/`), or none.
+4. **PTT**: USB serial ports and CM108-class HID devices found on the host
+   (recognised by USB ID: AIOC, CP210x as on the Digirig, C-Media), or
+   `vox`, `none`, `rigctld`; then the line (DTR/RTS) and polarity, or the
+   GPIO pin.
+5. **Real-time priority**: what the audio threads get, and how to allow it
+   if they get nothing.
+6. **Receive level**: with the squelch open and no signal, a 3 s measurement
+   against the target of SPEC 13.5 (open-squelch noise near -20 dBFS RMS,
+   peaks under -3 dBFS); optionally a second one while a peer sends the
+   tone or data (peaks near -10 dBFS); whether to run the receive AGC.
+7. **PTT test**: 1 s keyed, no audio.
+8. **Transmit level**: the level-setting tone (5 s), with how to judge
+   70% deviation without a meter (the limiter knee on a second receiver,
+   minus 3 dB) and the empirical fallback, the drive sweep: lower the
+   interface's output (for the AIOC, 'AIOC Audio Out Volume') 1-2 dB at a
+   time while a peer reports link-test SNR, and keep the level where the
+   SNR stops improving. You enter the setting you ended at.
+9. **TXDelay**: optionally measured with a second station running
+   `cairn-modem listen`: eight UI frames, each saying `TXDELAY n`, at 500,
+   400, 300, 250, 200, 150, 100 and 50 ms. You enter the shortest that
+   decoded (with every longer one), and setup recommends that plus 50 ms.
+   Then TXTail.
+10. **Squelch and carrier tail**: why the squelch stays open, and what a
+    radio's carrier tail (about 0.7 s on the `aioc-ht` handhelds) costs
+    each turnaround.
+11. **Identification**: if the PTT test or the tone went out (neither
+    carries a callsign), an ID frame (a BEACON with the ID block) is offered.
+12. **Review**: the file is shown, then written; only the values that
+    differ from the profile go in it, and the previous file is kept as
+    `cairn.toml.bak`.
+
+Steps 7, 8, 9 and 11 key the transmitter. Each one says what it will send,
+for how long, and whether the transmission identifies the station, then
+waits for you to type `yes`. Any other answer (`y` too) skips the step, and
+the profile's values stay. Use a dummy load, or a frequency you are licensed
+for that is clear.
+
 ## Two-radio broadcast test with `cairn-modem`
 
 The real-time modem (`modem/`, the `cairn-modem` command; build with
@@ -308,7 +368,9 @@ simulated FM channel) so you know what a good run looks like.
 
 ```sh
 M=modem/target/release/cairn-modem
-# 0. Levels and TXDelay exactly as for the broadcast test above (tone, levels).
+# 0. Levels and TXDelay exactly as for the broadcast test above (tone, levels),
+#    or with `cairn-modem setup` (above), after which the flags below that the
+#    config holds (-d, --ptt, --txdelay, --txtail, --cap, --callsign) can go.
 #    Open the squelch on both radios and keep it open: carrier detect watches
 #    the noise above the signal band (2700-3100 Hz at 24 tones, 3600-4150 Hz
 #    with --cap 32) and needs it. With the squelch open the two handhelds of
