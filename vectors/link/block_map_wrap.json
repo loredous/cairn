@@ -1,0 +1,16 @@
+{
+ "format": "cairn-control-vectors",
+ "version": 1,
+ "license": "CC BY 4.0",
+ "name": "block_map_wrap",
+ "description": "Block map across the sequence wrap: blocks 65533, 65535, 0 and 124 (bit 127)",
+ "valid": true,
+ "fields": {
+  "type": 7,
+  "base_sequence": 65533,
+  "bitmap_hex": "8000000000000000000000000000000d",
+  "sequences": [65533,65535,0,124]
+ },
+ "message_hex": "70fffd8000000000000000000000000000000d0000000000000000000000",
+ "info_hex": "70fffd8000000000000000000000000000000d00000000000000000000004afb"
+}

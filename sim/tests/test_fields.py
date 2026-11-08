@@ -151,7 +151,7 @@ def test_ack_block_ranges():
                             int(rng.integers(0, 256)), int(rng.integers(0, 256)), mask, bool(rng.integers(0, 2)),
                             bool(rng.integers(0, 2)), int(rng.integers(0, 8)), bool(rng.integers(0, 2)))
         out = control_round_trip(c)
-        assert [out.passed(i) for i in range(128)] == list(ok)
+        assert [out.holds(i) for i in range(128)] == list(ok)
     for edge in (fields.AckBlock(), fields.AckBlock(65535, (1 << 128) - 1, 15, 255, 255, fields.ALL_TONES,
                                                     True, True, 7, True)):
         control_round_trip(edge)
@@ -192,7 +192,7 @@ def test_calibration_id_and_path_blocks():
         fields.control_bits(fields.IdBlock("ABCDEFGHIJK"))
     for entries in ((), (A("WIDE1", 1),), (A("WIDE2", 2), A("N0CALL/7", 1).on_air())):
         control_round_trip(fields.PathBlock(entries, 3, (True, True), True))
-    for t in (2, 7, 15):                                 # reserved types are skipped, not errors
+    for t in (2, 8, 15):                                 # reserved types are skipped, not errors (ADR 0008)
         msg = np.zeros(240, np.uint8)
         msg[:4] = [(t >> (3 - i)) & 1 for i in range(4)]
         assert isinstance(fields.unpack_control(fields.with_crc(msg)), fields.UnknownControl)

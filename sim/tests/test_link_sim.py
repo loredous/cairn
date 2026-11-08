@@ -9,38 +9,54 @@ from cairn_sim import link_sim
 from cairn_sim.link_sim import Budget, Point, default_frame_s
 
 
-PRINTED = dict(probe=False, ack_block=False)     # SPEC 7.4 and Appendix A as printed
+PRE_ERRATUM = dict(probe=False, ack_block=False, pad_symbols=False)   # SPEC 7.4 / Appendix A before 2026-11-07
+
+# SPEC Appendix A.2 as printed: data blocks per frame and net kbps, 24 / 56 tones.
+A2 = {0: ((3, 7), (1.21, 2.82)), 1: ((4, 10), (1.73, 4.14)), 2: ((13, 32), (3.02, 7.16)),
+      3: ((20, 48), (4.55, 10.74)), 4: ((27, 64), (6.09, 14.32)), 5: ((34, 80), (7.61, 17.90)),
+      6: ((40, 96), (9.11, 21.48))}
 
 
-def test_worked_example_7_4_reproduced_within_5_percent():
-    b = Budget(3, **PRINTED)          # 24 tones, MCS 3, 4 s frames, TXDelay 150 ms
-    assert b.blocks == 21
-    assert b.symbols_per_block == pytest.approx(15.5, abs=0.06)
-    assert b.cycle_s == pytest.approx(4.46, rel=0.05)
-    assert b.net_bps == pytest.approx(4750, rel=0.05)
+@pytest.mark.parametrize("mcs", sorted(A2))
+def test_appendix_a2_pinned(mcs):
+    """Appendix A.2 exactly: the ACK control block in every DATA frame, the
+    probe at 56 tones, the data run padded to whole symbols (SPEC 6.4), 2 s
+    frames at rungs 0-1, and the 0.51 s peer ACK cycle."""
+    (b24, b56), (k24, k56) = A2[mcs]
+    for width, blocks, kbps in ((24, b24, k24), (56, b56, k56)):
+        b = Budget(mcs, width, default_frame_s(mcs))
+        assert b.blocks == blocks
+        assert round(b.net_bps / 1000, 2) == kbps
+        assert b.peer_turnaround_s + b.ack_time_s == pytest.approx(0.509, abs=0.001)
+        lo, hi = (2.33, 2.50) if mcs <= 1 else (4.34, 4.51)                    # the cycle range A.2 quotes
+        assert lo - 0.005 <= b.cycle_s <= hi + 0.005
+
+
+def test_worked_example_7_4():
+    """SPEC 7.4: 20 blocks in 311 symbols after the 135 ms ACK block, a 4.43 s
+    cycle and 4.55 kbps; 2 s frames about 3.6 kbps; 300 ms TXDelay at both
+    ends and 2 s frames about 3.1 kbps."""
+    b = Budget(3)
+    assert b.blocks == 20 and b.data_symbols == 311
+    assert b.control_symbols * link_sim.symbol_s() == pytest.approx(0.135)
+    assert b.data_symbols * link_sim.symbol_s() == pytest.approx(3.499, abs=0.001)
+    assert round(b.cycle_s, 2) == 4.43 and round(b.net_bps / 1000, 2) == 4.55
+    assert round(Budget(3, frame_s=2.0).net_bps / 1000, 1) == 3.6
+    assert round(Budget(3, frame_s=2.0, txdelay_s=0.3, peer_turnaround_s=0.4).net_bps / 1000, 1) == 3.1
     assert b.ack_time_s == pytest.approx(0.259, abs=0.001)
+    # A block map or an ID block costs 12 data-block symbols (A.2).
+    assert Budget(3, extra_controls=1).block_symbols_available == b.block_symbols_available - 12
 
 
-@pytest.mark.parametrize("mcs,blocks24,blocks56", [
-    (0, 3, 7), (1, 4, 11), (2, 14, 33), (3, 21, 50), (4, 28, 67), (5, 35, 83), (6, 42, 100)])
-def test_appendix_a2_blocks_per_frame(mcs, blocks24, blocks56):
-    # Appendix A.2 lists 84 blocks for MCS 5 at 56 tones; only 83 fit in the
-    # 330 block symbols of a 4 s frame (330 * 312 / 1232 = 83.6).
-    assert Budget(mcs, 24, default_frame_s(mcs), **PRINTED).blocks == blocks24
-    assert Budget(mcs, 56, default_frame_s(mcs), **PRINTED).blocks == blocks56
-
-
-@pytest.mark.parametrize("mcs,blocks24,blocks56", [
-    (0, 3, 7), (1, 4, 10), (2, 13, 32), (3, 20, 48), (4, 27, 64), (5, 34, 80), (6, 40, 96)])
-def test_blocks_with_ack_block_and_probe(mcs, blocks24, blocks56):
-    # SPEC 8.4: every DATA frame carries the ACK control block (12 symbols);
-    # ADR 0007: every frame with data above tone 23 carries the probe (2).
-    assert Budget(mcs, 24, default_frame_s(mcs)).blocks == blocks24
-    assert Budget(mcs, 56, default_frame_s(mcs)).blocks == blocks56
+def test_pre_erratum_budget_still_available():
+    # The drafts before the erratum: 21 blocks, about 4.75 kbps.
+    b = Budget(3, **PRE_ERRATUM)
+    assert b.blocks == 21 and b.symbols_per_block == pytest.approx(15.5, abs=0.06)
+    assert b.net_bps == pytest.approx(4750, rel=0.05)
 
 
 def test_block_symbols_in_a_4s_frame():
-    assert Budget(3, **PRINTED).block_symbols_available == 330
+    assert Budget(3, **PRE_ERRATUM).block_symbols_available == 330
     assert Budget(3).block_symbols_available == 318                    # less the ACK block
     assert Budget(3, 56).block_symbols_available == 316                # and the probe
     assert Budget(3, 56, ack_block=False).block_symbols_available == 328

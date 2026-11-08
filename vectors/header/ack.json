@@ -3,7 +3,7 @@
  "version": 1,
  "license": "CC BY 4.0",
  "name": "ack",
- "description": "ACK frame: one control block, no data",
+ "description": "ACK frame: one control block, no data, the sender's next unsent sequence, mask ID 2",
  "valid": true,
  "fields": {
   "version": 1,
@@ -13,6 +13,8 @@
   "session": true,
   "probe": false,
   "repeat": false,
+  "first_fragment": false,
+  "block_map": false,
   "source": {
    "callsign": "N0CALL",
    "ssid": 2,
@@ -23,11 +25,12 @@
    "ssid": 1,
    "value_hex": "39b0c130c1"
   },
-  "sequence": 0,
+  "sequence": 17,
   "mcs": 0,
   "control_blocks": 1,
-  "data_blocks": 0
+  "data_blocks": 0,
+  "mask_id": 2
  },
- "message_hex": "250939b0c130c239b0c130c100000400",
- "info_hex": "250939b0c130c239b0c130c100000400323e"
+ "message_hex": "250939b0c130c239b0c130c100110404",
+ "info_hex": "250939b0c130c239b0c130c10011040406e9"
 }

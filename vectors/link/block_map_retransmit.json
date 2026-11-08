@@ -1,0 +1,16 @@
+{
+ "format": "cairn-control-vectors",
+ "version": 1,
+ "license": "CC BY 4.0",
+ "name": "block_map_retransmit",
+ "description": "Block map of a frame carrying retransmissions 300 and 302 and new blocks 305-307 (base = header Sequence 300)",
+ "valid": true,
+ "fields": {
+  "type": 7,
+  "base_sequence": 300,
+  "bitmap_hex": "000000000000000000000000000000e5",
+  "sequences": [300,302,305,306,307]
+ },
+ "message_hex": "70012c000000000000000000000000000000e50000000000000000000000",
+ "info_hex": "70012c000000000000000000000000000000e500000000000000000000007c25"
+}

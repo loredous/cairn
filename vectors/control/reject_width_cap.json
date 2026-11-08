@@ -3,9 +3,9 @@
  "version": 1,
  "license": "CC BY 4.0",
  "name": "reject_width_cap",
- "description": "connect with width cap 10 (outside 23-55): malformed",
+ "description": "connect with width cap 10 (outside 23-55, max frame time not 0): malformed",
  "valid": false,
  "error": "fields",
- "message_hex": "11beef00212868ffffffffffffff01020304a0b0c0d00000000000000000",
- "info_hex": "11beef00212868ffffffffffffff01020304a0b0c0d0000000000000000088c1"
+ "message_hex": "11beef00212828ffffffffffffff01020304a0b0c0d00000000000000000",
+ "info_hex": "11beef00212828ffffffffffffff01020304a0b0c0d0000000000000000099ac"
 }
