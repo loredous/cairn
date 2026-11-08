@@ -225,12 +225,17 @@ fn bell202_burst_during_a_session_is_deferred_to() {
     let data = payload(40_000, 5);
     connect(&mut sim, 0, 1, t(0.5));
     send_file(&mut sim, 0, t(0.5), &data);
-    // A packet station keys at 20 s: 300 ms of flags (its TXDelay), a
-    // 60-byte frame, heard by both stations at 20 dB.
+    // A packet station keys after 20 s, in the first gap between the
+    // session's transmissions (10 ms after a release): 300 ms of flags (its
+    // TXDelay), a 60-byte frame, heard by both stations at 20 dB.
     let frame: Vec<u8> = (0..60u8).collect();
     let audio = bell202(&hdlc_bits(&frame, 45, 3), 0.3, 0.0);
     let burst_len = Duration::from_secs_f64(audio.len() as f64 / 48_000.0);
-    sim.foreign(t(20.0), Duration::from_millis(30), audio, Duration::from_millis(20), 20.0);
+    sim.run_until(t(20.0));
+    sim.run_while(t(40.0), |s| !s.stations.iter().any(|st| st.modem.keyed()));
+    sim.run_while(t(40.0), |s| s.stations.iter().any(|st| st.modem.keyed()));
+    let at = sim.now() + Duration::from_millis(10);
+    sim.foreign(at, Duration::from_millis(30), audio, Duration::from_millis(20), 20.0);
     sim.run_while(t(300.0), |s| s.stations[1].delivered_bytes().len() < data.len());
     assert_eq!(sim.stations[1].delivered_bytes(), data);
     let afsk: Vec<u64> = sim.stations.iter().map(|s| s.modem.stats.dcd_rises[2]).collect();
@@ -424,4 +429,251 @@ fn ten_minutes_idle_open_squelch() {
     }
     eprintln!("60 station-minutes of open-squelch noise: DCD rises quieting/preamble/AFSK/COS {total:?}");
     assert!(total.iter().sum::<u64>() <= 6, "{total:?}");
+}
+
+// --- Wide sessions with tone masks on a radio-like channel ----------------------------
+
+/// A station with a width cap of `cap` tones (the wide capability above 24)
+/// and tone masks tracked or not, as `run --cap N [--no-mask]` sets it.
+fn wide_station(call: &str, seed: u64, cap: u8, masks: bool) -> ModemConfig {
+    let mut m = station(call, seed);
+    m.station.width_cap = cap - 1;
+    if cap > 24 {
+        m.station.capabilities |= cairn_link::frame::caps::WIDE;
+    }
+    m.station.track_masks = masks;
+    m.dcd = cairn_phy::dcd::DcdConfig::for_width(cap as usize);
+    m
+}
+
+fn wide_pair(snr: f64, seed: u64, cap: u8, masks: bool) -> Sim {
+    let mut sim = Sim::new();
+    sim.add(wide_station("N0AAA", seed, cap, masks), 20.0, snr, seed);
+    sim.add(wide_station("N0BBB", seed + 1, cap, masks), -20.0, snr, seed + 1);
+    sim
+}
+
+/// (key time s, MCS, mask ID, mask) of a station's DATA frames.
+fn masked_frames(sim: &Sim, st: usize) -> Vec<(f64, u8, u8, u64)> {
+    sim.frames_from(st)
+        .iter()
+        .filter_map(|a| {
+            a.frame
+                .as_ref()
+                .filter(|f| f.ftype == FrameType::Data)
+                .map(|f| (a.key_time().as_secs_f64(), f.mcs, f.mask_id, f.tx.mask))
+        })
+        .collect()
+}
+
+/// What a one-way transfer did.
+#[derive(Debug)]
+struct WideRun {
+    kbps: f64,
+    secs: f64,
+    mode_mcs: u8,
+    max_mcs: u8,
+    frames: Vec<(f64, u8, u8, u64)>,
+    lost: u64,
+    /// The sender's applied mask at the end.
+    tx_mask: (u64, u8),
+    width: u8,
+    /// Frames the receiver sent with a probe, of all it sent.
+    rx_probes: (usize, usize),
+}
+
+fn radio_like_transfer(masks: bool, snr: f64, bytes: usize, seed: u64) -> WideRun {
+    let mut sim = wide_pair(snr, seed, 32, masks);
+    sim.radio_like_link(0, 1);
+    let data = payload(bytes, seed);
+    connect(&mut sim, 0, 1, t(0.5));
+    send_file(&mut sim, 0, t(0.5), &data);
+    sim.run_while(t(900.0), |s| s.stations[1].delivered_bytes().len() < data.len());
+    assert_eq!(sim.stations[1].delivered_bytes(), data, "masks {masks}: every byte, once, in order");
+    assert_no_overlaps(&sim);
+    let df = data_frames(&sim, 0);
+    let first = df.first().map(|x| x.0).expect("data frames");
+    let last = sim.stations[1].delivered.last().map(|x| x.0).expect("delivered");
+    let info = sim.stations[0].modem.station().session_info().expect("session");
+    let st = &sim.stations[1].modem.stats;
+    let from_b = sim.frames_from(1);
+    WideRun {
+        kbps: net_kbps(&sim, 0, 1),
+        secs: (last - first).as_secs_f64(),
+        mode_mcs: mode_mcs(&df),
+        max_mcs: df.iter().map(|f| f.1).max().unwrap_or(0),
+        frames: masked_frames(&sim, 0),
+        lost: st.blocks - st.blocks_ok,
+        tx_mask: info.tx_mask,
+        width: info.tx_width,
+        rx_probes: (from_b.iter().filter(|a| a.frame.as_ref().is_some_and(|f| f.flags.probe)).count(), from_b.len()),
+    }
+}
+
+const LOW_TONES: u64 = 0b111;
+
+#[test]
+fn radio_like_channel_masks_the_low_tones_at_32_tones() {
+    // The radios of the first on-air session (2026-11-07): tones 0-2 far
+    // down and noisy, the rest good, the response rolling off above 4.2 kHz
+    // (`twosim::radio_like`). Both stations run `--cap 32`; masked, the
+    // session starts with tones 0-2 dropped (the CONNECT-ACK's mask, from
+    // the CONNECT's probe) and climbs to MCS 4; unmasked the noisy tones pull
+    // the measured SNR down and the session stalls at MCS 2.
+    let (snr, bytes) = (24.0, 60_000);
+    let m = radio_like_transfer(true, snr, bytes, 70);
+    let u = radio_like_transfer(false, snr, bytes, 70);
+    for (name, r) in [("masked", &m), ("unmasked", &u)] {
+        eprintln!(
+            "radio-like channel, link SNR {snr} dB, 32 tones, {name}: {:.2} kbps net ({bytes} B in {:.0} s), MCS mode {} max {}, \
+{} blocks lost; final tx mask ID {} ({}); receiver's frames with a probe {}/{}",
+            r.kbps,
+            r.secs,
+            r.mode_mcs,
+            r.max_mcs,
+            r.lost,
+            r.tx_mask.1,
+            cairn_modem::runtime::describe_mask(r.tx_mask.0, r.width),
+            r.rx_probes.0,
+            r.rx_probes.1
+        );
+    }
+    eprintln!(
+        "masked DATA frames (s, MCS, mask ID): {:?}",
+        m.frames.iter().map(|f| (f.0.round(), f.1, f.2)).collect::<Vec<_>>()
+    );
+    assert_eq!(m.width, 32);
+    // Every DATA frame, the first included, already has tones 0-2 masked.
+    assert!(m.frames.iter().all(|f| f.3 & LOW_TONES == 0), "{:?}", m.frames);
+    assert_eq!(m.tx_mask.0 & LOW_TONES, 0);
+    assert!(m.tx_mask.0.count_ones() as usize >= 56 - 3 - 1, "at most one more tone dropped");
+    assert!(m.mode_mcs >= 4, "masked: MCS {}", m.mode_mcs);
+    assert!(u.max_mcs < m.mode_mcs, "unmasked stalls lower: max MCS {}", u.max_mcs);
+    assert!(u.frames.iter().all(|f| f.3 & LOW_TONES == LOW_TONES));
+    assert!(m.kbps > 1.3 * u.kbps, "{:.2} vs {:.2} kbps", m.kbps, u.kbps);
+}
+
+#[test]
+fn masks_follow_a_channel_change() {
+    // Flat 32-tone link at 26 dB; at 25 s tones 0-2 fade by 25 dB (A to B),
+    // at 70 s they come back. SPEC 10.3: dropped after two frames more than
+    // 6 dB below the active-tone average, restored after a probe shows them
+    // recovered (every 32-tone DATA frame probes, ADR 0007); every change
+    // takes the next mask ID and the sender applies it (ADR 0011).
+    let mut sim = wide_pair(26.0, 80, 32, true);
+    let fade =
+        cairn_modem::twosim::fir_from_response(&[(0.0, -25.0), (550.0, -25.0), (620.0, 0.0), (24_000.0, 0.0)], 1023);
+    sim.shape_step(t(25.0), 0, 1, Some(fade));
+    sim.shape_step(t(70.0), 0, 1, None);
+    let data = payload(400_000, 8);
+    connect(&mut sim, 0, 1, t(0.5));
+    send_file(&mut sim, 0, t(0.5), &data);
+    sim.run_until(t(110.0));
+    let f = masked_frames(&sim, 0);
+    let phase = |a: f64, b: f64| -> Vec<(u8, u8, u64)> {
+        f.iter().filter(|x| x.0 >= a && x.0 < b).map(|x| (x.1, x.2, x.3 & LOW_TONES)).collect()
+    };
+    let (before, faded, after) = (phase(0.0, 25.0), phase(25.0, 70.0), phase(70.0, 110.0));
+    eprintln!("before (MCS, ID, low-tone bits) {before:?}\nfaded {faded:?}\nafter {after:?}");
+    assert!(before.iter().all(|x| x.2 == LOW_TONES), "unmasked before the fade");
+    // Masked within a few frames of the fade (two measurements, the report,
+    // the sender's next frame), then for the rest of it.
+    let k = faded.iter().position(|x| x.2 == 0).expect("masked during the fade");
+    assert!(k <= 4, "{faded:?}");
+    assert!(faded[k..].iter().all(|x| x.2 == 0), "{faded:?}");
+    let k = after.iter().position(|x| x.2 == LOW_TONES).expect("restored after the fade");
+    assert!(k <= 3, "{after:?}");
+    assert!(after[k..].iter().all(|x| x.2 == LOW_TONES), "{after:?}");
+    // The mask IDs advance by one per change (mod 4).
+    let ids: Vec<u8> = f.iter().map(|x| x.2).collect();
+    assert!(ids.windows(2).all(|w| w[1] == w[0] || w[1] == (w[0] + 1) % 4), "{ids:?}");
+    assert_no_overlaps(&sim);
+}
+
+#[test]
+fn radio_tail_is_no_carrier() {
+    // The AIOC radios kept their carrier 0.64-0.73 s after PTT release
+    // (2026-11-07). Both stations here keep it 0.65 s: their own receivers
+    // hear silence meanwhile, which used to read as a carrier (one quieting
+    // rise per own transmission, 17 in 3.5 min); the peer sees the carrier
+    // and waits it out before replying.
+    let mut out = Vec::new();
+    for legacy in [false, true] {
+        let mut sim = wide_pair(25.0, 90, 32, true);
+        for s in &mut sim.stations {
+            s.radio_tail = Duration::from_millis(650);
+            if legacy {
+                let mut cfg = s.modem.config().clone();
+                cfg.dcd = cfg.dcd.legacy();
+                s.modem = cairn_modem::runtime::Modem::new(cfg);
+            }
+        }
+        let data = payload(30_000, 9);
+        connect(&mut sim, 0, 1, t(0.5));
+        send_file(&mut sim, 0, t(0.5), &data);
+        sim.run_while(t(300.0), |s| s.stations[1].delivered_bytes().len() < data.len());
+        assert_eq!(sim.stations[1].delivered_bytes(), data, "legacy {legacy}");
+        assert_no_overlaps(&sim);
+        let end = sim.now();
+        let rises: Vec<u64> = sim.stations.iter().map(|s| s.modem.stats.dcd_rises[0]).collect();
+        let heard: Vec<usize> = (0..2).map(|i| sim.frames_from(1 - i).len()).collect();
+        let rec: Vec<f64> = sim.stations[0].modem.stats.rx_recovery_ms.clone();
+        let ta = sim.turnarounds();
+        eprintln!(
+            "radio tail 650 ms{}: done at {end}; quieting rises A/B {rises:?} for {heard:?} peer transmissions; \
+A's receiver back after own PTT {:.0}-{:.0} ms ({}); peer replies {:.0}-{:.0} ms after the last sample",
+            if legacy { " (legacy carrier detect)" } else { "" },
+            rec.iter().cloned().fold(f64::INFINITY, f64::min),
+            rec.iter().cloned().fold(0.0, f64::max),
+            rec.len(),
+            percentile_ms(&ta, 0.0),
+            percentile_ms(&ta, 100.0)
+        );
+        out.push((rises, heard, rec));
+    }
+    let (rises, heard, rec) = &out[0];
+    // One quieting rise per peer transmission at most: none from the tails.
+    for i in 0..2 {
+        assert!(rises[i] as usize <= heard[i], "{rises:?} {heard:?}");
+    }
+    assert!(rec.iter().all(|&r| (620.0..700.0).contains(&r)), "{rec:?}");
+    let (old, _, _) = &out[1];
+    assert!(old[0] + old[1] > rises[0] + rises[1] + 10, "legacy {old:?} against {rises:?}");
+}
+
+#[test]
+fn rx_dir_files_arrive_byte_identical() {
+    // `run --rx-dir`: every FILE-CHUNK and MESSAGE PDU delivered goes to the
+    // receive directory; files are reassembled by object ID and offset.
+    let mut sim = pair(25.0, 95);
+    let files = [payload(9_000, 1), payload(2 * 2048, 2), payload(1, 3)];
+    connect(&mut sim, 0, 1, t(0.5));
+    let mut host = HostState::new();
+    for f in &files {
+        let (cmds, _, _) = host.file_commands(f);
+        for c in cmds {
+            sim.host(0, t(0.5), c);
+        }
+    }
+    sim.host(0, t(0.5), HostCommand::Send { id: 99, pdu: Pdu::message(b"73 de N0AAA".to_vec()) });
+    let total: usize = files.iter().map(|f| f.len()).sum::<usize>() + 11;
+    sim.run_while(t(200.0), |s| s.stations[1].delivered_bytes().len() < total);
+    let dir = std::env::temp_dir().join(format!("cairn-two-station-rxdir-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&dir);
+    let mut rx = cairn_modem::rxdir::RxDir::new(&dir).unwrap();
+    let mut lines = Vec::new();
+    for (_, from, pdu) in &sim.stations[1].delivered {
+        lines.extend(rx.on_pdu(*from, pdu, false).unwrap());
+    }
+    for l in &lines {
+        eprintln!("{l}");
+    }
+    assert_eq!(lines.len(), 4, "{lines:?}");
+    for (k, f) in files.iter().enumerate() {
+        let path = dir.join(format!("N0AAA_obj{}.bin", k + 1));
+        assert_eq!(&std::fs::read(&path).unwrap(), f, "{}", path.display());
+        assert!(lines[k].ends_with(&cairn_modem::rxdir::sha256_hex(f)), "{}", lines[k]);
+    }
+    assert_eq!(std::fs::read(dir.join("N0AAA_msg1.txt")).unwrap(), b"73 de N0AAA");
+    let _ = std::fs::remove_dir_all(&dir);
 }

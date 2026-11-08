@@ -10,8 +10,11 @@ continuous receiver that decodes each frame header first within the
 the link layer (`link/`, sessions, ARQ, adaptation, resume, link test,
 broadcast) wired to the PHY in one runtime with a KISS server and a
 control interface (`cairn-modem run`). Two complete modems hold sessions
-over a simulated FM channel (`cli/tests/two_station.rs`); an on-air
-two-radio session is the next step ([docs/bench-testing.md](../docs/bench-testing.md#two-station-session-with-cairn-modem-run)).
+over a simulated FM channel (`cli/tests/two_station.rs`), and the first
+on-air two-radio session ran on 2026-11-07 (24 tones, a few kB each way);
+from it came wider session widths with tone masks (`run --cap`), received
+files on disk (`run --rx-dir`) and carrier-detect hysteresis
+([docs/bench-testing.md](../docs/bench-testing.md#two-station-session-with-cairn-modem-run)).
 The native JSON API (SPEC 13.2) is not built yet.
 
 ```sh
@@ -277,9 +280,46 @@ M=target/release/cairn-modem
 $M run -d All-In-One-Cable --ptt serial:All-In-One-Cable --callsign N0CALL-1 --grid FN31
 #   --kiss 127.0.0.1:8001 (default; "off")    --control 127.0.0.1:8003 (the stdin protocol on TCP)
 #   --txdelay/--txtail (ms)  --persistence 0.25  --slot-ms 100  --max-frame 4.0  --broadcast-mcs 0
-#   --quieting 2700-3100 (Hz)  --refuse  --status 30  -v (every header and DCD change)
-#   --seconds N  --tx-budget S (never key more than S seconds in total: bench safety)
+#   --cap 32 (width cap in tones, 24-56)  --no-mask  --rx-dir DIR (received files and messages)
+#   --quieting 3600-4150 (Hz; default just above the cap)  --dcd-legacy  --refuse  --status 30
+#   -v (every header and DCD change)  --seconds N  --tx-budget S (never key more than S s in total)
 ```
+
+- **Width** (`--cap N`, 24-56 tones, default 24): the B.3 width cap is
+  N - 1, and above 24 the station advertises capability bit 0. In a
+  session each station sends at its own cap + 1 when its peer advertised
+  the bit, else at 24 tones (SPEC 5.4, ADR 0011 `session-width`): with
+  `--cap 32` at both ends, 32 tones each way. CONNECT carries the probe to
+  the sender's cap, CONNECT-ACK and every session frame whose data uses a
+  tone above 23 to the session width (ADR 0007, ADR 0011). When a session
+  opens both ends log `session width with PEER: tx 32 tones (own cap 31,
+  peer wide), rx 32 tones (peer cap 31, own wide); tx mask ID 0: ...`.
+  Broadcasts stay at 24 tones.
+- **Tone masks** (on unless `--no-mask`): the receiver measures every tone
+  of every decoded frame from the peer (the ADR 0006 channel SNR fitted per
+  tone on the rebuilt symbols; tones above 23 only from a frame's probe)
+  and runs SPEC 10.3 through the link layer's mask tracker: a tone more
+  than 6 dB below the active-tone average for two consecutive frames is
+  dropped, a dropped tone comes back when a probe shows it within 3 dB of
+  the average (the reading `READING_MASK_RESTORE_DB`), every change takes
+  the next mask ID, and every ACK block carries the mask with its ID; the
+  sender applies the latest mask it decoded and names its ID in the
+  header (ADR 0011). CONNECT-ACK reports the mask the CONNECT's probe
+  showed, so a session starts masked. A receiver with a tone dropped asks
+  for a probe after 10 s without one (ADR 0013). Changes print as
+  `rx mask report ID 1 to PEER: tones 0-2 masked, 29 of 32 active` and
+  `tx mask ID 1 from PEER: ...`, rung changes as `rungs with PEER: ...`;
+  `status` shows each direction's rung, width and mask.
+- **Received files** (`--rx-dir DIR`): FILE-CHUNK PDUs are written into
+  `DIR/CALL_objN.bin.part` at their offset as they arrive (CALL the
+  sender, N its object ID), and the file is renamed to `CALL_objN.bin` once
+  every byte up to its end has arrived, with `rx file from CALL object N
+  complete: BYTES bytes -> PATH sha256 HEX`. Text messages (session
+  MESSAGE PDUs, and UI broadcasts) become `CALL_msgK.txt` and
+  `CALL_uiK.txt`. Names never overwrite (`-2`, `-3`, ... are appended).
+  FILE-CHUNK carries no object length, so this modem marks the end itself:
+  every chunk but the last carries 2048 bytes, and a file whose length is
+  a multiple of 2048 ends with an empty chunk at its length.
 
 Control commands (stdin, or the `--control` port; one line each, every
 line out carries the seconds since start):
@@ -357,9 +397,19 @@ quieting: open-squelch noise as loud in the band as the reference signal
 until a carrier it hears is keyed (from PTT on, so during TXDelay too),
 then noise at that link's SNR (the 7 dB-equivalent in-band SNR of SPEC 7.1).
 The noise is white, band-limited 150 Hz-4 kHz. Outages, SNR steps and
-foreign transmitters (a Bell 202 station) can be scheduled. AWGN only: the
-FM mic, flat and repeater models of `sim/cairn_sim/channel.py` are not
-ported yet (the PHY's fixtures cover them frame by frame). Results, 24
+foreign transmitters (a Bell 202 station) can be scheduled. A link can take
+an audio response (`Sim::set_shape`, a linear-phase FIR applied with its
+delay removed) and a receiver coloured noise (`SimStation::noise_shape`);
+`Sim::radio_like_link` gives both from the radios of the first on-air
+session (`twosim::radio_like`: the noise 25 dB stronger at 300-350 Hz, 17
+at 450, 11 at 550, 4 at 650 Hz, then tilting from +1.5 dB at 1.1 kHz to
+-2.5 dB at 3.5 kHz; the signal flat from 650 Hz to 3.9 kHz and -10 dB at
+4.4 kHz; per tone the link SNR less 28, 18 and 11 dB on tones 0-2; heard
+12 dB below the transmitted level), and `SimStation::radio_tail` keeps a
+station's carrier up after PTT release while its own receiver hears
+silence. Otherwise AWGN: the FM mic, flat and repeater models of
+`sim/cairn_sim/channel.py` are not ported yet (the PHY's fixtures cover
+them frame by frame). Results, 24
 tones, TXDelay 150 ms, TXTail 10 ms, decoded frames reaching the station
 20 ms after their completing chunk:
 
@@ -367,13 +417,17 @@ tones, TXDelay 150 ms, TXTail 10 ms, decoded frames reaching the station
 | --- | --- |
 | Connect, 50 kB each way at once, disconnect; 25 dB, clocks +60/-40 ppm | Every byte delivered once and in order both ways in 105 s; 3.86 + 4.16 = 8.0 kbps together (both at MCS 5; A.2 one way 7.61); no delivered block resent; both ends `Disconnected`, nothing undelivered |
 | 50 kB one way (15 kB at 8 dB) | 8 dB: MCS 0, 1.11 kbps (A.2 1.21, 92%); 14 dB: MCS 2, 2.81 (3.02, 93%); 20 dB: MCS 3, 4.27 (4.55, 94%); 25 dB: MCS 5, 6.87 (7.61, 90%); 32 dB: MCS 6, 8.51 (9.11, 93%); no block lost. The shortfall is start-up (CONNECT, the first frames) and the last short frame |
-| SNR 25 -> 19 -> 25 dB during a transfer | MCS 5, then MCS 3 from the 2nd frame after the drop, then MCS 5 again on the 4th frame after the rise (one step, ADR 0013) |
+| SNR 25 -> 19 -> 25 dB during a transfer | MCS 5, then MCS 3 from the 2nd frame after the drop, then MCS 4 again on the 4th frame after the rise (one step, ADR 0013; the run's lowest measured SNR held it one rung below MCS 5, which the test allows) |
 | A Bell 202 station (300 ms of flags, 60 bytes, 734 ms) keys mid-session at 20 dB | Both stations' AFSK detectors assert; no transmission starts while it is keyed or within 100 ms after (the next one 156 ms after its release); frames capped at 2 s afterwards (SPEC 11.3); the transfer completes |
 | 120 s outage mid-transfer, A reconnects 1 s after its link loss | Link lost at 80 s (A) and 115 s (B), resumed at 137/141 s, transfer complete with no delivered block resent and nothing undelivered |
-| Link test, then a session | 0.86 s of air; 14 dB: forward SNR 14.2 dB, MCS 2, 3.02 kbps predicted, session 2.82 (-6%); 25 dB: 25.2 dB, MCS 5, 7.59 predicted, session 7.00 (-8%) |
+| Link test, then a session | 0.86 s of air; 14 dB: forward SNR 14.2 dB, MCS 2, 3.02 kbps predicted, session 2.82 (-6%); 25 dB: 25.2 dB, MCS 5, 7.59 predicted, session 6.56 (-14%: four more frames at MCS 4 before the climb) |
 | Two AX.25 frames from KISS (one of 920 bytes, fragmented) | Both back at B's KISS side unchanged, in order, from UI frames to the broadcast address |
 | BEACON with a status text | Heard with its ID block; text delivered |
 | Idle, open squelch, 2 x 10 min x 3 seeds (`--ignored`) | No carrier-detect rise from any detector, no detection |
+| Radio-like channel (below), link SNR 24 dB, `--cap 32` both, 60 kB one way | Masked: tones 0-2 dropped from the CONNECT-ACK on (every DATA frame), MCS 2, then MCS 4 from the 4th frame, 6.24 kbps net (60 kB in 77 s), no block lost. Unmasked (`--no-mask`): the noisy low tones pull the measured SNR down and the session stalls at MCS 2, 3.88 kbps (124 s). At 28 dB: MCS 5 masked, 7.35 kbps, against MCS 3 unmasked, 5.91 |
+| 32 tones at 26 dB, tones 0-2 fade by 25 dB at 25 s and recover at 70 s | Masked from the 3rd DATA frame after the fade (mask ID 1), restored on the 2nd after the recovery (ID 2); the rung holds MCS 4 throughout and climbs to 5 after |
+| Both radios keep their carrier 0.65 s after PTT release (as on the air) | Each receiver hears its own tail as silence and waits for the noise (back 635-645 ms after release): quieting rises 7 and 8 for 7 and 8 peer transmissions (legacy detector: 15 and 16); the peer waits the carrier out and replies 814-824 ms after the last sample |
+| `--rx-dir` with three files (9000, 4096 and 1 bytes) and a message | Each file byte-identical on disk with its SHA-256 logged; the message in `N0AAA_msg1.txt` |
 
 **Turnaround** (peer's last audio sample to own PTT, every turn-holder
 reply): p50 73.8 ms, max 77.5 ms over 23 replies with the 20 ms decode
@@ -390,10 +444,28 @@ clamp, see "Full speed on wake-up").
 
 | Detector | How | Measured |
 | --- | --- | --- |
-| Quieting | 8th-order Butterworth band power above the highest tone (2700-3100 Hz at 24 tones, 6000-7000 at 56; `--quieting`) per 10 ms; the open-squelch floor learnt from the 200 ms mean (rises with 0.4 s, falls with 2 s, frozen while asserted, re-learnt after 60 s); asserts when the 50 ms mean is 6 dB below the floor, releases when the 20 ms mean is back above the lower of floor -3 dB and the midpoint between floor and carrier level; unarmed while the floor is below -60 dB (squelch closed, or no radio) | Up 33-58 ms after a carrier keys; down 5-15 ms after the noise returns (20 dB quieting), 7-31 ms (10 dB) |
+| Quieting | 8th-order Butterworth band power above the highest tone (2700-3100 Hz at 24 tones, 3600-4150 at 32, 6000-7000 at 56; from `--cap`, or `--quieting`) per 10 ms; the open-squelch floor learnt from the 200 ms mean (rises with 0.4 s, falls with 2 s, frozen while asserted, re-learnt after 60 s); asserts when the 50 ms mean is 6 dB below the floor, releases when the 20 ms mean is back above the lower of floor -3 dB and the midpoint between floor and carrier level; unarmed while the floor is below -60 dB (squelch closed, or no radio). Hysteresis: after a release it decides on hops after it only (50 ms at least) and for 250 ms needs a 3 dB deeper drop; once up it stays up 30 ms at least. After own PTT it neither learns nor asserts until the open-squelch noise is back (at most 1.5 s) | Up 33-58 ms after a carrier keys; down 5-15 ms after the noise returns (20 dB quieting), 7-31 ms (10 dB) |
 | Preamble correlator | The streaming detector's early confirmation (`Detector::take_early`: plateau and S1 correlation over threshold), held to the end of the frame its header describes | Fires 48-54 ms after a frame starts (final detection 88-94 ms), down to 2 dB SNR |
 | Bell 202 | Sliding one-bit DFTs at 1200 and 2200 Hz: tone dominance, tone purity within a bit, transitions on the 1200-baud grid (rising and falling separately, for twist), over 60 ms | Up 50-80 ms after the burst starts at 10-30 dB with up to 6 dB twist (up to 130 ms at 10 dB with 9 dB twist); down 6-31 ms after it ends |
 | COS | `Modem::set_cos` (no sound-interface GPIO reader yet) | |
+
+**On the air (2026-11-07).** The first two-radio session counted 71 and 72
+quieting rises in 3.5 minutes (`run -v` logs). Two causes: the radios (or
+their AIOC cables) keep the carrier 0.64-0.73 s after PTT release, so each
+station's receiver heard silence after every own transmission and quieting
+asserted on it (17 and 16 rises), and the noise came back a few dB low
+after every carrier with the 50 ms assert window still holding the quieted
+hops, so it flapped every 10-30 ms around every transmission. With the
+hysteresis and the recovery after own PTT above, on the off-air captures
+(`cap_AtoB.wav`, `cap_BtoA.wav`: idle open-squelch noise, four carriers
+each with a frame) `cargo run --release --example dcd_wav -- CAP.wav`
+counts 5 and 4 rises (none idle, one per carrier, one dropout inside a
+24-tone frame) against 9 and 8 for `--legacy` (two per carrier: the flap at
+each carrier's end); with the 32-tone band (`--width 32`, 3600-4150 Hz)
+exactly one per carrier, also on the 32-tone frames. Latency is unchanged
+(`tests/dcd.rs`). In the simulator with a 0.65 s radio tail the own-tail
+rises are gone (table above); the receiver's recovery time after each own
+transmission is in `status` ("receiver back after own PTT").
 
 False asserts (the §14.1 target is at most one per 10 minutes): none from
 any detector on 80 minutes of synthetic open-squelch noise (white and

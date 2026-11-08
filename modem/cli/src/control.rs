@@ -199,13 +199,21 @@ impl HostState {
     }
 
     /// A file as FILE-CHUNK PDUs (SPEC 12.4: 32-bit object ID, 32-bit
-    /// offset, then data), with their ids and the object ID.
+    /// offset, then data), with their ids and the object ID. Every chunk
+    /// but the last carries [`FILE_CHUNK_DATA`] bytes; a file whose length
+    /// is a multiple of that (or empty) ends with an empty chunk at its
+    /// length, so a receiver knows where the object ends (this modem's
+    /// convention: the protocol carries no object length; `rxdir`).
     pub fn file_commands(&mut self, data: &[u8]) -> (Vec<HostCommand>, Vec<u64>, u32) {
         let obj = self.next_object;
         self.next_object += 1;
         let mut cmds = Vec::new();
         let mut ids = Vec::new();
-        for (k, chunk) in data.chunks(FILE_CHUNK_DATA).enumerate() {
+        let mut chunks: Vec<&[u8]> = data.chunks(FILE_CHUNK_DATA).collect();
+        if data.len() % FILE_CHUNK_DATA == 0 {
+            chunks.push(&[]);
+        }
+        for (k, chunk) in chunks.into_iter().enumerate() {
             let mut body = Vec::with_capacity(chunk.len() + 8);
             body.extend_from_slice(&obj.to_be_bytes());
             body.extend_from_slice(&((k * FILE_CHUNK_DATA) as u32).to_be_bytes());
@@ -332,16 +340,44 @@ pub fn status(m: &Modem) -> String {
     let s = &m.stats;
     let sess = match st.session_info() {
         Some(i) => format!(
-            "session with {} {:?} {:?} id {:04x}: tx MCS {} rx MCS {} (requested), idle {}, next seq {}, rx next {}",
-            i.peer, i.phase, i.role, i.session_id, i.tx_mcs, i.requested_mcs, i.idle, i.next_seq.0, i.rx_next.0
+            "session with {} {:?} {:?} id {:04x}: tx MCS {} x{} ({}, ID {}) rx MCS {} (requested) x{} ({}, ID {}), \
+idle {}, next seq {}, rx next {}",
+            i.peer,
+            i.phase,
+            i.role,
+            i.session_id,
+            i.tx_mcs,
+            i.tx_width,
+            crate::runtime::describe_mask(i.tx_mask.0, i.tx_width),
+            i.tx_mask.1,
+            i.requested_mcs,
+            i.rx_width,
+            crate::runtime::describe_mask(i.rx_mask.0, i.rx_width),
+            i.rx_mask.1,
+            i.idle,
+            i.next_seq.0,
+            i.rx_next.0
         ),
         None => "no session".into(),
+    };
+    let rec = if s.rx_recovery_ms.is_empty() {
+        String::new()
+    } else {
+        let mut v = s.rx_recovery_ms.clone();
+        v.sort_by(f64::total_cmp);
+        format!(
+            "; receiver back after own PTT {:.0}/{:.0}/{:.0} ms (min/median/max of {})",
+            v[0],
+            v[v.len() / 2],
+            v[v.len() - 1],
+            v.len()
+        )
     };
     let d = m.dcd().state();
     let floor = m.dcd().floor_dbfs().map_or("unarmed".to_string(), |f| format!("{f:.1} dBFS"));
     format!(
         "{} {}; DCD raw {} (quieting {} preamble {} AFSK {} COS {}), quieting floor {floor}; rises q/p/a/c {:?}; \
-frames rx {} (header failures {}), blocks {}/{}, tx {} frames, keyed {:.1} s",
+frames rx {} (header failures {}), blocks {}/{}, tx {} frames, keyed {:.1} s{rec}",
         st.address(),
         sess,
         m.dcd_raw(),

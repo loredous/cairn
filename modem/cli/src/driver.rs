@@ -57,6 +57,8 @@ pub struct RunOptions {
     pub verbose: bool,
     /// Status line interval (None: never).
     pub status_every: Option<Duration>,
+    /// Save received files and messages here.
+    pub rx_dir: Option<std::path::PathBuf>,
 }
 
 /// What the event loop hears from other threads.
@@ -109,6 +111,14 @@ pub fn run(
     cfg.decode_time = DecodeTime::Wall(origin);
     let mut modem = Modem::new(cfg);
     let mut host = HostState::new();
+    let mut rx_dir = match &opts.rx_dir {
+        Some(d) => {
+            let r = crate::rxdir::RxDir::new(d).map_err(|e| format!("--rx-dir {}: {e}", d.display()))?;
+            println!("received files and messages go to {}", d.display());
+            Some(r)
+        }
+        None => None,
+    };
     let (msg_tx, msg_rx): (Sender<Msg>, ChanRx<Msg>) = channel();
     let clients: Arc<Mutex<Vec<TcpStream>>> = Arc::new(Mutex::new(Vec::new()));
 
@@ -339,6 +349,20 @@ pub fn run(
         }
         // Outputs.
         for o in modem.drain() {
+            if let Some(r) = rx_dir.as_mut() {
+                let saved = match &o {
+                    Output::Deliver { from, pdu } => Some(r.on_pdu(*from, pdu, false)),
+                    Output::DeliverBroadcast { from, ftype: cairn_link::FrameType::Ui, pdu } => {
+                        Some(r.on_pdu(*from, pdu, true))
+                    }
+                    _ => None,
+                };
+                match saved {
+                    Some(Ok(lines)) => lines.iter().for_each(|l| output_line(l, &clients)),
+                    Some(Err(e)) => output_line(&format!("error: --rx-dir: {e}"), &clients),
+                    None => {}
+                }
+            }
             match &o {
                 Output::Transmit(req) => {
                     let keyed = req.keyed(modem.config().txdelay, modem.config().txtail);

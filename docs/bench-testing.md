@@ -309,17 +309,27 @@ simulated FM channel) so you know what a good run looks like.
 ```sh
 M=modem/target/release/cairn-modem
 # 0. Levels and TXDelay exactly as for the broadcast test above (tone, levels).
-#    Open the squelch on both radios: carrier detect watches the noise above
-#    the signal band (2700-3100 Hz on a 24-tone link) and needs it.
+#    Open the squelch on both radios and keep it open: carrier detect watches
+#    the noise above the signal band (2700-3100 Hz at 24 tones, 3600-4150 Hz
+#    with --cap 32) and needs it. With the squelch open the two handhelds of
+#    the first session ran TXDelay 300 ms (--txdelay 300) and TXTail 20 ms
+#    (--txtail 20), and their AIOC playback levels ended at
+#    -9 dB (station A) and -10 dB (station B) in alsamixer for 70% deviation.
 
-# 1. Both stations start the modem (Ctrl-C or "quit" stops it).
-$M run -d All-In-One-Cable --ptt serial:All-In-One-Cable --callsign N0CALL-1 --grid FN31 --status 30   # A
-$M run -d All-In-One-Cable --ptt serial:All-In-One-Cable --callsign N0CALL-2 --status 30               # B
-#    Each prints its devices, PTT, "KISS server on 127.0.0.1:8001" and waits.
-#    Leave both idle for a minute: "status" should show the quieting floor
-#    armed (a level in dBFS, not "unarmed") and no carrier-detect rises
-#    (rises q/p/a/c [0, 0, 0, 0]). A rise with nobody on the air is a false
-#    detection: raise the receive level or move the band (--quieting LO-HI).
+# 1. Both stations start the modem (Ctrl-C or "quit" stops it). --cap 32 lets
+#    each send 32 tones (B.3 width cap 31; tones 0-31 reach 3.45 kHz), tone
+#    masks drop the tones the radios do not pass, --rx-dir saves what arrives.
+$M run -d All-In-One-Cable --ptt serial:All-In-One-Cable --callsign N0CALL-1 --grid FN31 \
+    --txdelay 300 --txtail 20 --cap 32 --rx-dir ~/cairn-rx --status 30 -v                        # A
+$M run -d All-In-One-Cable --ptt serial:All-In-One-Cable --callsign N0CALL-2 \
+    --txdelay 300 --txtail 20 --cap 32 --rx-dir ~/cairn-rx --status 30 -v                        # B
+#    Each prints its devices, PTT, "cap 32 tones (B.3 width cap 31, wide), tone
+#    masks tracked, quieting 3600-4150 Hz", "KISS server on 127.0.0.1:8001"
+#    and waits. Leave both idle for a minute: "status" should show the
+#    quieting floor armed (a level in dBFS, not "unarmed") and no
+#    carrier-detect rises (rises q/p/a/c [0, 0, 0, 0]). A rise with nobody on
+#    the air is a false detection: raise the receive level or move the band
+#    (--quieting LO-HI).
 
 # 2. A link test first (about 1 s of air): both directions' SNR, rung and expected kbps.
 probe N0CALL-2                                   # at A
@@ -327,10 +337,15 @@ probe N0CALL-2                                   # at A
 
 # 3. A session: connect, send text and a file each way, disconnect.
 connect N0CALL-2                                 # at A -> "connected to N0CALL-2 (session ..., initiator)"
-send hello de N0CALL-1                           # at A; B prints "rx from N0CALL-1: ..."
+#    Both print "session width with ...: tx 32 tones (own cap 31, peer wide),
+#    rx 32 tones (...); tx mask ID 0: tones 0-2 masked, 29 of 32 active; ..."
+#    when the radios' low tones are as weak as on the first session's.
+send hello de N0CALL-1                           # at A; B prints "rx from N0CALL-1: ..." and saves it
 send @/path/to/file                              # at A: FILE-CHUNK PDUs; "delivered to N0CALL-2: file ..."
+#    B: "rx file from N0CALL-1 object 1 complete: N bytes -> ~/cairn-rx/N0CALL-1_obj1.bin sha256 ..."
+#    (compare with sha256sum of the file at A)
 send @/path/to/other                             # at B, at the same time: both directions share the turns
-status                                           # either: rung each way, sequences, counters
+status                                           # either: rung, width and mask each way, counters
 disconnect                                       # at A, after the deliveries
 ```
 
@@ -342,10 +357,32 @@ What to look for:
   that waits seconds means the turn-holder's carrier check saw a carrier
   (with `-v`, the `dcd` lines show which detector) or a frame was lost and
   the ACK timer (about 6.6 s) brought it back.
-- **Adaptation.** The rung each way (`status`) settles within a few
-  frames and stays put at a constant level. Turn the attenuator by 6 dB
-  during a transfer: the rung follows within 2 frames down and 4 up
-  (ADR 0013).
+- **Adaptation.** The rung each way (`status`, and `rungs with ...` lines)
+  settles within a few frames and stays put at a constant level. Turn the
+  attenuator by 6 dB during a transfer: the rung follows within 2 frames
+  down and 4 up (ADR 0013).
+- **Width and masks.** With `--cap 32` the session runs 32 tones each way.
+  The first session's radios measured -13 to +7 dB on tones 0-2
+  (350-550 Hz) against 9-28 dB above, and the reported SNR at 32 tones was
+  13 dB unmasked against 21-25 dB with tones 0-2 masked: the mask should
+  drop tones 0-2 from CONNECT-ACK on (`tx mask ID 0: tones 0-2 masked`),
+  and the rung settle at MCS 4-5 one way where the first session (24
+  tones, unmasked, about 12 dB measured) held MCS 0-2 (the best manual
+  setting was 32 tones, tones 0-2 masked, MCS 5 one way and MCS 3 the
+  other). A tone that fades is dropped after
+  two frames (`rx mask report ID 1 ...`) and comes back after a probe shows
+  it recovered. `--no-mask` turns masks off for a comparison; `--cap 24`
+  (the default) is the first session's setting.
+- **Carrier detect.** With `-v`, every peer transmission should give one
+  `quieting: true` and one `quieting: false`, and an own transmission none
+  (the first session's radios keep their carrier about 0.65 s after PTT
+  release, so the receiver hears silence; quieting now waits for the noise
+  to come back, and `status` reports how long that took: "receiver back
+  after own PTT 640/660/700 ms"). The first session counted 71-72 quieting
+  rises in 3.5 minutes; expect about one per peer frame. That tail also
+  delays every reply: the peer waits until the carrier has gone (about
+  0.8 s after the last sample); if the radios or the AIOC's virtual PTT
+  have a tail setting, shortening it buys throughput both ways.
 - **Throughput.** "delivered" lines with byte counts over the elapsed
   time, against Appendix A.2 at the rung in use (one way, 24 tones: MCS 3
   4.55 kbps, MCS 4 6.09, MCS 5 7.61, MCS 6 9.11 kbps; both ways at once

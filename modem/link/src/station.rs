@@ -427,6 +427,15 @@ pub struct SessionInfo {
     pub tx_mask: (u64, u8),
     /// Mask and ID this station reports.
     pub rx_mask: (u64, u8),
+    /// This station's session width (ADR 0011 `session-width`: its cap + 1
+    /// when the peer advertised capability bit 0, else 24).
+    pub tx_width: u8,
+    /// The peer's session width, as this station receives it.
+    pub rx_width: u8,
+    /// The peer's B.3 width cap.
+    pub peer_width_cap: u8,
+    /// The peer's B.3 capability bits.
+    pub peer_capabilities: u16,
     /// Neither station owes a reply.
     pub idle: bool,
     /// ACK-timer expirations since the last decoded peer header.
@@ -528,6 +537,10 @@ impl Station {
             tx_mcs: s.tx_mcs(),
             tx_mask: s.tx_mask(),
             rx_mask: s.rx_mask(),
+            tx_width: s.tx_width(&self.cfg),
+            rx_width: s.rx_width(&self.cfg),
+            peer_width_cap: s.peer_width_cap,
+            peer_capabilities: s.peer_caps,
             idle: s.is_idle(),
             expiries: s.expiries(),
             next_seq: s.tx.next_seq(),

@@ -28,6 +28,7 @@ use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use cairn_link::adapter::{FieldCodec, PhyCodec, header_from_phy};
+use cairn_link::session::Phase;
 use cairn_link::{
     Action, Address, Config, Event, FrameType, HostCommand, HostEvent, Instant, LinkFrame, Measurement, Pdu, RxHeader,
     Station,
@@ -239,6 +240,69 @@ pub struct Stats {
     pub turnarounds: Vec<Duration>,
     /// Decode times (wall), ms.
     pub decode_ms: Vec<f64>,
+    /// After each own transmission: how long the receiver took to hear the
+    /// open-squelch noise again after PTT release (the radio's transmit
+    /// tail; `cairn_phy::dcd::Dcd::take_recovery`), ms.
+    pub rx_recovery_ms: Vec<f64>,
+}
+
+/// Per-tone SNR for the tone-mask rules (SPEC 10.3): the ADR 0006 channel
+/// SNR fitted per tone against the rebuilt symbols where it was measured,
+/// which is unbiased next to bad tones, unlike the decoder's smoothed
+/// estimate (on the radio-like channel the decoder put tones 3-4 5-9 dB
+/// below their neighbours when tones 0-2 were bad, against 1-4 dB measured
+/// on the rebuilt symbols); tones without a fit take the decoder's estimate
+/// shifted by the median difference between the two.
+pub fn tone_snr(res: &cairn_phy::rx::RxResult) -> Vec<f64> {
+    let Some(c) = &res.channel_snr else { return res.snr_db.clone() };
+    let n = res.snr_db.len().min(c.per_tone_db.len());
+    let mut diff: Vec<f64> = (0..n)
+        .filter(|&k| c.per_tone_db[k].is_finite() && res.snr_db[k].is_finite())
+        .map(|k| c.per_tone_db[k] - res.snr_db[k])
+        .collect();
+    if diff.is_empty() {
+        return res.snr_db.clone();
+    }
+    diff.sort_by(f64::total_cmp);
+    let shift = diff[diff.len() / 2];
+    (0..res.snr_db.len())
+        .map(|k| match c.per_tone_db.get(k) {
+            Some(&v) if v.is_finite() => v,
+            _ => res.snr_db[k] + shift,
+        })
+        .collect()
+}
+
+/// The session as last logged.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+struct SessionView {
+    peer: Address,
+    tx_width: u8,
+    rx_width: u8,
+    tx_mask: (u64, u8),
+    rx_mask: (u64, u8),
+    tx_mcs: u8,
+    rx_mcs: u8,
+}
+
+/// "tones 0-2 masked, 29 of 32 active" for a mask at a width.
+pub fn describe_mask(mask: u64, width: u8) -> String {
+    let w = width.min(56) as usize;
+    let off: Vec<usize> = (0..w).filter(|&t| mask >> t & 1 == 0).collect();
+    if off.is_empty() {
+        return format!("all {w} tones active");
+    }
+    let mut runs: Vec<String> = Vec::new();
+    let mut k = 0;
+    while k < off.len() {
+        let mut j = k;
+        while j + 1 < off.len() && off[j + 1] == off[j] + 1 {
+            j += 1;
+        }
+        runs.push(if j == k { off[k].to_string() } else { format!("{}-{}", off[k], off[j]) });
+        k = j + 1;
+    }
+    format!("tones {} masked, {} of {w} active", runs.join(","), w - off.len())
 }
 
 /// What the receive path knows of the station between calls: the peer of
@@ -359,6 +423,8 @@ pub struct Modem {
     out: VecDeque<Output>,
     last_peer_frame: Option<(Address, Instant)>,
     now: Instant,
+    /// What the session log last said (widths, masks, rungs).
+    sess_seen: Option<SessionView>,
     /// Counters.
     pub stats: Stats,
 }
@@ -400,6 +466,7 @@ impl Modem {
             out: VecDeque::new(),
             last_peer_frame: None,
             now: Instant::ZERO,
+            sess_seen: None,
             stats: Stats::default(),
             cfg,
         }
@@ -529,6 +596,9 @@ impl Modem {
         // Carrier detect.
         let mut edges = self.dcd.set_muted(any_muted);
         edges.extend(self.dcd.process(x));
+        if let Some(r) = self.dcd.take_recovery() {
+            self.stats.rx_recovery_ms.push((r + self.cfg.unmute_guard.as_secs_f64()) * 1e3);
+        }
         // Preamble detector (silence while muted) and the frame pipeline.
         let rx_in: Vec<f64> =
             if any_muted { x.iter().zip(&muted).map(|(&v, &m)| if m { 0.0 } else { v }).collect() } else { x.to_vec() };
@@ -674,7 +744,8 @@ impl Modem {
             snr_db: snr,
             distortion: 0,
             adc_clipped: clipped,
-            tone_snr_db: Some(res.snr_db.clone()),
+            tone_snr_db: Some(tone_snr(&res)),
+
             probe: cfg.has_probe,
         };
         let Ok(mut f) = self.codec.to_link(&res, meas, ended_at) else {
@@ -740,6 +811,79 @@ impl Modem {
             }
         }
         self.refresh_view();
+        self.note_session();
+    }
+
+    /// Log the session's widths when it opens, and every mask and rung
+    /// change in either direction.
+    fn note_session(&mut self) {
+        let Some(i) = self.station.session_info() else {
+            self.sess_seen = None;
+            return;
+        };
+        if !matches!(i.phase, Phase::Open | Phase::Closing { .. }) {
+            return;
+        }
+        let v = SessionView {
+            peer: i.peer,
+            tx_width: i.tx_width,
+            rx_width: i.rx_width,
+            tx_mask: i.tx_mask,
+            rx_mask: i.rx_mask,
+            tx_mcs: i.tx_mcs,
+            rx_mcs: i.requested_mcs,
+        };
+        let prev = self.sess_seen.replace(v);
+        let mut lines = Vec::new();
+        match prev {
+            Some(p) if p.peer == v.peer => {
+                if p.tx_mask != v.tx_mask {
+                    lines.push(format!(
+                        "tx mask ID {} from {}: {}",
+                        v.tx_mask.1,
+                        v.peer,
+                        describe_mask(v.tx_mask.0, v.tx_width)
+                    ));
+                }
+                if p.rx_mask != v.rx_mask {
+                    lines.push(format!(
+                        "rx mask report ID {} to {}: {}",
+                        v.rx_mask.1,
+                        v.peer,
+                        describe_mask(v.rx_mask.0, v.rx_width)
+                    ));
+                }
+                if p.tx_mcs != v.tx_mcs || p.rx_mcs != v.rx_mcs {
+                    lines.push(format!(
+                        "rungs with {}: tx MCS {} (was {}), rx MCS {} requested (was {})",
+                        v.peer, v.tx_mcs, p.tx_mcs, v.rx_mcs, p.rx_mcs
+                    ));
+                }
+            }
+            _ => {
+                let wide = |caps: u16| if caps & cairn_link::frame::caps::WIDE != 0 { "wide" } else { "not wide" };
+                lines.push(format!(
+                    "session width with {}: tx {} tones (own cap {}, peer {}), rx {} tones (peer cap {}, own {}); \
+tx mask ID {}: {}; rx mask ID {}: {}; tx MCS {}, rx MCS {} requested",
+                    v.peer,
+                    v.tx_width,
+                    self.station.config().width_cap,
+                    wide(i.peer_capabilities),
+                    v.rx_width,
+                    i.peer_width_cap,
+                    wide(self.station.config().capabilities),
+                    v.tx_mask.1,
+                    describe_mask(v.tx_mask.0, v.tx_width),
+                    v.rx_mask.1,
+                    describe_mask(v.rx_mask.0, v.rx_width),
+                    v.tx_mcs,
+                    v.rx_mcs
+                ));
+            }
+        }
+        for l in lines {
+            self.out.push_back(Output::Log(l));
+        }
     }
 
     fn refresh_view(&mut self) {

@@ -366,7 +366,7 @@ impl Session {
 
     /// ADR 0011 `session-width`: cap + 1 when the peer advertised
     /// capability bit 0, else 24 (a station without the bit advertises cap 23).
-    fn tx_width(&self, cfg: &Config) -> u8 {
+    pub(crate) fn tx_width(&self, cfg: &Config) -> u8 {
         if self.peer_caps & caps::WIDE != 0 { cfg.width_cap + 1 } else { BASE_WIDTH }
     }
 

@@ -189,6 +189,13 @@ pub const ALL_TONES: u64 = (1u64 << 56) - 1;
 pub const MASK_DROP_DB: f64 = 6.0;
 /// ... for this many consecutive frames.
 pub const MASK_DROP_FRAMES: u8 = 2;
+/// A dropped tone counts as recovered (§10.3: "restored only after a width
+/// probe shows it recovered") when the probe puts it no more than this far
+/// below the active-tone average: 3 dB inside the drop threshold, so a tone
+/// hovering near the threshold is not dropped and restored frame after
+/// frame (each change costs a mask ID). §10.3 does not say how far a tone
+/// must recover; this is the reading.
+pub const READING_MASK_RESTORE_DB: f64 = 3.0;
 /// A receiver with dropped tones asks for a re-probe (ACK flag bit 2) once
 /// it has not received a width probe for this long, and keeps asking until
 /// one decodes (ADR 0013 `reprobe-request-cadence`, SHOULD).
