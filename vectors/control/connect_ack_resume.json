@@ -1,0 +1,22 @@
+{
+ "format": "cairn-control-vectors",
+ "version": 1,
+ "license": "CC BY 4.0",
+ "name": "connect_ack_resume",
+ "description": "CONNECT-ACK resuming a session: usable tones 0-29 less 9, cap 23, 2 s frames",
+ "valid": true,
+ "fields": {
+  "type": 1,
+  "session_id": 66,
+  "capabilities": 4,
+  "width_cap": 23,
+  "requested_mcs": 3,
+  "max_frame_time": 20,
+  "tone_mask": [0,1,2,3,4,5,6,7,8,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29],
+  "dictionary_ids": [0,0,0,0],
+  "more_dictionaries": false,
+  "resume": true
+ },
+ "message_hex": "12004200045cd40000003ffffdff00000000000000000000000000000000",
+ "info_hex": "12004200045cd40000003ffffdff0000000000000000000000000000000081a5"
+}

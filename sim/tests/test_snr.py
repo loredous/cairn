@@ -105,3 +105,67 @@ def test_rebuild_matches_build():
     cfg, tx = _frame(4, 24, rng, blocks=2)
     again = frame.rebuild(cfg, tx.header_bits, tx.block_bits)
     assert np.array_equal(again.samples, tx.samples)
+
+
+# --- frames with control blocks and a width probe (SPEC 8.1, 8.2) -------------------
+
+def _vector_frame(name, seed=0):
+    """A frame-vector case (``frame_vectors.FRAME_CASES``), clipped as sent on air."""
+    from cairn_sim.frame_vectors import FRAME_CASES
+    case = next(c for c in FRAME_CASES if c.name == name)
+    link = frame.LinkState(case.width, None if case.usable is None else frozenset(case.usable))
+    tx = frame.build_frame(case.header, case.controls, link=link, cp=case.cp, rng=np.random.default_rng(seed))
+    return link, tx
+
+
+def test_rebuild_matches_build_with_controls_and_probe():
+    link, tx = _vector_frame("data_ack_w30_mcs3_long_masked")
+    cfg = tx.config
+    assert cfg.n_control == 1 and cfg.has_probe and cfg.mask is not None and cfg.n_blocks == 3
+    again = frame.rebuild(cfg, tx.header_bits, tx.block_bits, tx.control_bits)
+    assert np.array_equal(again.samples, tx.samples)
+    assert np.array_equal(again.grid, tx.grid)
+    with pytest.raises(ValueError):
+        frame.rebuild(cfg, tx.header_bits, tx.block_bits)          # control bits are needed
+
+
+@pytest.mark.parametrize("name", ["data_ack_w30_mcs3_long_masked", "ack"])
+def test_header_first_channel_snr_with_control_blocks(name):
+    link, tx = _vector_frame(name)
+    cfg = tx.config
+    true_db = 25.0
+    # channel.awgn sets the noise by the frame's mean power; reference it to
+    # the last segment's (data, else control) so the true per-tone SNR is true_db.
+    last = cfg.first_data if cfg.n_blocks else cfg.first_control
+    p = float(np.mean(tx.samples[last * cfg.stride:] ** 2))
+    rng = np.random.default_rng(41)
+    y = channel.awgn(tx.samples, true_db - (cfg.clip_db - 7.0), cfg.width, rng, signal_power=p)
+    rx = np.concatenate([np.zeros(700), y, np.zeros(700)])
+    r = frame.receive(rx, link=link)
+    assert r.header is not None and r.control_ok.all() and r.block_ok.all()
+    assert not r.detail["snr_fallback"]
+    assert r.detail["snr_known_symbols"] == r.detail["snr_total_symbols"] == cfg.total_symbols
+    assert r.detail["snr_db"] == pytest.approx(true_db, abs=1.0)
+    assert len(r.detail["snr_per_tone_db"]) == cfg.width
+
+
+def test_failed_control_block_leaves_its_symbols_unknown():
+    cfg = frame.FrameConfig(width=24, mcs=2, n_blocks=1, n_control=3)
+    known = frame.known_symbols(cfg, True, np.array([True]), np.array([True, False, True]))
+    ct, per_block = len(cfg.control_tones), params.CONTROL_CODE.coded_bits[0] // 2
+    rows = np.arange(cfg.control_symbols)
+    hit = (rows * ct < 2 * per_block) & ((rows + 1) * ct > per_block)    # symbols holding block 1's points
+    assert np.array_equal(known[cfg.first_control:cfg.first_data], ~hit)
+    assert known[:cfg.first_control].all() and known[cfg.first_data:].all()
+    # No control_ok: no control symbol counts as known.
+    assert not frame.known_symbols(cfg, True, np.array([True]))[cfg.first_control:cfg.first_data].any()
+
+
+def test_control_only_frame_with_failed_controls_falls_back():
+    link, tx = _vector_frame("ack")
+    r = frame.receive(tx.samples, tx.config, start=0)
+    assert r.control_ok.all() and not r.detail["snr_fallback"]
+    r.control_ok = np.zeros_like(r.control_ok)
+    r.header_ok = False
+    m = frame.channel_snr(tx.samples, tx.config, r)
+    assert m.fallback and m.known_symbols == params.PREAMBLE_SYMBOLS

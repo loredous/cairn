@@ -1,0 +1,33 @@
+{
+ "format": "cairn-header-vectors",
+ "version": 1,
+ "license": "CC BY 4.0",
+ "name": "extended_mcs_ignored",
+ "description": "EXTENDED (type 31) with no data blocks: the MCS field (here a reserved rung, 15) is sent as given and ignored",
+ "valid": true,
+ "fields": {
+  "version": 1,
+  "frame_type": 31,
+  "flags": 1,
+  "more_fragments": false,
+  "session": false,
+  "probe": false,
+  "repeat": false,
+  "source": {
+   "callsign": "N0CALL",
+   "ssid": 1,
+   "value_hex": "39b0c130c1"
+  },
+  "destination": {
+   "callsign": "N0CALL",
+   "ssid": 2,
+   "value_hex": "39b0c130c2"
+  },
+  "sequence": 0,
+  "mcs": 15,
+  "control_blocks": 1,
+  "data_blocks": 0
+ },
+ "message_hex": "3f0139b0c130c139b0c130c20000f400",
+ "info_hex": "3f0139b0c130c139b0c130c20000f4002b41"
+}

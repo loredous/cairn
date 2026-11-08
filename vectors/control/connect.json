@@ -1,0 +1,22 @@
+{
+ "format": "cairn-control-vectors",
+ "version": 1,
+ "license": "CC BY 4.0",
+ "name": "connect",
+ "description": "CONNECT: all-ones tone mask, widths above 24 and calibration, cap 55, 4 s frames, two dictionaries and a second block of them to follow",
+ "valid": true,
+ "fields": {
+  "type": 1,
+  "session_id": 48879,
+  "capabilities": 33,
+  "width_cap": 55,
+  "requested_mcs": 1,
+  "max_frame_time": 40,
+  "tone_mask": [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55],
+  "dictionary_ids": [16909060,2695938256,0,0],
+  "more_dictionaries": true,
+  "resume": false
+ },
+ "message_hex": "11beef0021dc68ffffffffffffff01020304a0b0c0d00000000000000000",
+ "info_hex": "11beef0021dc68ffffffffffffff01020304a0b0c0d00000000000000000134c"
+}

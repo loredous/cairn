@@ -80,12 +80,21 @@ def test_case_set_covers_the_adr():
 
 @pytest.mark.parametrize("name", NAMES)
 def test_vector_follows_the_rules(name):
-    d = load(name)
+    check_frame_doc(load(name))
+
+
+def check_frame_doc(d: dict) -> None:
+    """Every stage of a frame vector (``vectors/bitmap/`` or ``vectors/frame/``)
+    against the ADR 0005 rules written out here."""
     w, q, e = d["width"], d["bits_per_point"], d["coded_bits"]
     hcode, dcode = ldpc.code_for(params.HEADER_CODE), ldpc.code_for(params.DATA_CODE)
-    blocks = [("header", d["header"], hcode, 144)] + [("data", b, dcode, 1024) for b in d["blocks"]]
+    ccode = ldpc.code_for(params.CONTROL_CODE)
+    controls = d.get("controls", [])
+    assert len(controls) == d["control_blocks"] and len(d["blocks"]) == d["data_blocks"]
+    blocks = ([("header", d["header"], hcode, 144)] + [("control", b, ccode, 256) for b in controls]
+              + [("data", b, dcode, 1024) for b in d["blocks"]])
     for kind, b, code, k in blocks:
-        n = b["coded_bits"] if kind == "header" else e
+        n = {"header": b.get("coded_bits"), "control": 512, "data": e}[kind]
         info = bits(b["info_hex"], k)
         msg = bytes.fromhex(b.get("message_hex") or b["payload_hex"])
         assert int("".join(map(str, info[-16:])), 2) == crc.crc16(msg)
@@ -99,7 +108,10 @@ def test_vector_follows_the_rules(name):
         out = np.empty(n, dtype=int)
         out[(a * np.arange(n)) % n] = s
         assert np.array_equal(bits(b["interleaved_hex"], n), out)
-    assert [b["position"] for b in d["blocks"]] == list(range(1, len(d["blocks"]) + 1))
+    # Positions: header 0, control blocks 1 .. n_c, then the data blocks.
+    n_c = len(controls)
+    assert [b["position"] for b in controls] == list(range(1, n_c + 1))
+    assert [b["position"] for b in d["blocks"]] == list(range(1 + n_c, n_c + len(d["blocks"]) + 1))
 
     seg = {s["kind"]: s for s in d["segments"]}
     grid = np.array(d["grid"]["re"]) + 1j * np.array(d["grid"]["im"])
@@ -126,8 +138,9 @@ def test_vector_follows_the_rules(name):
         silent = [t for t in range(w) if t not in dt and t not in pt]
         assert not rows[:, silent].any()
 
-    sg_q = {"header": 2, "data": q}
-    sg_pts = {"header": d["header"]["points_iq"], "data": d["data"]["points_iq"]}
+    sg_q = {"header": 2, "control": 2, "data": q}
+    sg_pts = {"header": d["header"]["points_iq"], "control": d.get("control", {}).get("points_iq"),
+              "data": d.get("data", {}).get("points_iq")}
     h = d["header"]
     h_stream = np.concatenate([bits(h["interleaved_hex"], h["coded_bits"]), bits(h["pad_hex"], h["pad_bits"])])
     assert np.array_equal(bits(h["pad_hex"], h["pad_bits"]), gold(256, h["pad_bits"]))
@@ -135,6 +148,29 @@ def test_vector_follows_the_rules(name):
     check_coded(seg["header"], h_stream, 1.0, 1 / math.sqrt(2))
 
     masked = set(d["masked_tones"])
+    assert ("control" in seg) == bool(controls) and ("data" in seg) == bool(d["blocks"])
+    if controls:
+        # Control: base data tones less masked ones, pilots 3 and 20, sqrt(24 / active).
+        ct = [t for t in range(24) if t not in (3, 20) and t not in masked]
+        assert seg["control"]["data_tones"] == ct and seg["control"]["pilot_tones"] == [3, 20]
+        cgain = math.sqrt(24 / (len(ct) + 2))
+        assert math.isclose(seg["control"]["gain"], cgain)
+        cd = d["control"]
+        stream = np.concatenate([bits(b["interleaved_hex"], 512) for b in controls]
+                                + [bits(cd["pad_hex"], cd["pad_bits"])])
+        assert np.array_equal(bits(cd["pad_hex"], cd["pad_bits"]), gold(256, cd["pad_bits"]))
+        assert stream.size == seg["control"]["symbols"] * len(ct) * 2
+        assert seg["control"]["symbols"] == -(-512 * len(controls) // (2 * len(ct)))
+        assert math.isclose(cd["point_scale"], 1 / math.sqrt(2))
+        check_coded(seg["control"], stream, cgain, 1 / math.sqrt(2))
+        first = seg["control"]["first_symbol"]
+        assert first == 4 + 7 + (2 if "probe" in seg else 0)
+        for i, b in enumerate(controls):
+            assert (b["first_symbol_offset"], b["first_tone_slot"]) == divmod(i * 256, len(ct))
+    if not d["blocks"]:
+        assert d["total_symbols"] == max(sg["first_symbol"] + sg["symbols"] for sg in d["segments"])
+        check_tail(d, grid, w, seg, pv)
+        return
     data_tones = [t for t in range(w) if t not in PILOTS and t not in masked]
     data_pilots = [p for p in PILOTS if p < w and p not in masked]
     assert seg["data"]["data_tones"] == data_tones and seg["data"]["pilot_tones"] == data_pilots
@@ -150,7 +186,12 @@ def test_vector_follows_the_rules(name):
     scale = 1 / math.sqrt(2 * np.mean([axis_level(lab) ** 2 for lab in labels]))
     assert math.isclose(dd["point_scale"], scale)
     check_coded(seg["data"], stream, gain, scale)
+    assert seg["data"]["first_symbol"] + seg["data"]["symbols"] == d["total_symbols"]
+    check_tail(d, grid, w, seg, pv)
 
+
+def check_tail(d: dict, grid: np.ndarray, w: int, seg: dict, pv: np.ndarray) -> None:
+    """The probe and the time-domain samples."""
     if "probe" in seg:
         p = seg["probe"]
         first = p["first_symbol"]

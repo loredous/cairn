@@ -1,0 +1,23 @@
+{
+ "format": "cairn-control-vectors",
+ "version": 1,
+ "license": "CC BY 4.0",
+ "name": "ack_mask_flags",
+ "description": "ACK with every field set: tone mask without tones 9 and 25, re-probe, long prefix, saturated SNR, 255 block errors, distortion 5, ADC clipped, block 127 and 0 passed",
+ "valid": true,
+ "fields": {
+  "type": 0,
+  "base_sequence": 65535,
+  "bitmap_hex": "80000000000000000000000000000001",
+  "requested_mcs": 6,
+  "snr_q": 255,
+  "block_errors": 255,
+  "tone_mask": [0,1,2,3,4,5,6,7,8,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55],
+  "reprobe": true,
+  "long_prefix": true,
+  "distortion": 5,
+  "adc_clipped": true
+ },
+ "message_hex": "0dffff800000000000000000000000000000016fffffffffffdfffdffb00",
+ "info_hex": "0dffff800000000000000000000000000000016fffffffffffdfffdffb00cb85"
+}

@@ -1,0 +1,17 @@
+{
+ "format": "cairn-control-vectors",
+ "version": 1,
+ "license": "CC BY 4.0",
+ "name": "cal_report",
+ "description": "CAL-REPORT: eight steps, steps 7 and 8 clipped, sweep valid",
+ "valid": true,
+ "fields": {
+  "type": 4,
+  "amplitudes": [120,108,96,84,72,61,55,54],
+  "distortion": [1,1,1,2,2,4,9,15],
+  "clipped": [false,false,false,false,false,false,true,true],
+  "sweep_valid": true
+ },
+ "message_hex": "41786c6054483d37361112249fc000000000000000000000000000000000",
+ "info_hex": "41786c6054483d37361112249fc0000000000000000000000000000000008d32"
+}

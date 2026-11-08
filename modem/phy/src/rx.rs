@@ -9,8 +9,14 @@
 //! header-noise method ("measured", the simulator's default); re-estimates
 //! the base tones' noise from the decoded header (decision-directed);
 //! raises the noise of burst-hit symbols (SPEC 6.5); demaps max-log LLRs and
-//! decodes every data block. Finally it measures the channel SNR (ADR 0006)
-//! against the frame rebuilt from the decoded bits.
+//! decodes every control block, then every data block. Finally it measures
+//! the channel SNR (ADR 0006) against the frame rebuilt from the decoded bits.
+//!
+//! [`Receiver::receive_header_first`] needs no configuration: it decodes the
+//! preamble and header on the base tones, unpacks the header (SPEC 8.2) and
+//! takes the rung, the control and data block counts and the probe flag
+//! from it; width and mask come from the caller's [`LinkState`], the prefix
+//! from the detector.
 //!
 //! Arithmetic is `f64` (LDPC in `f32`, as the simulator), so results agree
 //! with the simulator to rounding, not bit for bit.
@@ -20,12 +26,14 @@ use std::f64::consts::PI;
 use num_complex::Complex64;
 
 use crate::dsp;
-use crate::frame::FrameConfig;
+use crate::fields::{ControlBlock, FieldError, Header};
+use crate::frame::{ConfigError, FrameConfig, LinkState};
 use crate::ldpc::{self, DecodeResult};
 use crate::mapping::Demapper;
 use crate::ofdm::{Grid, Ofdm};
 use crate::params::{
-    self, BASE_TONES, BIN_OFFSET, HEADER_CODED_BITS, HEADER_POSITION, LDPC_ALPHA, N_USEFUL, PREAMBLE_SYMBOLS,
+    self, BASE_TONES, BIN_OFFSET, CONTROL_CODED_BITS, HEADER_CODED_BITS, HEADER_POSITION, LDPC_ALPHA, N_USEFUL,
+    PREAMBLE_SYMBOLS,
 };
 use crate::{gold, interleave, preamble, tx};
 
@@ -83,6 +91,18 @@ pub struct RxResult {
     pub header_bits: Vec<u8>,
     /// Header decoder iterations.
     pub header_iterations: usize,
+    /// The header's fields, when its CRC passed and its fields are valid.
+    pub header: Option<Header>,
+    /// Why there are no header fields, or why they describe no frame.
+    pub header_error: Option<HeaderError>,
+    /// Per control block: CRC passed.
+    pub control_ok: Vec<bool>,
+    /// Per control block: information bits (256, CRC included).
+    pub control_bits: Vec<Vec<u8>>,
+    /// Per control block: its fields (None where it failed or is malformed).
+    pub controls: Vec<Option<ControlBlock>>,
+    /// The configuration the frame was decoded with (None if the header failed).
+    pub config: Option<FrameConfig>,
     /// Per data block: CRC passed.
     pub block_ok: Vec<bool>,
     /// Per data block: information bits (1024, CRC included).
@@ -114,6 +134,28 @@ impl RxResult {
             }
         };
         avg + cfg.clip_db - params::CLIP_DB_REFERENCE
+    }
+}
+
+/// Why a frame's header gave no usable fields.
+#[derive(Clone, Debug, PartialEq)]
+pub enum HeaderError {
+    /// The header did not decode (LDPC or CRC).
+    NotDecoded,
+    /// The CRC passed but the fields are malformed (SPEC 8.2: discard).
+    Fields(FieldError),
+    /// The fields describe no frame this receiver can decode (a reserved
+    /// rung, or a frame wider than 24 tones without a width probe).
+    Config(ConfigError),
+}
+
+impl std::fmt::Display for HeaderError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            HeaderError::NotDecoded => write!(f, "header did not decode"),
+            HeaderError::Fields(e) => write!(f, "header fields: {e}"),
+            HeaderError::Config(e) => write!(f, "header describes no decodable frame: {e}"),
+        }
     }
 }
 
@@ -184,8 +226,12 @@ fn track_drift(
     window: usize,
 ) -> (Grid, f64) {
     let n_sym = obs.len();
-    let mut slopes = vec![0.0; pilots.len()];
-    for (j, slope) in slopes.iter_mut().enumerate() {
+    // A pilot absent from all but one row (an upper pilot in a frame with no
+    // data symbols) tells nothing about drift.
+    let used: Vec<usize> =
+        (0..pilots.len()).filter(|&j| obs.iter().filter(|row| row[j].is_some()).count() >= 2).collect();
+    let mut slopes = vec![0.0; used.len()];
+    for (slope, &j) in slopes.iter_mut().zip(&used) {
         let mut rows = Vec::new();
         let mut vals = Vec::new();
         for (s, row) in obs.iter().enumerate() {
@@ -193,9 +239,6 @@ fn track_drift(
                 rows.push(s as f64);
                 vals.push(v);
             }
-        }
-        if rows.is_empty() {
-            continue;
         }
         let klen = if rows.len() >= window { window } else { rows.len() };
         let kernel = vec![1.0 / klen as f64; klen];
@@ -207,8 +250,8 @@ fn track_drift(
         let den: f64 = rows.iter().map(|r| (r - rm) * (r - rm)).sum();
         *slope = num / den.max(1e-12);
     }
-    let f: Vec<f64> = pilots.iter().map(|&p| BIN_OFFSET + p as f64).collect();
-    let (beta, alpha) = if pilots.len() > 1 { dsp::linear_fit(&f, &slopes) } else { (0.0, slopes[0]) };
+    let f: Vec<f64> = used.iter().map(|&j| BIN_OFFSET + pilots[j] as f64).collect();
+    let (beta, alpha) = if used.len() > 1 { dsp::linear_fit(&f, &slopes) } else { (0.0, slopes[0]) };
     let mut corr = Grid::zeros(n_sym, width);
     for s in 0..n_sym {
         for k in 0..width {
@@ -274,6 +317,12 @@ impl Receiver {
                 }
             }
         }
+        let cgain = cfg.control_gain();
+        for s in cfg.first_control()..cfg.first_data() {
+            for v in g.row_mut(s) {
+                *v /= cgain;
+            }
+        }
         let gain = cfg.data_gain();
         for s in cfg.first_data()..n_sym {
             for v in g.row_mut(s) {
@@ -316,12 +365,17 @@ impl Receiver {
         let n_body = tones.rows - first;
         let pilots = &cfg.data_pilots;
         let table = gold::pilot_table(tones.rows);
+        let d0 = cfg.first_data() - first;
+        // Header rows carry base pilots only; with control blocks, so do the
+        // control rows, and the upper pilots then use the data rows alone (a
+        // contiguous run: probe rows dropped).
+        let upper_until = if cfg.n_control > 0 { d0 } else { hs };
         let mut obs: Vec<Vec<Option<Complex64>>> = (0..n_body)
             .map(|s| {
                 pilots
                     .iter()
                     .map(|&p| {
-                        if s < hs && p >= b {
+                        if s < upper_until && p >= b {
                             None
                         } else {
                             Some(tones.at(first + s, p) / gold::pilot_value(&table, first + s, p))
@@ -330,7 +384,6 @@ impl Receiver {
                     .collect()
             })
             .collect();
-        let d0 = hs + cfg.probe_symbols();
         let act = &cfg.data_active_tones;
         if opts.burst_aware && n_body > d0 {
             let power: Vec<f64> = (d0..n_body)
@@ -397,9 +450,11 @@ impl Receiver {
         let corr_kept = corr.clone();
         let w = cfg.width;
         let hs = cfg.header_symbols();
-        let d0 = hs + cfg.probe_symbols();
+        let c0 = cfg.first_control() - first;
+        let d0 = cfg.first_data() - first;
         let n_body = n_sym - first;
         let gain = cfg.data_gain();
+        let cgain = cfg.control_gain();
         let h2: Vec<f64> = h.iter().map(|v| v.norm_sqr()).collect();
         let mean_h2 = dsp::mean(&h2);
 
@@ -411,9 +466,16 @@ impl Receiver {
         }
         let mut nv = vec![0.0; n_body * w];
         let dn = data_noise(&noise, &thermal, gain);
+        let cn = data_noise(&noise, &thermal, cgain);
         for s in 0..n_body {
             for k in 0..w {
-                nv[s * w + k] = if s < d0 { noise[k] } else { dn[k] } / h2[k];
+                nv[s * w + k] = if s < c0 {
+                    noise[k]
+                } else if s < d0 {
+                    cn[k]
+                } else {
+                    dn[k]
+                } / h2[k];
             }
         }
 
@@ -477,12 +539,34 @@ impl Receiver {
             }
             snr_db = snr_of(&h, &noise);
             let dn = data_noise(&noise, &thermal, gain);
-            for s in d0..n_body {
+            let cn = data_noise(&noise, &thermal, cgain);
+            for s in c0..n_body {
                 for k in 0..w {
-                    nv[s * w + k] = dn[k] / h2[k];
+                    nv[s * w + k] = if s < d0 { cn[k] } else { dn[k] } / h2[k];
                 }
             }
         }
+
+        // Control blocks: MCS 0 on the control tones, scrambler positions 1 .. n_control.
+        let qpsk = Demapper::new(2);
+        let ct = &cfg.control_tones;
+        let mut cl = Vec::with_capacity((d0 - c0) * ct.len() * 2);
+        for s in c0..d0 {
+            for &k in ct {
+                qpsk.push_llrs(eq.at(s, k), nv[s * w + k], &mut cl);
+            }
+        }
+        let ccode = ldpc::control_code();
+        let crows = ccode.rows_for_length(CONTROL_CODED_BITS);
+        let mut cdec = ccode.decoder();
+        let cres: Vec<DecodeResult> = (0..cfg.n_control)
+            .map(|i| {
+                let e = CONTROL_CODED_BITS;
+                let mut l = interleave::deinterleave(&cl[i * e..(i + 1) * e]);
+                gold::descramble_llr(&mut l, 1 + i as u32);
+                cdec.decode(&ccode.rate_recover(&l, 0), &crows, opts.max_iter, LDPC_ALPHA)
+            })
+            .collect();
 
         // Data blocks.
         let act = &cfg.data_active_tones;
@@ -518,20 +602,40 @@ impl Receiver {
         let results: Vec<DecodeResult> = (0..cfg.n_blocks)
             .map(|i| {
                 let mut l = interleave::deinterleave(&dl[i * e..(i + 1) * e]);
-                gold::descramble_llr(&mut l, 1 + i as u32);
+                gold::descramble_llr(&mut l, (1 + cfg.n_control + i) as u32);
                 dec.decode(&dcode.rate_recover(&l, 0), &rows, opts.max_iter, LDPC_ALPHA)
             })
             .collect();
         let block_ok: Vec<bool> = results.iter().map(|r| r.ok).collect();
         let block_bits: Vec<Vec<u8>> = results.iter().map(|r| r.bits.clone()).collect();
-        let channel_snr = opts
-            .rebuild_snr
-            .then(|| rebuild_snr(&tones, &corr_kept, cfg, advance, hres.ok, &hres.bits, &block_ok, &block_bits));
+        let control_ok: Vec<bool> = cres.iter().map(|r| r.ok).collect();
+        let control_bits: Vec<Vec<u8>> = cres.iter().map(|r| r.bits.clone()).collect();
+        let decoded = Decoded {
+            header_ok: hres.ok,
+            header_bits: &hres.bits,
+            control_ok: &control_ok,
+            control_bits: &control_bits,
+            block_ok: &block_ok,
+            block_bits: &block_bits,
+        };
+        let channel_snr = opts.rebuild_snr.then(|| rebuild_snr(&tones, &corr_kept, cfg, advance, &decoded));
+        let (header, header_error) = parse_header(hres.ok, &hres.bits);
+        let controls = control_ok
+            .iter()
+            .zip(&control_bits)
+            .map(|(&ok, b)| if ok { ControlBlock::unpack(b).ok() } else { None })
+            .collect();
         RxResult {
             channel_snr,
             header_ok: hres.ok,
             header_bits: hres.bits,
             header_iterations: hres.iterations,
+            header,
+            header_error,
+            control_ok,
+            control_bits,
+            controls,
+            config: Some(cfg.clone()),
             block_ok,
             iterations: results.iter().map(|r| r.iterations).collect(),
             block_bits,
@@ -542,30 +646,104 @@ impl Receiver {
     }
 }
 
+impl Receiver {
+    /// Decode a frame without being told its configuration (SPEC 8.2):
+    /// decode the preamble and header on the base tones from `start` with
+    /// prefix `cp` (the detector's), unpack the header, take the rung, the
+    /// control and data block counts and the probe flag from it, and decode
+    /// the whole frame at the link's width and mask. A frame whose header
+    /// fails (decode, CRC, fields, or no decodable geometry) comes back with
+    /// `header` None, `header_error` set, `config` None and no blocks.
+    pub fn receive_header_first(
+        &mut self,
+        rx: &[f64],
+        link: &LinkState,
+        start: usize,
+        cp: usize,
+        opts: &RxOptions,
+    ) -> RxResult {
+        let head_cfg = FrameConfig::new(BASE_TONES, 0, 0).and_then(|c| c.with_cp(cp));
+        let Ok(head_cfg) = head_cfg else {
+            panic!("prefix {cp} is neither {} nor {}", params::CP_SHORT, params::CP_LONG);
+        };
+        let mut head = self.receive(rx, &head_cfg, start, opts);
+        let Some(header) = head.header.clone() else {
+            head.config = None;
+            return head;
+        };
+        let cfg = match FrameConfig::from_header(&header, link, cp) {
+            Ok(c) => c,
+            Err(e) => {
+                head.header = None;
+                head.header_error = Some(HeaderError::Config(e));
+                head.config = None;
+                return head;
+            }
+        };
+        let mut r = self.receive(rx, &cfg, start, opts);
+        // The header pass decided the geometry; report its header.
+        r.header_ok = true;
+        r.header_bits = head.header_bits;
+        r.header = Some(header);
+        r.header_error = None;
+        r
+    }
+
+    /// Find the strongest frame in `rx` with the SPEC 6.1 detector (blind
+    /// prefix) and decode it header first; None if nothing is detected.
+    pub fn detect_and_receive(&mut self, rx: &[f64], link: &LinkState, opts: &RxOptions) -> Option<RxResult> {
+        let dets = crate::detector::detect(rx, &crate::detector::DetectorConfig::default());
+        let best = dets
+            .iter()
+            .filter(|d| link.cp.is_none_or(|cp| cp == d.cp))
+            .max_by(|a, b| a.quality.total_cmp(&b.quality))?;
+        Some(self.receive_header_first(rx, link, best.start, best.cp, opts))
+    }
+}
+
+fn parse_header(ok: bool, bits: &[u8]) -> (Option<Header>, Option<HeaderError>) {
+    if !ok {
+        return (None, Some(HeaderError::NotDecoded));
+    }
+    match Header::unpack(bits) {
+        Ok(h) => (Some(h), None),
+        Err(e) => (None, Some(HeaderError::Fields(e))),
+    }
+}
+
+/// What the receiver decoded, for rebuilding the frame.
+struct Decoded<'a> {
+    header_ok: bool,
+    header_bits: &'a [u8],
+    control_ok: &'a [bool],
+    control_bits: &'a [Vec<u8>],
+    block_ok: &'a [bool],
+    block_bits: &'a [Vec<u8>],
+}
+
 /// ADR 0006 channel SNR: rebuild the transmitted frame from the decoded bits
 /// (encode, map, clip-and-filter), demodulate it with the receiver's window,
 /// and fit received = g_k x corr x rebuilt per tone over the symbols whose
 /// content is known; the residual is everything the channel added, without
 /// the designed clipping (which is in the rebuilt reference).
-#[allow(clippy::too_many_arguments)]
-fn rebuild_snr(
-    tones: &Grid,
-    corr: &Grid,
-    cfg: &FrameConfig,
-    advance: usize,
-    header_ok: bool,
-    header_bits: &[u8],
-    block_ok: &[bool],
-    block_bits: &[Vec<u8>],
-) -> ChannelSnr {
+fn rebuild_snr(tones: &Grid, corr: &Grid, cfg: &FrameConfig, advance: usize, dec: &Decoded) -> ChannelSnr {
+    let Decoded { header_ok, header_bits, control_ok, control_bits, block_ok, block_bits } = *dec;
     let w = cfg.width;
     let n_sym = cfg.total_symbols();
     let first = PREAMBLE_SYMBOLS;
     let hdr: Vec<u8> = header_bits[..params::HEADER_INFO_BITS - params::CRC_BITS].to_vec();
+    let cmsgs: Vec<Vec<u8>> =
+        control_bits.iter().map(|b| b[..params::CONTROL_INFO_BITS - params::CRC_BITS].to_vec()).collect();
     let payloads: Vec<Vec<u8>> = block_bits.iter().map(|b| b[..params::DATA_PAYLOAD_BITS].to_vec()).collect();
-    let frame = tx::Transmitter::new().build(cfg, &hdr, &payloads);
+    let frame = tx::Transmitter::new().build_with_controls(cfg, &hdr, &cmsgs, &payloads);
     let mut ofdm = Ofdm::new();
     let mut reference = ofdm.demodulate(&frame.samples, cfg.cp - advance, n_sym, w, cfg.cp, w, None);
+    let cgain = cfg.control_gain();
+    for s in cfg.first_control()..cfg.first_data() {
+        for v in reference.row_mut(s) {
+            *v /= cgain;
+        }
+    }
     let gain = cfg.data_gain();
     for s in cfg.first_data()..n_sym {
         for v in reference.row_mut(s) {
@@ -579,7 +757,16 @@ fn rebuild_snr(
     if header_ok {
         known.extend((cfg.first_header()..cfg.first_probe()).map(|s| (s, &base[..])));
     }
-    known.extend((cfg.first_probe()..cfg.first_data()).map(|s| (s, &all[..])));
+    known.extend((cfg.first_probe()..cfg.first_control()).map(|s| (s, &all[..])));
+    let ct = cfg.control_tones.len();
+    for cs in 0..cfg.control_symbols() {
+        // Points cs*D .. (cs+1)*D; control block i holds points i*256 .. (i+1)*256.
+        let (p0, p1) = (cs * ct, (cs + 1) * ct);
+        let half = CONTROL_CODED_BITS / 2;
+        if (0..cfg.n_control).filter(|&i| i * half < p1 && (i + 1) * half > p0).all(|i| control_ok[i]) {
+            known.push((cfg.first_control() + cs, &cfg.control_active_tones[..]));
+        }
+    }
     let (q, d, e) = (cfg.rung().bits_per_point, cfg.data_tones.len(), cfg.rung().coded_bits);
     for ds in 0..cfg.data_symbols() {
         // Points ds*D .. (ds+1)*D; block i holds points i*E/Q .. (i+1)*E/Q, padding after.

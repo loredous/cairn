@@ -2,7 +2,10 @@
 //! Stage 1 simulator's waveform, codes, bit mapping, preamble detector and
 //! receiver (`sim/cairn_sim/`), checked bit for bit against `vectors/`.
 //!
-//! No audio, PTT or link layer here: samples in, samples out, at 48 kHz.
+//! Header and control block fields (SPEC 8.2, Appendix B) are here too, so a
+//! receiver can decode a frame header first without being told its
+//! configuration. No audio, PTT or link layer: samples in, samples out, at
+//! 48 kHz.
 
 #![warn(missing_docs)]
 
@@ -10,6 +13,7 @@ pub mod channel;
 pub mod crc;
 pub mod detector;
 pub mod dsp;
+pub mod fields;
 pub mod frame;
 pub mod gold;
 pub mod interleave;
@@ -22,6 +26,7 @@ pub mod rx;
 pub mod tx;
 pub mod wav;
 
-pub use frame::{ConfigError, FrameConfig};
+pub use fields::{Address, ControlBlock, FieldError, Header};
+pub use frame::{ConfigError, FrameConfig, LinkState};
 pub use rx::{Receiver, RxOptions, RxResult};
 pub use tx::{Transmitter, TxFrame};

@@ -12,7 +12,9 @@ Default mode writes ``modem/fixtures/``:
     configuration, the header message and payloads, what the Python
     detector found and what the Python receiver decoded from exactly the
     samples in the WAV file (``tests/rx_fixtures.rs`` checks the Rust
-    receiver against it).
+    receiver against it). Cases named ``hdr_*`` carry real header fields and
+    control blocks (``fields``) and are decoded header first: the receivers
+    know only the width and mask (``frame.receive(rx, link=...)``).
 ``tx/<case>.f64`` + ``tx/<case>.json``
     Frames after clip-and-filter (little-endian float64), with their inputs,
     to check the Rust clip-and-filter against the simulator's.
@@ -34,7 +36,7 @@ from pathlib import Path
 
 import numpy as np
 
-from cairn_sim import channel, frame, params, preamble
+from cairn_sim import channel, fields, frame, params, preamble
 
 ROOT = Path(__file__).resolve().parents[1]
 GUARD = 400
@@ -55,6 +57,8 @@ class Case:
     burst_db: float | None = None  # 10 ms burst this far above the signal power
     seed: int = 1
     extra: dict = field(default_factory=dict)
+    header: fields.Header | None = None   # real header (decoded header first); None: random bits
+    controls: tuple = ()
 
 
 def _all_but(*tones: int) -> tuple[int, ...]:
@@ -82,6 +86,23 @@ CASES: tuple[Case, ...] = (
     Case("burst_w24_mcs2_snr12", 24, 2, 8, "awgn", 12.0, burst_db=20.0, seed=51),
 )
 
+_S1, _S2 = fields.Address("N0CALL", 1), fields.Address("N0CALL", 2)
+_ACK = fields.AckBlock(base_sequence=40, bitmap=0xFF, requested_mcs=2, snr_q=fields.snr_code(15.5))
+_T = fields.FrameType
+HEADER_CASES: tuple[Case, ...] = (
+    Case("hdr_mic_w24_mcs2_ctrl_snr16", 24, 2, 4, "mic", 16.0, seed=71,
+         header=fields.Header(_T.DATA, _S1, _S2, sequence=48, mcs=2, n_control=1, n_data=4, session=True),
+         controls=(_ACK,)),
+    Case("hdr_awgn_w30_mcs3_probe_ctrl2_masked_snr18", 30, 3, 3, "awgn", 18.0, usable=_all_but(1, 9, 25),
+         seed=72, header=fields.Header(_T.DATA, _S2, _S1, sequence=7, mcs=3, n_control=2, n_data=3,
+                                       session=True, probe=True),
+         controls=(_ACK, fields.IdBlock("N0CALL", 2, "FN31"))),
+    Case("hdr_repeater_w24_ack_long_snr14", 24, 0, 0, "repeater", 14.0, cp=params.CP_LONG, seed=73,
+         header=fields.Header(_T.ACK, _S2, _S1, n_control=1, session=True), controls=(_ACK,)),
+    Case("hdr_awgn_w24_probe_only_snr10", 24, 0, 0, "awgn", 10.0, seed=74,
+         header=fields.Header(_T.PROBE, _S1, _S2)),
+)
+
 TX_CASES: tuple[Case, ...] = (
     Case("tx_w24_mcs6_long", 24, 6, 2, cp=params.CP_LONG, seed=61),
     Case("tx_w56_mcs4_long_masked", 56, 4, 2, cp=params.CP_LONG, usable=_all_but(0, 1, 2, 37, 45, 46), seed=62),
@@ -89,9 +110,21 @@ TX_CASES: tuple[Case, ...] = (
 )
 
 
+def link(case: Case) -> frame.LinkState:
+    return frame.LinkState(case.width, None if case.usable is None else frozenset(case.usable), case.cp)
+
+
 def config(case: Case) -> frame.FrameConfig:
     mask = None if case.usable is None else frozenset(case.usable)
+    if case.header is not None:
+        return frame.FrameConfig.from_header(case.header, link(case))
     return frame.FrameConfig(width=case.width, mcs=case.mcs, n_blocks=case.n_blocks, cp=case.cp, mask=mask)
+
+
+def build(case: Case, cfg: frame.FrameConfig, rng: np.random.Generator) -> frame.TxFrame:
+    if case.header is not None:
+        return frame.build(cfg, rng, header=case.header, controls=list(case.controls))
+    return frame.build(cfg, rng)
 
 
 def bits_hex(bits: np.ndarray) -> str:
@@ -141,7 +174,10 @@ def python_receive(case: Case, cfg: frame.FrameConfig, rx: np.ndarray, tx: frame
     if start is None:
         out["rx"] = None
         return out
-    r = frame.receive(rx, cfg, start=start)
+    if case.header is not None:
+        r = frame.receive(rx, link=frame.LinkState(cfg.width, cfg.mask, cfg.cp), start=start)
+    else:
+        r = frame.receive(rx, cfg, start=start)
     correct = r.block_ok & np.all(r.block_bits == tx.block_bits, axis=1)
     out["rx"] = {"start": int(start), "header_ok": bool(r.header_ok),
                  "header_correct": bool(r.header_ok and np.array_equal(r.header_bits, tx.header_bits)),
@@ -149,6 +185,11 @@ def python_receive(case: Case, cfg: frame.FrameConfig, rx: np.ndarray, tx: frame
                  "block_correct": [bool(v) for v in correct],
                  "iterations": [int(v) for v in r.iterations],
                  "snr_db": [float(v) for v in r.snr_db]}
+    if case.header is not None:
+        out["rx"]["header_fields_ok"] = r.header == case.header
+        out["rx"]["control_ok"] = [bool(v) for v in r.control_ok]
+        out["rx"]["control_correct"] = [bool(v) for v in r.control_ok & np.all(r.control_bits == tx.control_bits,
+                                                                                axis=1)]
     return out
 
 
@@ -159,13 +200,16 @@ def case_doc(case: Case, cfg: frame.FrameConfig, tx: frame.TxFrame) -> dict:
             "burst_db": case.burst_db, "seed": case.seed, "guard": GUARD,
             "header_message_hex": bits_hex(tx.header_bits[:-16]),
             "payload_hex": [bits_hex(b[:-16]) for b in tx.block_bits],
-            "total_symbols": cfg.total_symbols}
+            "total_symbols": cfg.total_symbols,
+            **({} if case.header is None else {
+                "header_first": True, "n_control": cfg.n_control, "probe": cfg.has_probe,
+                "control_message_hex": [bits_hex(b[:-16]) for b in tx.control_bits]})}
 
 
 def rx_case(case: Case, out_dir: Path) -> dict:
     rng = np.random.default_rng(case.seed)
     cfg = config(case)
-    tx = frame.build(cfg, rng)
+    tx = build(case, cfg, rng)
     y = through_channel(case, tx.samples, rng)
     q, scale = to_int16(y)
     rx = q.astype(float) / 32768
@@ -212,11 +256,13 @@ def main() -> None:
         return
     (args.out / "rx").mkdir(parents=True, exist_ok=True)
     (args.out / "tx").mkdir(parents=True, exist_ok=True)
-    for case in CASES:
+    for case in CASES + HEADER_CASES:
         doc = rx_case(case, args.out / "rx")
         rx = doc["python"]["rx"]
         summary = "missed" if rx is None else (
             f"header {'ok' if rx['header_ok'] else 'FAIL'}, blocks {sum(rx['block_correct'])}/{case.n_blocks}")
+        if rx is not None and "control_ok" in rx:
+            summary += f", fields {'ok' if rx['header_fields_ok'] else 'FAIL'}, controls {rx['control_correct']}"
         print(f"{case.name}: {summary}")
     for case in TX_CASES:
         tx_case(case, args.out / "tx")

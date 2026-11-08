@@ -1,0 +1,19 @@
+{
+ "format": "cairn-control-vectors",
+ "version": 1,
+ "license": "CC BY 4.0",
+ "name": "cal_request",
+ "description": "CAL-REQUEST with the B.5 defaults",
+ "valid": true,
+ "fields": {
+  "type": 3,
+  "tone_freq": 100,
+  "step_count": 8,
+  "step_length": 40,
+  "gap_length": 10,
+  "start_level": 96,
+  "step_size": 3
+ },
+ "message_hex": "30648280a603000000000000000000000000000000000000000000000000",
+ "info_hex": "30648280a603000000000000000000000000000000000000000000000000aa00"
+}
