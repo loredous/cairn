@@ -69,6 +69,8 @@ pub struct AirTx {
     pub frame: Option<LinkFrame>,
     pub turn_holder: bool,
     pub heard_by: Vec<usize>,
+    /// Stations that lost the link during this transmission.
+    pub cut_for: Vec<usize>,
 }
 
 /// One directed link.
@@ -265,6 +267,7 @@ impl Sim {
             frame: None,
             turn_holder: false,
             heard_by: vec![],
+            cut_for: vec![],
         });
         let i = self.air.len() - 1;
         self.push(at, Ev::Foreign { start: true, air: i });
@@ -398,6 +401,7 @@ impl Sim {
             frame: Some(frame),
             turn_holder,
             heard_by: heard_by.clone(),
+            cut_for: vec![],
         });
         let i = self.air.len() - 1;
         self.stations[st].transmitting = Some(i);
@@ -415,7 +419,7 @@ impl Sim {
     fn reception(&mut self, r: usize, i: usize) -> Option<Event> {
         let a = self.air[i].clone();
         let frame = a.frame.clone()?;
-        if !self.links[a.from][r].audible {
+        if !self.links[a.from][r].audible || a.cut_for.contains(&r) {
             return None; // the link dropped during the frame
         }
         // Deaf while transmitting during the frame.
@@ -510,14 +514,23 @@ impl Sim {
             Ev::Impair { from, to, tones } => self.links[from][to].impaired = tones,
             Ev::Raw { st, ev } => self.deliver(st, ev),
             Ev::Audible { from, to, on } => {
-                // A carrier already on the air keeps its effect until it ends.
+                // A carrier on the air when the link changes is lost, or
+                // heard from then on (its frame is not received either way).
                 self.links[from][to].audible = on;
-                if !on {
-                    if let Some(i) = self.stations[from].transmitting {
-                        let _ = i;
-                        self.stations[to].carriers = self.stations[to].carriers.saturating_sub(1);
-                        self.update_dcd(to);
+                if let Some(i) = self.stations[from].transmitting {
+                    let heard = self.air[i].heard_by.contains(&to) && !self.pending_unhear.contains(&(from, to));
+                    if !on && heard {
+                        self.stations[to].carriers -= 1;
                         self.pending_unhear.push((from, to));
+                        self.air[i].cut_for.push(to);
+                        self.update_dcd(to);
+                    } else if on && !heard {
+                        self.stations[to].carriers += 1;
+                        self.pending_unhear.retain(|&p| p != (from, to));
+                        if !self.air[i].heard_by.contains(&to) {
+                            self.air[i].heard_by.push(to);
+                        }
+                        self.update_dcd(to);
                     }
                 }
             }
