@@ -668,22 +668,102 @@ def estimate_channel(y2: np.ndarray, y3: np.ndarray, s2: np.ndarray, window: int
     smoothed with a local quadratic fit over ``window`` tones, and rotated
     back. ``window`` < 3 returns the raw estimate.
     """
-    raw = (y2 / s2 + y3 / (s2 if second is None else second)) / 2
+    return smooth_channel((y2 / s2 + y3 / (s2 if second is None else second)) / 2, window)
+
+
+def smooth_channel(raw: np.ndarray, window: int = 7, step: float | None = None) -> np.ndarray:
+    """A raw per-tone channel estimate smoothed across tones as
+    ``estimate_channel`` does (``step``: the phase step per tone to de-rotate
+    by; None: measured from ``raw``)."""
     if window < 3:
         return raw
     k = np.arange(raw.size)
-    step = np.angle(np.sum(raw[1:] * np.conj(raw[:-1])))
+    if step is None:
+        step = channel_phase_step(raw)
     flat = raw * np.exp(-1j * step * k)
     smooth = (signal.savgol_filter(flat.real, window, 2, mode="interp")
               + 1j * signal.savgol_filter(flat.imag, window, 2, mode="interp"))
     return smooth * np.exp(1j * step * k)
 
 
+def channel_phase_step(raw: np.ndarray) -> float:
+    """The mean phase step from tone to tone of a channel estimate (the delay)."""
+    return float(np.angle(np.sum(raw[1:] * np.conj(raw[:-1]))))
+
+
 def estimate_noise(y2: np.ndarray, y3: np.ndarray, window: int = 7) -> np.ndarray:
     """Per-tone noise variance from the difference of the two S2 symbols."""
     raw = np.abs(y2 - y3) ** 2 / 2
+    return _box_smooth(raw, window)
+
+
+def _box_smooth(raw: np.ndarray, window: int) -> np.ndarray:
+    """A moving average over ``window`` tones, shortened at the band edges."""
     kernel = np.ones(window) / window
     return np.convolve(raw, kernel, mode="same") / np.convolve(np.ones(raw.size), kernel, mode="same")
+
+
+@dataclass
+class HeaderChannel:
+    """The base tones' channel re-estimated from the decoded header
+    (``header_channel_estimate``)."""
+    h: np.ndarray            # (24,) the combined estimate, smoothed
+    h_s2: np.ndarray         # (24,) the S2 estimate it replaces
+    h_loo: np.ndarray        # (header rows, 24) the estimate without each header row's own symbols
+    weight: np.ndarray       # (24,) the known rows' share of each tone's estimate (0: S2 alone, 1: rows alone)
+    rows: int                # fully known rows used (header, and the probe when present)
+
+
+def header_channel_estimate(tones: np.ndarray, h_s2: np.ndarray, thermal: np.ndarray, corr: np.ndarray,
+                            level: np.ndarray, x: np.ndarray, full: np.ndarray, hs: int,
+                            window: int = 7) -> HeaderChannel:
+    """Each base tone's channel from the S2 pair and every fully known row
+    after it (the decoded header, and the width probe), weighted by their
+    noise.
+
+    The S2 pair alone (two symbols, ``estimate_channel``) leaves about a
+    sixth of the S2 noise in each tone's estimate (``FALLBACK_H_BIAS``),
+    which costs every data symbol; once the header has decoded, its seven
+    symbols are known on every base tone, nine known symbols in all. ``tones``
+    are the demodulated symbols (all rows, ``level`` and ``corr`` for the rows
+    after the preamble: each row's tracked gain against the S2 estimate and
+    the pilots' phase and timing correction, zero at S2), ``x`` and ``full``
+    the known values and fully known rows (``level_cells``). A known row r
+    measures tone k as g = y / (corr level x): the channel at the S2 pair's
+    level and phase reference, each row at its own fitted level, so a row
+    the radios' ramp left louder than S2 counts for more. The rows' noise
+    per tone is their scatter about their mean (pooled over 7 tones, as
+    the S2 noise ``thermal`` is), which includes whatever
+    distortion the header symbols carry and the low-crest preamble escapes.
+    The S2 average (variance thermal / 2) and the rows' mean (variance
+    v / n) are combined by inverse variance and smoothed across tones as
+    the S2 estimate is. ``h_loo`` repeats the combination without each
+    header row in turn, for measuring the header's error on an estimate that
+    does not contain it (the data's estimate does not contain their noise).
+    """
+    b = params.BASE_TONES
+    first = params.PREAMBLE_SYMBOLS
+    s2 = preamble.s2()
+    raw_s2 = (tones[2, :b] + tones[3, :b]) / s2 / 2
+    rows = np.flatnonzero(full)
+    n = rows.size
+    g = tones[first + rows, :b] / (corr[rows, :b] * level[rows, None] * x[rows])
+    g_mean = np.mean(g, axis=0)
+    floor = 1e-9 * float(np.mean(np.abs(h_s2) ** 2))
+    v = np.maximum(_box_smooth(np.sum(np.abs(g - g_mean) ** 2, axis=0) / max(n - 1, 1), 7), floor)
+    w_s2 = 2 / np.maximum(thermal[:b], floor)
+
+    def combine(mean: np.ndarray, count: int) -> tuple[np.ndarray, np.ndarray]:
+        w_rows = count / v
+        return (w_s2 * raw_s2 + w_rows * mean) / (w_s2 + w_rows), w_rows / (w_s2 + w_rows)
+
+    raw, weight = combine(g_mean, n)
+    step = channel_phase_step(raw)
+    loo = np.empty((hs, b), dtype=complex)
+    for i, r in enumerate(rows):
+        if r < hs:
+            loo[r] = smooth_channel(combine((n * g_mean - g[i]) / (n - 1), n - 1)[0], window, step)
+    return HeaderChannel(smooth_channel(raw, window, step), h_s2[:b].copy(), loo, weight, n)
 
 
 CLOCK_PRIOR_SD_PPM = 50.0   # SPEC 14.1 allows +-100 ppm between stations: two standard deviations
@@ -1221,7 +1301,7 @@ def receive(rx: np.ndarray, cfg: FrameConfig | None = None, *, link: LinkSource 
             decision_directed: bool = True, burst_aware: bool = True,
             header_noise: str = "measured", measure_snr: bool = True,
             clock_prior: ClockPrior | Callable[[fields.Header], ClockPrior | None] | None = None,
-            track_levels: bool = True) -> RxResult:
+            track_levels: bool = True, header_channel: bool = True) -> RxResult:
     """Decode one frame from real samples ``rx``.
 
     Give ``start`` (index of the frame's first sample) or ``reference`` (the
@@ -1247,7 +1327,12 @@ def receive(rx: np.ndarray, cfg: FrameConfig | None = None, *, link: LinkSource 
     settling at the start of a transmission, a preamble that a limiter
     leaves louder than the data), from the pilots and probe and then the
     decoded header, and divided out of the equalised symbols; the noise
-    estimates are then made on them (``detail["level"]``).
+    estimates are then made on them (``detail["level"]``). With
+    ``header_channel``, once the header decodes the base tones' channel is
+    estimated again from the S2 pair and the header's symbols (and the
+    probe's), each row at its tracked level (``header_channel_estimate``),
+    and every row equalised by it (``detail["header_channel"]``; the S2
+    estimate stays in ``detail["h_s2"]``).
 
     Without ``cfg`` the header is decoded first and the frame's geometry
     taken from its fields (``receive_header_first``), with width and mask
@@ -1261,7 +1346,8 @@ def receive(rx: np.ndarray, cfg: FrameConfig | None = None, *, link: LinkSource 
                                     phase_window=phase_window, smooth_window=smooth_window,
                                     decision_directed=decision_directed, burst_aware=burst_aware,
                                     header_noise=header_noise, measure_snr=measure_snr,
-                                    clock_prior=clock_prior, track_levels=track_levels)
+                                    clock_prior=clock_prior, track_levels=track_levels,
+                                    header_channel=header_channel)
     if callable(clock_prior):
         raise ValueError("a clock prior per header needs the header-first receiver (no cfg)")
     if start is None:
@@ -1345,11 +1431,26 @@ def receive(rx: np.ndarray, cfg: FrameConfig | None = None, *, link: LinkSource 
         level = track_level(body[:, :b] / (h[None, :b] * corr[:, :b]), x_known, full, nv_s2, cfg)
         eq, excess, noise, nv = equalise(level)
         snr_db = 10 * np.log10(np.abs(h) ** 2 / noise)
+    h_s2, hch = h, None
+    if header_channel and known is not None:
+        # The decoded header is known on every base tone: nine known symbols
+        # per tone (eleven with the probe) instead of S2's two.
+        x_known, full = level_cells(cfg, known)
+        hch = header_channel_estimate(tones, h, thermal, corr, level.level, x_known, full, hs, smooth_window)
+        h = h.copy()
+        h[:b] = hch.h
+        eq, excess, noise, nv = equalise(level)
+        snr_db = 10 * np.log10(np.abs(h) ** 2 / noise)
     if known is not None and decision_directed:
         # The decoded header is a known signal on every base data tone: its
         # error per tone is noise plus distortion plus ISI, measured where
-        # it happens rather than interpolated between two pilots.
-        err = np.mean(np.abs(eq[:hs, btones] - known) ** 2, axis=0)
+        # it happens rather than interpolated between two pilots. Equalised
+        # by an estimate that contains the header, each row is measured on
+        # the estimate without it, as the data's estimate is without theirs.
+        eq_h = eq[:hs, btones]
+        if hch is not None:
+            eq_h = body[:hs, btones] / (hch.h_loo[:, btones] * corr[:hs, btones] * level.level[:hs, None])
+        err = np.mean(np.abs(eq_h - known) ** 2, axis=0)
         rel = np.interp(np.arange(params.BASE_TONES), btones, err)
         rel = np.convolve(rel, np.ones(3) / 3, mode="same") / np.convolve(
             np.ones(params.BASE_TONES), np.ones(3) / 3, mode="same")
@@ -1378,7 +1479,7 @@ def receive(rx: np.ndarray, cfg: FrameConfig | None = None, *, link: LinkSource 
                           cfg.n_blocks, 1 + cfg.n_control, cfg.interleaver)
     detail = {"h": h, "noise": noise, "thermal": thermal, "eq": eq, "d0": d0, "c0": c0,
               "window_start": window_start, "shifts": shifts, "drift": drift, "drift_sd": drift_sd,
-              "corr": corr, "level": level, "nv": nv}
+              "corr": corr, "level": level, "nv": nv, "h_s2": h_s2, "header_channel": hch}
     header, header_error = parse_header(bool(hres.ok[0]), hres.bits[0])
     controls = parse_controls(cres.ok, cres.bits)
     out = RxResult(bool(hres.ok[0]), hres.bits[0], dres.ok, dres.bits, start, snr_db, dres.iterations, detail,
@@ -1463,12 +1564,18 @@ class ProbeExtent:
 
     ``signal``, ``threshold`` and ``present`` are per tone 24-55; ``width``
     is the highest tone carrying the probe plus one (24 if none does).
+    ``data_width`` is set by the header-first receiver: the width at which a
+    data block decoded (its CRC passed), the probe's or one tried after it
+    (``width_alternatives``); None when the frame has no data blocks, or when
+    none decodes at any width tried, so the frame's width is unknown and the
+    configuration's (the probe's reading) is unconfirmed.
     """
     width: int
     signal: np.ndarray
     threshold: np.ndarray
     present: np.ndarray
     data_symbols: int
+    data_width: int | None = None
 
     def margin_db(self) -> tuple[float, float]:
         """Decision margins at the edge, dB: the last tone in the extent over
@@ -1560,8 +1667,21 @@ EXTENT_RETRY = (1, -1, 2, -2, 3, -3)     # widths tried around the probe's when 
 
 
 def width_alternatives(width: int) -> list[int]:
-    """Widths to try, nearest first, when nothing decodes at the probe's."""
-    return [width + d for d in EXTENT_RETRY if params.BASE_TONES <= width + d <= params.MAX_TONES]
+    """Widths to try when nothing decodes at the probe's: its neighbours,
+    nearest first (a weak edge tone can mislead the extent by a tone or
+    two), then every wider width up to 56 in turn.
+
+    The extent bounds the width from below only. Tones on which the probe
+    sequence is received were sent (up to a stray tone or two), but a
+    channel that rolls off below the sent width hides the probe's top tones
+    under its noise: the 2026-11-07 radios pass audio to about 4.25 kHz
+    (tone 39), and a 48-tone broadcast through them reads 38. The probe
+    cannot tell those widths apart; the data can, as its blocks decode only
+    at the width they were sent at.
+    """
+    b, m = params.BASE_TONES, params.MAX_TONES
+    near = [width + d for d in EXTENT_RETRY if b <= width + d <= m]
+    return near + list(range(width + max(EXTENT_RETRY) + 1, m + 1))
 
 
 def frame_link(header: fields.Header, link: LinkState | None, extent: ProbeExtent | None) -> LinkState:
@@ -1600,8 +1720,10 @@ def receive_header_first(rx: np.ndarray, link: LinkSource = None, *,
     (``link_error``). Any other frame, or a session frame with no link state
     (None), takes its width from its own probe (``probe_extent``, ADR 0007;
     in ``detail["probe_extent"]``), or is 24 tones without one; if no data
-    block decodes at the probe's width, the widths around it are tried
-    (``width_alternatives``) and the first at which a block decodes is kept.
+    block decodes at the probe's width, the widths around it and then every
+    wider one are tried (``width_alternatives``) and the first at which a
+    block decodes is kept (``ProbeExtent.data_width``; None when none does:
+    the frame's width is then unknown, not the probe's).
     Then decode the whole frame with that configuration, and name each data
     block's sequence (``block_sequences``, ADR 0008).
     A frame whose header fails (decode, CRC or fields) comes back with no
@@ -1664,9 +1786,10 @@ def receive_header_first(rx: np.ndarray, link: LinkSource = None, *,
         return head
     r = receive(rx, cfg, start=start, measure_snr=False, **kw)
     if extent is not None and cfg.n_blocks and not r.block_ok.any():
-        # No block decoded at the probe's width: a weak edge tone (a rolled-off
-        # mic path) can mislead the extent by a tone or two. The data decodes
-        # only at the width it was sent at, so try the neighbours.
+        # No block decoded at the probe's width: a weak edge tone can mislead
+        # the extent by a tone or two, and a channel narrower than the frame
+        # hides its top tones entirely. The data decodes only at the width it
+        # was sent at, so try the neighbours and then every wider width.
         for w in width_alternatives(extent.width):
             try:
                 alt = FrameConfig.from_header(head.header, LinkState(width=w, cap=w), cp=cp)
@@ -1679,6 +1802,10 @@ def receive_header_first(rx: np.ndarray, link: LinkSource = None, *,
     # The header pass decided the geometry; report its header.
     r.header_ok, r.header_bits, r.header, r.header_error = True, head.header_bits, head.header, None
     r.block_sequences = _sequences(r.header, r.controls, cfg.n_blocks)
+    if extent is not None:
+        # The width is known only where the data confirms it: without that,
+        # the probe's reading stands in the configuration, unconfirmed.
+        extent.data_width = cfg.width if cfg.n_blocks and r.block_ok.any() else None
     r.detail["probe_extent"] = extent
     if measure_snr:
         _add_channel_snr(rx, cfg, r)
@@ -1741,11 +1868,11 @@ def known_symbols(cfg: FrameConfig, header_ok: bool, block_ok: np.ndarray,
 def _clip_included_snr(res: RxResult, cfg: FrameConfig) -> tuple[float, np.ndarray]:
     """Fallback: the measured SNR over the data tones, which counts the
     designed clipping as noise (errs low), on the 7 dB-equivalent scale."""
-    h, noise, thermal = res.detail["h"], res.detail["noise"], res.detail["thermal"]
+    h, noise, thermal = res.detail["h_s2"], res.detail["noise"], res.detail["thermal"]
     t = [k for k in cfg.data_active_tones if k < cfg.n_tones]     # a frame without a probe: the base tones
     off = cfg.clip_db - 7.0
-    # |h|^2 carries the noise left in the smoothed estimate (about a third of
-    # half the S2 noise): take it out, or a weak frame reads high.
+    # |h|^2 carries the noise left in the smoothed S2 estimate (about a third
+    # of half the S2 noise): take it out, or a weak frame reads high.
     p = np.maximum(np.abs(h) ** 2 - thermal * FALLBACK_H_BIAS, 0.1 * np.abs(h) ** 2)
     off -= FALLBACK_MARGIN_DB
     overall = 10 * np.log10(np.sum(p[t]) / np.sum(noise[t])) + off

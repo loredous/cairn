@@ -132,7 +132,7 @@ def test_offair_level_tracking(direction, long, f):
         assert 0.75 < predicted / raw < 1.33, (raw, predicted)
     # Untracked, the data symbols sit at the ramp's offset.
     off = frame.receive(read_wav(DIR / f["wav"])[1][:, 0], link=frame.LinkState(width=24, cap=24),
-                        track_levels=False)
+                        track_levels=False, header_channel=False)
     assert _gain_db(*_data_symbols(off, f)[:2]) > RAMP_DB
     assert int(off.block_ok.sum()) == f["blocks_ok_untracked"]
 
@@ -145,6 +145,12 @@ def test_offair_level_tracking_decodes_the_long_frame():
     r = _decode(f["wav"])
     assert r.block_ok.all()
     _check_content(f, r)
+    # The header's channel estimate alone, untracked, sits at the header's
+    # level rather than S2's, near enough the data's: all 13 decode.
+    x = read_wav(DIR / f["wav"])[1][:, 0]
+    link = frame.LinkState(width=24, cap=24)
+    assert frame.receive(x, link=link, track_levels=False).block_ok.all()
+    assert frame.receive(x, link=link, header_channel=False).block_ok.all()
 
 
 @pytest.mark.parametrize("direction,long,f", FRAMES, ids=[f["wav"] for _, _, f in FRAMES])
@@ -169,3 +175,21 @@ def test_offair_clock_prior_from_the_link(direction, long, f):
     # The same prior given per header, as the link layer knows the sender only then.
     r2 = _decode(f["wav"], clock_prior=lambda header: prior)
     assert r2.detail["drift"] == pytest.approx(r.detail["drift"])
+
+
+WIDE = INDEX["wide"]
+
+
+@pytest.mark.parametrize("f", WIDE, ids=[f["wav"] for f in WIDE])
+def test_offair_wide_broadcast_takes_its_width_from_the_data(f):
+    # A 48-tone UI broadcast through radios that pass audio to about 4.25 kHz:
+    # tones 42-47 arrive 30 dB below the noise and 38-41 fade into it, so the
+    # probe's extent reads 38. Before the fix the receiver kept 38 (and the
+    # neighbours 35-41 it retried), failed the block and reported "x38 from
+    # probe". The block decodes only at the width it was sent at.
+    _, x = read_wav(DIR / f["wav"])
+    r = frame.receive(x[:, 0])
+    ext = r.detail["probe_extent"]
+    assert ext.width == f["probe_extent_width"] < f["width"]
+    assert r.config.width == r.config.cap == ext.data_width == f["width"]
+    _check_content({**f, "data_decodable": True}, r)

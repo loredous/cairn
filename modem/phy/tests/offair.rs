@@ -161,18 +161,25 @@ fn offair_level_tracking() {
 
 #[test]
 fn offair_level_tracking_decodes_the_long_frame() {
-    // B to A: the 4 s frame's data sat 6.2 dB above the S2 level. Untracked,
-    // two of its 13 MCS 2 (16-QAM) blocks fail; tracked, all decode.
+    // B to A: the 4 s frame's data sat 6.2 dB above the S2 level. Untracked
+    // (the S2 estimate alone), two of its 13 MCS 2 (16-QAM) blocks fail;
+    // tracked, all decode.
     let index = read_json(&dir().join("offair.json"));
     let f = index["directions"]["BtoA"]["frames"].as_array().unwrap().iter().find(|f| f["kind"] == "4s").unwrap();
     let name = f["wav"].as_str().unwrap();
     let r = decode(name, &RxOptions::default());
     check_content(name, f, &r, true);
-    let off = decode(name, &RxOptions { level_tracking: false, ..Default::default() });
+    let off = decode(name, &RxOptions { level_tracking: false, header_channel: false, ..Default::default() });
     let ok = off.block_ok.iter().filter(|&&b| b).count();
     assert_eq!(ok as u64, f["blocks_ok_untracked"].as_u64().unwrap());
     assert_eq!(ok, 11);
     assert!(!off.level.applied);
+    // The header's channel estimate alone, untracked, sits at the header's
+    // level rather than S2's, near enough the data's: all 13 decode.
+    let hdr = decode(name, &RxOptions { level_tracking: false, ..Default::default() });
+    assert!(hdr.block_ok.iter().all(|&b| b));
+    let s2 = decode(name, &RxOptions { header_channel: false, ..Default::default() });
+    assert!(s2.block_ok.iter().all(|&b| b));
 }
 
 #[test]
@@ -217,4 +224,28 @@ fn offair_clock_prior_per_peer_from_the_link_source() {
     let r = Receiver::new().detect_and_receive(&x, &peer, &RxOptions::default()).unwrap();
     let (ppm, _) = clock_ppm(&r);
     assert!((ppm - long_ppm).abs() <= PRIOR_CLOCK_TOLERANCE_PPM, "clock {ppm} vs {long_ppm} ppm");
+}
+
+#[test]
+fn offair_wide_broadcast_takes_its_width_from_the_data() {
+    // A 48-tone UI broadcast through radios that pass audio to about 4.25 kHz:
+    // tones 42-47 arrive 30 dB below the noise and 38-41 fade into it, so the
+    // probe's extent reads 38. Before the fix the receiver kept 38 (and the
+    // neighbours 35-41 it retried), failed the block and the listener printed
+    // "x38 from probe". The block decodes only at the width it was sent at.
+    let index = read_json(&dir().join("offair.json"));
+    for f in index["wide"].as_array().unwrap() {
+        let name = f["wav"].as_str().unwrap();
+        let x = wav::read(&dir().join(name)).unwrap();
+        let r = Receiver::new()
+            .detect_and_receive(&x, &LinkState::default(), &RxOptions::default())
+            .unwrap_or_else(|| panic!("{name}: no frame detected"));
+        let width = f["width"].as_u64().unwrap() as usize;
+        let ext = r.probe_extent.as_ref().expect("broadcast with a probe");
+        assert_eq!(ext.width, f["probe_extent_width"].as_u64().unwrap() as usize, "{name}: as the simulator reads");
+        assert!(ext.width < width, "{name}");
+        let cfg = r.config.as_ref().unwrap();
+        assert_eq!((cfg.width, cfg.cap, ext.data_width), (width, width, Some(width)), "{name}");
+        check_content(name, f, &r, true);
+    }
 }

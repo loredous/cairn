@@ -15,6 +15,11 @@ the Python receiver decodes from the fixture with and without level
 tracking, its level fit (``python_level``, for the Rust receiver to agree
 with) and the data symbols' gain against the S2 estimate measured with
 every sent symbol known (``data_gain_db``, what the tracker should find).
+
+``wide`` adds the session's width tests (``WIDE``: a broadcast at more
+tones than the radios pass, recorded with its transmitted reference), each
+with the width it was sent at, the probe's extent the Python receiver reads
+and the width it decodes at.
 """
 
 from __future__ import annotations
@@ -41,6 +46,10 @@ KEEP = {"AtoB": (1, 2, 3, 4), "BtoA": (1, 2, 3, 4)}
 # data block, at this capture sample: the data block cannot decode.
 GAPS = {("BtoA", 1): (542419, 1276)}
 LINK = frame.LinkState(width=24, cap=24)
+# Broadcasts wider than the radios pass (about 4.25 kHz, tone 39): name, the
+# recording on the receiving station and the transmitted reference (WAV and
+# cairn-bench manifest) in the session folder.
+WIDE = (("w48_ui", "w48_rxB.wav", "w48_ref"),)
 
 
 def mono16(path: Path) -> tuple[np.ndarray, np.ndarray]:
@@ -135,7 +144,7 @@ def main() -> None:
             # and without level tracking.
             _, xf = mono16(a.out / name)
             on = frame.receive(xf, link=LINK)
-            off = frame.receive(xf, link=LINK, track_levels=False)
+            off = frame.receive(xf, link=LINK, track_levels=False, header_channel=False)
             entry["frames"].append({
                 "wav": name, "manifest": ref_json.name, "kind": NAMES[i], "type": man["header"]["type"],
                 "data_decodable": gap is None,
@@ -150,7 +159,39 @@ def main() -> None:
             print(f"{name}: {(hi - lo) / FS:.2f} s, blocks {int(r.block_ok.sum())}/{r.block_ok.size}, "
                   f"clock {-r.detail['drift'] / r.config.stride * 1e6:+.1f} ppm, SNR {r.detail['snr_db']:.1f} dB")
         index["directions"][direction] = entry
+    index["wide"] = [wide_entry(a.capture_dir, a.out, *w) for w in WIDE]
     (a.out / "offair.json").write_text(json.dumps(index, indent=1) + "\n")
+
+
+def wide_entry(capture_dir: Path, out: Path, name: str, recording: str, ref: str) -> dict:
+    """Cut one wide broadcast and index it: what was sent, the width it was
+    sent at, and what the Python receiver reads of it (header first, no link
+    state: the width from the probe, ADR 0007)."""
+    q, x = mono16(capture_dir / recording)
+    found = decode(x)
+    assert len(found) == 1, f"{recording}: {len(found)} frames"
+    r = found[0]
+    man = json.loads((capture_dir / f"{ref}.json").read_text())["frames"][0]
+    shutil.copyfile(capture_dir / f"{ref}.json", out / f"{ref}.json")
+    lo = r.start - int(LEAD_S * FS)
+    hi = r.start + man["n_samples"] + int(TAIL_S * FS)
+    write_wav(out / f"{name}.wav", q[lo:hi])
+    _, xr = mono16(capture_dir / f"{ref}.wav")
+    sent = decode(xr)
+    assert len(sent) == 1 and sent[0].block_ok.all() and sent[0].config.width == man["width"]
+    payloads = [bytes(np.packbits(b[:1008])).hex() for b in sent[0].block_bits]
+    _, xf = mono16(out / f"{name}.wav")
+    got = frame.receive(xf)
+    ext = got.detail["probe_extent"]
+    print(f"{name}.wav: {(hi - lo) / FS:.2f} s, sent at {man['width']} tones, probe reads {ext.width}, "
+          f"decoded at {got.config.width}, blocks {int(got.block_ok.sum())}/{got.block_ok.size}")
+    return {"wav": f"{name}.wav", "manifest": f"{ref}.json", "capture": recording, "type": man["header"]["type"],
+            "capture_start_sample": int(r.start), "start_sample": int(LEAD_S * FS), "cp": man["cp"],
+            "width": man["width"], "mcs": man["mcs"], "n_blocks": man["n_blocks"],
+            "n_control": man["n_control"], "header_message_hex": man["header"]["message_hex"],
+            "control_hex": man["header"]["control_hex"], "payload_hex": payloads,
+            "probe_extent_width": int(ext.width), "data_width": ext.data_width,
+            "blocks_ok": int(got.block_ok.sum())}
 
 
 if __name__ == "__main__":

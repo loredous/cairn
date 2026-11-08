@@ -36,7 +36,7 @@ def _run(mcs: int, width: int, snr: float, seed: int, *, ramp: str | None, block
     if ramp == "rx":
         y = y * _ramp(y.size)
     on = frame.receive(y, cfg, start=GUARD, measure_snr=False)
-    off = frame.receive(y, cfg, start=GUARD, measure_snr=False, track_levels=False)
+    off = frame.receive(y, cfg, start=GUARD, measure_snr=False, track_levels=False, header_channel=False)
     return on, off, tx
 
 

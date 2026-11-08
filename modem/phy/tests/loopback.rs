@@ -244,7 +244,7 @@ fn level_ramp_64qam() {
             let p = frame.output().iter().map(|v| v * v).sum::<f64>() / frame.samples.len() as f64;
             let noisy = awgn(&x, snr, width, &mut rng, Some(p));
             let ramped: Vec<f64> = noisy.iter().zip(capture_ramp(x.len(), guard)).map(|(v, g)| v * g).collect();
-            let off = RxOptions { level_tracking: false, ..Default::default() };
+            let off = RxOptions { level_tracking: false, header_channel: false, ..Default::default() };
             let good = |r: &cairn_phy::RxResult| {
                 r.block_ok
                     .iter()
@@ -265,4 +265,64 @@ fn level_ramp_64qam() {
             assert_eq!(good(&plain), 4);
         }
     }
+}
+
+/// The base tones' channel re-estimated from the decoded header (nine known
+/// symbols per tone instead of S2's two): near the MCS 2 threshold, with and
+/// without the capture-like ramp, at 24 and 32 tones, more blocks decode on
+/// the same frames than with the S2 estimate alone; a frame whose header
+/// fails is decoded as before (the simulator's `test_header_channel.py`).
+#[test]
+fn header_channel_estimate() {
+    let mut rng = Rng::new(31);
+    let guard = 400;
+    let s2_only = RxOptions { header_channel: false, ..Default::default() };
+    for (width, ramp) in [(24usize, false), (24, true), (32, false)] {
+        let cfg = FrameConfig::new(width, 2, 8).unwrap().with_probe(width > 24).unwrap();
+        let (mut on, mut off) = (0, 0);
+        for _ in 0..6 {
+            let header = rng.bits(128);
+            let payloads: Vec<Vec<u8>> = (0..8).map(|_| rng.bits(params::DATA_PAYLOAD_BITS)).collect();
+            let frame = Transmitter::new().build(&cfg, &header, &payloads);
+            let mut x = vec![0.0; guard];
+            x.extend(frame.output());
+            x.extend(vec![0.0; guard]);
+            let p = frame.output().iter().map(|v| v * v).sum::<f64>() / frame.samples.len() as f64;
+            let mut y = awgn(&x, 7.0, width, &mut rng, Some(p));
+            if ramp {
+                y = y.iter().zip(capture_ramp(x.len(), guard)).map(|(v, g)| v * g).collect();
+            }
+            let good = |r: &cairn_phy::RxResult| {
+                r.block_ok
+                    .iter()
+                    .zip(&r.block_bits)
+                    .zip(&frame.block_bits)
+                    .filter(|((ok, b), t)| **ok && b == t)
+                    .count()
+            };
+            let mut rx = Receiver::new();
+            on += good(&rx.receive(&y, &cfg, guard, &RxOptions::default()));
+            off += good(&rx.receive(&y, &cfg, guard, &s2_only));
+        }
+        assert!(on > off, "x{width} ramp {ramp}: {on} vs {off} of 48 blocks");
+    }
+    // Below the header's threshold nothing is known to re-estimate from.
+    let cfg = FrameConfig::new(24, 0, 1).unwrap();
+    let frame = Transmitter::new().build(&cfg, &rng.bits(128), &[rng.bits(params::DATA_PAYLOAD_BITS)]);
+    let mut x = vec![0.0; guard];
+    x.extend(frame.output());
+    x.extend(vec![0.0; guard]);
+    let p = frame.output().iter().map(|v| v * v).sum::<f64>() / frame.samples.len() as f64;
+    let mut failed = 0;
+    for _ in 0..6 {
+        let y = awgn(&x, -6.0, 24, &mut rng, Some(p));
+        let mut rx = Receiver::new();
+        let a = rx.receive(&y, &cfg, guard, &RxOptions::default());
+        if !a.header_ok {
+            let b = rx.receive(&y, &cfg, guard, &s2_only);
+            assert_eq!((a.snr_db, a.block_ok, a.level), (b.snr_db, b.block_ok, b.level));
+            failed += 1;
+        }
+    }
+    assert!(failed > 0);
 }
