@@ -193,6 +193,26 @@ impl Attempt {
         self.turn_holder
     }
 
+    /// Why the attempt waits, and until when at the latest (when known),
+    /// for the host's etiquette status (SPEC 13.6).
+    pub fn wait_state(&self, dcd: &Dcd, now: Instant) -> (crate::station::WaitReason, Option<Instant>) {
+        use crate::station::WaitReason as R;
+        match self.phase {
+            Phase::Backoff(until) => (R::Backoff, Some(until)),
+            Phase::WaitCarrierGone(deadline) => (R::CarrierGone, Some(deadline)),
+            Phase::Window { until, .. } => (R::TurnCheck, Some(until)),
+            Phase::WaitHeldClear(_) | Phase::Sense => {
+                if dcd.held(now) {
+                    (R::Carrier, dcd.held_clears_at(now))
+                } else {
+                    (R::Clear, None)
+                }
+            }
+            Phase::Yield { until, .. } => (R::YieldWindow, Some(until)),
+            Phase::Slot { at, .. } => (R::Persistence, Some(at)),
+        }
+    }
+
     /// When a yield window was taken (completed or interrupted), once.
     pub fn take_yield(&mut self) -> Option<Instant> {
         self.yield_taken.take()

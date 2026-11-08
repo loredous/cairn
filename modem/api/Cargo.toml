@@ -1,0 +1,12 @@
+[package]
+name = "cairn-api"
+version = "0.1.0"
+description = "Cairn native host API (SPEC 13.2): JSON-lines protocol helpers, TCP and Unix-socket server, heard list, raw-audio ring buffer and capture files"
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+publish = false
+
+[dependencies]
+serde_json = { version = "1.0.154", features = ["preserve_order"] }
+regex-lite = "0.1.9"

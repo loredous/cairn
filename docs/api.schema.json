@@ -1,0 +1,842 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://loredous.github.io/cairn/api.schema.json",
+  "title": "Cairn native host API (SPEC 13.2), schema version 0.1.0",
+  "description": "Every line on a Cairn native API connection is one JSON object: a request (client to modem), a response (modem to the client that asked) or an event (modem to every subscribed client). docs/api.md is the normative prose; this file is its machine-readable form. Unknown members are ignored by receivers, so the object schemas below do not forbid additional properties.",
+  "oneOf": [
+    { "$ref": "#/$defs/request" },
+    { "$ref": "#/$defs/response" },
+    { "$ref": "#/$defs/event" }
+  ],
+  "$defs": {
+    "api_version": { "type": "string", "const": "0.1.0" },
+    "id": {
+      "description": "Client-chosen request identifier, echoed in the response. A string of at most 64 characters or an integer; null or absent when the client does not care.",
+      "anyOf": [
+        { "type": "string", "maxLength": 64 },
+        { "type": "integer" },
+        { "type": "null" }
+      ]
+    },
+    "address": {
+      "description": "A station address as the modem prints it: CALL or CALL-SSID (SSID 1-15; SSID 0 is printed without a suffix), '#' and ten hex digits for a long callsign carried as a hash (B.1), or '*' for broadcast.",
+      "type": "string",
+      "pattern": "^([A-Z0-9/]{1,6}(-([1-9]|1[0-5]))?|#[0-9a-f]{10}|\\*)$"
+    },
+    "address_in": {
+      "description": "A station address as a client may write it: CALL or CALL-SSID, any case; callsigns longer than six characters (up to ten) are carried as a hash.",
+      "type": "string",
+      "pattern": "^[A-Za-z0-9/]{1,10}(-([0-9]|1[0-5]))?$"
+    },
+    "time": {
+      "description": "UTC wall-clock time, RFC 3339 with milliseconds.",
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\\.[0-9]{3}Z$"
+    },
+    "modem_time": {
+      "description": "Seconds on the modem's monotonic clock since it started.",
+      "type": "number",
+      "minimum": 0
+    },
+    "seconds_or_null": { "type": ["number", "null"], "minimum": 0 },
+    "frame_type": {
+      "description": "SPEC 8.4 frame type name; RESERVED-n for codes 11-30.",
+      "type": "string",
+      "pattern": "^(BEACON|UI|CONNECT|CONNECT-ACK|DATA|ACK|SOUND|DISCONNECT|PROBE|CAL-REQUEST|POLL|EXTENDED|RESERVED-[0-9]{1,2})$"
+    },
+    "mode": {
+      "description": "The waveform a header was decoded in. 'cairn' is this protocol; the legacy names are reserved for the multi-mode receiver (SPEC 13.7).",
+      "type": "string",
+      "enum": ["cairn", "afsk1200", "g3ruh9600", "il2p"]
+    },
+    "mask": {
+      "description": "Tone mask: bit t set means tone t is usable; 16 lower-case hex digits after 0x.",
+      "type": "string",
+      "pattern": "^0x[0-9a-f]{16}$"
+    },
+    "direction": {
+      "description": "One direction of a session's link.",
+      "type": "object",
+      "required": ["mcs", "width", "mask_id", "mask", "masked"],
+      "properties": {
+        "mcs": { "type": "integer", "minimum": 0, "maximum": 7, "description": "Rung (SPEC 6.2). In rx: the rung this station requests of the peer." },
+        "width": { "type": "integer", "minimum": 24, "maximum": 56, "description": "Tones." },
+        "mask_id": { "type": "integer", "minimum": 0, "maximum": 3 },
+        "mask": { "$ref": "#/$defs/mask" },
+        "masked": { "type": "array", "items": { "type": "integer", "minimum": 0, "maximum": 55 }, "description": "Masked (unused) tones below the width, ascending." }
+      }
+    },
+    "progress": {
+      "description": "Transfer progress of a session (SPEC 13.6): payload bytes, not counting PDU or block overhead.",
+      "type": "object",
+      "required": ["tx", "rx", "retransmissions", "blocks_sent"],
+      "properties": {
+        "tx": {
+          "type": "object",
+          "required": ["queued_bytes", "acked_bytes", "pending_bytes", "rate_bps", "eta_s"],
+          "properties": {
+            "queued_bytes": { "type": "integer", "minimum": 0, "description": "Payload bytes the host has queued in this session." },
+            "acked_bytes": { "type": "integer", "minimum": 0, "description": "Of those, bytes the peer has delivered (their PDUs wholly acknowledged)." },
+            "pending_bytes": { "type": "integer", "minimum": 0 },
+            "rate_bps": { "type": "number", "minimum": 0, "description": "Delivered payload bits per second over the last 30 s." },
+            "eta_s": { "$ref": "#/$defs/seconds_or_null", "description": "pending_bytes at rate_bps; null when nothing is pending or the rate is unknown." }
+          }
+        },
+        "rx": {
+          "type": "object",
+          "required": ["delivered_bytes", "rate_bps"],
+          "properties": {
+            "delivered_bytes": { "type": "integer", "minimum": 0 },
+            "rate_bps": { "type": "number", "minimum": 0 }
+          }
+        },
+        "retransmissions": { "type": "integer", "minimum": 0, "description": "Data blocks this station has sent again." },
+        "blocks_sent": { "type": "integer", "minimum": 0, "description": "Data blocks this station has sent, retransmissions included." }
+      }
+    },
+    "session_status": {
+      "type": "object",
+      "required": ["peer", "phase", "role", "session_id", "tx", "rx", "idle", "drained", "progress"],
+      "properties": {
+        "peer": { "$ref": "#/$defs/address" },
+        "phase": { "type": "string", "enum": ["connecting", "half_open", "open", "closing"] },
+        "role": { "type": "string", "enum": ["initiator", "responder"] },
+        "session_id": { "type": "integer", "minimum": 0, "maximum": 65535 },
+        "tx": { "$ref": "#/$defs/direction" },
+        "rx": { "$ref": "#/$defs/direction" },
+        "idle": { "type": "boolean" },
+        "drained": { "type": "boolean" },
+        "progress": { "$ref": "#/$defs/progress" }
+      }
+    },
+    "channel_state": {
+      "description": "Etiquette status (SPEC 13.6): carrier detect, who holds the channel, the next yield window and why the modem is waiting.",
+      "type": "object",
+      "required": ["dcd", "dcd_raw", "keyed", "holder", "holder_address", "turn", "waiting", "next_yield_s", "legacy"],
+      "properties": {
+        "dcd": { "type": "boolean", "description": "Carrier sense with hold (what channel access uses)." },
+        "dcd_raw": { "type": "boolean", "description": "The OR of the raw detectors." },
+        "keyed": { "type": "boolean", "description": "This modem's PTT is keyed." },
+        "holder": { "type": "string", "enum": ["none", "self", "peer", "other", "unknown"], "description": "self: this modem is transmitting; peer: the session peer's frame is on the air; other: a decoded station other than the peer; unknown: carrier without a decoded header." },
+        "holder_address": { "anyOf": [{ "$ref": "#/$defs/address" }, { "type": "null" }] },
+        "turn": { "type": ["string", "null"], "enum": ["self", "peer", null], "description": "In an open session: who owes the next frame. Null outside a session or when idle." },
+        "waiting": {
+          "description": "The transmission this modem wants to make and what it waits for; null when it has nothing to send or is transmitting.",
+          "anyOf": [
+            { "type": "null" },
+            {
+              "type": "object",
+              "required": ["for", "reason", "until_s"],
+              "properties": {
+                "for": { "type": "string", "enum": ["connect", "session_reply", "session_data", "keepalive", "disconnect", "owed_reply", "broadcast", "probe"] },
+                "reason": { "type": "string", "enum": ["backoff", "carrier", "carrier_gone", "turn_check", "yield_window", "persistence", "clear"] },
+                "until_s": { "$ref": "#/$defs/seconds_or_null", "description": "Seconds from now until the wait ends at the latest, when known." }
+              }
+            }
+          ]
+        },
+        "next_yield_s": { "$ref": "#/$defs/seconds_or_null", "description": "Seconds until the next yield window falls due in an open session (0: due now); null outside a session." },
+        "legacy": { "type": "boolean", "description": "Legacy (AFSK) activity heard in the last 10 minutes: 2 s frames and half persistence (SPEC 11.3)." }
+      }
+    },
+    "detectors": {
+      "type": "object",
+      "required": ["quieting", "preamble", "afsk", "cos"],
+      "properties": {
+        "quieting": { "type": "boolean" },
+        "preamble": { "type": "boolean" },
+        "afsk": { "type": "boolean" },
+        "cos": { "type": "boolean" }
+      }
+    },
+    "heard_entry": {
+      "type": "object",
+      "required": ["address", "call", "ssid", "first_heard", "last_heard", "last_modem_time", "count", "last_snr_db", "last_width", "last_frame_type", "last_mcs", "frame_types", "modes"],
+      "properties": {
+        "address": { "$ref": "#/$defs/address" },
+        "call": { "type": "string" },
+        "ssid": { "type": "integer", "minimum": 0, "maximum": 15 },
+        "first_heard": { "$ref": "#/$defs/time" },
+        "last_heard": { "$ref": "#/$defs/time" },
+        "last_modem_time": { "type": ["number", "null"], "minimum": 0, "description": "Null for an entry loaded from a heard file and not heard since." },
+        "count": { "type": "integer", "minimum": 1 },
+        "last_snr_db": { "type": "number" },
+        "best_snr_db": { "type": "number" },
+        "last_width": { "type": "integer", "minimum": 24, "maximum": 56 },
+        "last_frame_type": { "$ref": "#/$defs/frame_type" },
+        "last_mcs": { "type": "integer", "minimum": 0, "maximum": 7 },
+        "last_dst": { "$ref": "#/$defs/address" },
+        "frame_types": { "type": "object", "additionalProperties": { "type": "integer", "minimum": 1 }, "description": "Headers decoded per frame type." },
+        "modes": { "type": "array", "items": { "$ref": "#/$defs/mode" } }
+      }
+    },
+    "config": {
+      "type": "object",
+      "required": ["callsign", "persistence", "slot_ms", "max_frame_s", "broadcast_mcs", "cap", "txdelay_ms", "txtail_ms", "accept_connects", "width_cap", "track_masks", "repeater", "ring_seconds", "settable"],
+      "properties": {
+        "callsign": { "$ref": "#/$defs/address" },
+        "persistence": { "type": "number", "exclusiveMinimum": 0, "maximum": 1 },
+        "slot_ms": { "type": "integer", "minimum": 10, "maximum": 2550 },
+        "max_frame_s": { "type": "number", "minimum": 0.5, "maximum": 4.0 },
+        "broadcast_mcs": { "type": "integer", "minimum": 0, "maximum": 3 },
+        "cap": { "type": "integer", "minimum": 24, "maximum": 56 },
+        "txdelay_ms": { "type": "integer", "minimum": 0, "maximum": 2550 },
+        "txtail_ms": { "type": "integer", "minimum": 0, "maximum": 2550 },
+        "accept_connects": { "type": "boolean" },
+        "width_cap": { "type": "integer", "minimum": 23, "maximum": 55 },
+        "track_masks": { "type": "boolean" },
+        "repeater": { "type": "boolean" },
+        "ring_seconds": { "type": "number", "minimum": 0 },
+        "quieting_hz": { "type": "array", "items": { "type": "number" }, "minItems": 2, "maxItems": 2 },
+        "settable": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "config_set": {
+      "type": "object",
+      "minProperties": 1,
+      "properties": {
+        "persistence": { "type": "number", "exclusiveMinimum": 0, "maximum": 1 },
+        "slot_ms": { "type": "integer", "minimum": 10, "maximum": 2550 },
+        "max_frame_s": { "type": "number", "minimum": 0.5, "maximum": 4.0 },
+        "broadcast_mcs": { "type": "integer", "minimum": 0, "maximum": 3 },
+        "cap": { "type": "integer", "minimum": 24, "maximum": 56 },
+        "txdelay_ms": { "type": "integer", "minimum": 0, "maximum": 2550 },
+        "txtail_ms": { "type": "integer", "minimum": 0, "maximum": 2550 },
+        "accept_connects": { "type": "boolean" }
+      }
+    },
+    "error_code": {
+      "type": "string",
+      "enum": [
+        "bad_json", "bad_request", "unknown_command", "unsupported", "no_session", "busy", "invalid_state",
+        "not_found", "io_error", "too_large", "line_too_long", "read_only", "out_of_range", "internal",
+        "send_rejected", "broadcast_rejected", "pdu_error", "tx_failed", "receive_clipping", "distortion",
+        "capture_failed"
+      ]
+    },
+    "error": {
+      "type": "object",
+      "required": ["code", "message"],
+      "properties": {
+        "code": { "$ref": "#/$defs/error_code" },
+        "message": { "type": "string" }
+      }
+    },
+    "command_name": {
+      "type": "string",
+      "enum": ["connect", "disconnect", "send", "beacon", "probe", "heard", "status", "config", "calibrate", "capture", "subscribe"]
+    },
+    "event_name": {
+      "type": "string",
+      "enum": ["hello", "rx", "session", "link", "heard", "channel", "dcd", "tx", "error"]
+    },
+
+    "request": {
+      "type": "object",
+      "required": ["cmd"],
+      "not": { "anyOf": [{ "required": ["ok"] }, { "required": ["event"] }] },
+      "properties": { "id": { "$ref": "#/$defs/id" }, "cmd": { "type": "string" } },
+      "oneOf": [
+        { "$ref": "#/$defs/req_connect" },
+        { "$ref": "#/$defs/req_disconnect" },
+        { "$ref": "#/$defs/req_send" },
+        { "$ref": "#/$defs/req_beacon" },
+        { "$ref": "#/$defs/req_probe" },
+        { "$ref": "#/$defs/req_heard" },
+        { "$ref": "#/$defs/req_status" },
+        { "$ref": "#/$defs/req_config" },
+        { "$ref": "#/$defs/req_calibrate" },
+        { "$ref": "#/$defs/req_capture" },
+        { "$ref": "#/$defs/req_subscribe" }
+      ]
+    },
+    "req_connect": {
+      "type": "object",
+      "required": ["cmd", "peer"],
+      "properties": {
+        "cmd": { "const": "connect" },
+        "peer": { "$ref": "#/$defs/address_in" },
+        "resume": { "type": "boolean", "default": true, "description": "Resume state retained from a recent session with the peer when there is any (SPEC 9.2); false discards it and starts fresh." }
+      }
+    },
+    "req_disconnect": {
+      "type": "object",
+      "required": ["cmd"],
+      "properties": {
+        "cmd": { "const": "disconnect" },
+        "graceful": { "type": "boolean", "default": true, "description": "Close after everything queued has been acknowledged; false closes now (undelivered PDUs are reported)." }
+      }
+    },
+    "req_send": {
+      "type": "object",
+      "required": ["cmd"],
+      "properties": {
+        "cmd": { "const": "send" },
+        "mode": { "type": "string", "enum": ["session", "broadcast"], "default": "session" },
+        "text": { "type": "string", "description": "UTF-8 text, sent as its bytes." },
+        "data": { "type": "string", "description": "Bytes, standard base64 with padding (RFC 4648 section 4)." },
+        "file": { "type": "string", "description": "Path of a file the modem reads, sent as FILE-CHUNK PDUs." },
+        "pdu_type": { "type": "string", "enum": ["message", "ax25"], "default": "message", "description": "For text and data. A file is always FILE-CHUNK." },
+        "stream": { "type": "integer", "minimum": 0, "maximum": 63, "default": 0 },
+        "priority": { "type": "integer", "minimum": 0, "maximum": 3, "description": "0 highest. Default 0 for text and data, 3 for a file." },
+        "encoding": { "type": "string", "enum": ["auto", "raw", "zstd", "zstd_dict"], "default": "auto" },
+        "dictionary": { "type": "string", "pattern": "^[0-9a-f]{8}$", "description": "Dictionary ID for zstd_dict." },
+        "repeats": { "type": "integer", "minimum": 0, "maximum": 3, "default": 0, "description": "Broadcast only: identical repeats of each frame." }
+      },
+      "oneOf": [
+        { "required": ["text"] },
+        { "required": ["data"] },
+        { "required": ["file"] }
+      ]
+    },
+    "req_beacon": {
+      "type": "object",
+      "required": ["cmd"],
+      "properties": {
+        "cmd": { "const": "beacon" },
+        "text": { "type": "string" },
+        "repeats": { "type": "integer", "minimum": 0, "maximum": 3, "default": 0 }
+      }
+    },
+    "req_probe": {
+      "type": "object",
+      "required": ["cmd", "target"],
+      "properties": {
+        "cmd": { "const": "probe" },
+        "target": { "$ref": "#/$defs/address_in" },
+        "kind": { "type": "string", "enum": ["link_test", "beacon"], "default": "link_test" },
+        "repeats": { "type": "integer", "minimum": 0, "maximum": 5, "default": 2 }
+      }
+    },
+    "req_heard": {
+      "type": "object",
+      "required": ["cmd"],
+      "properties": {
+        "cmd": { "const": "heard" },
+        "since": { "$ref": "#/$defs/time", "description": "Only entries last heard at or after this time." },
+        "limit": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "req_status": {
+      "type": "object",
+      "required": ["cmd"],
+      "properties": { "cmd": { "const": "status" } }
+    },
+    "req_config": {
+      "type": "object",
+      "required": ["cmd"],
+      "properties": {
+        "cmd": { "const": "config" },
+        "set": { "$ref": "#/$defs/config_set" }
+      }
+    },
+    "req_calibrate": {
+      "type": "object",
+      "required": ["cmd"],
+      "properties": {
+        "cmd": { "const": "calibrate" },
+        "peer": { "$ref": "#/$defs/address_in" },
+        "step": { "type": "string", "enum": ["tone", "turnaround", "drive", "all"], "default": "all" }
+      }
+    },
+    "req_capture": {
+      "type": "object",
+      "required": ["cmd"],
+      "properties": {
+        "cmd": { "const": "capture" },
+        "seconds": { "type": "number", "exclusiveMinimum": 0, "description": "Default and maximum: the ring buffer's length." },
+        "label": { "type": "string", "pattern": "^[A-Za-z0-9_-]{1,32}$" }
+      }
+    },
+    "req_subscribe": {
+      "type": "object",
+      "required": ["cmd", "events"],
+      "properties": {
+        "cmd": { "const": "subscribe" },
+        "events": {
+          "anyOf": [
+            { "const": "all" },
+            { "type": "array", "items": { "$ref": "#/$defs/event_name" } }
+          ]
+        }
+      }
+    },
+
+    "response": {
+      "type": "object",
+      "required": ["id", "ok", "cmd"],
+      "not": { "required": ["event"] },
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "ok": { "type": "boolean" },
+        "cmd": { "anyOf": [{ "type": "string" }, { "type": "null" }] }
+      },
+      "oneOf": [
+        { "$ref": "#/$defs/res_error" },
+        { "$ref": "#/$defs/res_connect" },
+        { "$ref": "#/$defs/res_disconnect" },
+        { "$ref": "#/$defs/res_send" },
+        { "$ref": "#/$defs/res_beacon" },
+        { "$ref": "#/$defs/res_probe" },
+        { "$ref": "#/$defs/res_heard" },
+        { "$ref": "#/$defs/res_status" },
+        { "$ref": "#/$defs/res_config" },
+        { "$ref": "#/$defs/res_calibrate" },
+        { "$ref": "#/$defs/res_capture" },
+        { "$ref": "#/$defs/res_subscribe" }
+      ]
+    },
+    "res_error": {
+      "type": "object",
+      "required": ["ok", "error"],
+      "properties": {
+        "ok": { "const": false },
+        "error": { "$ref": "#/$defs/error" }
+      }
+    },
+    "res_connect": {
+      "type": "object",
+      "required": ["ok", "cmd", "peer", "resuming"],
+      "properties": {
+        "ok": { "const": true },
+        "cmd": { "const": "connect" },
+        "peer": { "$ref": "#/$defs/address" },
+        "resuming": { "type": "boolean", "description": "State retained from a recent session will be offered for resume." }
+      }
+    },
+    "res_disconnect": {
+      "type": "object",
+      "required": ["ok", "cmd", "peer", "graceful"],
+      "properties": {
+        "ok": { "const": true },
+        "cmd": { "const": "disconnect" },
+        "peer": { "$ref": "#/$defs/address" },
+        "graceful": { "type": "boolean" }
+      }
+    },
+    "res_send": {
+      "type": "object",
+      "required": ["ok", "cmd", "ref", "mode", "bytes", "pdus", "encoding"],
+      "properties": {
+        "ok": { "const": true },
+        "cmd": { "const": "send" },
+        "ref": { "type": "integer", "minimum": 1, "description": "Names this send in later events." },
+        "mode": { "type": "string", "enum": ["session", "broadcast"] },
+        "bytes": { "type": "integer", "minimum": 0 },
+        "pdus": { "type": "integer", "minimum": 1 },
+        "object": { "type": "integer", "minimum": 0, "description": "FILE-CHUNK object ID (file sends)." },
+        "encoding": { "type": "string", "enum": ["raw", "zstd", "zstd_dict"], "description": "The encoding used." }
+      }
+    },
+    "res_beacon": {
+      "type": "object",
+      "required": ["ok", "cmd", "ref"],
+      "properties": {
+        "ok": { "const": true },
+        "cmd": { "const": "beacon" },
+        "ref": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "res_probe": {
+      "type": "object",
+      "required": ["ok", "cmd", "ref", "target", "kind"],
+      "properties": {
+        "ok": { "const": true },
+        "cmd": { "const": "probe" },
+        "ref": { "type": "integer", "minimum": 1 },
+        "target": { "$ref": "#/$defs/address" },
+        "kind": { "type": "string", "enum": ["link_test", "beacon"] }
+      }
+    },
+    "res_heard": {
+      "type": "object",
+      "required": ["ok", "cmd", "stations"],
+      "properties": {
+        "ok": { "const": true },
+        "cmd": { "const": "heard" },
+        "stations": { "type": "array", "items": { "$ref": "#/$defs/heard_entry" }, "description": "Most recently heard first." }
+      }
+    },
+    "res_status": {
+      "type": "object",
+      "required": ["ok", "cmd", "station", "time", "modem_time", "session", "channel", "dcd", "counters", "capture", "heard_stations"],
+      "properties": {
+        "ok": { "const": true },
+        "cmd": { "const": "status" },
+        "station": { "$ref": "#/$defs/address" },
+        "time": { "$ref": "#/$defs/time" },
+        "modem_time": { "$ref": "#/$defs/modem_time" },
+        "session": { "anyOf": [{ "type": "null" }, { "$ref": "#/$defs/session_status" }] },
+        "channel": { "$ref": "#/$defs/channel_state" },
+        "dcd": {
+          "type": "object",
+          "required": ["raw", "detectors", "quieting_floor_dbfs"],
+          "properties": {
+            "raw": { "type": "boolean" },
+            "detectors": { "$ref": "#/$defs/detectors" },
+            "quieting_floor_dbfs": { "type": ["number", "null"] }
+          }
+        },
+        "counters": {
+          "type": "object",
+          "required": ["samples", "detections", "header_failures", "frames", "blocks_ok", "blocks", "tx_frames", "keyed_s", "dcd_rises"],
+          "properties": {
+            "samples": { "type": "integer", "minimum": 0 },
+            "detections": { "type": "integer", "minimum": 0 },
+            "header_failures": { "type": "integer", "minimum": 0 },
+            "frames": { "type": "integer", "minimum": 0 },
+            "blocks_ok": { "type": "integer", "minimum": 0 },
+            "blocks": { "type": "integer", "minimum": 0 },
+            "tx_frames": { "type": "integer", "minimum": 0 },
+            "keyed_s": { "type": "number", "minimum": 0 },
+            "dcd_rises": {
+              "type": "object",
+              "required": ["quieting", "preamble", "afsk", "cos"],
+              "properties": {
+                "quieting": { "type": "integer", "minimum": 0 },
+                "preamble": { "type": "integer", "minimum": 0 },
+                "afsk": { "type": "integer", "minimum": 0 },
+                "cos": { "type": "integer", "minimum": 0 }
+              }
+            }
+          }
+        },
+        "capture": {
+          "type": "object",
+          "required": ["ring_seconds", "buffered_seconds"],
+          "properties": {
+            "ring_seconds": { "type": "number", "minimum": 0 },
+            "buffered_seconds": { "type": "number", "minimum": 0 }
+          }
+        },
+        "heard_stations": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "res_config": {
+      "type": "object",
+      "required": ["ok", "cmd", "config", "changed"],
+      "properties": {
+        "ok": { "const": true },
+        "cmd": { "const": "config" },
+        "config": { "$ref": "#/$defs/config" },
+        "changed": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "res_calibrate": {
+      "type": "object",
+      "required": ["ok", "cmd", "result"],
+      "properties": {
+        "ok": { "const": true },
+        "cmd": { "const": "calibrate" },
+        "result": { "type": "object", "description": "Reserved: the calibration result (TXDelay recommendation, knee, drive). This implementation answers unsupported." }
+      }
+    },
+    "res_capture": {
+      "type": "object",
+      "required": ["ok", "cmd", "wav", "sidecar", "seconds", "samples", "sample_rate", "start_modem_time"],
+      "properties": {
+        "ok": { "const": true },
+        "cmd": { "const": "capture" },
+        "wav": { "type": "string" },
+        "sidecar": { "type": "string" },
+        "seconds": { "type": "number", "minimum": 0 },
+        "samples": { "type": "integer", "minimum": 0 },
+        "sample_rate": { "type": "integer", "const": 48000 },
+        "start_modem_time": { "$ref": "#/$defs/modem_time" }
+      }
+    },
+    "res_subscribe": {
+      "type": "object",
+      "required": ["ok", "cmd", "events"],
+      "properties": {
+        "ok": { "const": true },
+        "cmd": { "const": "subscribe" },
+        "events": { "type": "array", "items": { "$ref": "#/$defs/event_name" } }
+      }
+    },
+
+    "event": {
+      "type": "object",
+      "required": ["event", "time", "modem_time"],
+      "not": { "anyOf": [{ "required": ["ok"] }, { "required": ["cmd"] }] },
+      "properties": {
+        "event": { "type": "string" },
+        "time": { "$ref": "#/$defs/time" },
+        "modem_time": { "$ref": "#/$defs/modem_time" }
+      },
+      "oneOf": [
+        { "$ref": "#/$defs/ev_hello" },
+        { "$ref": "#/$defs/ev_rx" },
+        { "$ref": "#/$defs/ev_session" },
+        { "$ref": "#/$defs/ev_link" },
+        { "$ref": "#/$defs/ev_heard" },
+        { "$ref": "#/$defs/ev_channel" },
+        { "$ref": "#/$defs/ev_dcd" },
+        { "$ref": "#/$defs/ev_tx" },
+        { "$ref": "#/$defs/ev_error" }
+      ]
+    },
+    "ev_hello": {
+      "type": "object",
+      "required": ["event", "api", "api_version", "implementation", "station", "client", "commands", "unsupported", "events", "encodings"],
+      "properties": {
+        "event": { "const": "hello" },
+        "api": { "const": "cairn" },
+        "api_version": { "$ref": "#/$defs/api_version" },
+        "implementation": {
+          "type": "object",
+          "required": ["name", "version"],
+          "properties": { "name": { "type": "string" }, "version": { "type": "string" } }
+        },
+        "station": { "$ref": "#/$defs/address" },
+        "client": { "type": "integer", "minimum": 1 },
+        "commands": { "type": "array", "items": { "$ref": "#/$defs/command_name" } },
+        "unsupported": { "type": "array", "items": { "type": "string", "enum": ["calibrate", "capture"] } },
+        "events": { "type": "array", "items": { "$ref": "#/$defs/event_name" } },
+        "encodings": { "type": "array", "items": { "type": "string", "enum": ["raw", "zstd", "zstd_dict"] } }
+      }
+    },
+    "ev_rx": {
+      "type": "object",
+      "required": ["event", "from", "mode", "frame_type", "pdu_type", "pdu_type_code", "stream", "priority", "encoding", "crc", "verify", "bytes", "data"],
+      "properties": {
+        "event": { "const": "rx" },
+        "from": { "$ref": "#/$defs/address" },
+        "mode": { "type": "string", "enum": ["session", "broadcast"] },
+        "frame_type": { "type": "string", "enum": ["DATA", "UI", "BEACON"], "description": "The frame type that carried the PDU (session PDUs: DATA, also when it arrived in another session frame)." },
+        "pdu_type": { "type": "string", "enum": ["ax25", "message", "file_chunk", "signature", "control", "unknown"] },
+        "pdu_type_code": { "type": "integer", "minimum": 0, "maximum": 255 },
+        "stream": { "type": "integer", "minimum": 0, "maximum": 63 },
+        "priority": { "type": "integer", "minimum": 0, "maximum": 3 },
+        "encoding": { "type": "string", "enum": ["raw", "zstd", "zstd_dict", "unknown"] },
+        "dictionary": { "type": ["string", "null"], "pattern": "^[0-9a-f]{8}$" },
+        "decoded": { "type": "boolean", "description": "False when the body is still compressed (an encoding this modem cannot decode); data then holds the encoded body." },
+        "crc": { "type": "string", "enum": ["ok"], "description": "PDUs that fail their CRC are not delivered; they are reported as pdu_error." },
+        "verify": { "type": "string", "enum": ["unsigned", "valid", "invalid", "unknown_key"], "description": "SPEC 12.3 signature check; 'unsigned' until signatures are implemented." },
+        "bytes": { "type": "integer", "minimum": 0, "description": "Length of the body, or of the chunk's data for file_chunk." },
+        "data": { "type": "string", "description": "The body (file_chunk: the chunk's data after object and offset), base64." },
+        "text": { "type": "string", "description": "The body as text, for message PDUs that are valid UTF-8." },
+        "object": { "type": "integer", "minimum": 0 },
+        "offset": { "type": "integer", "minimum": 0 },
+        "saved": {
+          "type": "object",
+          "required": ["path", "complete"],
+          "properties": {
+            "path": { "type": "string" },
+            "complete": { "type": "boolean" },
+            "bytes": { "type": "integer", "minimum": 0 },
+            "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+          }
+        }
+      }
+    },
+    "ev_session": {
+      "type": "object",
+      "required": ["event", "kind", "peer"],
+      "properties": {
+        "event": { "const": "session" },
+        "kind": { "type": "string" },
+        "peer": { "$ref": "#/$defs/address" }
+      },
+      "oneOf": [
+        {
+          "properties": {
+            "kind": { "const": "state" },
+            "state": { "type": "string", "enum": ["connecting", "open", "closing", "disconnected", "link_lost", "failed", "refused", "expired"] },
+            "session_id": { "type": ["integer", "null"], "minimum": 0, "maximum": 65535 },
+            "initiator": { "type": ["boolean", "null"] },
+            "resumed": { "type": ["boolean", "null"] },
+            "reason": { "type": ["string", "null"], "enum": ["refused", "no_answer", "half_open_timeout", "busy", "cancelled", null] }
+          },
+          "required": ["state", "session_id", "initiator", "resumed", "reason"]
+        },
+        {
+          "properties": {
+            "kind": { "const": "progress" },
+            "progress": { "$ref": "#/$defs/progress" }
+          },
+          "required": ["progress"]
+        },
+        {
+          "properties": {
+            "kind": { "const": "delivered" },
+            "ref": { "type": "integer", "minimum": 1 },
+            "bytes": { "type": "integer", "minimum": 0 }
+          },
+          "required": ["ref", "bytes"]
+        },
+        {
+          "properties": {
+            "kind": { "const": "undelivered" },
+            "refs": { "type": "array", "items": { "type": "integer", "minimum": 1 } },
+            "bytes": { "type": "integer", "minimum": 0 }
+          },
+          "required": ["refs", "bytes"]
+        }
+      ]
+    },
+    "ev_link": {
+      "type": "object",
+      "required": ["event", "kind"],
+      "properties": {
+        "event": { "const": "link" },
+        "kind": { "type": "string" }
+      },
+      "oneOf": [
+        {
+          "properties": {
+            "kind": { "const": "frame" },
+            "peer": { "$ref": "#/$defs/address" },
+            "frame_type": { "$ref": "#/$defs/frame_type" },
+            "seq": { "type": "integer", "minimum": 0, "maximum": 65535 },
+            "snr_db": { "type": "number" },
+            "ppm": { "type": "number" },
+            "frame_mcs": { "type": "integer", "minimum": 0, "maximum": 7 },
+            "blocks": { "type": "integer", "minimum": 0 },
+            "block_errors": { "type": "integer", "minimum": 0 },
+            "bler": { "type": "number", "minimum": 0, "maximum": 1 },
+            "rx": { "$ref": "#/$defs/direction" },
+            "tx": { "$ref": "#/$defs/direction" },
+            "far_end": {
+              "anyOf": [
+                { "type": "null" },
+                {
+                  "type": "object",
+                  "required": ["snr_db", "block_errors", "distortion", "requested_mcs", "clipped"],
+                  "properties": {
+                    "snr_db": { "type": "number" },
+                    "block_errors": { "type": "integer", "minimum": 0 },
+                    "distortion": { "type": "integer", "minimum": 0, "maximum": 7 },
+                    "requested_mcs": { "type": "integer", "minimum": 0, "maximum": 7 },
+                    "clipped": { "type": "boolean" }
+                  }
+                }
+              ]
+            },
+            "distortion": { "type": "integer", "minimum": 0, "maximum": 7 },
+            "clipped": { "type": "boolean" }
+          },
+          "required": ["peer", "frame_type", "seq", "snr_db", "ppm", "frame_mcs", "blocks", "block_errors", "bler", "rx", "tx", "far_end", "distortion", "clipped"]
+        },
+        {
+          "properties": {
+            "kind": { "const": "probe" },
+            "ref": { "type": ["integer", "null"], "minimum": 1 },
+            "target": { "$ref": "#/$defs/address" },
+            "answered": { "type": "boolean" },
+            "forward": { "$ref": "#/$defs/probe_direction" },
+            "reverse": { "$ref": "#/$defs/probe_direction" }
+          },
+          "required": ["ref", "target", "answered", "forward", "reverse"]
+        }
+      ]
+    },
+    "probe_direction": {
+      "anyOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "required": ["snr_db", "mcs", "net_kbps"],
+          "properties": {
+            "snr_db": { "type": "number" },
+            "mcs": { "type": "integer", "minimum": 0, "maximum": 7 },
+            "net_kbps": { "type": "number", "minimum": 0 }
+          }
+        }
+      ]
+    },
+    "ev_heard": {
+      "type": "object",
+      "required": ["event", "address", "call", "ssid", "dst", "frame_type", "mode", "session", "mcs", "width", "snr_db", "ppm", "blocks", "blocks_ok", "count"],
+      "properties": {
+        "event": { "const": "heard" },
+        "address": { "$ref": "#/$defs/address" },
+        "call": { "type": "string" },
+        "ssid": { "type": "integer", "minimum": 0, "maximum": 15 },
+        "dst": { "$ref": "#/$defs/address" },
+        "frame_type": { "$ref": "#/$defs/frame_type" },
+        "mode": { "$ref": "#/$defs/mode" },
+        "session": { "type": "boolean" },
+        "mcs": { "type": "integer", "minimum": 0, "maximum": 7 },
+        "width": { "type": "integer", "minimum": 24, "maximum": 56 },
+        "snr_db": { "type": "number" },
+        "ppm": { "type": "number" },
+        "blocks": { "type": "integer", "minimum": 0 },
+        "blocks_ok": { "type": "integer", "minimum": 0 },
+        "count": { "type": "integer", "minimum": 1, "description": "Headers heard from this station so far (heard list)." }
+      }
+    },
+    "ev_channel": {
+      "allOf": [
+        { "$ref": "#/$defs/channel_state" },
+        {
+          "type": "object",
+          "required": ["event"],
+          "properties": { "event": { "const": "channel" } }
+        }
+      ]
+    },
+    "ev_dcd": {
+      "type": "object",
+      "required": ["event", "raw", "detectors", "at"],
+      "properties": {
+        "event": { "const": "dcd" },
+        "raw": { "type": "boolean" },
+        "detectors": { "$ref": "#/$defs/detectors" },
+        "at": { "$ref": "#/$defs/modem_time", "description": "Modem time of the edge (the sample it happened at)." }
+      }
+    },
+    "ev_tx": {
+      "type": "object",
+      "required": ["event", "kind"],
+      "properties": {
+        "event": { "const": "tx" },
+        "kind": { "type": "string" }
+      },
+      "oneOf": [
+        {
+          "properties": {
+            "kind": { "const": "start" },
+            "frame_type": { "$ref": "#/$defs/frame_type" },
+            "dst": { "$ref": "#/$defs/address" },
+            "seq": { "type": "integer", "minimum": 0, "maximum": 65535 },
+            "mcs": { "type": "integer", "minimum": 0, "maximum": 7 },
+            "width": { "type": "integer", "minimum": 24, "maximum": 56 },
+            "blocks": { "type": "integer", "minimum": 0 },
+            "turn_holder": { "type": "boolean" },
+            "keyed_s": { "type": "number", "minimum": 0 }
+          },
+          "required": ["frame_type", "dst", "seq", "mcs", "width", "blocks", "turn_holder", "keyed_s"]
+        },
+        {
+          "properties": {
+            "kind": { "const": "done" },
+            "keyed_ms": { "type": ["number", "null"], "minimum": 0 },
+            "txdelay_ms": { "type": ["number", "null"], "minimum": 0 },
+            "txtail_ms": { "type": ["number", "null"], "minimum": 0 }
+          },
+          "required": ["keyed_ms", "txdelay_ms", "txtail_ms"]
+        },
+        {
+          "properties": {
+            "kind": { "const": "broadcast_sent" },
+            "refs": { "type": "array", "items": { "type": "integer", "minimum": 1 } }
+          },
+          "required": ["refs"]
+        }
+      ]
+    },
+    "ev_error": {
+      "type": "object",
+      "required": ["event", "code", "message", "severity"],
+      "properties": {
+        "event": { "const": "error" },
+        "code": { "$ref": "#/$defs/error_code" },
+        "message": { "type": "string" },
+        "severity": { "type": "string", "enum": ["error", "warning"] },
+        "ref": { "type": ["integer", "null"], "minimum": 1 },
+        "peer": { "anyOf": [{ "$ref": "#/$defs/address" }, { "type": "null" }] }
+      }
+    }
+  }
+}

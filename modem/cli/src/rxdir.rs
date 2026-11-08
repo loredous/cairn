@@ -54,6 +54,38 @@ pub struct Completed {
     pub sha256: String,
 }
 
+/// Where a delivered PDU was saved.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Saved {
+    /// The file (a `.part` file while an object is incomplete).
+    pub path: PathBuf,
+    /// The object, when this PDU completed it.
+    pub completed: Option<Completed>,
+    /// A MESSAGE PDU saved whole.
+    pub message: bool,
+}
+
+impl Saved {
+    /// The lines to print: a completed file's path and SHA-256, a
+    /// message's path (nothing for a chunk of an incomplete object).
+    pub fn lines(&self, from: Address, pdu: &Pdu) -> Vec<String> {
+        match self {
+            Saved { completed: Some(c), .. } => vec![format!(
+                "rx file from {} object {} complete: {} bytes -> {} sha256 {}",
+                c.from,
+                c.object,
+                c.bytes,
+                c.path.display(),
+                c.sha256
+            )],
+            Saved { path, completed: None, message: true } => {
+                vec![format!("rx message from {from} saved: {} ({} bytes)", path.display(), pdu.body.len())]
+            }
+            _ => Vec::new(),
+        }
+    }
+}
+
 /// The callsign as a file-name part: letters, digits and '-' only.
 fn call_part(a: &Address) -> String {
     a.to_string().chars().map(|c| if c.is_ascii_alphanumeric() || c == '-' { c } else { '_' }).collect()
@@ -106,30 +138,34 @@ impl RxDir {
     /// A delivered PDU (session, or broadcast when `broadcast`). Returns the
     /// lines to print: a completed file's path and SHA-256, a message's path.
     pub fn on_pdu(&mut self, from: Address, pdu: &Pdu, broadcast: bool) -> io::Result<Vec<String>> {
+        Ok(self.save(from, pdu, broadcast)?.map_or_else(Vec::new, |s| s.lines(from, pdu)))
+    }
+
+    /// A delivered PDU: where it went. FILE-CHUNK PDUs of sessions go into
+    /// their object's file (`completed` once it is whole), MESSAGE PDUs into
+    /// a file of their own; other PDUs, and broadcast FILE-CHUNKs, are not
+    /// saved.
+    pub fn save(&mut self, from: Address, pdu: &Pdu, broadcast: bool) -> io::Result<Option<Saved>> {
         match pdu.pdu_type {
             pdu_type::FILE_CHUNK if !broadcast && pdu.body.len() >= 8 => {
                 let obj = u32::from_be_bytes(pdu.body[0..4].try_into().expect("4 bytes"));
                 let off = u32::from_be_bytes(pdu.body[4..8].try_into().expect("4 bytes"));
-                Ok(match self.chunk(from, obj, off as u64, &pdu.body[8..])? {
-                    Some(c) => vec![format!(
-                        "rx file from {} object {} complete: {} bytes -> {} sha256 {}",
-                        c.from,
-                        c.object,
-                        c.bytes,
-                        c.path.display(),
-                        c.sha256
-                    )],
-                    None => Vec::new(),
-                })
+                Ok(Some(match self.chunk(from, obj, off as u64, &pdu.body[8..])? {
+                    Some(c) => Saved { path: c.path.clone(), completed: Some(c), message: false },
+                    None => {
+                        let path = self.objects.get(&(from, obj)).map(|p| p.part.clone()).unwrap_or_default();
+                        Saved { path, completed: None, message: false }
+                    }
+                }))
             }
             pdu_type::MESSAGE => {
                 self.messages += 1;
                 let kind = if broadcast { "ui" } else { "msg" };
                 let path = unique(&self.dir, &format!("{}_{kind}{}", call_part(&from), self.messages), "txt");
                 fs::write(&path, &pdu.body)?;
-                Ok(vec![format!("rx message from {from} saved: {} ({} bytes)", path.display(), pdu.body.len())])
+                Ok(Some(Saved { path, completed: None, message: true }))
             }
-            _ => Ok(Vec::new()),
+            _ => Ok(None),
         }
     }
 

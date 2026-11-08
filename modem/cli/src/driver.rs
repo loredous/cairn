@@ -1,11 +1,13 @@
 //! The live modem (`cairn-modem run`): the [`Modem`] core on a sound card
-//! and a PTT, with the KISS server and the control interface.
+//! and a PTT, with the KISS server, the native API (`hostapi`, SPEC 13.2)
+//! and the line control interface.
 //!
 //! Threads: this one owns the core and the capture stream and runs the
 //! event loop; a transmit thread owns the playback stream and the PTT and
 //! runs each keyed transmission (`txseq::transmit`: key, TXDelay, audio,
 //! drain, TXTail, unkey), reporting the measured release time; the KISS
-//! server and the control readers send commands over channels. The
+//! server, the API server and the control readers send commands over
+//! channels. The
 //! station's clock is the monotonic clock since start; capture sample times
 //! come from a running estimate of when each sample arrived (the earliest
 //! arrival over the last few seconds, which tracks drift between the
@@ -25,7 +27,12 @@ use cairn_link::{HostCommand, Instant};
 use cairn_phy::params::FS;
 use cairn_ptt::SharedPtt;
 
+use cairn_api::proto::{ApiError, Code, Rejected};
+use cairn_api::server::{ApiServer, Inbound};
+use serde_json::Value;
+
 use crate::control::{self, Control, HostState};
+use crate::hostapi::{HostApi, HostApiConfig};
 use crate::kiss::{self, KissCommand};
 use crate::runtime::{DecodeTime, Modem, ModemConfig, Output};
 use crate::txseq::{self, TxTiming};
@@ -59,12 +66,24 @@ pub struct RunOptions {
     pub status_every: Option<Duration>,
     /// Save received files and messages here.
     pub rx_dir: Option<std::path::PathBuf>,
+    /// Native API on TCP (None: off).
+    pub api: Option<String>,
+    /// Native API on a Unix socket.
+    pub api_socket: Option<std::path::PathBuf>,
+    /// Where captures go.
+    pub capture_dir: std::path::PathBuf,
+    /// Keep the heard list in this file.
+    pub heard_file: Option<std::path::PathBuf>,
+    /// Capture automatically after a frame from the session peer fails
+    /// (a header failure, or data blocks lost), at most once a minute.
+    pub capture_on_failure: bool,
 }
 
 /// What the event loop hears from other threads.
 enum Msg {
     Control(String),
     Kiss(SocketAddr, KissCommand),
+    Api(Inbound),
     TxDone { release_wall: std::time::Instant, keyed_ms: f64, txdelay_ms: f64, txtail_ms: f64, err: Option<String> },
 }
 
@@ -109,8 +128,18 @@ pub fn run(
     let _ = START.set(origin);
     let now = move || Instant(origin.elapsed().as_micros() as u64);
     cfg.decode_time = DecodeTime::Wall(origin);
+    let ring_seconds = cfg.ring_seconds;
     let mut modem = Modem::new(cfg);
     let mut host = HostState::new();
+    let epoch = cairn_api::proto::now_unix_us();
+    let mut api = HostApi::new(
+        HostApiConfig {
+            capture_dir: opts.capture_dir.clone(),
+            heard_file: opts.heard_file.clone(),
+            epoch_unix_us: epoch,
+        },
+        ring_seconds,
+    )?;
     let mut rx_dir = match &opts.rx_dir {
         Some(d) => {
             let r = crate::rxdir::RxDir::new(d).map_err(|e| format!("--rx-dir {}: {e}", d.display()))?;
@@ -204,6 +233,39 @@ pub fn run(
         }
         None => None,
     };
+    // Native API.
+    let server = if opts.api.is_some() || opts.api_socket.is_some() {
+        let (srv, inbound) = ApiServer::new();
+        if let Some(addr) = &opts.api {
+            let local = srv.listen_tcp(addr).map_err(|e| format!("API on {addr}: {e}"))?;
+            println!("native API on {local}");
+        }
+        #[cfg(unix)]
+        if let Some(p) = &opts.api_socket {
+            srv.listen_unix(p).map_err(|e| format!("API socket {}: {e}", p.display()))?;
+            println!("native API on {}", p.display());
+        }
+        let m = msg_tx.clone();
+        std::thread::spawn(move || {
+            for i in inbound {
+                if m.send(Msg::Api(i)).is_err() {
+                    break;
+                }
+            }
+        });
+        Some(srv)
+    } else {
+        None
+    };
+    let publish = |api: &mut HostApi, srv: &Option<ApiServer>| {
+        for e in api.take_events() {
+            if let Some(s) = srv {
+                s.publish(e.name, &e.line);
+            }
+        }
+    };
+    let mut auto_capture: Option<std::time::Instant> = None;
+    let mut last_auto: Option<std::time::Instant> = None;
     // Control: stdin and a TCP port.
     if opts.stdin {
         let m = msg_tx.clone();
@@ -258,9 +320,66 @@ pub fn run(
         // Messages.
         while let Ok(m) = msg_rx.try_recv() {
             match m {
+                Msg::Api(i) => {
+                    let Some(srv) = &server else { continue };
+                    match i {
+                        Inbound::Connected(id) => srv.send_hello(id, &api.hello(id, &modem, now())),
+                        Inbound::Line(id, line) => {
+                            let h = api.request(&line, &mut modem, now());
+                            if let Some(sub) = h.subscribe {
+                                srv.subscribe(id, sub);
+                            }
+                            srv.send(id, &h.response);
+                        }
+                        Inbound::TooLong(id) | Inbound::NotUtf8(id) => {
+                            let error = match i {
+                                Inbound::TooLong(_) => ApiError::new(Code::LineTooLong, "request line over 1 MiB"),
+                                _ => ApiError::new(Code::BadJson, "request line is not UTF-8"),
+                            };
+                            srv.send(id, &Rejected { id: Value::Null, cmd: Value::Null, error }.response().to_string());
+                        }
+                        Inbound::Disconnected(_) => {}
+                    }
+                }
                 Msg::Control(line) => match control::parse(&line) {
                     Ok(Control::Quit) => quit = true,
                     Ok(Control::Status) => output_line(&control::status(&modem), &clients),
+                    Ok(Control::Heard) => {
+                        let list = api.heard().list(None, None);
+                        if list.is_empty() {
+                            output_line("heard: nobody yet", &clients);
+                        }
+                        for e in list {
+                            output_line(
+                                &format!(
+                                    "heard {} last {} ({} headers, last {} MCS {} x{} SNR {:.1} dB, best {:.1} dB)",
+                                    e.address,
+                                    cairn_api::proto::utc_string(e.last_us),
+                                    e.count,
+                                    e.last_frame_type,
+                                    e.last_mcs,
+                                    e.last_width,
+                                    e.last_snr_db,
+                                    e.best_snr_db
+                                ),
+                                &clients,
+                            );
+                        }
+                    }
+                    Ok(Control::Capture { seconds, label }) => {
+                        match api.capture(&modem, seconds, label.as_deref(), "control") {
+                            Ok(m) => output_line(
+                                &format!(
+                                    "capture: {} s -> {} and {}",
+                                    m["seconds"],
+                                    m["wav"].as_str().unwrap_or(""),
+                                    m["sidecar"].as_str().unwrap_or("")
+                                ),
+                                &clients,
+                            ),
+                            Err(e) => output_line(&format!("error: capture: {}", e.message), &clients),
+                        }
+                    }
                     Ok(Control::Help) => output_line(control::HELP, &clients),
                     Ok(c) => match host.commands(&c) {
                         Ok((cmds, line)) => {
@@ -306,13 +425,19 @@ pub fn run(
                     let release = Instant(release_wall.saturating_duration_since(origin).as_micros() as u64);
                     keyed_total += Duration::from_secs_f64(keyed_ms / 1e3);
                     match e {
-                        None => output_line(
-                            &format!(
-                                "tx done: keyed {keyed_ms:.0} ms, TXDelay {txdelay_ms:.1} ms, TXTail {txtail_ms:.1} ms (at the DAC)"
-                            ),
-                            &clients,
-                        ),
-                        Some(e) => output_line(&format!("tx failed: {e} (PTT released)"), &clients),
+                        None => {
+                            output_line(
+                                &format!(
+                                    "tx done: keyed {keyed_ms:.0} ms, TXDelay {txdelay_ms:.1} ms, TXTail {txtail_ms:.1} ms (at the DAC)"
+                                ),
+                                &clients,
+                            );
+                            api.on_tx_done(Some((keyed_ms, txdelay_ms, txtail_ms)), now());
+                        }
+                        Some(e) => {
+                            output_line(&format!("tx failed: {e} (PTT released)"), &clients);
+                            api.on_tx_failed(&format!("transmission failed: {e} (PTT released)"), now());
+                        }
                     }
                     modem.tx_done(release, now());
                 }
@@ -349,18 +474,37 @@ pub fn run(
         }
         // Outputs.
         for o in modem.drain() {
+            let mut saved = None;
             if let Some(r) = rx_dir.as_mut() {
-                let saved = match &o {
-                    Output::Deliver { from, pdu } => Some(r.on_pdu(*from, pdu, false)),
+                let res = match &o {
+                    Output::Deliver { from, pdu } => Some((*from, pdu, r.save(*from, pdu, false))),
                     Output::DeliverBroadcast { from, ftype: cairn_link::FrameType::Ui, pdu } => {
-                        Some(r.on_pdu(*from, pdu, true))
+                        Some((*from, pdu, r.save(*from, pdu, true)))
                     }
                     _ => None,
                 };
-                match saved {
-                    Some(Ok(lines)) => lines.iter().for_each(|l| output_line(l, &clients)),
-                    Some(Err(e)) => output_line(&format!("error: --rx-dir: {e}"), &clients),
-                    None => {}
+                match res {
+                    Some((from, pdu, Ok(Some(s)))) => {
+                        s.lines(from, pdu).iter().for_each(|l| output_line(l, &clients));
+                        saved = Some(s);
+                    }
+                    Some((_, _, Err(e))) => output_line(&format!("error: --rx-dir: {e}"), &clients),
+                    _ => {}
+                }
+            }
+            api.on_output(&o, saved.as_ref(), &modem, now());
+            if opts.capture_on_failure && auto_capture.is_none() {
+                let me = modem.station().address();
+                let peer = modem.station().session_info().map(|i| i.peer);
+                let failed = match &o {
+                    Output::HeaderFailed { .. } => peer.is_some(),
+                    Output::Heard(f) => f.header.dst == me && Some(f.header.src) == peer && f.blocks_ok < f.blocks,
+                    _ => false,
+                };
+                let quiet = last_auto.is_none_or(|t| t.elapsed() >= Duration::from_secs(60));
+                if failed && quiet {
+                    // A little after the failure, so the capture holds what followed.
+                    auto_capture = Some(std::time::Instant::now() + Duration::from_secs(2));
                 }
             }
             match &o {
@@ -371,6 +515,7 @@ pub fn run(
                             &format!("tx budget exhausted: {:?} not keyed (PTT stays released)", req.frame.ftype),
                             &clients,
                         );
+                        api.on_tx_failed("tx budget exhausted: not keyed", now());
                         modem.tx_done(now(), now());
                         continue;
                     }
@@ -417,6 +562,16 @@ pub fn run(
                 }
             }
         }
+        api.poll(&modem, now());
+        if auto_capture.is_some_and(|t| std::time::Instant::now() >= t) {
+            auto_capture = None;
+            last_auto = Some(std::time::Instant::now());
+            match api.capture(&modem, None, Some("auto"), "auto") {
+                Ok(m) => output_line(&format!("auto capture after a failed frame: {}", m["wav"]), &clients),
+                Err(e) => output_line(&format!("error: auto capture: {}", e.message), &clients),
+            }
+        }
+        publish(&mut api, &server);
         if let Some(t) = next_status {
             if std::time::Instant::now() >= t {
                 output_line(&control::status(&modem), &clients);
@@ -432,6 +587,16 @@ pub fn run(
     }
     drop(job_tx);
     let _ = tx_thread.join();
+    if let Err(e) = api.save_heard() {
+        eprintln!("error: {e}");
+    }
+    if let Some(s) = &server {
+        s.close_all();
+    }
+    #[cfg(unix)]
+    if let Some(p) = &opts.api_socket {
+        let _ = std::fs::remove_file(p);
+    }
     if let Ok(Some(true)) = ptt.read_back() {
         return Err("PTT still reads keyed after release".into());
     }
