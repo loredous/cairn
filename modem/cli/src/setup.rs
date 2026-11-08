@@ -27,8 +27,8 @@ use crate::txseq::TxTiming;
 pub const TXDELAY_SWEEP_MS: [f64; 8] = [500.0, 400.0, 300.0, 250.0, 200.0, 150.0, 100.0, 50.0];
 /// Margin added to the shortest TXDelay that decoded, ms.
 pub const TXDELAY_MARGIN_MS: f64 = 50.0;
-/// Level-setting tone length, s.
-pub const TONE_S: f64 = 5.0;
+/// Level-setting tone length, s (keyed time stays under the 5 s that `tone` allows without --force).
+pub const TONE_S: f64 = 4.0;
 
 /// A wizard step.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -921,7 +921,7 @@ mod tests {
         // Keyed: the PTT test, the tone, eight sweep frames, the ID frame.
         assert_eq!(hw.keyed.len(), 1 + 1 + 8 + 1, "{:?}", hw.keyed);
         assert!(hw.keyed[0].starts_with("key_ptt serial:All-In-One-Cable"));
-        assert!(hw.keyed[1].contains("txdelay 300 ms") && hw.keyed[1].contains("5.00 s"), "{}", hw.keyed[1]);
+        assert!(hw.keyed[1].contains("txdelay 300 ms") && hw.keyed[1].contains("4.00 s"), "{}", hw.keyed[1]);
         assert!(hw.keyed[2].contains("txdelay 500 ms") && hw.keyed[9].contains("txdelay 50 ms"));
         assert!(text.contains("Recommended: 200 + 50 ms margin = 250 ms"));
         assert!(text.contains("70% of full deviation") && text.contains("drive sweep"));

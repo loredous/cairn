@@ -262,7 +262,7 @@ The setup goes through these steps, in order:
    peaks under -3 dBFS); optionally a second one while a peer sends the
    tone or data (peaks near -10 dBFS); whether to run the receive AGC.
 7. **PTT test**: 1 s keyed, no audio.
-8. **Transmit level**: the level-setting tone (5 s), with how to judge
+8. **Transmit level**: the level-setting tone (4 s), with how to judge
    70% deviation without a meter (the limiter knee on a second receiver,
    minus 3 dB) and the empirical fallback, the drive sweep: lower the
    interface's output (for the AIOC, 'AIOC Audio Out Volume') 1-2 dB at a
