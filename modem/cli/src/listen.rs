@@ -464,11 +464,15 @@ pub fn decode_job(rx: &mut Receiver, job: &Job, opts: &RxOptions) -> RxResult {
     }
 }
 
-/// Start the decoder thread: one [`Receiver`] decoding jobs in order.
-pub fn spawn_decoder(jobs: ChanRx<Job>, reports: Sender<FrameReport>, opts: RxOptions) -> JoinHandle<()> {
+/// Start the decoder thread: one [`Receiver`] decoding jobs in order. With
+/// `boost`, it asks the scheduler to run it at full speed ([`crate::boost`]).
+pub fn spawn_decoder(jobs: ChanRx<Job>, reports: Sender<FrameReport>, opts: RxOptions, boost: bool) -> JoinHandle<()> {
     std::thread::Builder::new()
         .name("cairn-decode".into())
         .spawn(move || {
+            if boost && let Err(e) = crate::boost::boost_current_thread() {
+                eprintln!("note: decoder runs without a utilisation clamp ({e}); turnaround may suffer");
+            }
             let mut rx = Receiver::new();
             for job in jobs {
                 let t0 = Instant::now();
@@ -610,6 +614,8 @@ pub struct ListenOptions {
     pub rx: RxOptions,
     /// Stats interval, samples (0: never).
     pub stats_every: usize,
+    /// Run the decoder at full speed when it wakes ([`crate::boost`]).
+    pub boost: bool,
 }
 
 /// Totals at the end of a run.
@@ -640,7 +646,7 @@ pub fn run(
 ) -> Totals {
     let (job_tx, job_rx) = channel();
     let (rep_tx, rep_rx) = channel();
-    let worker = spawn_decoder(job_rx, rep_tx, opts.rx.clone());
+    let worker = spawn_decoder(job_rx, rep_tx, opts.rx.clone(), opts.boost);
     let mut listener = Listener::new(config, opts.detector.clone(), job_tx);
     let mut meter = LevelMeter::new();
     let mut totals = Totals::default();
@@ -726,6 +732,7 @@ mod tests {
             detector: DetectorConfig::default(),
             rx: RxOptions { threads: 2, ..Default::default() },
             stats_every: 0,
+            boost: false,
         };
         let t = run(&mut src, cfg, opts, &mut |o| {
             if let Output::Frame(f) = o {

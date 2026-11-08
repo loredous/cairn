@@ -283,6 +283,9 @@ struct ListenArgs {
     /// Data-block decoder threads
     #[arg(long, default_value_t = 4)]
     threads: usize,
+    /// Do not ask the scheduler to run the decoder at full speed (Linux uclamp)
+    #[arg(long)]
+    no_boost: bool,
     /// Read this WAV (48 kHz mono 16-bit) instead of the sound card, as fast as possible
     #[arg(long)]
     wav: Option<PathBuf>,
@@ -773,7 +776,12 @@ fn listen_cmd(a: ListenArgs) -> Result<(), String> {
         Box::new(HeaderFirst::new(link, rx_opts.clone()))
     };
     let detector = DetectorConfig { xcorr_threshold: a.rho, ..Default::default() };
-    let opts = ListenOptions { detector, rx: rx_opts, stats_every: (a.stats * FS as f64).round() as usize };
+    let opts = ListenOptions {
+        detector,
+        rx: rx_opts,
+        stats_every: (a.stats * FS as f64).round() as usize,
+        boost: !a.no_boost,
+    };
     let limit = (a.seconds > 0.0).then_some((a.seconds * FS as f64) as usize);
 
     let live = a.wav.is_none();

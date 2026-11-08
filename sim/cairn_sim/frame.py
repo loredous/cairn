@@ -915,7 +915,7 @@ def locate(rx: np.ndarray, cp: int | None = None,
 # --- probe extent (ADR 0007 broadcast-width-from-probe) -----------------------
 
 EXTENT_SIGMA = 5.0          # a tone carries the probe when its signal clears this many noise deviations
-EXTENT_FLOOR_DB = -24.0     # ... and this level against the base tones (clip-and-filter regrowth: about -30 dB)
+EXTENT_FLOOR_DB = -18.0     # ... and this level against the base tones (regrowth, mic-path leakage: -22 to -33 dB)
 EXTENT_NOISE_TONES = 11     # neighbouring upper tones pooled for each tone's noise reference
 
 

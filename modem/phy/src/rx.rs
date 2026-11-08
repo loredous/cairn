@@ -841,8 +841,9 @@ impl Receiver {
 /// standard deviations of its noise-only value (ADR 0007 probe extent).
 pub const EXTENT_SIGMA: f64 = 5.0;
 /// ... and this level against the base tones' probe power, dB
-/// (clip-and-filter regrowth just above the cap is about -30 dB).
-pub const EXTENT_FLOOR_DB: f64 = -24.0;
+/// (clip-and-filter regrowth just above the cap is about -30 dB; the mic
+/// path's limiter and filter tails leave -22 to -25 dB on the next tones).
+pub const EXTENT_FLOOR_DB: f64 = -18.0;
 /// Neighbouring upper tones pooled for each tone's noise reference.
 pub const EXTENT_NOISE_TONES: usize = 11;
 /// Width offsets tried around the probe's when no data block decodes there.

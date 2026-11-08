@@ -6,6 +6,7 @@
 
 #![warn(missing_docs)]
 
+pub mod boost;
 pub mod frames;
 pub mod headers;
 pub mod listen;
