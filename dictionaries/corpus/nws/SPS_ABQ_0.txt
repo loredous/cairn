@@ -1,0 +1,29 @@
+WWUS85 KABQ 021158 SPSABQ
+
+Special Weather Statement National Weather Service Albuquerque NM 458 AM MST Mon Nov 2 2026
+
+NMZ218-219-221>223-021245- Estancia Valley NM-Santa Fe Metro Area NM-Central Highlands NM- Middle Rio Grande Valley including the Albuquerque Metro Area NM- Sandia and Manzano Mountains including Edgewood NM- 458 AM MST Mon Nov 2 2026
+
+...A LINE OF SHOWERS WILL IMPACT SOUTHEASTERN VALENCIA... BERNALILLO...NORTHWESTERN TORRANCE...SOUTHEASTERN SANDOVAL AND SOUTHERN SANTA FE COUNTIES UNTIL 545 AM MST...
+
+At 458 AM MST, Doppler radar was tracking a line of showers extending from near Sandia Park to 6 miles east of Rio Communities, moving east at 35 mph.
+
+HAZARD...Wind gusts up to 50 mph.
+
+SOURCE...Radar indicated.
+
+IMPACT...Gusty winds could knock down tree limbs and blow around unsecured objects.
+
+Locations impacted include... Moriarty, Estancia, Edgewood, Mountainair, Tijeras, Willard, Chilili and Escabosa.
+
+This includes the following highways... Interstate 40 between Mile Markers 168 and 210. Highway 285 between Mile Markers 268 and 271. Highway 60 between Mile Markers 206 and 226. Interstate 25 between Mile Markers 187 and 190.
+
+PRECAUTIONARY/PREPAREDNESS ACTIONS...
+
+Monitor the weather situation closely and be alert for threatening weather conditions.
+
+&&
+
+LAT...LON 3480 10652 3492 10647 3529 10654 3529 10581 3489 10578 3464 10586 3448 10603 3450 10605 3450 10608 3449 10610 3450 10611 3449 10613 3450 10617 3451 10618 3452 10621 3453 10622 3451 10629 3459 10687 TIME...MOT...LOC 1158Z 275DEG 30KT 3520 10641 3492 10636 3475 10643 3464 10660
+
+MAX HAIL SIZE...0.00 IN MAX WIND GUST...50 MPH

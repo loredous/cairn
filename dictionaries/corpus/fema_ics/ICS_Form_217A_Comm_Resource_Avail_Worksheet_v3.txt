@@ -1,0 +1,31 @@
+Frequency Band
+
+Description
+
+COMMUNICATIONS RESOURCE AVAILABILITY WORKSHEET Pg No
+
+Channel Configuration
+
+Channel Name/Trunked Radio System Talkgroup
+
+Eligible Users
+
+RX Freq
+
+N or W
+
+RX Tone/NAC
+
+TX Freq
+
+N or W
+
+Tx Tone/NAC
+
+Mode A, D or M
+
+Remarks
+
+The convention calls for frequency lists to show four digits after the decimal place, followed by either an "N" or a "W", depending on whether the frequency is narrow or wide band. Mode refers to either "A" or "D" indicating analog or digital (e.g. Project 25) or "M" indicating mixed mode. All channels are shown as if programmed in a control station, mobile or portable radio. Repeater and base stations must be programmed with the Rx and Tx reversed. ICS 217A Excel
+
+3/2007

@@ -1,0 +1,29 @@
+WWUS83 KDVN 040022 SPSDVN
+
+Special Weather Statement National Weather Service Quad Cities IA/IL 622 PM CST Tue Nov 3 2026
+
+IAZ067-078-089-ILZ016-024>026-040115- Warren IL-Mercer IL-Henderson IL-Henry IL-Des Moines IA-Muscatine IA- Louisa IA- 622 PM CST Tue Nov 3 2026
+
+...An area of heavy rain will impact portions of northwestern Warren, Mercer, northeastern Henderson, southwestern Henry, northeastern Des Moines, southwestern Muscatine and southeastern Louisa Counties through 715 PM CST...
+
+At 622 PM CST, Doppler radar was tracking heavy rain near Oquawka, moving northeast at 40 mph.
+
+HAZARD...Wind gusts up to 50 mph.
+
+SOURCE...Radar indicated.
+
+IMPACT...Strong winds could break small tree limbs and blow around unsecured objects.
+
+Locations impacted include... Aledo, Oquawka, Burgess, Fruitland, Viola, Millersburg, Matherville, New Boston, Keithsburg, Eliza, Joy, Gladstone, Rozetta, Seaton, Oakville, Shale City, Toolesboro, Boden, Mannon, and Ogle.
+
+PRECAUTIONARY/PREPAREDNESS ACTIONS...
+
+If outdoors, consider seeking shelter inside a building.
+
+&&
+
+LAT...LON 4086 9096 4099 9113 4134 9118 4126 9043 TIME...MOT...LOC 0022Z 227DEG 33KT 4098 9098
+
+MAX HAIL SIZE...<0.75 IN MAX WIND GUST...50 MPH
+
+$$

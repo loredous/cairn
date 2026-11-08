@@ -1,0 +1,21 @@
+NOUS43 KUNR 041915 PNSUNR
+
+Public Information Statement National Weather Service Rapid City SD 1215 PM MDT Wed Nov 4 2026
+
+To: Subscribers: -NOAA Weather Wire Service -Emergency Managers Weather Information Network -NOAAPort -Other NWS Partners and NWS Employees
+
+From: David Hintz, NWS Rapid City Meteorologist in Charge Melissa Smith, NWS Rapid City Service Hydrologist
+
+Subject: Soliciting Comments until December 15, 2026 to Discontinue the Monthly Precipitation Summary Text Product (RR2) December 31, 2026.
+
+The National Weather Service (NWS) Rapid City is proposing to discontinue the Monthly Precipitation Summary (RR2) text product effective December 31, 2026. The RR2 provides total monthly precipitation amounts for Cooperative Observing (COOP) stations and Automated Surface Observing Systems (ASOS) across western South Dakota and northeastern Wyoming. This product has historically been issued on an ad hoc basis throughout the month.
+
+Product Proposed For Discontinuance:
+
+Product Name AWIPS ID WMO Heading Monthly Precipitation Data RR2UNR SRUS53 KUNR
+
+More frequently updated precipitation data are available in both tabular and graphical formats through the NWS Rapid City Climate web page at: https://www.weather.gov/wrh/climate?wfo=unr. These data are also available through Climate Data Online (CDO), a service provided by NOAA's National Centers for Environmental Information (NCEI) at: http://www.ncei.noaa.gov/cdo-web
+
+Please submit questions or comments regarding this proposed discontinuance by December 15, 2026 to:
+
+Melissa Smith National Weather Service Rapid City, SD 300 East Signal Drive Rapid City, South Dakota 57701 605-341-9271

@@ -1,0 +1,203 @@
+DEMOBILIZATION CHECK-OUT (ICS 221) 1. Incident Name:
+
+2. Incident Number:
+
+3. Planned Release Date/Time: Date:
+
+4. Resource or Personnel Released:
+
+5. Order Request Number:
+
+Time:
+
+6. Resource or Personnel: You and your resources are in the process of being released. Resources are not released until the checked boxes below have been signed off by the appropriate overhead and the Demobilization Unit Leader (or Planning Section representative). LOGISTICS SECTION Unit/Manager Remarks Name Signature Supply Unit
+
+Communications Unit
+
+Facilities Unit
+
+Ground Support Unit
+
+Security Manager
+
+FINANCE/ADMINISTRATION SECTION Unit/Leader Remarks Time Unit
+
+Name
+
+Signature
+
+Remarks
+
+Name
+
+Signature
+
+Remarks
+
+Name
+
+Signature
+
+OTHER SECTION/STAFF Unit/Other
+
+PLANNING SECTION Unit/Leader
+
+Documentation Leader
+
+Demobilization Leader
+
+7. Remarks:
+
+8. Travel Information:
+
+Room Overnight: Yes No
+
+Estimated Time of Departure:
+
+Actual Release Date/Time:
+
+Destination:
+
+Estimated Time of Arrival:
+
+Travel Method:
+
+Contact Information While Traveling:
+
+Manifest: Yes No Number:
+
+Area/Agency/Region Notified:
+
+9. Reassignment Information: Yes No Incident Name: Location: 10. Prepared by: Name: ICS 221
+
+Incident Number: Order Request Number: Position/Title: Date/Time:
+
+Signature:
+
+ICS 221 Demobilization Check-Out Purpose. The Demobilization Check-Out (ICS 221) ensures that resources checking out of the incident have completed all appropriate incident business, and provides the Planning Section information on resources released from the incident. Demobilization is a planned process and this form assists with that planning. Preparation. The ICS 221 is initiated by the Planning Section, or a Demobilization Unit Leader if designated. The Demobilization Unit Leader completes the top portion of the form and checks the appropriate boxes in Block 6 that may need attention after the Resources Unit Leader has given written notification that the resource is no longer needed. The individual resource will have the appropriate overhead personnel sign off on any checked box(es) in Block 6 prior to release from the incident. Distribution. After completion, the ICS 221 is returned to the Demobilization Unit Leader or the Planning Section. All completed origial forms must be given to the Documentation Unit. Personnel may request to retain a copy of the ICS 221. Notes: * Members are not released until form is complete when all of the items checked in Block 6 have been signed off. * If additional pages are needed for any form page, use a blank ICS 221 and repaginate as needed. Block Number
+
+Block Title
+
+Instructions
+
+Incident Name
+
+Enter the name assigned to the incident.
+
+Incident Number
+
+Enter the number assigned to the incident.
+
+Planned Release Date/Time
+
+Enter the date (month/day/year) and time (using the 24-hour clock) of the planned release from the incident.
+
+Resource or Personnel Released
+
+Enter name of the individual or resource being released.
+
+Order Request Number
+
+Enter order request number (or agency demobilization number) of the individual or resource being released.
+
+Resource or Personnel You and your resources are in the process of being released. Resources are not released until the checked boxes below have been signed off by the appropriate overhead and the Demobilization Unit Leader (or Planning Section representative). * Unit/Leader/Manager/Other * Remarks * Name * Signature
+
+Resources are not released until the checked boxes below have been signed off by the appropriate overhead. Blank boxes are provided for any additional unit requirements as needed (e.g., Safety Officer, Agency Representative, etc.).
+
+Logistics Section Supply Unit Communications Unit Facilities Unit Ground Support Unit Security Manager
+
+The Demobilization Unit Leader will enter an "X" in the box to the left of those Units requiring the resource to check out. Identified Unit Leaders or other overhead are to sign the appropriate line to indicate release.
+
+Block Number (continued)
+
+Block Title
+
+Instructions
+
+Finance/Administration Section Time Unit
+
+The Demobilization Unit Leader will enter an "X" in the box to the left of those Units requiring the resource to check out.
+
+Other Section/Staff
+
+The Demobilization Unit Leader will enter an "X" in the box to the left of those Units requiring the resource to check out.
+
+Identified Unit Leaders or other overhead are to sign the appropriate line to indicate release.
+
+Identified Unit Leaders or other overhead are to sign the appropriate line to indicate release. Planning Section Documentation Leader Demobilization Leader
+
+The Demobilization Unit Leader will enter an "X" in the box to the left of those Units requiring the resource to check out. Identified Unit Leaders or other overhead are to sign the appropriate line to indicate release.
+
+Remarks
+
+Enter any additional information pertaining to demobilization or release (e.g., transportation needed, destination, etc.). This section may also be used to indicate if a performance rating has been completed as required by the discipline or jurisdiction.
+
+Travel Information
+
+Enter the following travel information:
+
+Room Overnight
+
+Use this section to enter whether or not the resource or personnel will be staying in a hotel overnight prior to returning home base and/or unit.
+
+Estimated Time of Departure
+
+Use this section to enter the resource's or personnel's estimated time of departure (using the 24-hour clock).
+
+Actual Release Date/Time
+
+Use this section to enter the resource's or personnel's actual release date (month/day/year) and time (using the 24-hour clock).
+
+Destination
+
+Use this section to enter the resource's or personnel's destination.
+
+Estimated Time of Arrival
+
+Use this section to enter the resource's or personnel's estimated time of arrival (using the 24-hour clock) at the destination.
+
+Travel Method
+
+Use this section to enter the resource's or personnel's travel method (e.g., POV, air, etc.).
+
+Contact Information While Traveling
+
+Use this section to enter the resource's or personnel's contact information while traveling (e.g., cell phone, radio frequency, etc.).
+
+Manifest Yes No Number
+
+Use this section to enter whether or not the resource or personnel has a manifest. If they do, indicate the manifest number.
+
+Area/Agency/Region Notified
+
+Use this section to enter the area, agency, and/or region that was notified of the resource's travel. List the name (first initial and last name) of the individual notified and the date (month/day/year) he or she was notified.
+
+Reassignment Information Yes No
+
+Enter whether or not the resource or personnel was reassigned to another incident. If the resource or personnel was reassigned, complete the section below.
+
+Incident Name
+
+Use this section to enter the name of the new incident to which the resource was reassigned.
+
+Incident Number
+
+Use this section to enter the number of the new incident to which the resource was reassigned.
+
+Location
+
+Use this section to enter the location (city and State) of the new incident to which the resource was reassigned.
+
+Order Request Number
+
+Use this section to enter the new order request number assigned to the resource or personnel.
+
+Block Number
+
+Block Title
+
+Instructions
+
+Prepared by * Name * Position/Title * Signature * Date/Time
+
+Enter the name, ICS position, and signature of the person preparing the form. Enter date (month/day/year) and time prepared (using the 24-hour clock).

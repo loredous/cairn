@@ -1,0 +1,4170 @@
+[
+ {
+  "source": "fema_ics",
+  "file": "fema_ics/ICS_Form_201_Incident_Briefing_v3.txt",
+  "url": "https://training.fema.gov/EMIWeb/IS/ICSResource/assets/ICS%20Forms/ICS%20Form%20201%2C%20Incident%20Briefing%20%28v3%29.pdf",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "7dbcaf686813397509b6ba08738809c560f03de87c5926e03c021d6a509a002e",
+  "clean_sha256": "d0ec2c35fde4049c096e46cabb8093e6673b8f253a3a0f7877e9ee06ac6739af",
+  "clean_bytes": 6489
+ },
+ {
+  "source": "fema_ics",
+  "file": "fema_ics/ICS_Form_202_Incident_Objectives_v3_1.txt",
+  "url": "https://training.fema.gov/EMIWeb/IS/ICSResource/assets/ICS%20Forms/ICS%20Form%20202%2C%20Incident%20Objectives%20%28v3.1%29.pdf",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "36508936f551eb0557c6be3ffcdac5322618c05aa55561505da7d30b75282034",
+  "clean_sha256": "a0bd5d0ba34054b21d48a184dd3d961c733cb01c78d5711a7a160a2269c4fd9f",
+  "clean_bytes": 4626
+ },
+ {
+  "source": "fema_ics",
+  "file": "fema_ics/ICS_Form_203_Organization_Assignment_List_v3.txt",
+  "url": "https://training.fema.gov/EMIWeb/IS/ICSResource/assets/ICS%20Forms/ICS%20Form%20203%2C%20Organization%20Assignment%20List%20%28v3%29.pdf",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "bf00e4920f14cfe2edd0c64a6577a9f243fe0f98f959b124d011c273e83b4c7d",
+  "clean_sha256": "09f27adf316a5ceee5524909496c555117fecb6d937af980d6384e0337a207c7",
+  "clean_bytes": 6090
+ },
+ {
+  "source": "fema_ics",
+  "file": "fema_ics/ICS_Form_204_Assignment_List_v3_1.txt",
+  "url": "https://training.fema.gov/EMIWeb/IS/ICSResource/assets/ICS%20Forms/ICS%20Form%20204%2C%20Assignment%20List%20%28v3.1%29.pdf",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "b8f71e2bed6d1b00ce42281f906173c697ebd48066d95f3a3c052ebe13d30728",
+  "clean_sha256": "4bb4442e343522ecf4a751070a634ca3b0ddafe530acf66e40604498af3d8dcb",
+  "clean_bytes": 5128
+ },
+ {
+  "source": "fema_ics",
+  "file": "fema_ics/ICS_Form_205_Incident_Radio_Communications_Plan_v3_1.txt",
+  "url": "https://training.fema.gov/EMIWeb/IS/ICSResource/assets/ICS%20Forms/ICS%20Form%20205%2C%20Incident%20Radio%20Communications%20Plan%20%28v3.1%29.pdf",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "cbe54dc5ae6de7af1d01f5c84c68031645f5d92b095763b3667ed13efd872377",
+  "clean_sha256": "334a669c65c8218d0f8a90350f3a235febf3165678ceca3d6d2e0a4148b7164b",
+  "clean_bytes": 4980
+ },
+ {
+  "source": "fema_ics",
+  "file": "fema_ics/ICS_Form_205A_Communications_List_v3.txt",
+  "url": "https://training.fema.gov/EMIWeb/IS/ICSResource/assets/ICS%20Forms/ICS%20Form%20205A%2C%20Communications%20List%20%28v3%29.pdf",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "f3900b90813d2f37f15c81e2a14e30b3ee4121239c27a895647b7c850330b36e",
+  "clean_sha256": "43f7985e2c43e1b3d8b962544afcab29ece8f36588d3b18bcf83732e07af6483",
+  "clean_bytes": 2609
+ },
+ {
+  "source": "fema_ics",
+  "file": "fema_ics/ICS_Form_206_Medical_Plan_v3.txt",
+  "url": "https://training.fema.gov/EMIWeb/IS/ICSResource/assets/ICS%20Forms/ICS%20Form%20206%2C%20Medical%20Plan%20%28v3%29.pdf",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "c45b65c182fd5f002b9966fd7d494fb186c110d046bdd6ce60b3def1208ef7b4",
+  "clean_sha256": "71f35696d2b484b296c39683646368807fc5188cfc322db9fc96dbc44c76f67e",
+  "clean_bytes": 5008
+ },
+ {
+  "source": "fema_ics",
+  "file": "fema_ics/ICS_Form_207_Incident_Organization_Chart_v3.txt",
+  "url": "https://training.fema.gov/EMIWeb/IS/ICSResource/assets/ICS%20Forms/ICS%20Form%20207%2C%20Incident%20Organization%20Chart%20%28v3%29.pdf",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "e2ae9bde78241f4bc6000bd1b0b660a4eba69445f96e6c3091b3d52a9dc8d1bd",
+  "clean_sha256": "c97689c357dde42bf53da9d57695caba17157c3c026f35af0c0f9b5eefb023da",
+  "clean_bytes": 3578
+ },
+ {
+  "source": "fema_ics",
+  "file": "fema_ics/ICS_Form_208_Safety_Message_Plan_v3_1.txt",
+  "url": "https://training.fema.gov/EMIWeb/IS/ICSResource/assets/ICS%20Forms/ICS%20Form%20208%2C%20Safety%20Message-Plan%20%28v3.1%29.pdf",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "429f4db68a0899aca9752f9de73ffd33e418e40ed5c68a23aa65a3c58dc04eab",
+  "clean_sha256": "ecaa29c49df09c451de2a8cb251a2fa704bf40af9120696b618430d524759e4e",
+  "clean_bytes": 2060
+ },
+ {
+  "source": "fema_ics",
+  "file": "fema_ics/ICS_Form_209_Incident_Status_Summary_v3.txt",
+  "url": "https://training.fema.gov/EMIWeb/IS/ICSResource/assets/ICS%20Forms/ICS%20Form%20209%2C%20Incident%20Status%20Summary%20%28v3%29.pdf",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "827ab8bc11d8ba8358b984183d0b9671f82a2ae09db2d0c72beecd5e5b03c0b6",
+  "clean_sha256": "24cd4c3f224fb1db95897d726e3e2921462b37c56fa86b9a63eb5ce4b0770744",
+  "clean_bytes": 60214
+ },
+ {
+  "source": "fema_ics",
+  "file": "fema_ics/ICS_Form_210_Resource_Status_Change_v3.txt",
+  "url": "https://training.fema.gov/EMIWeb/IS/ICSResource/assets/ICS%20Forms/ICS%20Form%20210%2C%20Resource%20Status%20Change%20%28v3%29.pdf",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "32a0c73cc3823f75d6e906f45c5a134a01f17b8ed10ab9cf8d49d9b8bf0c48a9",
+  "clean_sha256": "3f60c6d277fee8747040570b1ac91d22f047824e680ace589150da1e3829c878",
+  "clean_bytes": 3557
+ },
+ {
+  "source": "fema_ics",
+  "file": "fema_ics/ICS_Form_211_Incident_Check_In_List_v3_1.txt",
+  "url": "https://training.fema.gov/EMIWeb/IS/ICSResource/assets/ICS%20Forms/ICS%20Form%20211%2C%20Incident%20Check-In%20List%20%28v3.1%29.pdf",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "b9c22c0768a547b3f6194ad505aebc1f431be472d4cfbdd35405df951a491977",
+  "clean_sha256": "fe81c58c33edb74df5717d839026d8656a18f4f113b18c7998f40b2fce5bada8",
+  "clean_bytes": 7407
+ },
+ {
+  "source": "fema_ics",
+  "file": "fema_ics/ICS_Form_213_General_Message_v3.txt",
+  "url": "https://training.fema.gov/EMIWeb/IS/ICSResource/assets/ICS%20Forms/ICS%20Form%20213%2C%20General%20Message%20%28v3%29.pdf",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "e745a3a7b78bea3295e33b1efbc291011a9b78bdd1c937115c8c5301e7b9454f",
+  "clean_sha256": "abe26cddad247395dcce39afe86919f128f57d62ea68ad77eb53fd5fc21ec8a6",
+  "clean_bytes": 2828
+ },
+ {
+  "source": "fema_ics",
+  "file": "fema_ics/ICS_Form_213RR_Resource_Request_Message_v3.txt",
+  "url": "https://training.fema.gov/EMIWeb/IS/ICSResource/assets/ICS%20Forms/ICS%20Form%20213RR%2C%20Resource%20Request%20Message%20%28v3%29.pdf",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "8aab341bb07ead3b903fd1527e26fca113c74d03a361254cd329b9464e47e798",
+  "clean_sha256": "1c55a771535e21e991754fd32b84d1cd14f190999b8289bacb894c08ff5ffcb1",
+  "clean_bytes": 863
+ },
+ {
+  "source": "fema_ics",
+  "file": "fema_ics/ICS_Form_214_Activity_Log_v3_1.txt",
+  "url": "https://training.fema.gov/EMIWeb/IS/ICSResource/assets/ICS%20Forms/ICS%20Form%20214%2C%20Activity%20Log%20%28v3.1%29.pdf",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "fe7d710eb7c188c9b114b6dad08ed4ee72bf0883fc5f7b59f2f519e4fec3b87b",
+  "clean_sha256": "29a3a88544adb88be3f8a76716ee5b64af31af9aacfe5f296e4b886bc652a596",
+  "clean_bytes": 3488
+ },
+ {
+  "source": "fema_ics",
+  "file": "fema_ics/ICS_Form_215_Operational_Planning_Worksheet_v3.txt",
+  "url": "https://training.fema.gov/EMIWeb/IS/ICSResource/assets/ICS%20Forms/ICS%20Form%20215%2C%20Operational%20Planning%20Worksheet%20%28v3%29.pdf",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "75088eebd3e8f55aa51eccd8ae9dd12d1101759a0b6e85647805602c1215a8de",
+  "clean_sha256": "9dc7c219b6cc9d72ea46d23cb77be7ea647aaee38bb49f57510bf56ad2fe16a3",
+  "clean_bytes": 5026
+ },
+ {
+  "source": "fema_ics",
+  "file": "fema_ics/ICS_Form_217A_Comm_Resource_Avail_Worksheet_v3.txt",
+  "url": "https://training.fema.gov/EMIWeb/IS/ICSResource/assets/ICS%20Forms/ICS%20Form%20217A%2C%20Comm%20Resource%20Avail%20Worksheet%20%28v3%29.pdf",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "0af48b029cd7f6ab3ccaaf8b7f2e6e7dcf68d04778e8cceba6ebb62f0849f6c9",
+  "clean_sha256": "525cc76020b90355b1f9b79a57e08b9b62f128a6c7172ba64eba3a96ceb08d97",
+  "clean_bytes": 729
+ },
+ {
+  "source": "fema_ics",
+  "file": "fema_ics/ICS_Form_218_Support_Vehicle_Equipment_Inventory_v3.txt",
+  "url": "https://training.fema.gov/EMIWeb/IS/ICSResource/assets/ICS%20Forms/ICS%20Form%20218%2C%20Support%20Vehicle-Equipment%20Inventory%20%28v3%29.pdf",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "9100d1c72fc7f841fcd88778e86ad1eac8d3dc39e27708c3b7cd9c217b863e48",
+  "clean_sha256": "7eb0b4d99d7827ed5caedea1bea04428477b594f95b7c310c9e68b0fa97e2eb9",
+  "clean_bytes": 4149
+ },
+ {
+  "source": "fema_ics",
+  "file": "fema_ics/ics_form_221_demobilization_check_out_v3.txt",
+  "url": "https://training.fema.gov/EMIWeb/IS/ICSResource/assets/ICS%20Forms/ics%20form%20221%2C%20demobilization%20check-out%20%28v3%29.pdf",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "d9ebfe692bfee18a99963f737fd824ddaf6db26f3703405b2f921c79ffbdbd53",
+  "clean_sha256": "cdcd8575621b7b5919ae38192788e4affdc483224e0fcc2c5537eef3568b109a",
+  "clean_bytes": 7430
+ },
+ {
+  "source": "fema_ics",
+  "file": "fema_ics/ICS_Form_260_Resource_Order.txt",
+  "url": "https://training.fema.gov/EMIWeb/IS/ICSResource/assets/ICS%20Forms/ICS%20Form%20260%2C%20Resource%20Order.pdf",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "5ad7fef26b59f01f72d21815669b7661f9751c4a50f8286aee4aaa52a9ac24b5",
+  "clean_sha256": "e7586a85f591d2f77887b0312d94ec3d78ef6495a17c6fa9ceec3e27e975093f",
+  "clean_bytes": 1151
+ },
+ {
+  "source": "fema_ics",
+  "file": "fema_ics/ICS_Forms_Instructions_v3.txt",
+  "url": "https://training.fema.gov/EMIWeb/IS/ICSResource/assets/ICS%20Forms/ICS%20Forms%20-%20Instructions%20%28v3%29.pdf",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "a8c4751fa8fd6554d437d462e71cc89acb1b17e4f3a9665804befa10d9b60e21",
+  "clean_sha256": "0a109de034845c4fea4cdfab54f5c3142e2ff2d0869709d3ddb1a39bf4bedf8a",
+  "clean_bytes": 8739
+ },
+ {
+  "source": "ecfr_part97",
+  "file": "ecfr_part97/part97.txt",
+  "url": "https://www.ecfr.gov/api/versioner/v1/full/2026-11-05/title-47.xml?part=97",
+  "as_of": "2026-11-05",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "cb184d49b5f49a79f3e65a0641f77659241b8da52cae46a5e3527c03386c65cb",
+  "clean_sha256": "fd2515ebf427c2249d784c1c1efd32876853311e6db6cb2ca0d0f04348dcfdde",
+  "clean_bytes": 136282
+ },
+ {
+  "source": "nws",
+  "file": "nws/AFD_LOT_0.txt",
+  "url": "https://api.weather.gov/products/ebfa14b0-335e-4fa8-9f97-3cc563576a86",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "ee3c645cf0940e41b6fdd388add853f2931ff1a7bff95d86362a657fc438f8f4",
+  "clean_sha256": "0803b726e1ee877bdc5899e007e5416a3ed333b4f25885a2b7ce0f09c7ecaa86",
+  "clean_bytes": 3433
+ },
+ {
+  "source": "nws",
+  "file": "nws/AFD_LOT_1.txt",
+  "url": "https://api.weather.gov/products/1efc3525-f72f-4423-be32-d44c807668ea",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "6d21834fda3b545aae63b79295a431ad8e8bdc0bfea386948c8c1f252b360c8a",
+  "clean_sha256": "0ff468db87821c273f1be06765a9f1cdec2c183cc3d973aff9ac6153211e1d2f",
+  "clean_bytes": 3591
+ },
+ {
+  "source": "nws",
+  "file": "nws/AFD_DVN_0.txt",
+  "url": "https://api.weather.gov/products/ef6faa98-f931-499c-abcf-8518539b3983",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "4ccf97a8fcf506e4699992afb8f9a38cd90af7aa77b3f2a621aefed2bf16b518",
+  "clean_sha256": "690a1837cb038b6827b1f40d190bde0b299629ef5a8ad98f3372535c0c37156b",
+  "clean_bytes": 3285
+ },
+ {
+  "source": "nws",
+  "file": "nws/AFD_DVN_1.txt",
+  "url": "https://api.weather.gov/products/9d856b5d-254e-4650-8a07-b63ddd89f817",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "a2af067ec78044551e210f1369234c5d066c0f20a20ce33ebfaa80496122f0ef",
+  "clean_sha256": "044c1b2ec8e3381e1fd304652ebc1a16b28b1d78d215cb86b153cf2b92a1ff54",
+  "clean_bytes": 3067
+ },
+ {
+  "source": "nws",
+  "file": "nws/AFD_GRR_0.txt",
+  "url": "https://api.weather.gov/products/19b57bb9-c06b-4d71-bf3b-1a3e0d8d521c",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "ad0959c5d05967a2caf9a1d6ef336b0210820edf24c19bc8a02cf2fc6ce94749",
+  "clean_sha256": "20043463b4532582a10372b3756cd5973422d17a6cf1382ebff8b19f0b7efd0b",
+  "clean_bytes": 2859
+ },
+ {
+  "source": "nws",
+  "file": "nws/AFD_GRR_1.txt",
+  "url": "https://api.weather.gov/products/1f076edb-3ef7-42cc-b5ef-7a2167099da5",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "5991d918ab80bcf0aa4406c0e087d80feeef2c6a8f894cef5184ae131ccf06d4",
+  "clean_sha256": "3f8e4d39ce22208d6d84d33fc92625f63001f6c04eb7c316b42b80df2dee58a5",
+  "clean_bytes": 2615
+ },
+ {
+  "source": "nws",
+  "file": "nws/AFD_MKX_0.txt",
+  "url": "https://api.weather.gov/products/e222fe09-b927-4f95-af0d-96498bfbc83a",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "381c92914692f51710a047548799dab9be3453a252adfb19b17019e583c53030",
+  "clean_sha256": "0477731a145e6a00763e0fff1f583d972ce0d03d169349f12e9920ce9e9082d4",
+  "clean_bytes": 4968
+ },
+ {
+  "source": "nws",
+  "file": "nws/AFD_MKX_1.txt",
+  "url": "https://api.weather.gov/products/0701f509-0135-491f-a427-ea72e39e2cb0",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "a7b42a017deb041e3b19eabb7ae6b57c91b4ca5e8a8dadd6c5bd986073aae337",
+  "clean_sha256": "79943e97b1d6b04f48ffa455d0e9f675b797c12d54745264dcc63a629d5a4639",
+  "clean_bytes": 4429
+ },
+ {
+  "source": "nws",
+  "file": "nws/AFD_DTX_0.txt",
+  "url": "https://api.weather.gov/products/ca07f74d-8b2e-4779-ae3a-902739aa75d1",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "0defd0fb48c73d3fec97f6d80ef40c86c404c477704a047c452b3b2e79fa1362",
+  "clean_sha256": "1c3a17909cb1afe37eddd2fea807fff70191182b29114c03b00e94355f520979",
+  "clean_bytes": 4773
+ },
+ {
+  "source": "nws",
+  "file": "nws/AFD_DTX_1.txt",
+  "url": "https://api.weather.gov/products/467dd727-c9eb-4902-8de7-ad435198adff",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "2960aaeab48d28cd262e17a4d1240a5ba34a4d06e71c8502c6e0e8bf856e5746",
+  "clean_sha256": "4e9e17707be49b94acbab35414335a65ace2a38d8f728da8894b3fd955417782",
+  "clean_bytes": 4677
+ },
+ {
+  "source": "nws",
+  "file": "nws/AFD_IWX_0.txt",
+  "url": "https://api.weather.gov/products/c13592a0-754f-46ad-a56c-a3b8a8184d9e",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "5907b486231b8f2c6490262b3c56f31b433269060af4d0b865d5f98ef486925e",
+  "clean_sha256": "483dcb75143148c7a71d22a112ed855c6887b57c7906855306c9e50e4ba2a7ed",
+  "clean_bytes": 2784
+ },
+ {
+  "source": "nws",
+  "file": "nws/AFD_IWX_1.txt",
+  "url": "https://api.weather.gov/products/cd62364a-c603-4079-b708-c303a72f5f97",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "4d93e1aa46baa5f44f0fcee50b1390aeac37d99b1c3f133b727c90a134e8add3",
+  "clean_sha256": "ae5c9158041decbaac1c78732e4788435e55b8fab4a491ca7e2f1abae7aa4a30",
+  "clean_bytes": 2991
+ },
+ {
+  "source": "nws",
+  "file": "nws/AFD_ILN_0.txt",
+  "url": "https://api.weather.gov/products/9dde3282-7986-4788-a514-ebbdb6221041",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "fb90638efcfad4b05e6fdfdd845f1a576d04bfe6117fbf7a795a19343e06ed5f",
+  "clean_sha256": "b78f1a1e29ace392c9959d724e8fd9a4c1266bf3f01138f1a9d15c17c674b0cd",
+  "clean_bytes": 2860
+ },
+ {
+  "source": "nws",
+  "file": "nws/AFD_ILN_1.txt",
+  "url": "https://api.weather.gov/products/32adbd7c-81d5-41e8-8bb0-0e6adb90ef61",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "7ec2f572f25371442ce5e7a1c48a29f178f9a0b0431a9353dbfea9ab67fbcca9",
+  "clean_sha256": "2dfae0cf00338bb1e1e93747c293e4a1def6beb1e1eebae4c78af60cd1ec3275",
+  "clean_bytes": 2789
+ },
+ {
+  "source": "nws",
+  "file": "nws/AFD_PBZ_0.txt",
+  "url": "https://api.weather.gov/products/7747a0c3-106d-4a84-ba04-d91914460153",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "71f1ea660f88d27f2d8e1c6105d397cc3ec94ca094ea38066a5156ed5165d7ec",
+  "clean_sha256": "4722eac45aefc9cc8762a0a590df46f4e89cc07bea4d8757662e56a36ddc97f4",
+  "clean_bytes": 3209
+ },
+ {
+  "source": "nws",
+  "file": "nws/AFD_PBZ_1.txt",
+  "url": "https://api.weather.gov/products/f3d251ae-e443-4fdd-a023-6b6de7438cbd",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "c89ecacb9628e3d9e6f9b0e08e9a957a4ba0bdadd60590472e0ce7fcf25085ab",
+  "clean_sha256": "fabb06391db906f41866bab1ea00a432d0ecc89c58c51a1f6b6679f2d57bf1bf",
+  "clean_bytes": 3243
+ },
+ {
+  "source": "nws",
+  "file": "nws/AFD_CTP_0.txt",
+  "url": "https://api.weather.gov/products/1440951d-5a67-4e28-8a0c-e58de82cfd12",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "055db5a999be0b5ab7b79f41f447441c3bed558d63d47ca503b0b8e8574a88ed",
+  "clean_sha256": "f3ab86529a85e6b4d89e7f60cf5c2c59e6d369e7a382b2b5516695e38d0b631f",
+  "clean_bytes": 3341
+ },
+ {
+  "source": "nws",
+  "file": "nws/AFD_CTP_1.txt",
+  "url": "https://api.weather.gov/products/66efafe7-7d36-46cf-9df0-5b16322c8c40",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "e1689083f99a276c02f8721bf0d33a54f52f8987f48be0c685d5f23c2e929abc",
+  "clean_sha256": "03af306fa280ce1afb3c53df10f5aeeab59886d542dbb34c31628ccbd9a4987e",
+  "clean_bytes": 3177
+ },
+ {
+  "source": "nws",
+  "file": "nws/AFD_OKX_0.txt",
+  "url": "https://api.weather.gov/products/0355c007-e81a-475b-b778-83417b2f3d2f",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "8127b15b63fff927f22e74ab41072ed46362e3eb7e9fc9182dee6e7bf0937ab5",
+  "clean_sha256": "8b93ebbed6d409415c755fdf170e42ee88201e77419b94d30d97c655d9c3af1b",
+  "clean_bytes": 4129
+ },
+ {
+  "source": "nws",
+  "file": "nws/AFD_OKX_1.txt",
+  "url": "https://api.weather.gov/products/0cb66b93-42e7-4286-8a25-537514dd6dec",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "79af616a7963e9b10992e96ecd9303d1ced96ab9fe8d3445471de72166cbc5d9",
+  "clean_sha256": "242908a66d2233180a44b22a94c9e4b4972652304a2246a28d342d1bc6f69a4d",
+  "clean_bytes": 4116
+ },
+ {
+  "source": "nws",
+  "file": "nws/AFD_BOX_0.txt",
+  "url": "https://api.weather.gov/products/a3ff0c10-fbee-48ca-9ef8-3a933cee2cc0",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "85fd2b07e67764510b14be645dd94edb00de7935cc173109861036fa1cc01cc5",
+  "clean_sha256": "082d89784988a684cf6b8cfc82de4706565513f11414c424691e42ad56026f3e",
+  "clean_bytes": 4907
+ },
+ {
+  "source": "nws",
+  "file": "nws/AFD_BOX_1.txt",
+  "url": "https://api.weather.gov/products/df24b7fe-1053-4fde-b16a-79dfeb405b2c",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "f04b0914462dad7a0a0dc07f10bd19c577b9c4b96f6e866ce7233f0bd684fb0d",
+  "clean_sha256": "26e85029b8f58703d116a426e51228f3c08e949938126da500c4d5f1278a9b5c",
+  "clean_bytes": 4903
+ },
+ {
+  "source": "nws",
+  "file": "nws/AFD_GYX_0.txt",
+  "url": "https://api.weather.gov/products/f24c201e-b151-4d40-a45d-c739655a2833",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "3624ae29bd4020064b4cda0e716dd3f1f9222731dfe2c26aacf01f0c1f20b6d7",
+  "clean_sha256": "b275df1d38d46dfef49810457c577e342cd393c0b05f0ebfdefbac74c4145e57",
+  "clean_bytes": 4839
+ },
+ {
+  "source": "nws",
+  "file": "nws/AFD_GYX_1.txt",
+  "url": "https://api.weather.gov/products/eeedfdae-512e-4127-a093-6931625ff906",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "69d7c0574b08929a7c6014b0326c28a6171a7a94cbec3c9cb9e28bbeff209b62",
+  "clean_sha256": "157dae5c4b6d82d7042643ef0ee0bc23435045037d30635bbd847263abcc0372",
+  "clean_bytes": 4928
+ },
+ {
+  "source": "nws",
+  "file": "nws/AFD_BUF_0.txt",
+  "url": "https://api.weather.gov/products/f569287a-c0aa-4adc-a8b3-f6cbc3e2d127",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "aa48822329dc704518d59c00610c9492bc7f038ae9055d453f26e58d086780df",
+  "clean_sha256": "27f652c22e59ccca1f668c99f18b6a3404b3838c871fd8f86695071d927181c1",
+  "clean_bytes": 4677
+ },
+ {
+  "source": "nws",
+  "file": "nws/AFD_BUF_1.txt",
+  "url": "https://api.weather.gov/products/d0c17f57-060a-4d68-b3b0-a0da8c90a2ea",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "29bbd1bf310d97120bb4224f12cdac5812f1866dabe5779a1735c0c2636bad17",
+  "clean_sha256": "8a154aba01c8499b37e1b88499f5865111262f4d98400660546226f52f2e75a9",
+  "clean_bytes": 4632
+ },
+ {
+  "source": "nws",
+  "file": "nws/AFD_ALY_0.txt",
+  "url": "https://api.weather.gov/products/9ebd7831-aca4-4901-b300-798864bddf52",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "63b5dcdc39fda96216fff2d577e98cd3b395201f69351597aaa688692f6984a1",
+  "clean_sha256": "d310103dfcac799fe3eb75596fe60720b4fd4af3e2d94bc44c555eb9b2ace433",
+  "clean_bytes": 4990
+ },
+ {
+  "source": "nws",
+  "file": "nws/AFD_ALY_1.txt",
+  "url": "https://api.weather.gov/products/753f662d-cc80-4615-8e86-5145a7003935",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "afd6ab25a272914ef39089efc705c56a97782b949252a5129d5c04d421642190",
+  "clean_sha256": "a1ddc21dd6d4e36e6b8c24d86557d1c367a471a384c1f95f807ed921f046f702",
+  "clean_bytes": 4361
+ },
+ {
+  "source": "nws",
+  "file": "nws/AFD_RLX_0.txt",
+  "url": "https://api.weather.gov/products/f6b9458f-3cce-4267-8f9b-dc8fac9dcb09",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "8a71624db68dac515ce418348e3ea5902b656ea4d8ced3bbad64c5357c8cf7cc",
+  "clean_sha256": "6d4f10cf8036050e13fb65c8973838543facfd562d083f8defee4b42facc986d",
+  "clean_bytes": 3002
+ },
+ {
+  "source": "nws",
+  "file": "nws/AFD_RLX_1.txt",
+  "url": "https://api.weather.gov/products/df82a781-2e2d-4dfc-b305-56780945e557",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "fb72765c835954cc7985164ac70ef9ddc376459bec44311b9a857006aada2d1d",
+  "clean_sha256": "1f2222c4942d9680ac17629365fce2302afed14b5d232c81ff58741f3d64365a",
+  "clean_bytes": 4454
+ },
+ {
+  "source": "nws",
+  "file": "nws/AFD_LWX_0.txt",
+  "url": "https://api.weather.gov/products/68b893b0-77d1-4291-a3f4-0d72b3f07639",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "f6d5d724d9d928b229aad050fce097ffa01a56e47287af25d055ee945d8b7e20",
+  "clean_sha256": "5efbdfb6de6a45f29ec763fceceb33440a1de1febb72b309a919026aae6930ae",
+  "clean_bytes": 4850
+ },
+ {
+  "source": "nws",
+  "file": "nws/AFD_LWX_1.txt",
+  "url": "https://api.weather.gov/products/6c0fb610-5c10-4ed5-ad66-9ab2d35b8d9b",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "da3c8d8816b518973b8b279184d2199c211934cea75a36e5be71ca93063fc5d7",
+  "clean_sha256": "b0a5fcaabc89ee7b31133ff1ac2b17c5b07a740fc3dce8bb7949cab4a047a6c6",
+  "clean_bytes": 4731
+ },
+ {
+  "source": "nws",
+  "file": "nws/AFD_AKQ_0.txt",
+  "url": "https://api.weather.gov/products/3e84f871-ff5f-4996-9e87-2444cda5ea46",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "8aedc216ec342724e8a0ff2a2ca923458107299bf2c8a2c37930d947d1517e93",
+  "clean_sha256": "859ff20972a7537378c8e02d792adcbf8c20b1b61feda82f3d63693397e18f19",
+  "clean_bytes": 3664
+ },
+ {
+  "source": "nws",
+  "file": "nws/AFD_AKQ_1.txt",
+  "url": "https://api.weather.gov/products/6b75434f-7140-4a69-b2a0-67f304084bf1",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "733472119ec4c660ea99d3a4318f6769d64fb7422d2a32446dbfc221a5dcb7cd",
+  "clean_sha256": "29ee61835d173fc386e8fe8e0f417252a0a2b9d1f7a9e358dc1739ac533fd730",
+  "clean_bytes": 3611
+ },
+ {
+  "source": "nws",
+  "file": "nws/AFD_RAH_0.txt",
+  "url": "https://api.weather.gov/products/3b59b50c-95dd-4ff2-b978-8aef41195666",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "17459f8f9c3d292c6bf8aa15a252c51e7c52f9843ca902ed823901b6988e0fd5",
+  "clean_sha256": "5faabd17d8d66802c517bf0e25bc96b4b98caedddbc8a1874bda98a219eb463a",
+  "clean_bytes": 3153
+ },
+ {
+  "source": "nws",
+  "file": "nws/AFD_RAH_1.txt",
+  "url": "https://api.weather.gov/products/aef22fcd-1ad1-468c-a43d-0f20f554a687",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "e3777ff61e7f49ed402afde44634688c31ec129dda772e605214312665d7f752",
+  "clean_sha256": "6741ea7bc9bd97710b588893c80c0edf77151a27aa072caa32ac980d13d93eed",
+  "clean_bytes": 3095
+ },
+ {
+  "source": "nws",
+  "file": "nws/AFD_MHX_0.txt",
+  "url": "https://api.weather.gov/products/443dbb4c-2b04-45c7-883e-3d7a0a5f8715",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "6776f90e2d464df9f7a46923a3d188f6884862937ed23660b795a60c8e6b2d04",
+  "clean_sha256": "f6c7200f123e6adf3ab8f01e14bf950134257b517503bbeb0d9887f8643fdeff",
+  "clean_bytes": 4057
+ },
+ {
+  "source": "nws",
+  "file": "nws/AFD_MHX_1.txt",
+  "url": "https://api.weather.gov/products/bed0e621-a76c-4083-bf82-03795894b768",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "5faf1fdc4e16c272b2d4e211273c2887031cc046ac707111a76e6b8abd5361ea",
+  "clean_sha256": "ddd6a4b45b54bd78c816deb5705bf79da2fe24fa70bee80789eb58a9a46cad2f",
+  "clean_bytes": 4378
+ },
+ {
+  "source": "nws",
+  "file": "nws/AFD_ILM_0.txt",
+  "url": "https://api.weather.gov/products/24ac706d-4013-43f5-93d8-a498cd67e9f2",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "519144fd256e20768937a9a1c8e096467014171e5a4ea13aaf5c628b3bba3169",
+  "clean_sha256": "667935a1da4af735aabd36e6e7bb64c4fb82350e94510ad944101ad5958372bf",
+  "clean_bytes": 3037
+ },
+ {
+  "source": "nws",
+  "file": "nws/AFD_ILM_1.txt",
+  "url": "https://api.weather.gov/products/4fb05f2c-a2f2-4037-9047-a97f4646ce41",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "ba501a48cbc0ade30a4ef2cf667b3eedab1f6a70add6b231a8dc6a0da3fa8810",
+  "clean_sha256": "9295caac93a5d14aabdac9d22a878101fb18366a07fde252680c2b27c57bbcc4",
+  "clean_bytes": 2706
+ },
+ {
+  "source": "nws",
+  "file": "nws/AFD_CAE_0.txt",
+  "url": "https://api.weather.gov/products/7f284206-5b04-4a5a-aeab-5beac18867ae",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "88eb728e2d1fe6e71ad7fdb678476ab6a345ab53e31e2a704e037c3ff8bdc8aa",
+  "clean_sha256": "57530de44f86d6c06623cf410c9bb556d765be1aeae8147091803f098c8f4dd9",
+  "clean_bytes": 2015
+ },
+ {
+  "source": "nws",
+  "file": "nws/AFD_CAE_1.txt",
+  "url": "https://api.weather.gov/products/9366192f-5617-479c-aa27-a356704e3f8a",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "b24084a052d8dcb493e22976045c429be900e63b0480d91eb916f2d49c1c3c3b",
+  "clean_sha256": "69bce22dbe3dd23473e9f0802e523ed506cd2ebf63a6b6fcc0ac5cf83f486a41",
+  "clean_bytes": 2614
+ },
+ {
+  "source": "nws",
+  "file": "nws/AFD_FFC_0.txt",
+  "url": "https://api.weather.gov/products/ba2bfe1d-9073-4160-a495-de68775d8434",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "9b31f1a0c270530aec3046f8073e350b86147132e7407cab897ce33f3bc8b583",
+  "clean_sha256": "220c8d79d7652671f986803df3d8e1e09626ca58cf10d35f6bab3a3d379dcda3",
+  "clean_bytes": 4924
+ },
+ {
+  "source": "nws",
+  "file": "nws/AFD_FFC_1.txt",
+  "url": "https://api.weather.gov/products/f70be150-b2f6-4f55-90ef-2001c057a3eb",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "c57ab384a463f47925f28918ab0648c5c572efe61328492255499ce83f89c6c5",
+  "clean_sha256": "4427ee335e7f7da48b359b69861a8cf0e3dd0a1744c9ea953f96c378a7fc4ec9",
+  "clean_bytes": 4781
+ },
+ {
+  "source": "nws",
+  "file": "nws/AFD_BMX_0.txt",
+  "url": "https://api.weather.gov/products/4eefb960-d3b8-4ef7-bcc9-ed896703d48b",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "0678f052c417ad6e3ff52cabc5a6c4ddb9806a74767f9d36120a1ee74a4b5ee1",
+  "clean_sha256": "3971dc491dd2d308940228e67ec5e9795b96c9fc0564224d87a8f64a84e74a17",
+  "clean_bytes": 3686
+ },
+ {
+  "source": "nws",
+  "file": "nws/AFD_BMX_1.txt",
+  "url": "https://api.weather.gov/products/aa61b0f2-b018-422c-b4c7-d8c1c9e426e1",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "edaaf963e4d82295d50791af61e08e6202b52333bdb9374bde28520676fe8a2b",
+  "clean_sha256": "a98f72e16ff2f43d5ef7476f1ce7a004951722986bba8c5f718a899c3897f8ee",
+  "clean_bytes": 3809
+ },
+ {
+  "source": "nws",
+  "file": "nws/AFD_JAN_0.txt",
+  "url": "https://api.weather.gov/products/3c56a797-c465-4310-99dc-0559f58bccf1",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "bbaaa9260b9725260a22fa3bc0de20bc9f52a2074480cf29b05c0f04f4e238a7",
+  "clean_sha256": "0ef65e25b4522980868a774a281a7d191bf93a51b5dc81dd18429ec3506d6db0",
+  "clean_bytes": 4113
+ },
+ {
+  "source": "nws",
+  "file": "nws/AFD_JAN_1.txt",
+  "url": "https://api.weather.gov/products/253eb617-cf7a-4fc8-8958-71c724cccfbd",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "15d14e04cba8907d911fbc566244d4d65a7faa81b24852d33bd68a49281a841a",
+  "clean_sha256": "889a6a5e599202bbf060894b384e19209e1e9c3edca3b2815564f02db0b76b33",
+  "clean_bytes": 3922
+ },
+ {
+  "source": "nws",
+  "file": "nws/AFD_LIX_0.txt",
+  "url": "https://api.weather.gov/products/7be311ae-5ca1-4390-83ea-0f945019e742",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "62cda359e77e4d2936f4080545d0998b546c0e6165e03586b3d6099edba61ed7",
+  "clean_sha256": "a1e147cb4b57f6e8df22d09d16aba0514e6ff343ec5fb54065112004e4e2b422",
+  "clean_bytes": 4470
+ },
+ {
+  "source": "nws",
+  "file": "nws/AFD_LIX_1.txt",
+  "url": "https://api.weather.gov/products/cd687488-2502-4cbb-bfd9-0da26ccb0901",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "3a79f7698b869bd6327a161f2242f33a9d8ed2d71d2a5486cb90b82695b07d1c",
+  "clean_sha256": "2fcd2e8c722b7fe242a27279a4e85453ac5a807551de5b535b482a80b7824948",
+  "clean_bytes": 4360
+ },
+ {
+  "source": "nws",
+  "file": "nws/AFD_HGX_0.txt",
+  "url": "https://api.weather.gov/products/7520caf8-61fd-4381-83be-5f3ffb590d67",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "371aa2a416972d65490d21e799eafd307312b9866ec97e14c311ad31a8abcf12",
+  "clean_sha256": "25e0025782af60fd91d57517c65537793433606fa1a728dd9fda685a3fe8e1af",
+  "clean_bytes": 4899
+ },
+ {
+  "source": "nws",
+  "file": "nws/AFD_HGX_1.txt",
+  "url": "https://api.weather.gov/products/60764589-71ca-46d9-a89d-f2a7bd0bdc6d",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "bece2ca7e70b47a27148a2580a0b45fb95ffac49d47b39df3747da895c4395bb",
+  "clean_sha256": "20aad4d8964fa0c5d470f3dd50b94dd3fba7928b3f78312138c3e439f2f8e5a8",
+  "clean_bytes": 4928
+ },
+ {
+  "source": "nws",
+  "file": "nws/AFD_FWD_0.txt",
+  "url": "https://api.weather.gov/products/ebbdd041-86fe-42fd-94b7-b48ae494d7de",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "c52d0dcd92b86ba3e643da0a30bcff7865fd776ab55e2f31f0f56ecfaca3e06a",
+  "clean_sha256": "3a3aba9da3165e9fa6ba2bb613fbfa8ca5321b0d2b8fc152e5396e63d9f138f4",
+  "clean_bytes": 4944
+ },
+ {
+  "source": "nws",
+  "file": "nws/AFD_FWD_1.txt",
+  "url": "https://api.weather.gov/products/45756c4a-b27b-49e4-817f-7124808f492f",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "ea39a1af3a4fcc434fe34ec58bd892db09bcdbdd2b3d336850a330f07b17ce79",
+  "clean_sha256": "1bf375c31f1cc86c1cf8377d29d769bd8817385018160dbd618f6b79ba25e361",
+  "clean_bytes": 4617
+ },
+ {
+  "source": "nws",
+  "file": "nws/AFD_OUN_0.txt",
+  "url": "https://api.weather.gov/products/6f6062e3-2db5-4c37-9d74-198247bfbcaa",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "71da9ce48e468ca30b54118e79d321077f7fa220e611c08f3c0a287b28ebe2e2",
+  "clean_sha256": "e1acb4420a0b0f88a1f86ab1ce0926d3c02635a487c991bc925a703b7396cf39",
+  "clean_bytes": 4988
+ },
+ {
+  "source": "nws",
+  "file": "nws/AFD_OUN_1.txt",
+  "url": "https://api.weather.gov/products/5b490131-9376-400e-a17c-01c98d294779",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "fccebc1a09cc95ea57e46d52bf7b4ad5a8a1d52762381a536c2c9f40fcedfdb5",
+  "clean_sha256": "ec78aa3d7cf6e50126ee72bf64457ba4c7e56314f3d7484116a75f3f662c46f7",
+  "clean_bytes": 4506
+ },
+ {
+  "source": "nws",
+  "file": "nws/AFD_TSA_0.txt",
+  "url": "https://api.weather.gov/products/711da9db-e9d5-4d5f-8a22-8966eaaf6467",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "bfcc2df3d9707b967614df14c35bb06c6869073d9e4f839177c459fe3655af70",
+  "clean_sha256": "3795c58cc4283fafec3889ca7db73eac7704e4457ee48999775aa3bcd4a0df68",
+  "clean_bytes": 3549
+ },
+ {
+  "source": "nws",
+  "file": "nws/AFD_TSA_1.txt",
+  "url": "https://api.weather.gov/products/74def0bc-a194-4abc-b367-a3e1c7acec85",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "7ac438cce4dfc963423d9d05ffb028ad11bec909959084608e4724ab551a143c",
+  "clean_sha256": "e0e97f33b29c7ecb4ce0017e84e69b1f1e60eb0c9c33d24aae4f8f2781f009eb",
+  "clean_bytes": 2689
+ },
+ {
+  "source": "nws",
+  "file": "nws/AFD_EAX_0.txt",
+  "url": "https://api.weather.gov/products/1771e12d-477c-4634-baca-1fe69b368834",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "2122fb143102e48ee39442d8f9e9b2bb0152b6e241a20b1f8c6382231d80fd2c",
+  "clean_sha256": "b937e0fa1f514f5749b5c191a364bd4d7fec5c5c44bd807e79f32fbd9e32aaad",
+  "clean_bytes": 3276
+ },
+ {
+  "source": "nws",
+  "file": "nws/AFD_EAX_1.txt",
+  "url": "https://api.weather.gov/products/5910d537-0944-4ffd-9d56-9c1025e8eec2",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "669c9d1162acc6876c7929a9215134c65af2b9688afb0c6c53e4b438040a7fde",
+  "clean_sha256": "2a2a5dfec026c50b5301fb1741827d4887d0f322f22d30212ec2ce647e9b57a9",
+  "clean_bytes": 3365
+ },
+ {
+  "source": "nws",
+  "file": "nws/AFD_SGF_0.txt",
+  "url": "https://api.weather.gov/products/8c54a883-03df-47fc-aea3-94125c4d2cd5",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "ff28b763587b5c6c564ebd94e66f127966f7190660e95684dce5806011c7b7ff",
+  "clean_sha256": "ec5058888a6ebcfc3b37283aed1228016c9a205b281375d1fb988dbb0cc2d7a1",
+  "clean_bytes": 4051
+ },
+ {
+  "source": "nws",
+  "file": "nws/AFD_SGF_1.txt",
+  "url": "https://api.weather.gov/products/0ef6624b-0a85-4e29-9ac4-db7525e5567b",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "d904ebc78564c5e82091b872ff5d632d8e1922d4a7a37cf11ff5404e0414aa6e",
+  "clean_sha256": "206df36b17164fce39dc4b4722f004e825ac0d5a3a799e0877135d2f9060cb8f",
+  "clean_bytes": 4052
+ },
+ {
+  "source": "nws",
+  "file": "nws/AFD_LSX_0.txt",
+  "url": "https://api.weather.gov/products/bc29d2a0-71d5-4276-ac86-f12101857eed",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "8c5576aff3319eee0c5a92f7abf93c2f07cdec2aca4e92ca5322db9088bfed0d",
+  "clean_sha256": "626bea0471e9cee358d7f53e107e3828085101eb58e4e5cb1343793e0bc418a0",
+  "clean_bytes": 3544
+ },
+ {
+  "source": "nws",
+  "file": "nws/AFD_LSX_1.txt",
+  "url": "https://api.weather.gov/products/6bad894e-7f8e-4634-b48c-2e32f02751c7",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "57b6af8feba16a18e1546ede83e24246fa1055fb78f5e5eca848a0ceac28ed83",
+  "clean_sha256": "06c0d3897b19a89c0e2c58b954a83284da808329e1f22ae0a233940ee9eed92b",
+  "clean_bytes": 3590
+ },
+ {
+  "source": "nws",
+  "file": "nws/AFD_DMX_0.txt",
+  "url": "https://api.weather.gov/products/ced605ba-0b03-4c7f-8951-ce2520692c48",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "cabeeeb7c2cc7b7fd459e8bd9b5342b74b5c1d93dfde53ba36708e696118d4d5",
+  "clean_sha256": "33ee515f5ec47af97c7ee88ed8a0897346204586086b113d7068692b8fe79c40",
+  "clean_bytes": 3231
+ },
+ {
+  "source": "nws",
+  "file": "nws/AFD_DMX_1.txt",
+  "url": "https://api.weather.gov/products/88d55ce9-d73d-4ccc-8ebe-b774cabfbd9b",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "a89702705b6f02be79f260a6dfd7c6d3687b9f40d7d33734b3386916de454b1a",
+  "clean_sha256": "6f3ea4cb20ab15c527fb07b6afd065ec1779494c980f0a1d2593f82e5ce52a55",
+  "clean_bytes": 3126
+ },
+ {
+  "source": "nws",
+  "file": "nws/AFD_MPX_0.txt",
+  "url": "https://api.weather.gov/products/d5dd38e0-b886-420d-aa27-934b0c30f26c",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "f39e44ce3af22a01480f9ff6b01da86928fb38c9a44d871aa52d741702b8fa84",
+  "clean_sha256": "b965fa312eea7f83a07b8757ed54ac846304496009b97d31b971a6c1b18b3e2b",
+  "clean_bytes": 3255
+ },
+ {
+  "source": "nws",
+  "file": "nws/AFD_MPX_1.txt",
+  "url": "https://api.weather.gov/products/aedf7069-bc75-4972-9eed-e41c4b8089e7",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "6a2ebe5bc2289f44c936a1bcf2855484d71e763bfc9af8b1136d6a58083b0b89",
+  "clean_sha256": "11b92f36fbae238e4aed855f70324eaa44889c2103f319db27957c3a84a25146",
+  "clean_bytes": 3444
+ },
+ {
+  "source": "nws",
+  "file": "nws/AFD_FGF_0.txt",
+  "url": "https://api.weather.gov/products/e78bd3a0-ffd0-47ea-bd27-3cc2e417323d",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "ebe1c429212ff2e77f0944c864bcde3424ce1b3095a2286907c7bf903071cc9d",
+  "clean_sha256": "29d21d8a795b0fdefb581deac751a491a8eee90b4a8a6dd3c41f886f20ca464c",
+  "clean_bytes": 2269
+ },
+ {
+  "source": "nws",
+  "file": "nws/AFD_FGF_1.txt",
+  "url": "https://api.weather.gov/products/2401abc6-eb42-411f-9b72-8e4383a106ad",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "ac4b7cd496a429daae718502eb0a81e2c2524f49b885baffc7df57f9db205ff2",
+  "clean_sha256": "2bf93035bdbff14794a2e0835490e5668f89acc1f21da55c159bb8835aa911ac",
+  "clean_bytes": 2158
+ },
+ {
+  "source": "nws",
+  "file": "nws/SPS_DVN_0.txt",
+  "url": "https://api.weather.gov/products/5e8e5029-5ab8-4743-9029-4938412cb6d4",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "e1a40fcb250136adc5ba23dfca2ecf537f8ad7e534dd71ae1a764a03464536d6",
+  "clean_sha256": "d1c64550db36372c918da3c82d9c66e167f9778eaeebf4acd1100d3b4195328a",
+  "clean_bytes": 1212
+ },
+ {
+  "source": "nws",
+  "file": "nws/SPS_OKX_0.txt",
+  "url": "https://api.weather.gov/products/448f7561-0449-4923-a996-1db02d2dad34",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "b10b712d9896111f2a50d007b6dda7f1dad9ea6759d0438e22c4e67a561e706c",
+  "clean_sha256": "aa04b1ee1fed153bddae3a9509619b1ef9396c6e2522440e14450e7f7870614c",
+  "clean_bytes": 698
+ },
+ {
+  "source": "nws",
+  "file": "nws/SPS_OKX_1.txt",
+  "url": "https://api.weather.gov/products/194b1884-4fe5-48c7-8b28-388d5b52e08d",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "01c3fa6980d02cc5a62c8722cab757230ff3e8dc7e04593b464a36b7d1675ebb",
+  "clean_sha256": "e12dad23b390b6332d17909b77f52bf09951cf34a3998c760e5e452ac6a82ae6",
+  "clean_bytes": 1097
+ },
+ {
+  "source": "nws",
+  "file": "nws/SPS_BOX_0.txt",
+  "url": "https://api.weather.gov/products/671bfdf8-383a-4f2e-8df5-a6b86b2ed755",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "a4644ac722d65e172750991780db5cf16d669bba4c7fb12fe4ca6ace082ea178",
+  "clean_sha256": "1351bc1cb688eda884434af8d0f41b9cfada234dd2197e6860395e99e85a6789",
+  "clean_bytes": 1163
+ },
+ {
+  "source": "nws",
+  "file": "nws/SPS_BOX_1.txt",
+  "url": "https://api.weather.gov/products/88064969-5232-4b73-96fe-aa0b42ec60a5",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "33c68d06c1bc279342df0e269b997565a0649e47ac16370b61a048956ef415e7",
+  "clean_sha256": "5fb6f023aac33124020580bef6655258e9b43e4ad519e28e914be3d97ce249dd",
+  "clean_bytes": 1259
+ },
+ {
+  "source": "nws",
+  "file": "nws/SPS_RLX_0.txt",
+  "url": "https://api.weather.gov/products/1f079e73-a7ae-4920-a2e1-fca5a904e3a9",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "3d8986f91225735658d6413aee7d315e5f36f3c7eb5fcddd0e233fd7e85b6f08",
+  "clean_sha256": "369f5c6a95421765398506597551f8d777e6ab1cf0fa749a6c2eaeddda32a669",
+  "clean_bytes": 1319
+ },
+ {
+  "source": "nws",
+  "file": "nws/SPS_AKQ_0.txt",
+  "url": "https://api.weather.gov/products/966d15d6-2728-4c17-ab43-9d0e93aaa8a0",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "e655a8514f63e8f5cfc60e8e7a31999c7d381fb04f5816f52c193ceadb4ee106",
+  "clean_sha256": "6e758b71f85ae9cbe4a89d55b2c2e5e456e62933e3410d4c1c62adc183539fd6",
+  "clean_bytes": 1409
+ },
+ {
+  "source": "nws",
+  "file": "nws/SPS_AKQ_1.txt",
+  "url": "https://api.weather.gov/products/1aae477d-9e09-4ce1-8fbe-d147c5165efa",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "a3bf6bd1a79dcefb6ea97d018043f1921d6fc850fd2d85bb1abb26a2e97c3511",
+  "clean_sha256": "5324ee63b251b8d2833a77236ebee61027127a578d7dff6f166de8c79c4ddeaf",
+  "clean_bytes": 1938
+ },
+ {
+  "source": "nws",
+  "file": "nws/SPS_RAH_0.txt",
+  "url": "https://api.weather.gov/products/fb7921a6-853f-4399-b509-b700590bdf31",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "dfbf7f651c51ecdc5730c87b2adc156d7af6bd334e9c1a76376ceefadd556a67",
+  "clean_sha256": "50ced19878b656fe1d1b987560da339e06343cb01a79fb720677d733f726cd7a",
+  "clean_bytes": 973
+ },
+ {
+  "source": "nws",
+  "file": "nws/SPS_RAH_1.txt",
+  "url": "https://api.weather.gov/products/2214e102-e2f0-4d74-925b-cc892e8b3824",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "1e118527963c05cb87ae1939da83622eb33fddfe542b1142c6f7c5901a575a9d",
+  "clean_sha256": "eecaf41ea7722ef8003b1722f4f37b28c3d0db18f1cd676f3db3c520faa33089",
+  "clean_bytes": 1338
+ },
+ {
+  "source": "nws",
+  "file": "nws/SPS_MHX_0.txt",
+  "url": "https://api.weather.gov/products/898d1c62-b09f-4671-bd49-d29b773c70cc",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "93695a1b740758e3826370b9bd685428a79a75833b20aab77476ed5af6de9475",
+  "clean_sha256": "85ddc751d678e57800dc86b845eb511bb4cd8a7adfae2455c05d713bbcbf12e6",
+  "clean_bytes": 1549
+ },
+ {
+  "source": "nws",
+  "file": "nws/SPS_MHX_1.txt",
+  "url": "https://api.weather.gov/products/abda60f2-ab91-48b7-b770-afcce4486c56",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "bc4681dd20a4416273d1fb2bc53150c45f1400a4e59cc5fd4166ce0aa19be16d",
+  "clean_sha256": "61e5a61fd872b5c2c86106e1d9a0bd07af0f9a87677685b9a8f3cf8bcca02a01",
+  "clean_bytes": 1837
+ },
+ {
+  "source": "nws",
+  "file": "nws/SPS_ILM_0.txt",
+  "url": "https://api.weather.gov/products/64c56063-eec3-48cf-9089-4517a0c3b176",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "0ece1515fc6dc327e8b079d7d6ee89f50b35074bcf42670f2ab134b0626b63da",
+  "clean_sha256": "ff9c14f6a01850df9a231ec562d49b4bef1cae49230e60a8c08002ce9ffa86f1",
+  "clean_bytes": 1300
+ },
+ {
+  "source": "nws",
+  "file": "nws/SPS_ILM_1.txt",
+  "url": "https://api.weather.gov/products/6cef0a25-a93f-44b1-a271-85de54059137",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "28b91d51e321c10161f006453257956b169d31d21aaf1d99ed5d89cb07177fcf",
+  "clean_sha256": "346bd32b44b91e556694a22ae84273d80945be1a1f5f42e2d6a7f27cac522f4c",
+  "clean_bytes": 1019
+ },
+ {
+  "source": "nws",
+  "file": "nws/SPS_CAE_0.txt",
+  "url": "https://api.weather.gov/products/105a6184-25df-4e63-9c16-4e79527b702b",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "eb24dfe0839ae81fc9438e6c3bb39c49081e2bfa71e6f5c2f225137d8c2c069d",
+  "clean_sha256": "c5ed03fff0fefd390464d8d2a6ce0480ee844841b8c5debd5c9e838715c85e8a",
+  "clean_bytes": 449
+ },
+ {
+  "source": "nws",
+  "file": "nws/SPS_FFC_0.txt",
+  "url": "https://api.weather.gov/products/3c5130c0-dbdf-47b4-b4be-22e4828b2130",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "0802c71a25bd9eda11b6db7019e0f90bf705763746ec1fb62b82d68c53037219",
+  "clean_sha256": "a947537c47df28d40302d8c5a01c4596b92f1efb01f74dbaf8f17b983fa6cb3b",
+  "clean_bytes": 705
+ },
+ {
+  "source": "nws",
+  "file": "nws/SPS_FFC_1.txt",
+  "url": "https://api.weather.gov/products/dfebf38d-8389-4d92-b437-e9c7445d4fbc",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "6297e7f4497af6f36755924b78dcd29cc5d057a11833ebda77de9c32ff3e93d5",
+  "clean_sha256": "7060b7649fd0d86628c8b3d77202b146a143732c030f784a04b5d49b7392893d",
+  "clean_bytes": 1293
+ },
+ {
+  "source": "nws",
+  "file": "nws/SPS_JAN_0.txt",
+  "url": "https://api.weather.gov/products/2c03d295-4e6b-4dbc-9025-e912e4b61e67",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "e83518eb8627db42f3dd8ef12a629e3682fac8c27f5d60039c62fcfe202554bc",
+  "clean_sha256": "d8beb490a5d6533c53de47b7397e8fb69b6f7c33b12f465d41a05c30d6260134",
+  "clean_bytes": 1214
+ },
+ {
+  "source": "nws",
+  "file": "nws/SPS_FWD_0.txt",
+  "url": "https://api.weather.gov/products/26329f01-a3a7-466c-8ca1-001bc69ad466",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "e70df7a6eea2ed2a5aaffdc67785abd3fc6a0a355b7fc684710ff6ae53a4d058",
+  "clean_sha256": "7c0a2f1d6effda8d59b262511e277d0c7265bb138333ea1c7f420e5424afdd13",
+  "clean_bytes": 1296
+ },
+ {
+  "source": "nws",
+  "file": "nws/SPS_FWD_1.txt",
+  "url": "https://api.weather.gov/products/f67e7220-f498-4ad3-9fa3-f9658e240270",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "00ef5e8211a72b76df74147cafe7cf582bf25967be61cd6d16be634ccfa57a41",
+  "clean_sha256": "2c5b360c9ba50400f1de400cd5294f93e840b7602dc4c543b72b43cf9b7f69bd",
+  "clean_bytes": 1682
+ },
+ {
+  "source": "nws",
+  "file": "nws/SPS_OUN_0.txt",
+  "url": "https://api.weather.gov/products/cf584757-53d2-46e0-9573-660ee98a4310",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "52dd864bcbfcfe1b4ccfebe728f1edc352bbf2c376ac9c64a42bb54aaff2a09d",
+  "clean_sha256": "0f566c4dc4176e6041229402995be3b52df7326f6ea3ab40238cf91d0181088f",
+  "clean_bytes": 935
+ },
+ {
+  "source": "nws",
+  "file": "nws/SPS_OUN_1.txt",
+  "url": "https://api.weather.gov/products/2aa90225-1a8f-4c30-98b8-b6cbacfedc29",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "b3d2878ea9e056bd15d4436c6c46fa8f719bac900156a2e9dc63f780f62e665b",
+  "clean_sha256": "7ed01377e5d6bdd666cc0443b69c96638b915ce5306d48c274964304198aa737",
+  "clean_bytes": 968
+ },
+ {
+  "source": "nws",
+  "file": "nws/SPS_TSA_0.txt",
+  "url": "https://api.weather.gov/products/53742663-4b84-4cba-97df-2e1a8fc4143b",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "68878eaf50771eb419129a0f741bfa47d2ccc77c8f8b0cc53d8c2fcbd3ef2e44",
+  "clean_sha256": "01d26b73d5da9c2afad77644b362e2a499b4807279053d9b593a8442ca67283d",
+  "clean_bytes": 1373
+ },
+ {
+  "source": "nws",
+  "file": "nws/SPS_TSA_1.txt",
+  "url": "https://api.weather.gov/products/452c706a-f2b6-4015-9723-ce2dcf1ffd41",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "55921b0c44f69f0139c97511593e40930cf14d7ab36353721d9dab8229742e14",
+  "clean_sha256": "7794cc37f58baa3871a91b91185d01501ecc03f7b391518838f4f4159f17870d",
+  "clean_bytes": 1344
+ },
+ {
+  "source": "nws",
+  "file": "nws/SPS_FGF_0.txt",
+  "url": "https://api.weather.gov/products/c20fc19c-c7ae-4954-a2bb-853c04be4104",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "b52a1501b72667d9e653c8b70f142ded2c49785f492dc49841ba0d3bb9278dff",
+  "clean_sha256": "d765186a0daf3112e7b89a4ca54626d650fe28ec7b61bb922e388b264b215118",
+  "clean_bytes": 774
+ },
+ {
+  "source": "nws",
+  "file": "nws/SPS_BIS_0.txt",
+  "url": "https://api.weather.gov/products/1ab7dca3-dad6-41bd-8c38-b5c2d1d76294",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "f953e6a7c2ceb1be8914f21bff51b5e2a5202c4ba3bc7b92b05a47e27bff2808",
+  "clean_sha256": "903aaeb0529f4353859c6545d724775d3b1af6cfda19fc96bc0adb4ee8cc4949",
+  "clean_bytes": 754
+ },
+ {
+  "source": "nws",
+  "file": "nws/SPS_BIS_1.txt",
+  "url": "https://api.weather.gov/products/62622bb0-1341-4525-9d5d-36e67cf767c0",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "70a4f17304b68f166f6248777fe4ecbc3791031415dbf3aa0437273c75a032a4",
+  "clean_sha256": "46f8165ca4e6f92566149acbcf7825e3d2899e336149adc448ae0178d7f52719",
+  "clean_bytes": 869
+ },
+ {
+  "source": "nws",
+  "file": "nws/SPS_CYS_0.txt",
+  "url": "https://api.weather.gov/products/9c600061-37c1-461c-8caa-4937fa8ced6a",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "92b560b440a639ced6d55107fb9569835fef86be80fd855dd4e95c32649631a7",
+  "clean_sha256": "35d9ae64eeb2b42fc12bac7ca52dad347274a46c8401f22c0978f18b724d7686",
+  "clean_bytes": 751
+ },
+ {
+  "source": "nws",
+  "file": "nws/SPS_CYS_1.txt",
+  "url": "https://api.weather.gov/products/d6d3dc6e-7a83-4b66-8ac3-6ea8d866c346",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "b7ea6b2a809f15624eb630cdc5e146791c7dc60511e28d79cd80d540ad006825",
+  "clean_sha256": "3b671bab49d50df0f11ca574405d60ed00c71dd1d96cc3a3f17a8bb7af77ec1d",
+  "clean_bytes": 844
+ },
+ {
+  "source": "nws",
+  "file": "nws/SPS_PDT_0.txt",
+  "url": "https://api.weather.gov/products/f39a2e06-ba43-41cb-8fc6-2bff552a6b4c",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "8f5866210dd511fc08122f0481b7f1450aacd17fe6cdda41d8399bb98bfd8002",
+  "clean_sha256": "8bd32a646e1f4c5bdd5a6f5a93b04524f65ee68d3ed441ea27c16f4f61d67569",
+  "clean_bytes": 658
+ },
+ {
+  "source": "nws",
+  "file": "nws/SPS_PDT_1.txt",
+  "url": "https://api.weather.gov/products/8a325034-ca0a-4ff9-bdc3-542bcc74f4bc",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "a597192f8178b642818d3dda39d0dab854f45ea19b064cb52a583cbc95ca6b02",
+  "clean_sha256": "6b1c96dc3632fc125379d257953e6e689e6cca381f79519b716d17602ea70710",
+  "clean_bytes": 609
+ },
+ {
+  "source": "nws",
+  "file": "nws/SPS_HNX_0.txt",
+  "url": "https://api.weather.gov/products/4a7a5f92-ff9d-428a-9e81-ab048e80c0f5",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "fd13a311e17d62d4ee3433f56db3bbe64a3d2d9c2e59fe7474ec688aed805c68",
+  "clean_sha256": "6608432011249e7fffdf79cb2c301f1b0aa5106eec0005e4b1e74c492bed3386",
+  "clean_bytes": 1143
+ },
+ {
+  "source": "nws",
+  "file": "nws/SPS_PSR_0.txt",
+  "url": "https://api.weather.gov/products/d8e6bc28-71cb-4131-8cbb-0a656f7f6680",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "70f4972cfe6dd9d40a4bea0f83104ada81f23cc378a6abe8a9fea9af060c312e",
+  "clean_sha256": "7dd52817901737f013c358c7e742c1a71fc69ed3d33c11d522aa8183b6e5aea0",
+  "clean_bytes": 1975
+ },
+ {
+  "source": "nws",
+  "file": "nws/SPS_EPZ_0.txt",
+  "url": "https://api.weather.gov/products/cef8c3f6-2e65-4c5d-a5db-a2e2f3327e75",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "29820ec46fdf37c38ba585fbcbbea00cbd3db471181a621d29cf64c403d2c49e",
+  "clean_sha256": "b68677217e71c8aabbd2ecf36d22e241fbf8ac50f7ddecf52de4d545f45a07d4",
+  "clean_bytes": 1072
+ },
+ {
+  "source": "nws",
+  "file": "nws/SPS_EPZ_1.txt",
+  "url": "https://api.weather.gov/products/70b68aeb-5a87-4be1-8817-1257d3dea436",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "daee13f2839cf996d6d7477109e21656439355f9141142d45f06b082a73e4d0c",
+  "clean_sha256": "4e785b3811be627574e05ea64e8a4da532bf43e08412171c9c7c6e0784b7b6ec",
+  "clean_bytes": 1179
+ },
+ {
+  "source": "nws",
+  "file": "nws/SPS_ABQ_0.txt",
+  "url": "https://api.weather.gov/products/50efbd71-0175-4ee0-84f8-fb22bfaf431c",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "70ecc533b3851aadb6a32c881bf4906890a7fcfaf83db0dc9aa72273b4a5cf90",
+  "clean_sha256": "2164b664e932681932272772ce117c5cdedde2b8e370881f90ef55bde79c20d6",
+  "clean_bytes": 1632
+ },
+ {
+  "source": "nws",
+  "file": "nws/SPS_ABQ_1.txt",
+  "url": "https://api.weather.gov/products/43cb244a-a0f7-493c-af87-4cd925df3db7",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "2200e39baa641e34a3933f034e644d8f475ee9fb5186a1b693b6a0bb110016f5",
+  "clean_sha256": "576223e7a69bb72702d88674f19fc4da1d6ea7278b3808fc46736c3bcb7379f6",
+  "clean_bytes": 1279
+ },
+ {
+  "source": "nws",
+  "file": "nws/SPS_AMA_0.txt",
+  "url": "https://api.weather.gov/products/d1ef8063-16a4-4b77-ab8b-d2e05faed6cb",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "ef787ca8b1a2b2832bf2c2dc7d4f37741bb6b658bfcd9036da70b01d8964f0d2",
+  "clean_sha256": "a7f83c2c1c3a9795e049546a15c3fe2b8e9db7657b01f45f5c4ad98243a8a341",
+  "clean_bytes": 1133
+ },
+ {
+  "source": "nws",
+  "file": "nws/SPS_AMA_1.txt",
+  "url": "https://api.weather.gov/products/61f54ed4-8481-4af4-adcb-11533c19b21a",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "c84296e9ff160126916a3a612de216a17556c4f91444c30f2c4a32e1d894f0dc",
+  "clean_sha256": "3a129403e94a118bd73c5ed0f55847ce976708997b9899ce0606353d977e2cc0",
+  "clean_bytes": 1115
+ },
+ {
+  "source": "nws",
+  "file": "nws/HWO_DVN_0.txt",
+  "url": "https://api.weather.gov/products/3e34d0cd-ec0f-4d7d-9ea8-881a13b0e35a",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "a594c54313e355411249bd2a98adb412508ce9fd6b2c13058059226495695abe",
+  "clean_sha256": "0971b3889b9375ccdb14a1e3e65cdea37d6b63b5d341e15068e148b723ad3f07",
+  "clean_bytes": 1127
+ },
+ {
+  "source": "nws",
+  "file": "nws/HWO_DVN_1.txt",
+  "url": "https://api.weather.gov/products/fc065341-9abc-448b-aee7-cc26ccd11e97",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "0d65ae557fd50aba58b2211f92a9d4f8b589fa4ec852bdda83b5ba86b65be6d0",
+  "clean_sha256": "226327ef413d20138864af585d813113c53a4f24c385c71b26d59c07bc976a82",
+  "clean_bytes": 1131
+ },
+ {
+  "source": "nws",
+  "file": "nws/HWO_MKX_0.txt",
+  "url": "https://api.weather.gov/products/7422e23f-4a83-40e2-829b-f7aa9bb069ca",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "12f64c83cfc6745e722e1d33ac50a86e1090c69344a6be19c8bc555c435dfa21",
+  "clean_sha256": "2e298de5ae2e734cef6b93e2d6887c5194d0f941e62d6e378554e63b3ce6627f",
+  "clean_bytes": 3319
+ },
+ {
+  "source": "nws",
+  "file": "nws/HWO_MKX_1.txt",
+  "url": "https://api.weather.gov/products/a7e17bc4-470e-4023-beaa-b64e654436e5",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "45f94a16a528779a6058f60841994a45b3df00e57f21397aa191bd9aaf411c39",
+  "clean_sha256": "280f7536ab7a09fc1cbaf3f9b4ef9eff5dfb14d055019ddce6fb7d35a8c8c98e",
+  "clean_bytes": 3250
+ },
+ {
+  "source": "nws",
+  "file": "nws/HWO_DTX_0.txt",
+  "url": "https://api.weather.gov/products/79b85640-dee1-415f-accb-be0677ad4d1b",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "7bd6494de8fbe7cd8329b5d76580499c5ca7916094424f07138eb89acf9bb1cf",
+  "clean_sha256": "f94df7fc8d07090a2488012d5acfaaeb7d6753ea7000ef04406c893995748ded",
+  "clean_bytes": 2160
+ },
+ {
+  "source": "nws",
+  "file": "nws/HWO_DTX_1.txt",
+  "url": "https://api.weather.gov/products/34504c76-b04f-4447-8f73-05e4a8587272",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "ba1b9e2706c3424078664e69308f11f2398c5a717f55dd50c7d7d83cea01dd77",
+  "clean_sha256": "b14126f84559f2268f39c3af3701ccf2a718a49faaa8d529dc71da07a7e3e901",
+  "clean_bytes": 2192
+ },
+ {
+  "source": "nws",
+  "file": "nws/HWO_ILN_0.txt",
+  "url": "https://api.weather.gov/products/f4eeb3b7-5f9b-4428-9558-2b063e7ff96e",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "832b217c374e2c8c965684932df12d2abd45daa5bd5c2960a6bdcf2923912d48",
+  "clean_sha256": "ed2fd4856a1b5ff6efa24318f4a525c94120f5879033ef915eaed8c4d4ef170c",
+  "clean_bytes": 1837
+ },
+ {
+  "source": "nws",
+  "file": "nws/HWO_ILN_1.txt",
+  "url": "https://api.weather.gov/products/030a7444-6306-4217-a97d-7b0bcea4bab3",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "11f9c59953793963b8f672946b85fdcaf0759d31ab00b7fc405466669a067c6d",
+  "clean_sha256": "83ea92a1a774a8753141c46e36029c980abb46fb8552a66b278730e7553601fc",
+  "clean_bytes": 1953
+ },
+ {
+  "source": "nws",
+  "file": "nws/HWO_PBZ_0.txt",
+  "url": "https://api.weather.gov/products/9557c8f2-5ae8-4edc-98a0-a4148e135b3c",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "901fed281fd4bc6096e6bcd50563e20df7a2134f579fc434ce2b0a92d74f34f1",
+  "clean_sha256": "cf4ed5c218064ac0365de437fed5fd5a14e55eca26a73a05607ce94198d98d0c",
+  "clean_bytes": 1142
+ },
+ {
+  "source": "nws",
+  "file": "nws/HWO_PBZ_1.txt",
+  "url": "https://api.weather.gov/products/ad46b0e0-cc52-4a9e-9aeb-75149b3a3895",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "1c25289bf72e5b8de2725cb42175e20c6b266c63b4d9ccbc2b0b6e307b0d4b9a",
+  "clean_sha256": "da4283ea7340dcdfdb10447bf1dd8869887605066be4e941cb72afa937ae41df",
+  "clean_bytes": 1564
+ },
+ {
+  "source": "nws",
+  "file": "nws/HWO_CTP_0.txt",
+  "url": "https://api.weather.gov/products/25fc2779-9180-4b05-a401-1298c647d6c9",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "552685e29d323f3656aefe877b18044a9e4e22f78f8a0647f5fe2a44b21afc3c",
+  "clean_sha256": "a681550e78e926afb068b25a0e8d3d1ce3a2ee1bf054a8d3915b12030d68d6bc",
+  "clean_bytes": 1555
+ },
+ {
+  "source": "nws",
+  "file": "nws/HWO_CTP_1.txt",
+  "url": "https://api.weather.gov/products/99738ec1-c469-48ad-8bbc-a03aaef3b3c3",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "bd549c8dafdd1f461636c0649d8f0ed047d88d2bbc57dd9f71bd91cc5dfd4b62",
+  "clean_sha256": "61406186d7202f931527cbaa5d8f27f4aba9a8259bf66b30d0bd2561a47c87e7",
+  "clean_bytes": 928
+ },
+ {
+  "source": "nws",
+  "file": "nws/HWO_OKX_0.txt",
+  "url": "https://api.weather.gov/products/e9ac15b0-42bb-44f7-a804-36b0b5d53e09",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "49fdf416af6a7bf518c5d237cf5bc011c4e3ea5825fea235c56d7c33dd6d57db",
+  "clean_sha256": "3a4542db8f501a333b44b27f855c56b9c197263d0690cef9a6478f057481e90b",
+  "clean_bytes": 3600
+ },
+ {
+  "source": "nws",
+  "file": "nws/HWO_OKX_1.txt",
+  "url": "https://api.weather.gov/products/2e5566af-b1d2-4df6-af26-ed5c8c37bf05",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "c48b280e3df085a8fd7235980fb4df94ca18f27aee1d86882908715ee63590a6",
+  "clean_sha256": "b289d929dc0555da75db69c940d4c0bf2873ffb761416187cd59a096f587918e",
+  "clean_bytes": 2951
+ },
+ {
+  "source": "nws",
+  "file": "nws/HWO_BUF_0.txt",
+  "url": "https://api.weather.gov/products/f72a98cf-a5a6-4aea-a7de-35faad9922b2",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "025a8643bae3643b2d335f9ce0430088dfec6d2c5ac592ed3bc374aa9dba29ef",
+  "clean_sha256": "cafc659545261ee48508dff0353e6ff65aaa6e4521c095045a93a2d086bccf59",
+  "clean_bytes": 3587
+ },
+ {
+  "source": "nws",
+  "file": "nws/HWO_BUF_1.txt",
+  "url": "https://api.weather.gov/products/364d9df1-894d-4d57-b061-d0ff529debc5",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "ceb748a38ff1e3e4ebe4f560491bd1359478b420fcd3de7b0685fee5ae052a42",
+  "clean_sha256": "0f0fd605292786e9d0ba157548c027dc4fda72cddfb6d392de6c88468482b235",
+  "clean_bytes": 3630
+ },
+ {
+  "source": "nws",
+  "file": "nws/HWO_LWX_0.txt",
+  "url": "https://api.weather.gov/products/f7988ffa-10a1-4cef-b8d8-42047884273a",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "0ce83ecf92c2b915226b7e19244ad16b972141f0512bd7f987b8d94ff8c5ddce",
+  "clean_sha256": "0060b3fbfe38c4a8628cc1b1320f84bf3e6247d8ca607a47097a592caaa9d09f",
+  "clean_bytes": 3429
+ },
+ {
+  "source": "nws",
+  "file": "nws/HWO_LWX_1.txt",
+  "url": "https://api.weather.gov/products/cdc22874-1aab-4cdc-b016-04a4ae7d8dba",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "b09529a4af8f54d34acaf9d7b050d2a59f45db8cd6ebb5391c4562ed45deb295",
+  "clean_sha256": "e6b87ac3b6efbc57dab88a856e0218b9a6d5bb466f8b258ecbad6b25a272df34",
+  "clean_bytes": 3428
+ },
+ {
+  "source": "nws",
+  "file": "nws/HWO_AKQ_0.txt",
+  "url": "https://api.weather.gov/products/6d04b7ab-b950-4e3e-a63f-4aa0b0b3214a",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "379c8bcd079a9033f7355bb343269da43c45f8fe40fcbf6ce22962515476a199",
+  "clean_sha256": "406cb5d04dc06f5ce67c1aff85a0c20036656a9fac6c9ed49f77c0af10e31288",
+  "clean_bytes": 1644
+ },
+ {
+  "source": "nws",
+  "file": "nws/HWO_AKQ_1.txt",
+  "url": "https://api.weather.gov/products/0ee70d71-7dd7-4e7d-b88b-ed0e8ea2d927",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "5294f56506f069850e6ddcd713e6069e15abc916a18d14276281899c14e9358c",
+  "clean_sha256": "e6408781921045794cfea833755adf635e03e8446846edbda6f83bf9f10fa5c6",
+  "clean_bytes": 1638
+ },
+ {
+  "source": "nws",
+  "file": "nws/HWO_RAH_0.txt",
+  "url": "https://api.weather.gov/products/b1d44ec3-5eb8-40ed-8184-990c90027446",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "153d98e7622716f457ed2c181fa9bd7300a7203b39ccc28d5c43e52b89c77658",
+  "clean_sha256": "b110a5462ab05e948996acf047e7bd5f02bd03dd9ecf829221751a069f7ad442",
+  "clean_bytes": 1155
+ },
+ {
+  "source": "nws",
+  "file": "nws/HWO_RAH_1.txt",
+  "url": "https://api.weather.gov/products/e22f3033-53a0-4d27-82e6-ac82377a4bd8",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "b0ab7ba5940ce2210cc653fb78cc39e81939e263d1d9d7a616a0a27b668e2a1c",
+  "clean_sha256": "2211b738472597839b09c1f9f9377c8ad50cd644bf0b1fb1d02249dff679c27b",
+  "clean_bytes": 763
+ },
+ {
+  "source": "nws",
+  "file": "nws/HWO_MHX_0.txt",
+  "url": "https://api.weather.gov/products/5a18e38f-3e87-4154-b2ff-4739b6dae9c9",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "ed8efc0d13dabb651f1a774a6e8007d703d5de83f2675432d3ffae29fa5df9da",
+  "clean_sha256": "7b1ac5982a35c563e3a0e11d8d91eb30bcfdd09e5995c40eeb608bca22d1438a",
+  "clean_bytes": 797
+ },
+ {
+  "source": "nws",
+  "file": "nws/HWO_MHX_1.txt",
+  "url": "https://api.weather.gov/products/c8dfe6ac-30e5-45bd-96b9-0c70457ac4f4",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "826119822eb77357bee790a2eb264d7333c71fafc8c996be44c18fa93f1f2961",
+  "clean_sha256": "258abc7182c6f0eb6b395791af64cc0a96462713e70af60f4c4be59834fe2519",
+  "clean_bytes": 791
+ },
+ {
+  "source": "nws",
+  "file": "nws/HWO_FFC_0.txt",
+  "url": "https://api.weather.gov/products/0ce1e628-eaf1-4f57-b8d5-6172714f4315",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "45d4e0863ec1e483e975b806421e2b9567cf8490b26222f4cff19b232c073f3c",
+  "clean_sha256": "1be58f1e981e7cd198b572cac703645f751d7da1539220e266acf8a90fd39d6e",
+  "clean_bytes": 1416
+ },
+ {
+  "source": "nws",
+  "file": "nws/HWO_FFC_1.txt",
+  "url": "https://api.weather.gov/products/c7b86578-5f2b-4ad3-aacf-a6ca0c004427",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "fa8d4d502263531acd042177c3aa437b9d5362e3d1ed158e48c9bd03e9e0b896",
+  "clean_sha256": "2b6c5e2d6aa8c6977ab014019991f7dc6fde4a7f64147107ed5ac8b6bccf7e69",
+  "clean_bytes": 1432
+ },
+ {
+  "source": "nws",
+  "file": "nws/HWO_TSA_0.txt",
+  "url": "https://api.weather.gov/products/714f6db9-3617-4ea4-b429-8ad3dbea668c",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "f7e906ec2b602e3d23eb4fbaa41c58b66737bafdad7efb1af9b9234dbbd245f7",
+  "clean_sha256": "9d43de6ab34c18516023dce3e395d4c16f6e02d5c868e6d6769869a5b959b36e",
+  "clean_bytes": 1882
+ },
+ {
+  "source": "nws",
+  "file": "nws/HWO_TSA_1.txt",
+  "url": "https://api.weather.gov/products/9fb4c1f5-3d7f-4f03-ae6e-7f733ea740e7",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "dbd88b933bbf50453694702773fd1dcff1b24e676b7d8727bc3cb5371f1f4f95",
+  "clean_sha256": "cb9afb0d9c75cc2f9a2aae4f0782225f42510dff654cf22d1d9b89abe57e357f",
+  "clean_bytes": 1644
+ },
+ {
+  "source": "nws",
+  "file": "nws/HWO_EAX_0.txt",
+  "url": "https://api.weather.gov/products/c2e8382b-9c65-410d-a300-cba726f98c1f",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "939322a2c0fb8d21c75c4c05f2fff1afed09ead6cb817dad2d1eb4931ffe9c4f",
+  "clean_sha256": "d87050339f78c9813285fc2f552ea2e0c4e373f8a0d9e02ad014d52011bf8c3d",
+  "clean_bytes": 1229
+ },
+ {
+  "source": "nws",
+  "file": "nws/HWO_EAX_1.txt",
+  "url": "https://api.weather.gov/products/af281bc6-d946-49ed-a3bb-24bde7ff5119",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "8a25c826e9b00dbd24dd32d4d6e3b39c9bd0290ee5b802d3fad0dbaad4ab9c48",
+  "clean_sha256": "4d75f760724b59fae39150832ad3247f0baa74e8379a225f0128364c0f18c5a6",
+  "clean_bytes": 1201
+ },
+ {
+  "source": "nws",
+  "file": "nws/HWO_SGF_0.txt",
+  "url": "https://api.weather.gov/products/dae649ee-afeb-4b01-b5b0-cf84f9b63533",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "db952e534a2fb7b1f9d000af8f97f54de26b9849cbefdbc8cee531aff70237ed",
+  "clean_sha256": "9d0308b873c18d4a67bf9f0d98db795a6f956db6fc7af0943208c3744018298c",
+  "clean_bytes": 1288
+ },
+ {
+  "source": "nws",
+  "file": "nws/HWO_SGF_1.txt",
+  "url": "https://api.weather.gov/products/95d96699-3d71-4514-b09a-4cf2e343792b",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "bd35346e5dbde24540a6d808a389c8be62d11c939c334b65795ba051ea95064a",
+  "clean_sha256": "d7ee013cffd79e30214500da2eec6d9539b1b580dd4001163cadbae0748c0b6f",
+  "clean_bytes": 1287
+ },
+ {
+  "source": "nws",
+  "file": "nws/HWO_MPX_0.txt",
+  "url": "https://api.weather.gov/products/53e0e3ac-c738-4445-9815-8805cc0e1820",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "f5de9b00378a31164e470706dcb70592b2e9fccd77b7c75c303486d409c62398",
+  "clean_sha256": "8a2a11fd24d73982d941bd5400b744dc52e484c42c17011fc73a700f81b75d08",
+  "clean_bytes": 1017
+ },
+ {
+  "source": "nws",
+  "file": "nws/HWO_MPX_1.txt",
+  "url": "https://api.weather.gov/products/489811ec-c0c0-40a9-a4d5-5883ca212bbd",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "884274b48a2617482ca0b939899c2907554673b406f97d6bfb1b782ffcdf3b14",
+  "clean_sha256": "2ba16cbdf3d05ef015d17c57a76b103a59b0be9af1ef313c8ca40e06e2a5e4ed",
+  "clean_bytes": 1006
+ },
+ {
+  "source": "nws",
+  "file": "nws/HWO_FGF_0.txt",
+  "url": "https://api.weather.gov/products/1f9cac5c-2717-4772-a35d-9cce10398389",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "c9aa45876684a3cd4e017ad71a77216223c29c492acd72cbad6e7639f9577159",
+  "clean_sha256": "ae2d3c9bc7c78b4c62a8792fce76a7b50455409e5f5b4688f48d8717eff3931c",
+  "clean_bytes": 1066
+ },
+ {
+  "source": "nws",
+  "file": "nws/HWO_FGF_1.txt",
+  "url": "https://api.weather.gov/products/164fd046-26d5-4e80-b3fd-7aa54d0e81ee",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "a9bbb143139f810a9071e8cb406fb228339dcdfbc62f46095f050fae9f5da644",
+  "clean_sha256": "847834c6594148a27312386522aee33d891eff4f71755107136d5ce08b06f1bc",
+  "clean_bytes": 1057
+ },
+ {
+  "source": "nws",
+  "file": "nws/HWO_ABR_0.txt",
+  "url": "https://api.weather.gov/products/1c55d692-f181-4914-961b-4f22288d5331",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "a9aeef33b4416532eadda41d2111a40fb9abb60ae68e54cf2136301e5830cbc6",
+  "clean_sha256": "2fece057980ce775a539c071dda8e08acb04e153aeb402b8360d142c6d22ff6d",
+  "clean_bytes": 848
+ },
+ {
+  "source": "nws",
+  "file": "nws/HWO_ABR_1.txt",
+  "url": "https://api.weather.gov/products/677090ae-adfd-4d5e-9cb2-c79a7530edd0",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "bc9390b8bec783b80944f25779c04a1b31d80ef919337688c93aa5f9ddc1c501",
+  "clean_sha256": "d927e156d14f346f64b55475e5d1874594f8423abaa6d564c1d2ee4e873c0a46",
+  "clean_bytes": 1610
+ },
+ {
+  "source": "nws",
+  "file": "nws/HWO_BIS_0.txt",
+  "url": "https://api.weather.gov/products/5c134f14-f6b8-45c8-ae8f-5d20ac04f9ef",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "536e4c9a4e4ce4fd50a9aa76197719d015d20317242aff836c9ab6dc5243332a",
+  "clean_sha256": "4828ba318499e5fea8844ef0040c2c75e8720f5f9616af945467e43f9c67cc82",
+  "clean_bytes": 1198
+ },
+ {
+  "source": "nws",
+  "file": "nws/HWO_BIS_1.txt",
+  "url": "https://api.weather.gov/products/60642cf9-61cf-4214-bbe4-f8d9110cac50",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "c70f7b27f86d8d7182f3078dc4b00decd31cfb7df1d07be0ef2a7757ae32a7be",
+  "clean_sha256": "a5133c72bfe6204eb35f1a263c42400a2cd346cceccfbb266b77f98c2af73fb8",
+  "clean_bytes": 1198
+ },
+ {
+  "source": "nws",
+  "file": "nws/HWO_AMA_0.txt",
+  "url": "https://api.weather.gov/products/b3a1187b-0be1-4344-b1c9-c7a0cc2d7024",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "953b3726b8692b0b728742d11ed781e1f6ec9aecb668940850854b974d0bf999",
+  "clean_sha256": "4b40721dbd89a481e7af3bf52ca2a6ef808712413bad9ec4dc5ed1b773cef3d1",
+  "clean_bytes": 733
+ },
+ {
+  "source": "nws",
+  "file": "nws/HWO_AMA_1.txt",
+  "url": "https://api.weather.gov/products/b86b0194-f73b-4ca8-8023-9e03b8aed5db",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "db677057dd89aae2a22a8e0e8956dc9fd5791a374e87598bee574fcf0f555c4a",
+  "clean_sha256": "88fddf52f3a5c5f0fd4606a90c24c21e689ef7d72d0fca704fde615e9f6fc381",
+  "clean_bytes": 739
+ },
+ {
+  "source": "nws",
+  "file": "nws/HWO_LUB_0.txt",
+  "url": "https://api.weather.gov/products/0ddcf636-aff7-4218-b0bb-aa3eaccf4b23",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "7a2179aeef0d39a0eae208511ca2cb3a4798cdf442ba45c488976a6a9c4c4a57",
+  "clean_sha256": "1e535a39c5b17fe0e0e6472fd73f17d5f81057a93f2fae2e05c6f87fc2e20457",
+  "clean_bytes": 617
+ },
+ {
+  "source": "nws",
+  "file": "nws/HWO_LUB_1.txt",
+  "url": "https://api.weather.gov/products/5675cb5f-03b6-462e-a34e-bd769610f125",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "99e6e3e6aa8838d2e768c583c8fd010188d4d597ee31c03e5754c9cbdc4d13cb",
+  "clean_sha256": "8960735e955d67bb6dc3328d8c1e3b0f246a741ecdfc5a7231381eed83d740c8",
+  "clean_bytes": 621
+ },
+ {
+  "source": "nws",
+  "file": "nws/RWR_IWX_0.txt",
+  "url": "https://api.weather.gov/products/503aac3f-aa5d-4f43-9281-b7de6a8d968c",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "53dfe393c411d22b857718fc2568238b97af5fd9512b72f976e08b260249077b",
+  "clean_sha256": "d53e7e673bc95c30507dd7da598b253c07d4d9c66c68f6ec5c2c90c4908d52d3",
+  "clean_bytes": 3641
+ },
+ {
+  "source": "nws",
+  "file": "nws/RWR_IWX_1.txt",
+  "url": "https://api.weather.gov/products/3eff4710-fa72-4b16-873b-a4660810b98d",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "5bde422864ad6e8855705fa22cab3575cf06874c5a7d8fd4a87380e3484e1b75",
+  "clean_sha256": "9d70718dba976fffd1f0b84b74a5f562119e8471c037e88f29374ab4e3fe38bf",
+  "clean_bytes": 2501
+ },
+ {
+  "source": "nws",
+  "file": "nws/RWR_CTP_0.txt",
+  "url": "https://api.weather.gov/products/f6e8bf5d-a11a-42db-9cf1-ae7d32971d04",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "16cc770950bb5b6331638c3177f3148d271e4722ad75ad5efea20bb1b74c6ea3",
+  "clean_sha256": "b9d562c55086f38f8ade498c09c909f0d0d10c186b67583e031e75c0636fc25b",
+  "clean_bytes": 1728
+ },
+ {
+  "source": "nws",
+  "file": "nws/RWR_CTP_1.txt",
+  "url": "https://api.weather.gov/products/c5db2aa1-011f-4eae-ba4c-f4dcc4f93b9f",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "d35c29f68f5c5d4529124e406d7564baf4d48fdf52ed5e51064da96ab8b4cf48",
+  "clean_sha256": "538f8df2a6028b24c9efc34ba5d94b7a5dd0333ffc0dc0a64066759fed215d3b",
+  "clean_bytes": 1728
+ },
+ {
+  "source": "nws",
+  "file": "nws/RWR_OKX_0.txt",
+  "url": "https://api.weather.gov/products/83131e42-1dfc-4152-a91c-6a9c7f880239",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "8f9065da76c72d0f4328c73ee4e3d1ee9102c4064979a24d70bbc8626a8ada79",
+  "clean_sha256": "2c3017915e888bef0eb774fcfbaa773cc3296a1a349fae683ce5c947da6164a4",
+  "clean_bytes": 3999
+ },
+ {
+  "source": "nws",
+  "file": "nws/RWR_OKX_1.txt",
+  "url": "https://api.weather.gov/products/85aaa25d-c48a-4826-8d2f-05ef1c272c8f",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "4ac769ee8bffab80bc29e4537b3500bb4d68612ff0c5226bf059ab6cb84f8045",
+  "clean_sha256": "3adf3630408157ccf873aa13cd5d8500a6f53890a6aafe570415cd2f5f7c93cf",
+  "clean_bytes": 3999
+ },
+ {
+  "source": "nws",
+  "file": "nws/RWR_BOX_0.txt",
+  "url": "https://api.weather.gov/products/9360190c-d75e-4daa-aae5-68c309aacbe8",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "0ffb50e0a4c40d9ae418f3d631eb0bd20c802ff955cd854e93ccf3c2ccba120a",
+  "clean_sha256": "a30a9808ffdae0771454a5c9799f5ffa23834242c0945277a4fc1589c3005e6b",
+  "clean_bytes": 3520
+ },
+ {
+  "source": "nws",
+  "file": "nws/RWR_BOX_1.txt",
+  "url": "https://api.weather.gov/products/b3107fe4-831a-45c9-96b4-5ee8e7c8b7cc",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "36bce5e6d36af5cff2566db52c9bb86331667cdb905f8e7fcfa9b0713c8a2197",
+  "clean_sha256": "c3a2468970fdd64e9b345d9e60b75975a7f378ba7c7a254b688b421ab91f41d2",
+  "clean_bytes": 3171
+ },
+ {
+  "source": "nws",
+  "file": "nws/RWR_GYX_0.txt",
+  "url": "https://api.weather.gov/products/ec9ea089-8713-46a7-97f8-0d1b9aa7e0ce",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "bde561c8c2832836c0a65caf4b8c83ba19ca9d8eed3ac85cc5d07ca1e3f2645d",
+  "clean_sha256": "f26fd3c4b8bd53d83ed41c8c5096cf3dd10d5a65dd6e7099772e31ce8b826f31",
+  "clean_bytes": 3505
+ },
+ {
+  "source": "nws",
+  "file": "nws/RWR_GYX_1.txt",
+  "url": "https://api.weather.gov/products/118f76db-fa8a-4b1d-b8ba-0fa51ff6b98d",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "a0ae60046c81e3e852e8198bddc6713ad4238d804d3bf3c985b51cc472d35634",
+  "clean_sha256": "8a63582589a6582313ad2b1f372431c90e0e1511afedae26dc380efeea11c8c7",
+  "clean_bytes": 3463
+ },
+ {
+  "source": "nws",
+  "file": "nws/RWR_ALY_0.txt",
+  "url": "https://api.weather.gov/products/c0f76ac1-797b-46c3-8a0a-4833684986af",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "5daf234d97d00a2cf3ec7e1122b8e8a7dcd3ab9105ef327134a6c24ab7e6105f",
+  "clean_sha256": "dfb2bffb6072f12226a78e672b21b325ef59df97040f8a6164593cc2d09c52d5",
+  "clean_bytes": 1720
+ },
+ {
+  "source": "nws",
+  "file": "nws/RWR_ALY_1.txt",
+  "url": "https://api.weather.gov/products/906eb80b-c321-4a6b-91a2-4d86c2e29c08",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "9dfe3ca38614b8b73b906ed56a865d38fa20de8123bd8153ab8f59c383c9db8d",
+  "clean_sha256": "53e41643cb05687c18a75e9cfb2b5c5b0d5859328d6ddb056d907dad7144dc05",
+  "clean_bytes": 1698
+ },
+ {
+  "source": "nws",
+  "file": "nws/RWR_RLX_0.txt",
+  "url": "https://api.weather.gov/products/95abd325-398e-40c9-9ce4-67ee717a440a",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "a4dc2d51aee4850f240609370f9777db08097370d3687f559209e708075bb4da",
+  "clean_sha256": "4c546964a01f30ac33efc6f2698dfe7488cd634bc91baf3a82baadc09e8aff40",
+  "clean_bytes": 1706
+ },
+ {
+  "source": "nws",
+  "file": "nws/RWR_RLX_1.txt",
+  "url": "https://api.weather.gov/products/2838524d-fe64-45d2-b404-e9796a92eb37",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "e7bf551c887826232cec6bbd45f67462c7380f269e66410b1052020100ffe941",
+  "clean_sha256": "4ed668168d70a1cbede019073c3073d44483abea199eab1c041d8ea3998d88f8",
+  "clean_bytes": 1707
+ },
+ {
+  "source": "nws",
+  "file": "nws/RWR_LWX_0.txt",
+  "url": "https://api.weather.gov/products/b575e97e-3ce9-4678-95df-9c24de96c629",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "17dd29e85143a96c8a9de35a6dc1747245f3e621c88173ac145e2dbabfd1e3fc",
+  "clean_sha256": "dcd55c61453e3c23b1a81fac604322e9a39995474738c688c37fd560fa0e2135",
+  "clean_bytes": 3857
+ },
+ {
+  "source": "nws",
+  "file": "nws/RWR_LWX_1.txt",
+  "url": "https://api.weather.gov/products/f2887a8f-3b4e-4d0e-a10b-cd13920d5514",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "09ffd0f70ecd4fea39444319f91b31e7a5f3067ed07aaa44243bc19da608a362",
+  "clean_sha256": "be68de47eed32647059432bf1b55b2af625c14bb0aefb7dc7908b4d4b577d1b0",
+  "clean_bytes": 3847
+ },
+ {
+  "source": "nws",
+  "file": "nws/RWR_AKQ_0.txt",
+  "url": "https://api.weather.gov/products/667396e8-819b-41cf-8e71-dde5fde201b9",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "0b9abf58286853cd8f1bbff924853ea6ea78ac7609588a81a4996a6eb71ae873",
+  "clean_sha256": "092b32da38cbdf0f33d0543035f4ca786defa12b09081b434f89434482ef3d62",
+  "clean_bytes": 4591
+ },
+ {
+  "source": "nws",
+  "file": "nws/RWR_AKQ_1.txt",
+  "url": "https://api.weather.gov/products/ebf4edb9-3985-41d1-aac4-8d25cf5fb1a6",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "9d4e27a818f8e33cf95eb3622079990c2e78264c8e4a7d823ac6e810a186e486",
+  "clean_sha256": "329180a4d228c8dbbe45a0585e50bd3f57a7a61665e9eb0f93f6e90b85a82f82",
+  "clean_bytes": 4537
+ },
+ {
+  "source": "nws",
+  "file": "nws/RWR_RAH_0.txt",
+  "url": "https://api.weather.gov/products/d7ee5daf-22eb-4bf3-8f48-e64621573106",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "6b2137b87ae32ed466cda8679a07add7208df6d297f40b906554d87136030e88",
+  "clean_sha256": "6e8eeed5cc2ca66775c40eb48676fd43a448e7d3df9715c4d10c675d9e95b578",
+  "clean_bytes": 1566
+ },
+ {
+  "source": "nws",
+  "file": "nws/RWR_RAH_1.txt",
+  "url": "https://api.weather.gov/products/847d2cd0-289f-4e16-a62f-280d255f501d",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "ddd0091d3b77df1173df0ce00fa3cedb724e3db7369e91d1f456aceb1fcbe6cf",
+  "clean_sha256": "e236c4d2be9f92e0c4e7fbd843e135034be5eb3a6b59ff5611dfaad96f5c59c0",
+  "clean_bytes": 1559
+ },
+ {
+  "source": "nws",
+  "file": "nws/RWR_MHX_0.txt",
+  "url": "https://api.weather.gov/products/4cff3578-3e57-489a-8854-7de2c3f4f859",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "fe714d091dc6a24457a1837a8377fbb5c469088411f8694a4f76fd5b9fbe1474",
+  "clean_sha256": "2e795eb4010bb61cfee580110cc5307b429ed3ddded05b07ef1f5e7c4837c891",
+  "clean_bytes": 2608
+ },
+ {
+  "source": "nws",
+  "file": "nws/RWR_MHX_1.txt",
+  "url": "https://api.weather.gov/products/61282805-99d3-48e2-8dc9-e1af3e9f951f",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "0edf00850edad2aaaddbd983697b640ca77f7df34ead9e9269b407d57e29e628",
+  "clean_sha256": "5cc30ecbbadfbc5bdfc4aa1be78412defc4f504f3c792f7dfab1ac074ff473d6",
+  "clean_bytes": 2608
+ },
+ {
+  "source": "nws",
+  "file": "nws/RWR_ILM_0.txt",
+  "url": "https://api.weather.gov/products/1123cb6a-e72a-42e3-92ae-2256a294181a",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "6ed7d093de9a76a1ab192f552cac874e97f671352e98553fe6bba8fffc031c42",
+  "clean_sha256": "9d2c74c9e453d07361cfc9fa4071d6942620e7fbe350b5bd016d3f0f4701a4e3",
+  "clean_bytes": 4327
+ },
+ {
+  "source": "nws",
+  "file": "nws/RWR_ILM_1.txt",
+  "url": "https://api.weather.gov/products/e58d1eaf-d691-49a7-8be1-8cbfe8fc1db3",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "6323036c7058220382f21542ea38176e6aa974f62cf5ac6c7bfe1e6d7b98ee97",
+  "clean_sha256": "901bdc60727c49a0165944cfac7d97ae611bd5d904434a5f1f83b72a76aa11cf",
+  "clean_bytes": 4452
+ },
+ {
+  "source": "nws",
+  "file": "nws/RWR_CAE_0.txt",
+  "url": "https://api.weather.gov/products/2b60ac58-67fc-4153-937e-4cc286232586",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "f5ab7ab68dad4bb998afe2a3091cd07d0167a380641915e7da38f6edbc8f89b4",
+  "clean_sha256": "c229f01ac6a1f6e6f61dfa34bf0af7d4acede2eb86ac5484dc89ed7bfe4f017c",
+  "clean_bytes": 3570
+ },
+ {
+  "source": "nws",
+  "file": "nws/RWR_CAE_1.txt",
+  "url": "https://api.weather.gov/products/0bdc5b11-f57c-46f5-b03e-bba5ff3cb5ca",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "05b07cdb8a89eb674b63a828f9a161cd632656b80c3473e211ebe79838312e26",
+  "clean_sha256": "4b9ed9b5552b4c62669d7f333f48486bb7fb9a573c273859e566f10159ce4783",
+  "clean_bytes": 2497
+ },
+ {
+  "source": "nws",
+  "file": "nws/RWR_LIX_0.txt",
+  "url": "https://api.weather.gov/products/7bd098b2-b2c9-4280-ab61-6b349262bb48",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "b28dfdea4403aba4ac465bf56a18dfec12fb37ef2afab412a04930300ce13ac3",
+  "clean_sha256": "9fa7a87bc0655afb30f14ceb0deeb4bcdcccf75efae4da0c12bcf13dd571fb8e",
+  "clean_bytes": 2175
+ },
+ {
+  "source": "nws",
+  "file": "nws/RWR_LIX_1.txt",
+  "url": "https://api.weather.gov/products/ee750d2f-34c6-4da6-80b3-a898729dc0fe",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "610e03993ad9edea520b77ddc5dcb38c92fd35ef56f05e9bda82a3cad345319a",
+  "clean_sha256": "2c6b59a365e75f123698cc6eefe34bb973ecdf7a27f934de0a510a47fa65854b",
+  "clean_bytes": 1698
+ },
+ {
+  "source": "nws",
+  "file": "nws/RWR_FWD_0.txt",
+  "url": "https://api.weather.gov/products/e65cedc1-3361-4df6-a103-c5689d8cf1e1",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "404a8a3d08cb1153072b661fab3f6699d1490961e023eba94aa214fd72d11b46",
+  "clean_sha256": "6b10ead5c1ef2e1eca981d175af4204433623dbd77d3783017f3b83bfdde0e65",
+  "clean_bytes": 4995
+ },
+ {
+  "source": "nws",
+  "file": "nws/RWR_FWD_1.txt",
+  "url": "https://api.weather.gov/products/26eb80b8-ee70-45ff-babb-81e6c451242b",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "f6c6247f7a3a9714dde62b4e338b60a319f246491f2e3eff645bc008ed8e062c",
+  "clean_sha256": "e8be738a0e968dec434d224392a433db0433c307f90125e210950817b29dc8bf",
+  "clean_bytes": 4995
+ },
+ {
+  "source": "nws",
+  "file": "nws/RWR_EAX_0.txt",
+  "url": "https://api.weather.gov/products/0c1768db-a7a6-4162-bb1c-795401d69cc5",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "ecce43195c52f6859f1394967905a0403525cc7d5a2af31884bcdf6dbcc8b737",
+  "clean_sha256": "feea5116f7164ca6b4f01993c5af9a0a01d9a8518a10d0269e4535edce3e467a",
+  "clean_bytes": 2729
+ },
+ {
+  "source": "nws",
+  "file": "nws/RWR_EAX_1.txt",
+  "url": "https://api.weather.gov/products/840a702f-6c7c-4669-85eb-ca5392bc2b50",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "9c8bedad2664d461b8a2d96fcc5b67c20d3ffd56e5f28c8f8af578643e9f0096",
+  "clean_sha256": "d0f67c85078e77758ba4c5283aefa11b078c2e56c430223e440fecd962ba29a0",
+  "clean_bytes": 2728
+ },
+ {
+  "source": "nws",
+  "file": "nws/RWR_FGF_0.txt",
+  "url": "https://api.weather.gov/products/1d9653f0-c2c9-40a4-8287-3965839db30f",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "8cd489c2db2798f5d9d32844aa695323141b3784872bc79c9bb17de3c93d1e00",
+  "clean_sha256": "ce3363b820258e3d84ceb8a6d26dca932e3058cf20f446b49c3f9410a24ea790",
+  "clean_bytes": 4979
+ },
+ {
+  "source": "nws",
+  "file": "nws/RWR_FGF_1.txt",
+  "url": "https://api.weather.gov/products/90aa38cc-a902-4fc6-a024-757e57599350",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "41ff7f71c41e37c78c642329138d9db64c582c8d9d3d7481b9f61575afb01f77",
+  "clean_sha256": "b983febae44af9db35878758120920bb8d10b3eb99ca997722ab8cb47099aebd",
+  "clean_bytes": 4864
+ },
+ {
+  "source": "nws",
+  "file": "nws/RWR_BIS_0.txt",
+  "url": "https://api.weather.gov/products/2c9428f0-6e5f-41ea-b56e-677aef50190b",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "3eee94b2444adc0b3f6d46eb2f9f271d5a19bf21d30b7538a5c02ae1a29ad8ee",
+  "clean_sha256": "0b404a13ae102090f1fcc6b051a43553138f81c6dc63ecea6b60da16e07e327e",
+  "clean_bytes": 1666
+ },
+ {
+  "source": "nws",
+  "file": "nws/RWR_BIS_1.txt",
+  "url": "https://api.weather.gov/products/ad053eea-ff8f-4071-9bf4-d37a8670ffe0",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "9a9abcb6af57cf6b17bd76cb9da21a7121f7b7bec964c064d9ba55c8b2775125",
+  "clean_sha256": "ea969cfbee85d8bbefd8f8ebee5ad8ae28ebe9a0b6683fa18365016aa0c2a944",
+  "clean_bytes": 1287
+ },
+ {
+  "source": "nws",
+  "file": "nws/RWR_PDT_0.txt",
+  "url": "https://api.weather.gov/products/726941da-0b94-437e-908d-c3eeb2ffa1ed",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "5a01cec83402e51b8bd9efb5766de2f4eca49a4aebcaf6357b8c06d1451657af",
+  "clean_sha256": "ede7dd5020b333476e23a52433e02c8d79d7f478e14a500fc5fb829fba80fb17",
+  "clean_bytes": 3004
+ },
+ {
+  "source": "nws",
+  "file": "nws/RWR_PDT_1.txt",
+  "url": "https://api.weather.gov/products/390af208-ee68-4d10-a47c-a558427e6522",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "6b3acba59180bb86cc98fb99f95473897a5656bd3013e7c27c6eba1720df80d4",
+  "clean_sha256": "4b276b1dc97402ace5e61127b9cb20a78990d85d7c414ce1a69b0c4c16def673",
+  "clean_bytes": 3004
+ },
+ {
+  "source": "nws",
+  "file": "nws/RWR_SGX_0.txt",
+  "url": "https://api.weather.gov/products/a40ba0db-e3a3-4dbf-9ae5-c9feef75296d",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "02d3cfadb7ec83cc556f0f495ce075946456c300a3dbec510de4fa97bcb2f3a5",
+  "clean_sha256": "0c9399886be202bc3f86506308b722b7a1f5764f27c14532245b20d9d8996d01",
+  "clean_bytes": 3819
+ },
+ {
+  "source": "nws",
+  "file": "nws/RWR_SGX_1.txt",
+  "url": "https://api.weather.gov/products/d68d35d4-b5ee-446d-894e-9a26ce8c1292",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "9d2946c66b877e07217fbbf15a87beff6841d05622dab4fe78d7c202bb8bc54e",
+  "clean_sha256": "c1b80cc9d729d4f8ac6938a663f397c94af7362abe62f6b031f7c65ac7349621",
+  "clean_bytes": 3836
+ },
+ {
+  "source": "nws",
+  "file": "nws/RWR_LUB_0.txt",
+  "url": "https://api.weather.gov/products/ec07646f-3a0a-4f4b-93ab-4b7d3592e225",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "cd8e1ca9ebdf386a464164b21047d4d62756c2c9d684358e522f340de3601099",
+  "clean_sha256": "aa97ff44b6a78929b2f14d3b63e29f94cc6caf89e2af9873ab0c857cd89e2c28",
+  "clean_bytes": 4935
+ },
+ {
+  "source": "nws",
+  "file": "nws/RWR_LUB_1.txt",
+  "url": "https://api.weather.gov/products/4b11b75e-3e0f-4fd0-a5fd-c2390cfe6a07",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "14dc22c7cf128add91e0767e1c24f66589a42a8469252f517a739187e991442e",
+  "clean_sha256": "b44f90be3f6dc1bde30ff4bd64a51b84c7fd4171f4170e6c65bea35090ff605b",
+  "clean_bytes": 4959
+ },
+ {
+  "source": "nws",
+  "file": "nws/ZFP_LOT_0.txt",
+  "url": "https://api.weather.gov/products/b5080e76-6260-4221-9d08-aee8d320a716",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "692fac6c1343633a341ec13dbe1a98ef0b83c430312d8a6a9b9fe054c594ea9d",
+  "clean_sha256": "c970316ef54bb3be69e99ef19e0b271ff09547e8cd1b8d1036e8979183c5c19c",
+  "clean_bytes": 4854
+ },
+ {
+  "source": "nws",
+  "file": "nws/ZFP_LOT_1.txt",
+  "url": "https://api.weather.gov/products/77c57713-467e-4788-8045-4147251e22bb",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "fde24d0b37071f67abf770ecd9247c7d13bb64020431d05d9cb3d6b15c230253",
+  "clean_sha256": "a1212e906539ff72a91b8f666463822b1a1162774c52bef5660e69e7964ecc5a",
+  "clean_bytes": 4998
+ },
+ {
+  "source": "nws",
+  "file": "nws/ZFP_DVN_0.txt",
+  "url": "https://api.weather.gov/products/6f994da6-a84a-48a4-8e4c-22136264d10b",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "aa85deb53f9cd63c4397888ce629e9f90dd97fc213c1af0a5cc892b98f7b1ae2",
+  "clean_sha256": "59a65117c5253fb1c39d584a0f7ee8c489b27959713c3cbc01310f620001848c",
+  "clean_bytes": 4356
+ },
+ {
+  "source": "nws",
+  "file": "nws/ZFP_DVN_1.txt",
+  "url": "https://api.weather.gov/products/df82c08d-5a69-440c-8985-4e9ab2ae0f37",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "0104846074e737fcb424eb05fe0a57abe24fd54c56c416124d1e5fca69e2abc5",
+  "clean_sha256": "f13e975b4c05ff9a1e722776876cb100a072f082da3f18f18f095572d9feb7a8",
+  "clean_bytes": 4313
+ },
+ {
+  "source": "nws",
+  "file": "nws/ZFP_GRR_0.txt",
+  "url": "https://api.weather.gov/products/f0a3544f-6c88-40d3-adbf-6762c2b32efa",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "978c2aed58f64f29711786247de49fa355ef74e71b422472a96bb3c31b1963a5",
+  "clean_sha256": "c5d2b78ce2189bd1c0714d482cf55b0150489a349456113163a3331bb07f92a0",
+  "clean_bytes": 4464
+ },
+ {
+  "source": "nws",
+  "file": "nws/ZFP_GRR_1.txt",
+  "url": "https://api.weather.gov/products/594f400c-1bd0-4768-b32d-cc81aa6bb969",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "61d1cbacde040ca974b90c9324942c98a0d44cf318b779307fb8364b3bd2f7b4",
+  "clean_sha256": "d6f1fa68b5ff059d2678a121b15d69ad42a8c804bdad8b8f20047a077dedc445",
+  "clean_bytes": 4152
+ },
+ {
+  "source": "nws",
+  "file": "nws/ZFP_MKX_0.txt",
+  "url": "https://api.weather.gov/products/9d07f2c7-d001-4b87-867b-dd84d33eb27b",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "21a833770bd229a3142cd9b43d0c0da69cdc48b217fb21a24446575059335a2b",
+  "clean_sha256": "3c01b2875815d9ac12a76fdfd62e33c63300001f7b62666c040f8f1bd14d0784",
+  "clean_bytes": 3726
+ },
+ {
+  "source": "nws",
+  "file": "nws/ZFP_MKX_1.txt",
+  "url": "https://api.weather.gov/products/bd4a0109-a2cc-49ba-bacc-05bd1eb1a70f",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "a1a360d1860366cec07e25d96e92175767e9b5645ac9a5801c5d9070d0baae2c",
+  "clean_sha256": "fa14d3ad23f3836c62e65a71fbc3bcf3faeb27db22ba6429c482c42d3599f625",
+  "clean_bytes": 3726
+ },
+ {
+  "source": "nws",
+  "file": "nws/ZFP_DTX_0.txt",
+  "url": "https://api.weather.gov/products/35d0b8f4-097a-4158-9710-be31e766c29b",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "dc12d7d66408cfcf0da54296be00a97804593d455f495b5a987d0f9040bfb060",
+  "clean_sha256": "eda24c6a65428b2f1cf032d57afc6a8e6dc3705dbe43af220ac91e7e2692cca6",
+  "clean_bytes": 4474
+ },
+ {
+  "source": "nws",
+  "file": "nws/ZFP_DTX_1.txt",
+  "url": "https://api.weather.gov/products/c15cd339-4187-46c1-85fa-316693ea6386",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "c8cd1694ade0c0335da71eb8f0049d3162dc492c7a85ec22a6d9f1fe722a75d0",
+  "clean_sha256": "72bdaad3c104a8076372de3498b9a01d7a3f94de95cb00ce8f79e8ac783c32fb",
+  "clean_bytes": 4998
+ },
+ {
+  "source": "nws",
+  "file": "nws/ZFP_IWX_0.txt",
+  "url": "https://api.weather.gov/products/4922dac0-ca5e-4e4e-a42f-4740768f2201",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "09062e6bd06082f471ef19506a4460f175331772bb3ce69da90096f8b44e768a",
+  "clean_sha256": "ca243ca2a74c4611a8f7e1f0b9f3fcf7cc8463bf8f16c408a7f48c540b6fde00",
+  "clean_bytes": 4216
+ },
+ {
+  "source": "nws",
+  "file": "nws/ZFP_IWX_1.txt",
+  "url": "https://api.weather.gov/products/fd7548f4-6d44-470a-851b-389d712986a4",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "f446cf38bea79c7bbc18cafce2b50c79b5b2eb3217814fd41bc79ab7317d1a4f",
+  "clean_sha256": "879b38db5fdaf6446a7af3ae125ede2c86e6c66089aa0f473989e1d1063b6c03",
+  "clean_bytes": 4171
+ },
+ {
+  "source": "nws",
+  "file": "nws/ZFP_ILN_0.txt",
+  "url": "https://api.weather.gov/products/875d14a6-51bd-4a1d-b5f2-d9124a8582f7",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "4af498e2f2c3e5d37320bb5d6031dafb88b9a98c2e95cf4bd40f8b0466c033e5",
+  "clean_sha256": "d80f38a921fa317f94f7a33dc6d19444cdb2e482a3edf691247bb9ace27a14d6",
+  "clean_bytes": 4284
+ },
+ {
+  "source": "nws",
+  "file": "nws/ZFP_ILN_1.txt",
+  "url": "https://api.weather.gov/products/f0d7edd5-f4a1-4199-a021-1465c61007a2",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "f8853cc7b9bbef9a47fd894c1b8a4f610f436fa8dd32241c6629ccf51129e22b",
+  "clean_sha256": "999de6bbe1f91d0ce9e2eda9db51743bbe1ba9af64092fe7d93be84e96cefaec",
+  "clean_bytes": 4352
+ },
+ {
+  "source": "nws",
+  "file": "nws/ZFP_PBZ_0.txt",
+  "url": "https://api.weather.gov/products/7984723c-447b-4278-b7ad-10f20000229a",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "089d491cbd5ca45a69c1fdb78064ff857defdb9f9821b6f86cd8977a990e8567",
+  "clean_sha256": "7affea553c54ad8d0c5f969800ebd2607b216c8eab11ce42779fb2c9b590f067",
+  "clean_bytes": 4784
+ },
+ {
+  "source": "nws",
+  "file": "nws/ZFP_PBZ_1.txt",
+  "url": "https://api.weather.gov/products/61be4c3d-6849-4cfd-8d2e-ca45ca7ddabd",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "9fe3b046b6c5718f9af2b269466891091b7e4e4a71478f37533e2d3f794f0c32",
+  "clean_sha256": "5d0b1e1b761432206e90067b825798c79e889dbd5bcc34201768578461fe7e2b",
+  "clean_bytes": 4856
+ },
+ {
+  "source": "nws",
+  "file": "nws/ZFP_CTP_0.txt",
+  "url": "https://api.weather.gov/products/83e09d48-de6a-40e0-beb9-ae2e199f339e",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "261321c442eab723cb3f24d7464102bf079c6cac3413c741037630997ce90a60",
+  "clean_sha256": "a8e6ff35f623b75f017f9cfa847da816168103cf787db3ac801030aeabaa3166",
+  "clean_bytes": 4865
+ },
+ {
+  "source": "nws",
+  "file": "nws/ZFP_CTP_1.txt",
+  "url": "https://api.weather.gov/products/8d26feeb-3da5-4ee4-9864-9b216addf589",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "1d6b9b77ea7a20519fb0d92fa785e3928a23fcfdd40f433539590924326d07a8",
+  "clean_sha256": "c14dc3d8454ea4b2253507b25acd76b25954ddf13d31d118045bd554cc20d67c",
+  "clean_bytes": 4882
+ },
+ {
+  "source": "nws",
+  "file": "nws/ZFP_OKX_0.txt",
+  "url": "https://api.weather.gov/products/c1803a03-50a5-4fc6-b161-58489c594da9",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "41cda8a3d897fd71bd585c95a3d1a3388709592e22650aeac7f8a46052b5706f",
+  "clean_sha256": "c7e80cd15833211372252e43772fc501ef4a7e54995002b12344e2ba3d7931c3",
+  "clean_bytes": 4996
+ },
+ {
+  "source": "nws",
+  "file": "nws/ZFP_OKX_1.txt",
+  "url": "https://api.weather.gov/products/5e84ce2a-d1aa-43c6-a4a2-dfe8d84d8b5f",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "07a0bb243f55e1c50e5f4477ba5a6e89ea7695a896b48f8cf749bb6582607070",
+  "clean_sha256": "3a1c7b40caec64b3e29268d6a783fb8b856d7515e41b6d8d33f78360077d6701",
+  "clean_bytes": 3900
+ },
+ {
+  "source": "nws",
+  "file": "nws/ZFP_BOX_0.txt",
+  "url": "https://api.weather.gov/products/81868055-7bbd-471e-b271-7567e386a420",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "e7d821599ae3d22a7b94a591e447fe84c8ba1e1858bb517012d6cf102a717621",
+  "clean_sha256": "f6d7ee96555f488a4270565e4d6d4d631e6f1c642d6c12f0cde299c2f3701a94",
+  "clean_bytes": 4021
+ },
+ {
+  "source": "nws",
+  "file": "nws/ZFP_BOX_1.txt",
+  "url": "https://api.weather.gov/products/07ca06f8-d43b-47f4-91f0-23a0561852e6",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "0a65b9443f46fe580dd69135388b2a707c419523b38d7843abd55422ddfed08c",
+  "clean_sha256": "87161a277fa49aee0880772b0d9a5c121cbbf9a209e25fd54a13f65ae1c5b10f",
+  "clean_bytes": 4045
+ },
+ {
+  "source": "nws",
+  "file": "nws/ZFP_GYX_0.txt",
+  "url": "https://api.weather.gov/products/4b30c5ed-0398-4d2c-8c0b-068bd227d5f2",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "b1f35ba02c556c990eeaa8320e8ca4d0448dffd70185dcbe321f38b764109ef8",
+  "clean_sha256": "9f95fe03e2d5e25d3f65835fa3d3e95bc4aabcab2181b14c71abef49ed094893",
+  "clean_bytes": 3953
+ },
+ {
+  "source": "nws",
+  "file": "nws/ZFP_GYX_1.txt",
+  "url": "https://api.weather.gov/products/48b4574f-d476-4af4-b0a2-9f5a0035423c",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "c3e65f6a1ce34ccf518c2407a3dfa52ccaf0fc37f1865b709ff1204ba1f510db",
+  "clean_sha256": "623394314af9dd72435cb48c0877d5ba324f35055955ab8731911f6d85617175",
+  "clean_bytes": 4383
+ },
+ {
+  "source": "nws",
+  "file": "nws/ZFP_BUF_0.txt",
+  "url": "https://api.weather.gov/products/bfa58f1a-bab1-493f-b5e5-aa73232b300a",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "f45ef2a30fb97007c19d3d8dfc665cba522ac3a7609cf427dc787e81419f7524",
+  "clean_sha256": "0fd7aa24b6b4364941056604dbfd5b605b2680b128b67bc721f4e3df75974f98",
+  "clean_bytes": 4513
+ },
+ {
+  "source": "nws",
+  "file": "nws/ZFP_BUF_1.txt",
+  "url": "https://api.weather.gov/products/a7098ad3-5367-445f-a103-2c72d4e1e2e9",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "927c1219ecaee224d9d005473e4947b93779a501314dc41d8ed5d0bd3b401bdb",
+  "clean_sha256": "c02ce3b680424a180682d5f4db0b9a1538a0fb5022d5355ec1a481660be446fc",
+  "clean_bytes": 4728
+ },
+ {
+  "source": "nws",
+  "file": "nws/ZFP_ALY_0.txt",
+  "url": "https://api.weather.gov/products/bba64b33-095a-479a-83ba-a33d96ba027d",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "b9edfac0fe6d25244902ac0106de74fcf53d6501a7fc7bab7c48daf54a3e40b5",
+  "clean_sha256": "3706ce0e3fdd5ff26659bb1133751c3aca8c87f2c664458bc412961c908ba3cb",
+  "clean_bytes": 4783
+ },
+ {
+  "source": "nws",
+  "file": "nws/ZFP_ALY_1.txt",
+  "url": "https://api.weather.gov/products/3a3b9807-bd3d-4639-9f69-b533273c4941",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "f1d43c484000e46f0c6a6637c84de722ac625fe30d52a1319a52c00e2349867f",
+  "clean_sha256": "e502e827fed54001d1e53432134447b7d46e4e62013f1bc0c3190d42fbbd5b19",
+  "clean_bytes": 4702
+ },
+ {
+  "source": "nws",
+  "file": "nws/ZFP_RLX_0.txt",
+  "url": "https://api.weather.gov/products/b7f78091-b964-4261-9061-8c2f9e560912",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "55a1298699d544efe2992d82a12771267c7c4c22224d579311e57904318d2ef3",
+  "clean_sha256": "29b644a236b1c7c134477a36d5bcb570a14d89a2afaed46a23bc35e5113b920c",
+  "clean_bytes": 4527
+ },
+ {
+  "source": "nws",
+  "file": "nws/ZFP_RLX_1.txt",
+  "url": "https://api.weather.gov/products/e6afee23-540e-48c3-9c14-9abf9894d5ca",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "9eff558d57fc4d48758595843e06ae633f03e0a058f1fa23f29c79c9314bf949",
+  "clean_sha256": "44159151ff7193c68afb98b03e04e303d3e27ac3858e03b7e1e94201a939dc7a",
+  "clean_bytes": 4527
+ },
+ {
+  "source": "nws",
+  "file": "nws/ZFP_LWX_0.txt",
+  "url": "https://api.weather.gov/products/e9d61045-a4d8-4318-89ac-3acef0d9aa65",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "ccba796b4b1ea37a4ee2a764270d6db847ad1cd6a63d58024113e41afe94df30",
+  "clean_sha256": "4f9e839a470190e1dfeeb9aae2f2ad86037f0b5de34d52676e388eb9b4ddfdf4",
+  "clean_bytes": 4938
+ },
+ {
+  "source": "nws",
+  "file": "nws/ZFP_LWX_1.txt",
+  "url": "https://api.weather.gov/products/82a58791-ee7d-4bad-a1f9-aeb4a9dd431d",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "5409aaea3a84877080d1a6dacc6abb82b99128047df7502492206f21578179a0",
+  "clean_sha256": "e9a56667a2611520e9d7ba20b70f398eb8f1f55ec45702fe201c3d080a11d3b9",
+  "clean_bytes": 4951
+ },
+ {
+  "source": "nws",
+  "file": "nws/ZFP_AKQ_0.txt",
+  "url": "https://api.weather.gov/products/8f9097e9-44f2-455b-97fd-2ebdbca4b12a",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "23fba8763f3e6f445b3f1209346a98d6acc6282b30f82356b42c319421c1ad89",
+  "clean_sha256": "ac6ee008dec81e6295a1587361d3eccb4b06025f1cc769f9814ce5507f362504",
+  "clean_bytes": 4994
+ },
+ {
+  "source": "nws",
+  "file": "nws/ZFP_AKQ_1.txt",
+  "url": "https://api.weather.gov/products/65fda994-2f6e-461b-8b7a-1bc9727a809d",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "84b07e189ce1e6f6684e9ec938cba7068b1e0c69ed9bfd5b0d806ee8cb9cff43",
+  "clean_sha256": "799d8c58f911f4fcc69fd143ffb368971f2850e77237579e1d01dc6325431875",
+  "clean_bytes": 3934
+ },
+ {
+  "source": "nws",
+  "file": "nws/ZFP_RAH_0.txt",
+  "url": "https://api.weather.gov/products/aa13e730-6859-4760-b245-263d7986217c",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "bdad7f740814a437f54a1d3c7191e32b085653d95c054398fefb4a13f03a7539",
+  "clean_sha256": "f10edd58a95aa5fa507245c6ca90e8ec76411a411927c3a5ed17ac5ec0db50c7",
+  "clean_bytes": 4370
+ },
+ {
+  "source": "nws",
+  "file": "nws/ZFP_RAH_1.txt",
+  "url": "https://api.weather.gov/products/6414a412-9226-4306-8a02-733c6fe5c78f",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "e12fe2a072aada75fce428f51e985d00b047716c03276fb4bb7057c33f76adfa",
+  "clean_sha256": "da99fddc792c885eeebec256a83d5b2115667197bf6165f757b1d9e77b6bdb58",
+  "clean_bytes": 4292
+ },
+ {
+  "source": "nws",
+  "file": "nws/ZFP_MHX_0.txt",
+  "url": "https://api.weather.gov/products/a04e7f77-be6b-4e15-ad5a-15624cde80a4",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "9ebefd24e20804ee712343f8dcddc0ad62a59a4dc64f2b2c7cc34bb64a2f9d05",
+  "clean_sha256": "73e208d26392c699c27a5370ef9691b28522e3a70dec56c53fd6e5f099eea926",
+  "clean_bytes": 4727
+ },
+ {
+  "source": "nws",
+  "file": "nws/ZFP_MHX_1.txt",
+  "url": "https://api.weather.gov/products/4de4ff87-319e-494d-87b9-33c18c037ff2",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "3428f9afd7da607173d7a13fad2d773a30f608e16e7de30f86204509c391fa6f",
+  "clean_sha256": "0b65d8ec04c172f2a9c3678057429db4e1329f5ac7d9a45d9387491516d07873",
+  "clean_bytes": 4881
+ },
+ {
+  "source": "nws",
+  "file": "nws/ZFP_ILM_0.txt",
+  "url": "https://api.weather.gov/products/fc8e4073-f230-4d42-a5d7-f3ce7ffdfb98",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "d99d0ef00dbc96150f2a8a28dc7edb6dcadac1d5d3d1652857492ca03f9d5ab7",
+  "clean_sha256": "b20e407fb70d667c1786eb5dc38d67ce6b9d51274babfc76ef6d915714e220fa",
+  "clean_bytes": 4521
+ },
+ {
+  "source": "nws",
+  "file": "nws/ZFP_ILM_1.txt",
+  "url": "https://api.weather.gov/products/ef02c943-48f7-45e4-8cd7-4c75e213c995",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "e853cdc3446ee811840ff9b63ad6b53a03374adbac087ba8096fb548f4de3e31",
+  "clean_sha256": "1a267664ed94c4e24d661f82a9e80f51595fce4bf0e4959b16e407c1ad8d1eab",
+  "clean_bytes": 4298
+ },
+ {
+  "source": "nws",
+  "file": "nws/ZFP_CAE_0.txt",
+  "url": "https://api.weather.gov/products/e6532cf5-d319-4bf3-91a5-29dcbc9fbea7",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "6d97fb42409b0dfd2670d12899191668aa5e65b232972f98cfb3ed9a0ffe8717",
+  "clean_sha256": "078938c838467ff44eb4ee206ae4ecc2d0d80c111dd5aa87c944de30b38eba23",
+  "clean_bytes": 4225
+ },
+ {
+  "source": "nws",
+  "file": "nws/ZFP_CAE_1.txt",
+  "url": "https://api.weather.gov/products/170968ea-f09c-417f-a935-4a87cc68c57e",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "d7bbdc6b4fdad8c6c316018784a3419786687775ee48bef37c3190f17e0dff3c",
+  "clean_sha256": "e7ba629e388d0c90c06834de682741dd3708e34edaafc428f4d506adf9ca4d4b",
+  "clean_bytes": 4231
+ },
+ {
+  "source": "nws",
+  "file": "nws/ZFP_FFC_0.txt",
+  "url": "https://api.weather.gov/products/e7a68fe2-119a-4dd2-8386-56676485b1a2",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "2bd38eecb8597629a8d22342605e1a96174f0952797ec033df2b3e65c3702387",
+  "clean_sha256": "ab980d44bcc08ec8d8adb39c01701f4fc7a6fecf7b48eef2a3084e19fb43b2a3",
+  "clean_bytes": 4998
+ },
+ {
+  "source": "nws",
+  "file": "nws/ZFP_FFC_1.txt",
+  "url": "https://api.weather.gov/products/2cd85525-a772-4760-b7b3-d115e6b6be78",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "cd1929366dbed5d826bd3691a20df2add2eacb64b5890984e5f78b5c3b260e4d",
+  "clean_sha256": "83f897ed3c4bad2dfd16968091513c7698103d9cba94832a3439cc27d000a8c6",
+  "clean_bytes": 4825
+ },
+ {
+  "source": "nws",
+  "file": "nws/ZFP_BMX_0.txt",
+  "url": "https://api.weather.gov/products/fc43dd94-e043-4e96-b72e-e3f80d5d57c1",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "b15d5dec41dd472d5f5b7cdc017313de14e05d291709988d2b6b870d2410b736",
+  "clean_sha256": "8ce74ad8715688d51bbe1b2d505c6a716178f640ee3520c950e82ecc0f82ea07",
+  "clean_bytes": 4444
+ },
+ {
+  "source": "nws",
+  "file": "nws/ZFP_BMX_1.txt",
+  "url": "https://api.weather.gov/products/32c87448-ef6d-441d-a671-ce47c049075b",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "be003096cca3ac6c797efbc1889224bbb2549898e3f012616a29ec68251a6fb5",
+  "clean_sha256": "a3c4b57e1d9ab2c14991655cd4168c66b692d271baadff246458683f8fd2c264",
+  "clean_bytes": 4423
+ },
+ {
+  "source": "nws",
+  "file": "nws/ZFP_JAN_0.txt",
+  "url": "https://api.weather.gov/products/f42cf181-c8e0-4180-b4e6-9cae67b80807",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "81f95445334d08eea96a9d87c7a3e38535a15e4b227c7de0eed19200674c19b5",
+  "clean_sha256": "574204d626b7952ee6a894127cf3c4aa312aa3102c1b3c878a9e386145693571",
+  "clean_bytes": 4333
+ },
+ {
+  "source": "nws",
+  "file": "nws/ZFP_JAN_1.txt",
+  "url": "https://api.weather.gov/products/5cf82d0c-5d14-43f7-b2a3-9927d902ede5",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "46b182fe0236c6e4748d0c164a96708a6e694ce493a167c27e1c666f92864788",
+  "clean_sha256": "fe1b48806de5984352633c15f3a3c28be161600da6d3382499961ad18219d38b",
+  "clean_bytes": 4393
+ },
+ {
+  "source": "nws",
+  "file": "nws/ZFP_LIX_0.txt",
+  "url": "https://api.weather.gov/products/330c2f11-51e3-4a0a-b17f-bc51a6521d10",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "9d0434d3b89866a041d8fa827f2a562cc388a5b630e55981ac92ff139f5a850f",
+  "clean_sha256": "5d00f54394c22ebc92c1200b8df4d95e0bc70d32c345c6d2b654b0ec0e2360da",
+  "clean_bytes": 4265
+ },
+ {
+  "source": "nws",
+  "file": "nws/ZFP_LIX_1.txt",
+  "url": "https://api.weather.gov/products/9da20ad6-a353-464b-8e83-a16c1af70f98",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "f24771247fe7e9d9da29bf7cb421c8f88462b66282848cc421070a5f9fec6e1a",
+  "clean_sha256": "a4a01c5d8b04bc77fbaeecb7074e00ab5206dad5d1ec589bb36040a6b0ef92c9",
+  "clean_bytes": 4973
+ },
+ {
+  "source": "nws",
+  "file": "nws/ZFP_HGX_0.txt",
+  "url": "https://api.weather.gov/products/502ba65a-4f2d-47db-b65a-934aeebe456b",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "480443352363bd291eea6290121bf51db56ca3b0ab66b380f031c51087ed6df6",
+  "clean_sha256": "0242aa63237b6368bc1a826f7de5988e7151424bf3e5e18090b88d17758ee6ab",
+  "clean_bytes": 4976
+ },
+ {
+  "source": "nws",
+  "file": "nws/ZFP_HGX_1.txt",
+  "url": "https://api.weather.gov/products/54cfd1b1-f0a2-4295-b182-a7f9cc196b63",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "168db3d4984cfc0087ad49395bec9344d7f8c183d1a7e5c788e6d41798761713",
+  "clean_sha256": "3ec8d7e7c0bc0c1a4e411df95067ff7a9b131dd997b99eba2bad7c55e2bf3229",
+  "clean_bytes": 3852
+ },
+ {
+  "source": "nws",
+  "file": "nws/ZFP_FWD_0.txt",
+  "url": "https://api.weather.gov/products/9650d47b-12c1-4111-afff-1cd4577908c3",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "320beecf7cf71034bd1c5efdf46e21682e74fb5341dd10b2dcd7abad103a434c",
+  "clean_sha256": "f7701e320f1a9d7d53677d69c6495e01b019bb43cccb82866c166b9ca39689a0",
+  "clean_bytes": 4996
+ },
+ {
+  "source": "nws",
+  "file": "nws/ZFP_FWD_1.txt",
+  "url": "https://api.weather.gov/products/0e7f0463-1ea3-4168-a7e9-64690d7a9b77",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "31512c7b275a593de5d5765e323e4cb0aa21607bedac5253ca3409a919efeecf",
+  "clean_sha256": "ecc2ed06157845af22c5cf82946127c31d24233d3051c2758dded6782a3da8fa",
+  "clean_bytes": 4886
+ },
+ {
+  "source": "nws",
+  "file": "nws/ZFP_OUN_0.txt",
+  "url": "https://api.weather.gov/products/94d28288-28d5-45f7-b044-117d8ba820c7",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "7750ce57e579b75930f6b84f2b51536ad140ea83d3cc535bdb67a059ef5c9af7",
+  "clean_sha256": "79ea0b3e26c0e61ed62854afc8d467cfc7e550d62ea9aba04074bcc4052ca812",
+  "clean_bytes": 4400
+ },
+ {
+  "source": "nws",
+  "file": "nws/ZFP_OUN_1.txt",
+  "url": "https://api.weather.gov/products/d06e011e-e819-4475-b2f4-a48abf65cffd",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "c7a911c4d669487cbd3f913c2a0c6194b448cc208d68cc7ab266a2a9f9e1131c",
+  "clean_sha256": "de4517a23c3dab10bef678af89575cd2d3068074d02ea7f5685f880baa221f26",
+  "clean_bytes": 4288
+ },
+ {
+  "source": "nws",
+  "file": "nws/ZFP_TSA_0.txt",
+  "url": "https://api.weather.gov/products/1fdb2fc4-9ec6-401d-abcc-e2f5f6b8a5fa",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "e2ab9a5757cc38e5626b44cd330e9cbe877b471b77d24ca96f0341af07a969da",
+  "clean_sha256": "f9184940fb702b5b1838d48fb9b9d0ba2c5082c400783991482babb8a95924a8",
+  "clean_bytes": 4921
+ },
+ {
+  "source": "nws",
+  "file": "nws/ZFP_TSA_1.txt",
+  "url": "https://api.weather.gov/products/edeff411-97fc-43ea-8ed5-96730f3f9151",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "548b56e5273d78dc46fdc7a1f1511a405783ad3337e8ac709e691125960c1965",
+  "clean_sha256": "9c5c962a5a7634216d03fcb31dc662e5aa046ac2cca4f409437281179f1ffa3b",
+  "clean_bytes": 4989
+ },
+ {
+  "source": "nws",
+  "file": "nws/ZFP_EAX_0.txt",
+  "url": "https://api.weather.gov/products/e8370616-9c04-43c2-9d1e-50d218622498",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "c6fc71648ebd762dd21eb84f59b23afb3f9c4f9bf780be4431da00d4a933e207",
+  "clean_sha256": "d7f862eab3a7d2a60a10414de3c91d92dab18c09e9af7e141a194b3d5c206f72",
+  "clean_bytes": 4590
+ },
+ {
+  "source": "nws",
+  "file": "nws/ZFP_EAX_1.txt",
+  "url": "https://api.weather.gov/products/853c6b80-aa69-443d-83dc-1cc2b7f7b42b",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "4a575be90f902b9b320e67b23c0691bcdbfaa81b59830320120309548c7aa4e9",
+  "clean_sha256": "c3f9fcee971c1b1f97c9cfcab561645d6b8521518609cb96f347108fdcb5ffb2",
+  "clean_bytes": 4770
+ },
+ {
+  "source": "nws",
+  "file": "nws/ZFP_SGF_0.txt",
+  "url": "https://api.weather.gov/products/7001885c-6a57-4ad1-9824-c775e629c7c5",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "ab887ef8fdf5e155ac4be07c9bb31b6851d3d954d9141536ac09a92b97035b14",
+  "clean_sha256": "ab0d329ed929a1e54f5125dcc28a6c8c36cbcc87a010720644efa004372f948b",
+  "clean_bytes": 4569
+ },
+ {
+  "source": "nws",
+  "file": "nws/ZFP_SGF_1.txt",
+  "url": "https://api.weather.gov/products/6c1b5695-b9b8-4917-a995-8de67223eb36",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "77994e2b2e574d49696785e58f985dc78a8814cca3bd14fb2f51e2994d202df9",
+  "clean_sha256": "ef28897482defb9dc5235492dadd84f323a8dd0b935615a8363776c7dd675792",
+  "clean_bytes": 4512
+ },
+ {
+  "source": "nws",
+  "file": "nws/ZFP_LSX_0.txt",
+  "url": "https://api.weather.gov/products/8945cb5e-e15c-4770-9fc3-3d492df7d2ea",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "68c5d4fda18629fe9849d74ddc285df12638635b3846605d2eb0a1afc2b05fd6",
+  "clean_sha256": "3d8430f22d09e40869f7f9a7c5dcf32c11fc0cb978722f7632c611d8480c36b4",
+  "clean_bytes": 4994
+ },
+ {
+  "source": "nws",
+  "file": "nws/ZFP_LSX_1.txt",
+  "url": "https://api.weather.gov/products/47acf827-c4d9-484c-bbe7-a13d3e58bd9e",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "8c179810213fb3fbc7d1902b1604c83c19a7362e250f6cee227c1055beecaa67",
+  "clean_sha256": "8bd1d1ddcabe65030886e522c44bf57af08b24e0933e2eb95eed436bae39f3fd",
+  "clean_bytes": 4961
+ },
+ {
+  "source": "nws",
+  "file": "nws/ZFP_DMX_0.txt",
+  "url": "https://api.weather.gov/products/ba299587-c294-4c32-9e06-4b77908c6e12",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "f608ceb2a8223f0c950cb75680cc446d01143ef287b58cc7738bec52c4d7365a",
+  "clean_sha256": "0c31cf3b31c6a3ad5db3047a097331c3165bfdb3dfbe2bdee1cf191ae1954e01",
+  "clean_bytes": 4935
+ },
+ {
+  "source": "nws",
+  "file": "nws/ZFP_DMX_1.txt",
+  "url": "https://api.weather.gov/products/ab3306f6-1c27-43d2-bf35-c0a9d948b1f4",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "3c475b28bdf0cc27591fbcdc4f1abb2653170589ee36b0cbcedc82c562cd92c9",
+  "clean_sha256": "4d255c7b1c7c6f92efc1a677ffbdacb0188d77d6894891052cd3e85583121356",
+  "clean_bytes": 4974
+ },
+ {
+  "source": "nws",
+  "file": "nws/ZFP_MPX_0.txt",
+  "url": "https://api.weather.gov/products/f938c583-f9bb-4bc5-a501-d185f308e939",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "7b0ba295746a8867d219dacbcc6ac4fd09acd15e827997f718ead921e2f407cf",
+  "clean_sha256": "0f59b3f3bb42ba0413582a753332650226f062356623173ca060e83d190f30f5",
+  "clean_bytes": 4293
+ },
+ {
+  "source": "nws",
+  "file": "nws/ZFP_MPX_1.txt",
+  "url": "https://api.weather.gov/products/7474a086-e961-4749-a03d-c5b581674ac3",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "7807f7d89ae7ff6247bb9183444152b489e3029f44c22c73c83aa0bd68514adf",
+  "clean_sha256": "1787df1cf9015d303a73340c5625db7265a13445b0de22234290d4aa94b1df1f",
+  "clean_bytes": 4391
+ },
+ {
+  "source": "nws",
+  "file": "nws/ZFP_FGF_0.txt",
+  "url": "https://api.weather.gov/products/78bd9169-924f-42b0-a1ef-27d29c063c2f",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "c15856653c463c9a4edcd4eb846edd9d13edd07bacaed529cbf7a3dc39133b25",
+  "clean_sha256": "8b4acc65455b120337d902cf0a4c8267bed109174f16913aec4745f2c9adcad5",
+  "clean_bytes": 4863
+ },
+ {
+  "source": "nws",
+  "file": "nws/ZFP_FGF_1.txt",
+  "url": "https://api.weather.gov/products/d1035b5f-18f5-4f48-b02a-3b675eff2fa5",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "273f1b5330760ba08123f5574273a29e37958e7421bc6b21d2ffa486c157c13d",
+  "clean_sha256": "8900fd7b5f18ad1b737a637e2e453cfc617632742b0b9bc7dc5b83913dcfb4e3",
+  "clean_bytes": 4906
+ },
+ {
+  "source": "nws",
+  "file": "nws/PNS_LOT_0.txt",
+  "url": "https://api.weather.gov/products/94354bc8-6680-43f0-b29c-f942b5644b3a",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "1c9e2377bf5b79176e75369a5a27e4bb9d1b74d54492e712bcad5057b286a271",
+  "clean_sha256": "9d4d631725ce81a7d2c109e43949fd4b71960b3c071a344ef15f46d51df559c7",
+  "clean_bytes": 1897
+ },
+ {
+  "source": "nws",
+  "file": "nws/PNS_IWX_0.txt",
+  "url": "https://api.weather.gov/products/b74b7d77-fcd7-44b3-ab97-a614caf99bd5",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "945521d13062f33d6e00566e9e521ade8cf35e4b129961e48131fd674f0bc35a",
+  "clean_sha256": "4a34e6d012899e7a3c1c5af76ca437516eb3fb1fa3a96d4aaaa4e9dfac51cab1",
+  "clean_bytes": 615
+ },
+ {
+  "source": "nws",
+  "file": "nws/PNS_ILN_0.txt",
+  "url": "https://api.weather.gov/products/d1da5302-1093-45eb-9a38-efa113a7ef43",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "e98e86810881149bc9a630276bc576eebcb9621918290c62c7085090675873f7",
+  "clean_sha256": "4650f7fb4b62a594d8a7d23e2ba6a5101bd0d0d2cbd85cbf02b8799713d3480e",
+  "clean_bytes": 989
+ },
+ {
+  "source": "nws",
+  "file": "nws/PNS_PBZ_0.txt",
+  "url": "https://api.weather.gov/products/3de31bff-317b-421b-8038-3dbc98ba13b8",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "7b99af79497bf9deb57401ee65d2c987c49640362c66b095810859cbb192007a",
+  "clean_sha256": "e5b12568b4af4c1e1a74767454a3ac15c998b789dea4a2e4021e7d49e75434e7",
+  "clean_bytes": 4262
+ },
+ {
+  "source": "nws",
+  "file": "nws/PNS_PBZ_1.txt",
+  "url": "https://api.weather.gov/products/4632fb23-dd2c-42a5-a7ec-dc3ce7833eaa",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "c8efe23ca9900fb2bd8d77cf54c5f712eb500ac94a73d8b6055b41d04777a0bd",
+  "clean_sha256": "603af9b45b553ffe092c1fdd1945d0f41012a43e967b612ff7d148c5ee5dda15",
+  "clean_bytes": 675
+ },
+ {
+  "source": "nws",
+  "file": "nws/PNS_CTP_0.txt",
+  "url": "https://api.weather.gov/products/1589a996-1dfa-4989-a944-baf1381d497f",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "74b95f0cf9e27928052c5c2cc121696cc7a883f56643b4cb54b4241b4a8f5fb2",
+  "clean_sha256": "d12f0fc6e66748064788d9a66f4e0386d81fe84548ed0c4a9e0714a58768c70a",
+  "clean_bytes": 386
+ },
+ {
+  "source": "nws",
+  "file": "nws/PNS_OKX_0.txt",
+  "url": "https://api.weather.gov/products/f0d1b865-a81d-4ed3-a0bd-30c324b0466e",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "b722a195b62da3b4d64cd415d4761c9f6120782769a867709a0f01b5f15c045d",
+  "clean_sha256": "fbd3d11ac824bfed8e8d233c8345309e5e1e4262eb1a85f7abc6ab2d4411328a",
+  "clean_bytes": 4819
+ },
+ {
+  "source": "nws",
+  "file": "nws/PNS_OKX_1.txt",
+  "url": "https://api.weather.gov/products/ac202b8a-76c5-4861-9174-85795b2f9a79",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "e010b8ed6d78836af2bef48e474b2ae7aaf0d512968ca958075ccadc31bc7142",
+  "clean_sha256": "ef97e16a12ea0521d1e7d5f33cf40c36fc8b4c642958b433aa8c3662475aaf40",
+  "clean_bytes": 4822
+ },
+ {
+  "source": "nws",
+  "file": "nws/PNS_BOX_0.txt",
+  "url": "https://api.weather.gov/products/fd96ec53-7482-4ea2-a102-f9258c09ad3e",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "015eda9a7aa1024ce8f122f670bccfabf40b9837a192cb38d4fb913c461a4887",
+  "clean_sha256": "303c15ff2ef3270ae643ec0570898efba953d3e7954f1517c0d4b981f6b9f256",
+  "clean_bytes": 3029
+ },
+ {
+  "source": "nws",
+  "file": "nws/PNS_BOX_1.txt",
+  "url": "https://api.weather.gov/products/846f3e24-c420-4784-9dc0-75455f3a37f1",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "43b2ea3874701469014ba5c34b97b496eafaa5be2573c5543af8e71a7f9ae91e",
+  "clean_sha256": "e35059a8cfa5cd7f637bc36aa103af78b1a071f8e56d8aaa2be91322b3dcbe23",
+  "clean_bytes": 4702
+ },
+ {
+  "source": "nws",
+  "file": "nws/PNS_GYX_0.txt",
+  "url": "https://api.weather.gov/products/572cbb71-6f3e-41da-9c75-59d2d41ca170",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "f0a65059114438c0b9debad333526e48efc7a97e9659b712abd7d24708c548b6",
+  "clean_sha256": "2ead51bff34c3170673e0af31d1475e91285bb1757bb513f1eb70e523806d821",
+  "clean_bytes": 4805
+ },
+ {
+  "source": "nws",
+  "file": "nws/PNS_BUF_0.txt",
+  "url": "https://api.weather.gov/products/7b86c21f-df14-4269-92f2-8ea6ecfee36d",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "6611fb3aa19c09d0c99f150a98bf965bc5f8f4abb5014d79cdd3a410876646e7",
+  "clean_sha256": "d3479bb8b084640390a16c1e32a535f19d2b314f31e4620365586c1b2074c87a",
+  "clean_bytes": 4655
+ },
+ {
+  "source": "nws",
+  "file": "nws/PNS_RLX_0.txt",
+  "url": "https://api.weather.gov/products/98b0df20-22d9-4665-97a4-76f4c7273daf",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "f3d2f85bbb35356107d1485928ad6ea79fa1115b5902a71c6b484bf648ebbc41",
+  "clean_sha256": "00e96e84794555db1c017fdde6308ffd35420ad44f6626b52467ee567e91af9a",
+  "clean_bytes": 462
+ },
+ {
+  "source": "nws",
+  "file": "nws/PNS_RLX_1.txt",
+  "url": "https://api.weather.gov/products/0a3853fb-3369-4a1b-925e-26fdf0216336",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "1c4c6a75e80cffe2d539151a772b170d5469e523d6f3d5cffd7064a6b0639103",
+  "clean_sha256": "cf3e337fefec4cf10f777adc0fda64a1aa2f8478bb083f1f7ee9520183a1cb17",
+  "clean_bytes": 840
+ },
+ {
+  "source": "nws",
+  "file": "nws/PNS_AKQ_0.txt",
+  "url": "https://api.weather.gov/products/cc360b29-1b44-4de4-8fbf-a53dc6eb78a0",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "387789a53314ef6b92bef18f34b7c070875c60efdfe5f81d215e7c38030e498a",
+  "clean_sha256": "57abdc628fd6d0b01558c868b932992f5b49f82077a6b09d9c23f313500950d8",
+  "clean_bytes": 4613
+ },
+ {
+  "source": "nws",
+  "file": "nws/PNS_AKQ_1.txt",
+  "url": "https://api.weather.gov/products/a7b42d5a-3a96-40d4-9128-d525c9d825b6",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "972898a0a46ec6d08a8a7d9c2229d386697ac1b64c7780459cc39ec21dc1fc06",
+  "clean_sha256": "343985dee35dda53e80897649ae3130c0caf88b1af34b771411f2650ede8dfc9",
+  "clean_bytes": 4613
+ },
+ {
+  "source": "nws",
+  "file": "nws/PNS_RAH_0.txt",
+  "url": "https://api.weather.gov/products/7fb7eaa5-cc56-4be4-94c7-b0282d617baa",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "8c69e9bc410d33bcc0a6c628708bc4ba232c28feb351f9b80a670278fb35ddec",
+  "clean_sha256": "5e164c56e91761adfecfba6070b76625e48047291b72b3e1be466a7016b7d776",
+  "clean_bytes": 4108
+ },
+ {
+  "source": "nws",
+  "file": "nws/PNS_RAH_1.txt",
+  "url": "https://api.weather.gov/products/5dd91179-8b16-46bd-89d7-13ec146d997f",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "ea0eac8ffcd0a1b3281473d3719fe012ac26efe586e0dc61bd8d4a005b4cd1d8",
+  "clean_sha256": "b71f8e2b625aca3ef05aee43a3a364279c9139875be9b5d05e418aa58ba2b598",
+  "clean_bytes": 4966
+ },
+ {
+  "source": "nws",
+  "file": "nws/PNS_MHX_0.txt",
+  "url": "https://api.weather.gov/products/bb80b3dc-d98e-469a-b81c-e6835a1b9d30",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "25dd2ebc7eb1bad729efebc73af2507a3fce440c42786210f64360f74434f133",
+  "clean_sha256": "cf4a6179f196c5ce060b871af354a80f3b2507341e4ef8a5fb6ee972751f9007",
+  "clean_bytes": 4582
+ },
+ {
+  "source": "nws",
+  "file": "nws/PNS_FFC_0.txt",
+  "url": "https://api.weather.gov/products/89160675-5c86-462a-ab28-ca2071294c6a",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "2b91c9f360a7a51f86468ae1529e41438b087d12c7c36eb37f4cc9939e81d283",
+  "clean_sha256": "8b33c6e08ce36910f80c9e34b4798c05be4d1b9f8d4286333ab722e121e2a7bc",
+  "clean_bytes": 3288
+ },
+ {
+  "source": "nws",
+  "file": "nws/PNS_BMX_0.txt",
+  "url": "https://api.weather.gov/products/31d2c66f-232f-4446-ad75-7446a6614c34",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "f75b3cad58e8a81b3e65350ed471cbe04ba4f51d2986fbdb5275d748894dd51d",
+  "clean_sha256": "1c01e429f891766310b1cfcce1a40799b56b58b8b309c30045288c237c98346c",
+  "clean_bytes": 1936
+ },
+ {
+  "source": "nws",
+  "file": "nws/PNS_BMX_1.txt",
+  "url": "https://api.weather.gov/products/0e5b63af-3214-4399-8d06-f053c6fa0cc4",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "2ded2d6a372221af6a08db5b4f7c8e9802197ba206ea21b94fdd34667879eb04",
+  "clean_sha256": "989c8e96d23a5b02d5f11c46cdf0a8ba4b8ac34e385aeec88a7cb39fa9003beb",
+  "clean_bytes": 720
+ },
+ {
+  "source": "nws",
+  "file": "nws/PNS_LIX_0.txt",
+  "url": "https://api.weather.gov/products/153549a0-0bc7-4106-b03f-4e0e864b0965",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "fd43d8e8f012717f01970fb08ea6a8aec195ef8ad1912257ba40744110182ad6",
+  "clean_sha256": "0bc5278a0504b9ac4f5feaac280ae2a08759b48ba396abb4a13e483d190a8f4d",
+  "clean_bytes": 826
+ },
+ {
+  "source": "nws",
+  "file": "nws/PNS_TSA_0.txt",
+  "url": "https://api.weather.gov/products/a7cd43c4-3c0c-4a92-97c4-69ba09f39c26",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "815e7b4f06e402a6214fe9205c439d293777a1e714e63b49aa018a06fe5b3843",
+  "clean_sha256": "80f1395bf45d978e5a2fa1e65f7ba0ed10bb9931646c0d4a1982eb6ca6217472",
+  "clean_bytes": 3593
+ },
+ {
+  "source": "nws",
+  "file": "nws/PNS_TSA_1.txt",
+  "url": "https://api.weather.gov/products/e9062c17-2104-4179-b089-0f4ebd0f6bce",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "2b2dfb15052568eb02301b8deccae4df414bf9780f5e218c367c43feaccfe7b0",
+  "clean_sha256": "0dc213aa1b62dd09f0b0e1c2224252d641bc43d89f3cb3e93b75b8d6f8a71363",
+  "clean_bytes": 2562
+ },
+ {
+  "source": "nws",
+  "file": "nws/PNS_EAX_0.txt",
+  "url": "https://api.weather.gov/products/27358144-5d3d-41c9-aa7d-19ca74ef07ad",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "9bf5f7cf99d3853ab9eaaedd5241d5f0bead04bf3697dc5723e42319397dd16e",
+  "clean_sha256": "ed7fec296ebf06d1a3731b7998dbde4ed6a9bb11a3c62c96d7c4ba3fbdc02eb3",
+  "clean_bytes": 1511
+ },
+ {
+  "source": "nws",
+  "file": "nws/PNS_FGF_0.txt",
+  "url": "https://api.weather.gov/products/65f942b4-4610-45eb-8332-0f800a080db1",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "127085d2bd4df0472d5b110abc1047ef8f852ca2feefeeff9883579e889d8b6c",
+  "clean_sha256": "1cf6f92a411b59726d72300629c50449584650dab5b84315515e9005d8d5444b",
+  "clean_bytes": 4725
+ },
+ {
+  "source": "nws",
+  "file": "nws/PNS_FGF_1.txt",
+  "url": "https://api.weather.gov/products/df388dad-16fc-47b7-9fce-c21366d3c46f",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "e9cc1cfb13545b023b9fc3f249a3b8053bf4e2665e174bad053a700267c7b0eb",
+  "clean_sha256": "55e4908534bfcdf5ebc58ac11be056785e923fe59114c825228732546c62a299",
+  "clean_bytes": 4081
+ },
+ {
+  "source": "nws",
+  "file": "nws/PNS_ABR_0.txt",
+  "url": "https://api.weather.gov/products/07c1cbb5-c123-484f-97b9-67492d466828",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "5f2c4d9d1a2aa0b2821e95217e6a216d7ee823a1c508704878436c8c3fbf97d4",
+  "clean_sha256": "4e2bf429c0f411650b6d6c53eafad60f6e11872303b0300a3104d55fab289be6",
+  "clean_bytes": 1296
+ },
+ {
+  "source": "nws",
+  "file": "nws/PNS_ABR_1.txt",
+  "url": "https://api.weather.gov/products/42168225-0bf3-46ef-82fd-dffbf7aa773f",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "18d08d7829f3ae77c402dec9f5170dd6209c27cf0fb09ff7692ea1285ce0da1d",
+  "clean_sha256": "adadc12d17fc9f460e2d2bfad9944d3f7d52a4d27fef3d15c4c98db2ef534ad9",
+  "clean_bytes": 3638
+ },
+ {
+  "source": "nws",
+  "file": "nws/PNS_BIS_0.txt",
+  "url": "https://api.weather.gov/products/bba891aa-506c-4f2f-a21c-329401f0008d",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "2943769480bb7516387f551825a42683a0d242bcfa60a5ae723672491c9eaab6",
+  "clean_sha256": "2c4f669016a0efd2994306f51f401c60cd4e3d87245d575b4750665b16b24d3b",
+  "clean_bytes": 395
+ },
+ {
+  "source": "nws",
+  "file": "nws/PNS_BIS_1.txt",
+  "url": "https://api.weather.gov/products/30c2bd79-aa02-40e4-b83c-457b5b38eec4",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "f9820fd626db3c6fd3b04ab1b418ed846988cd8a37ae9d5eec33e1772d774b83",
+  "clean_sha256": "856ffbf33a670826f875e8935e713b8f6387a0156a794346065f7467eec626a6",
+  "clean_bytes": 518
+ },
+ {
+  "source": "nws",
+  "file": "nws/PNS_UNR_0.txt",
+  "url": "https://api.weather.gov/products/4d006d4d-fda7-4b10-a1d3-cd2511522781",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "c00464da46571e5d5c5e564a00f1f8d0430bde7b2352ae981cdf5fe0df8c7ba2",
+  "clean_sha256": "b053471b00236d4ea4e9bf852ee8dfd650986b88e107e4cb865a422704111539",
+  "clean_bytes": 1664
+ },
+ {
+  "source": "nws",
+  "file": "nws/PNS_UNR_1.txt",
+  "url": "https://api.weather.gov/products/998bbbf1-6dc0-489e-8e53-3f9e61488e26",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "d91c0ea9da47514b6c7d96fb07298b4195d659ea3638de7e11e4145ba41d9a4a",
+  "clean_sha256": "0978882f369d3ce7bec0288060e394f3394adb757f2cbaaa0f00d292a8959d06",
+  "clean_bytes": 2559
+ },
+ {
+  "source": "nws",
+  "file": "nws/PNS_BOU_1.txt",
+  "url": "https://api.weather.gov/products/0bc3d0d2-ac92-4753-a616-db14ca38eb4f",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "6659bee262da03c0a717ba91dda9cf3c024a674b718acaa039c5c545f0cd0662",
+  "clean_sha256": "c51bcd7dc0ce95a3187f137fc7490377495d5c1dee70d99ca69bc40411b07c14",
+  "clean_bytes": 1549
+ },
+ {
+  "source": "nws",
+  "file": "nws/PNS_SLC_0.txt",
+  "url": "https://api.weather.gov/products/69408258-a886-42e4-9ecf-a62dfadc522e",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "6114c72d57c3235e04915c7d64dc9d089e4c716c38fa6fa271a046c0e3db05df",
+  "clean_sha256": "9958e22b87182c38f8f6deca74a3f825d8c9da86a07a9dcaf5854fa3bfcbe841",
+  "clean_bytes": 4856
+ },
+ {
+  "source": "nws",
+  "file": "nws/PNS_SLC_1.txt",
+  "url": "https://api.weather.gov/products/06b8fb94-da37-498c-a9a9-33e8d02280c8",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "eca9a25e6c433d78aba04e0da1cf13fa54e362a30963a0322f02a14ef380fec6",
+  "clean_sha256": "80e0ef223e19263e620b0ee2f99fe75d2654b5a3fe353103a250398f5fb19b20",
+  "clean_bytes": 3856
+ },
+ {
+  "source": "nws",
+  "file": "nws/PNS_SEW_0.txt",
+  "url": "https://api.weather.gov/products/fe3c40aa-12fe-472a-83ca-199f6d903a6a",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "db3a97c48841e6d75af8234399d827b6858ff3f05c126d05bb01d1ca264c6a43",
+  "clean_sha256": "fdc526250850ddd56425f601029fc11511472b9a4e91ad0117ad4c4cc95c3122",
+  "clean_bytes": 2145
+ },
+ {
+  "source": "nws",
+  "file": "nws/PNS_MFR_0.txt",
+  "url": "https://api.weather.gov/products/6c4d7aa2-cf04-4916-a6c7-e881f6427158",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "81f89963eab7e50af1ba49b515df866a830add975e6884856d1bcb0edcdd6f40",
+  "clean_sha256": "6149a272195b9134d2a79b3fe0c84e37997b2248a412d78ee86d4497cc9d3d7a",
+  "clean_bytes": 2304
+ },
+ {
+  "source": "nws",
+  "file": "nws/PNS_STO_0.txt",
+  "url": "https://api.weather.gov/products/91bc1d28-9b81-4ce7-b901-ad3d7e57ee6a",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "d2924ff3fc1f4196dda5c7468897fe2bf85b07b409cf09c4c22ffff0673a62ac",
+  "clean_sha256": "ab067f01cc26e67aed3d1254e57c8415b1723bdc87aa60c5333346fae88ec2a6",
+  "clean_bytes": 4934
+ },
+ {
+  "source": "nws",
+  "file": "nws/PNS_HNX_0.txt",
+  "url": "https://api.weather.gov/products/1c55fe03-9c7c-4a66-b760-96d13d501689",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "38b0e7c0f6cb51b576af38859f671375fde27f39a42114a7bdc3f860c0776a5b",
+  "clean_sha256": "ea80274047dc4fbf77bcbb8ce6c8005713676b31046675cc64c9cabd9b68803e",
+  "clean_bytes": 1075
+ },
+ {
+  "source": "nws",
+  "file": "nws/PNS_VEF_0.txt",
+  "url": "https://api.weather.gov/products/c190cef2-d610-4305-a24b-f30cb21f5335",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "c76ef7c9a9709edd3546e2bbc9c789e7243b168ecc72dfc7761ee555f063caa9",
+  "clean_sha256": "1f3acf8aea74d2c8a8eacd8e5fd81b852863e54cade61f711cfe9ac5aaac5797",
+  "clean_bytes": 3687
+ },
+ {
+  "source": "nws",
+  "file": "nws/PNS_FGZ_0.txt",
+  "url": "https://api.weather.gov/products/488a0282-2dd2-4c53-8c3b-880d5ab5791e",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "f1b6da26f473a8683ad7b5107cd370f1950b3191d3dd35d0fcb7b74b7de51f61",
+  "clean_sha256": "452c5ef4f0d04ab5a6b5bb88a579922a121da0ce50034f9abbd987f207351ff3",
+  "clean_bytes": 3552
+ },
+ {
+  "source": "nws",
+  "file": "nws/PNS_TWC_0.txt",
+  "url": "https://api.weather.gov/products/eab28466-7702-4559-b351-99afdb6f56bc",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "161444b8c484c8ac979fdf5a80d1170d97824e78a34f7c0e8c783fc7d2f2c37d",
+  "clean_sha256": "ac2618eaf797460ed9f1a866dd08b1df41238a838a4039ad7f8a8eeb945012b2",
+  "clean_bytes": 4573
+ },
+ {
+  "source": "nws",
+  "file": "nws/PNS_TWC_1.txt",
+  "url": "https://api.weather.gov/products/a9238a11-cba2-44dd-8cf0-8e7e537dc863",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "b98bbe574b4f6018d226212fb97f7c51e54694f7a3a2b460e34e0e1a8a49ab0d",
+  "clean_sha256": "c1827cd7054d7ba6f84cb1960789a0f05d0561012dab6816c7127c82f7f46bf1",
+  "clean_bytes": 4554
+ },
+ {
+  "source": "nws",
+  "file": "nws/PNS_EPZ_0.txt",
+  "url": "https://api.weather.gov/products/509c9d2c-e80a-46fe-8e0c-93499505b839",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "9035984d00967f82f47256fbbd52c051b1ccd0fd9030170e3b7e753fd9ac454a",
+  "clean_sha256": "32c8b49c4ec30d21273197003a170be4c7ead55b3c3c69dd7ca5b4887a1a6834",
+  "clean_bytes": 3296
+ },
+ {
+  "source": "nws",
+  "file": "nws/PNS_ABQ_0.txt",
+  "url": "https://api.weather.gov/products/c36477d0-3a38-431f-9c19-81a0f576b2e7",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "ad0834645fd47b4d4ec13a7bbbf4afe548ed3894ce39179dc301e14d59497337",
+  "clean_sha256": "ef0451dc52b47218d7a4b3f2ab1362219a7f458329162d5266a48ad4b0b5734c",
+  "clean_bytes": 4909
+ },
+ {
+  "source": "nws",
+  "file": "nws/PNS_ABQ_1.txt",
+  "url": "https://api.weather.gov/products/6abc9468-9002-417d-a3f6-265919771ea9",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "4099f1f3f02541db37485144e5789c9e9dde669214e7e6d1f1557e866ef869a9",
+  "clean_sha256": "4982d3891776601b6d9da8ed058cdc07558f2d3ab474b49e9bc355ec53cb1211",
+  "clean_bytes": 1729
+ },
+ {
+  "source": "nws",
+  "file": "nws/PNS_AMA_0.txt",
+  "url": "https://api.weather.gov/products/c5ba8cbb-21dc-42d9-830a-257acfddcac4",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "da45a2316421ee3855e69123b7ec956a0ddfd9784cd38b5e1299d1c202aa05a3",
+  "clean_sha256": "31bb5a8ec2bef7b14550319f73af239db30037522e2d29528f2aa77f79f78e9d",
+  "clean_bytes": 2550
+ },
+ {
+  "source": "nws",
+  "file": "nws/PNS_AMA_1.txt",
+  "url": "https://api.weather.gov/products/ea7ac5cd-3940-44d1-8a45-fa3fb600588b",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "d08f5c06ea317ab3d995da21e19b63a84a398cd474cba44960fec50ed626d1ad",
+  "clean_sha256": "6c22a32f9c7498203b2374d396639a65177538fe29418cc5d46d318bd2671aa0",
+  "clean_bytes": 751
+ },
+ {
+  "source": "nws",
+  "file": "nws/WSW_UNR_0.txt",
+  "url": "https://api.weather.gov/products/3be2ebc5-6ba0-41db-9619-4675ca3c5247",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "bfc3118b83df9dba10894a546cb9dbf944260d9caf4e5bb25612c234ecd006e1",
+  "clean_sha256": "d9bf2160892485dd79e6422c3e01a5048fe7badaf0bdae91cbe851c6e7b7c771",
+  "clean_bytes": 502
+ },
+ {
+  "source": "nws",
+  "file": "nws/WSW_UNR_1.txt",
+  "url": "https://api.weather.gov/products/17a0724c-f245-4b09-b057-84f8cd1346dd",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "7aaff8ce246f429e55ca7eb178fe4678e585c0cee9d5e866cfec85313441c1a9",
+  "clean_sha256": "431c746cb14bdd399e36678c6859e65e15c7129b8c5bbeb64de9108047451b29",
+  "clean_bytes": 1404
+ },
+ {
+  "source": "nws",
+  "file": "nws/WSW_CYS_0.txt",
+  "url": "https://api.weather.gov/products/aa6783ea-267f-47a1-a2bd-a4fe1720980a",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "e787dccd8b6f8fc8c036ba51535aaceef35c6a165dd603a93b6a8f5089ab9307",
+  "clean_sha256": "fdd4149a94a2d06f1842fb979c2a5303999ed40bb7f5abab59d5623a02606f8b",
+  "clean_bytes": 444
+ },
+ {
+  "source": "nws",
+  "file": "nws/WSW_CYS_1.txt",
+  "url": "https://api.weather.gov/products/901b08f6-1e3d-4f3e-9e80-32d8a57688c3",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "ebc5e325bfb730cf1fcf66d6916f8d1839400157553be95a57bc2cd3da02611b",
+  "clean_sha256": "97c4c8859ea28ff9ece0bce3d32a2b4663f211fe7adf2a653b3c90dfe71045e6",
+  "clean_bytes": 1479
+ },
+ {
+  "source": "nws",
+  "file": "nws/WSW_BOU_0.txt",
+  "url": "https://api.weather.gov/products/9b3d9297-b1b5-4295-a56a-14464dbe99cc",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "19237c9afa7d1cb3b5abccb60370e5d0ce3f12729f975b271e019b1a1f08428e",
+  "clean_sha256": "b083c687abd1ab7736be34d01696248c86f9c006832a1ae52606ce5b3e6b65ca",
+  "clean_bytes": 1044
+ },
+ {
+  "source": "nws",
+  "file": "nws/WSW_BOU_1.txt",
+  "url": "https://api.weather.gov/products/6a9f2f6d-1439-45ae-a0f4-5733f586d490",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "c73df1f0d7722912ef51771c28040268870dfca5dbff9a5f21c85ac146ec1a45",
+  "clean_sha256": "bc75811b3067973b81bcf8048cc0fd40fc1976f9c29fdae1234c8e28bf7d9bd6",
+  "clean_bytes": 1456
+ },
+ {
+  "source": "nws",
+  "file": "nws/WSW_GJT_0.txt",
+  "url": "https://api.weather.gov/products/1b17a26a-dd80-44ef-b6f1-67f1c8120dfc",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "93f947d633825f7489c4d5d443507148f94bd0045cba5ca081f5e515f4f4d4f4",
+  "clean_sha256": "516a92a8010ebfdc587ee9dc337d03ed08fa179b57689a00624d5331b4f06ce5",
+  "clean_bytes": 467
+ },
+ {
+  "source": "nws",
+  "file": "nws/WSW_GJT_1.txt",
+  "url": "https://api.weather.gov/products/3227e410-cd67-48bc-9185-6196cc4011c5",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "a15c8ac5666d3b11ec20e5e6e8740f42d8c27e32ff76e67987964c2ae57053aa",
+  "clean_sha256": "0b0ef5aa3e268c8af365c7200563f4288fe00ee30c0e16c13ac784b2eac24604",
+  "clean_bytes": 1083
+ },
+ {
+  "source": "nws",
+  "file": "nws/WSW_SLC_0.txt",
+  "url": "https://api.weather.gov/products/1c75b8af-eb25-43de-984e-ebaf24a19c52",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "11097b49e154aed99f012196be92ab2b7476ac86d8421f24790618b7f594bfdc",
+  "clean_sha256": "ee58817cb7469a221306709bbe7a1e9942960010110f343648897e3c1df8e50a",
+  "clean_bytes": 806
+ },
+ {
+  "source": "nws",
+  "file": "nws/WSW_SLC_1.txt",
+  "url": "https://api.weather.gov/products/c37befca-8a5c-406f-a95b-ebc29b45167c",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "d29849dee8c5f31be58e944a6aa6950bf7f4ee429b9cb6c600964a4295a8b430",
+  "clean_sha256": "66491a485e28c51a4b204346bc314445421d6dcacdc1b8930fc6970be225e118",
+  "clean_bytes": 1276
+ },
+ {
+  "source": "nws",
+  "file": "nws/WSW_PIH_0.txt",
+  "url": "https://api.weather.gov/products/c4e44ef1-7988-4b63-ba65-29928d8bb3d3",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "87d51cf144fb64884f96bbdec1c204c8af71f37b09df0a085c6949e532b888d3",
+  "clean_sha256": "e16c7ffd2aeeae104a428f283195965e33d86452a3d0b82e9dfc896369c89a18",
+  "clean_bytes": 454
+ },
+ {
+  "source": "nws",
+  "file": "nws/WSW_PIH_1.txt",
+  "url": "https://api.weather.gov/products/7931257a-db90-4cad-94b2-16caadff8f7e",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "5a18f4c82c085a95a66882eb28329ce8c837db64ad26cbbf6ae48ca5452c43f3",
+  "clean_sha256": "f6b45690c00fe3527fb4945e483ce46b0921164382e79990c57a819572d3d7c4",
+  "clean_bytes": 922
+ },
+ {
+  "source": "nws",
+  "file": "nws/WSW_STO_0.txt",
+  "url": "https://api.weather.gov/products/f421cb47-ea43-4bd4-9a57-192530b996a2",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "672511335b4fcbf2047566d7a369aacf4fbfaa81aa6ee529bbeaad34cd9d86fd",
+  "clean_sha256": "c5ea0ac5a01a994073b0bcdd688d7a824d447217376f6136f1a8f0392e011b20",
+  "clean_bytes": 869
+ },
+ {
+  "source": "nws",
+  "file": "nws/WSW_HNX_0.txt",
+  "url": "https://api.weather.gov/products/f3435dd8-ea7d-49e6-b6fd-54e79be1a854",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "516150f3630578a5521ebc688fce1fd90b554bbb6dd9ebd5353cb988c8429b57",
+  "clean_sha256": "e462bf1f566f0126a526f8cffd3b3038af626cfad8cf6783fb3ba8ef01af69b0",
+  "clean_bytes": 749
+ },
+ {
+  "source": "nws",
+  "file": "nws/WSW_HNX_1.txt",
+  "url": "https://api.weather.gov/products/d7706705-ff5f-408f-bee0-79f4f57f1132",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "668c9087d8db24299382cbf4f20ae2175cf3cc3e47d2f8f0474b2585f78eb48d",
+  "clean_sha256": "7c11ac8b7f3cd301d0cc6746177139e9787d55f56acaedab51e3297f8379cc60",
+  "clean_bytes": 1162
+ },
+ {
+  "source": "nws",
+  "file": "nws/SVR_BOX_0.txt",
+  "url": "https://api.weather.gov/products/950c332c-d9aa-49c9-bce8-f30b52569cde",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "3da4451d3d088bb866658324cdb124071897d3cb78ab5dd44e5ab1daf36b9026",
+  "clean_sha256": "d99195290c4ac92f3984cc27a8ea0e43ef9c33e3e654c09b22936e03d1af2a2f",
+  "clean_bytes": 1403
+ },
+ {
+  "source": "nws",
+  "file": "nws/SVR_RAH_0.txt",
+  "url": "https://api.weather.gov/products/e1280838-4b15-4bbe-bf5e-1cb3794e80a0",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "81493524101fbaace9b6db6f3954104510d3ab0b70a8d6dc18c70d3a602730d6",
+  "clean_sha256": "549f6d3db93252964d8cc9276715f3aaf1db00f08b929e07583e8e3951ac12b0",
+  "clean_bytes": 1331
+ },
+ {
+  "source": "nws",
+  "file": "nws/SVR_FWD_0.txt",
+  "url": "https://api.weather.gov/products/8fdcbaec-efab-47ca-97fc-e792c83ca86a",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "ccf9c0cf50d5f255242da18229c302e30980ee32d6211d0750cb15938a6aa2f3",
+  "clean_sha256": "d82f473d87823e2f241b07035ba8527084e282f81961b6c4c8cee942665f8b7a",
+  "clean_bytes": 1504
+ },
+ {
+  "source": "nws",
+  "file": "nws/SVR_FWD_1.txt",
+  "url": "https://api.weather.gov/products/84b1e7ef-bc3d-48e0-a3c1-63227fe66b49",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "417105567fb84f7ea820e4028bb1e5b58d10ae721ffe7a06a85f3289045a68c8",
+  "clean_sha256": "2de5bbcd4c40580e8b73793376a0056badcd06a918f4d32b0024aeb21a2c2921",
+  "clean_bytes": 1600
+ },
+ {
+  "source": "nws",
+  "file": "nws/SVR_OUN_0.txt",
+  "url": "https://api.weather.gov/products/c42c5391-8376-421d-a5f0-bb9c4fa5e34a",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "7829ef3887841986157cdd887443a036a1e881142b3ef8bf53f7114d764fc051",
+  "clean_sha256": "7ac6f16e6b57099f2ac5db7cf4d580407d350cedf39f60317ae77427230b75b1",
+  "clean_bytes": 1342
+ },
+ {
+  "source": "nws",
+  "file": "nws/SVR_OUN_1.txt",
+  "url": "https://api.weather.gov/products/090e1c66-5ed8-466c-a60b-b8bee1359267",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "f2a1eb6f67c7c402e8d5c4eaf3d6c463912470b7724d2da4bab91c134343fdb7",
+  "clean_sha256": "94049ac7717dc25f935f837cdb05d77af87e29adbc09c1d52114d9693f83f861",
+  "clean_bytes": 1534
+ },
+ {
+  "source": "nws",
+  "file": "nws/SVR_TSA_0.txt",
+  "url": "https://api.weather.gov/products/f410960b-35da-477c-bd2a-c35711b78904",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "109abd88a851b8ebde11669372c1a97cbfbde983a847a25ccff6a2c0032c9130",
+  "clean_sha256": "579e21b0ee1c7407c8fa8a7edcde790c564631f104272ae74cb9e955f9c3ba81",
+  "clean_bytes": 1659
+ },
+ {
+  "source": "nws",
+  "file": "nws/SVR_TSA_1.txt",
+  "url": "https://api.weather.gov/products/ed3c5d5d-41b6-4843-8d0d-b14d76644247",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "d18b2ee1f228d5f70bb1997bcf67878acf22f7afe0d52b9409eb92d07fa11129",
+  "clean_sha256": "206cd06cfa5f10d09c4382dbe50da128ed8c7a5c4e64c0ee65209a500e9793e7",
+  "clean_bytes": 1473
+ },
+ {
+  "source": "nws",
+  "file": "nws/SVR_VEF_0.txt",
+  "url": "https://api.weather.gov/products/549adc09-aa39-4dda-bdef-e6985a1442e7",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "ebc94a8617c388821fbf7cbf65cc99fa952a1ba3a53240800c6a871ed3bb6fad",
+  "clean_sha256": "ec41acc47d61627ba54dc19e9aaf26701005bde7760f4498c8a1c3b5a11c22e2",
+  "clean_bytes": 1233
+ },
+ {
+  "source": "nws",
+  "file": "nws/SVR_VEF_1.txt",
+  "url": "https://api.weather.gov/products/8a4c1685-3280-4b0c-b6ab-001785902ad2",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "994b8135707b733e2e8b2a76c3eb456547116dc04180a8a409ba763d956a94cb",
+  "clean_sha256": "c365473f2ad9f79965a3187accab1fb99b923a7497bcb5a730aa294d89a5e262",
+  "clean_bytes": 1513
+ },
+ {
+  "source": "nws",
+  "file": "nws/SVR_TWC_0.txt",
+  "url": "https://api.weather.gov/products/45f40375-3fd0-4291-83cb-cbab7f38a374",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "fa67ddc136e5388d5e97ecc0a060a36b1401f69d76a8ad82713d0e5ee93aff46",
+  "clean_sha256": "a494decaa085e5d04e6cd0b3154951add9a2531c104a7c8b9de96bae609d5bee",
+  "clean_bytes": 1327
+ },
+ {
+  "source": "nws",
+  "file": "nws/SVR_ABQ_0.txt",
+  "url": "https://api.weather.gov/products/f17aae75-8f98-4674-981a-936173338178",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "396b323c28d94da53b6ac05556ddd7dce52a96deecd047b4309b28f22da85f71",
+  "clean_sha256": "cd9c9e239ba10db15e22a5a807bb5daef63f154709b00eb5567a5cc57b87e0f9",
+  "clean_bytes": 1611
+ },
+ {
+  "source": "nws",
+  "file": "nws/SVR_ABQ_1.txt",
+  "url": "https://api.weather.gov/products/57bb77fa-bfb7-4cd4-854e-4c1e4c262749",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "1e47230989dec3cbba406239e6641ffce6e7c8c0e9c86b2fcf439794a91d93e4",
+  "clean_sha256": "65c78fc7aa06d1bbf3d8de2a814837bb6ced965281fb6fdc7cf30d638485d8cc",
+  "clean_bytes": 2032
+ },
+ {
+  "source": "nws",
+  "file": "nws/SVR_AMA_0.txt",
+  "url": "https://api.weather.gov/products/4c3767c4-1d7a-4802-82ac-4e8fdb9f3aaf",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "6f5ba80e5eb07053bad4062acd04362fd58f44db9ded4c6999590d34290496d0",
+  "clean_sha256": "e1eedd99b6e08d0bf718ab4c7462d7734084c4e52cf6f74be1b596f2f22ba3e6",
+  "clean_bytes": 1659
+ },
+ {
+  "source": "nws",
+  "file": "nws/SVR_AMA_1.txt",
+  "url": "https://api.weather.gov/products/dd8bd574-f021-401f-86a2-c3254a83d8a4",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "60a71c39fba9e904691199287c2165396f6a5b4fe238944a7b2ca940079938f0",
+  "clean_sha256": "6d754f5cd6055781b4a36332aedcb1f61cc23a73a7d897d4fc86dd862a499b4b",
+  "clean_bytes": 1614
+ },
+ {
+  "source": "nws",
+  "file": "nws/SVR_LUB_0.txt",
+  "url": "https://api.weather.gov/products/a90b573f-f54f-4aa7-9da8-e1be0ffc2775",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "801d2b8c3f2122f03e78911f23cf3c99978b1837792d856e3e1fd8cf70188e2c",
+  "clean_sha256": "5711ee12684ad7b7da49fcfc168d777718d41a34c0cd4dee8121f0b4b53a3831",
+  "clean_bytes": 1240
+ },
+ {
+  "source": "nws",
+  "file": "nws/FFW_BOX_0.txt",
+  "url": "https://api.weather.gov/products/0e3368cc-6e67-4c3d-8fbb-1428f74ac92d",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "1eeffd61e52709f6975493cdc27c974a3c4bccc005d3b0e9295c3fcc57fd01fb",
+  "clean_sha256": "1dbf55c17e663a2595d269956d97bff908ae2f77b59a259d5a2b24879dcb47e8",
+  "clean_bytes": 1722
+ },
+ {
+  "source": "nws",
+  "file": "nws/FFW_AKQ_0.txt",
+  "url": "https://api.weather.gov/products/67e9a835-cd9f-40c7-b075-e4208042cb67",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "a2cbe1e28ff98596d71ae9cc0b22b12255af104683bea43a2b9a2aab8ce57b45",
+  "clean_sha256": "b2d9d8414e5acd1f4936f68252b01919414f28518bd1164cef790fb6cf65072a",
+  "clean_bytes": 1918
+ },
+ {
+  "source": "nws",
+  "file": "nws/FFW_RAH_0.txt",
+  "url": "https://api.weather.gov/products/5e0fed63-d048-4e61-b35e-a294c044572d",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "d37358957334c9b396aa4cd5264cd34b48c99b7b88697a4e991a1dab630ff29a",
+  "clean_sha256": "0fe035f58571ad428756c6193db4cc04b6fbff8be7bd3f9145b408037d715e89",
+  "clean_bytes": 1633
+ },
+ {
+  "source": "nws",
+  "file": "nws/FFW_FFC_0.txt",
+  "url": "https://api.weather.gov/products/e4f8fd74-c0dc-44d4-82f5-724d373da8f8",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "52fdae1708ce79bdbf0b375ba99c9f25f32516513a7c4f38428bb4e90ea4a187",
+  "clean_sha256": "12fb89e77e81788ee56c06675118d33b6dfd72006ea8d276b8406f790d2020ef",
+  "clean_bytes": 1799
+ },
+ {
+  "source": "nws",
+  "file": "nws/FFW_FFC_1.txt",
+  "url": "https://api.weather.gov/products/f9cac500-a94e-4b42-8dd9-6846b3c62dbc",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "b16b5927af6c15155e86590207cfc9c1f3d74de58c8b12a3219685d7d2cde680",
+  "clean_sha256": "dad422146132c7cf59a80725a766c33cf6bcb766072b6817b879fc3b2fb82f71",
+  "clean_bytes": 1782
+ },
+ {
+  "source": "nws",
+  "file": "nws/FFW_JAN_0.txt",
+  "url": "https://api.weather.gov/products/fbaa7073-8904-4a02-beab-fdfb2976e4da",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "4f0a2e84175c241edada80f0c56a680db23449418c7f1c69b5f8a2c58b2acbf6",
+  "clean_sha256": "db8bec911fea99e3909070c7f5968cf0774919c96ad842196e51c3e0ac559bec",
+  "clean_bytes": 1422
+ },
+ {
+  "source": "nws",
+  "file": "nws/FFW_FGZ_0.txt",
+  "url": "https://api.weather.gov/products/29f0300d-0544-4282-a234-5cde4f0ea939",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "8f14a567de310b85e628a7c3a0f90eb7c992393390593d5ae0dd845112e57b26",
+  "clean_sha256": "9b0c5d20923de4715307a5ba5712286245e031e43648f4c469ba482572b94ce4",
+  "clean_bytes": 2017
+ },
+ {
+  "source": "nws",
+  "file": "nws/FFW_FGZ_1.txt",
+  "url": "https://api.weather.gov/products/c6ff2b74-3483-4289-9a0a-74e54638125b",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "607de7683e519759dfa7de2119c0f3ebe633551af17d13091c5fbf3b82905dcf",
+  "clean_sha256": "79f6b6169471c7aee2d80ee4be9675ec8d98ef45142d88642146c28741f7222e",
+  "clean_bytes": 1990
+ },
+ {
+  "source": "nws",
+  "file": "nws/FFW_PSR_0.txt",
+  "url": "https://api.weather.gov/products/b1ed803e-56ad-4ce4-a775-4154bf89abc5",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "def7b636add112ef790de2417e5e3cf3105fe86a13be61033542efbb01219a99",
+  "clean_sha256": "06fca750040db0a8239d6c07c0d9a979ca25b862d481a571803641e0a701599e",
+  "clean_bytes": 1843
+ },
+ {
+  "source": "nws",
+  "file": "nws/FFW_PSR_1.txt",
+  "url": "https://api.weather.gov/products/cb989e69-4429-4374-98dd-993d318aacd9",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "f72a49ff6b5aed60713fbda3bbf4547c88ff38d1bef037acdb82ebf59924fcec",
+  "clean_sha256": "ed0990944c7daf3d73c492d2bb6761b6cbd1819fc5c5d6a98935e6774518cf42",
+  "clean_bytes": 1530
+ },
+ {
+  "source": "nws",
+  "file": "nws/FFW_TWC_0.txt",
+  "url": "https://api.weather.gov/products/eb37bb90-2ca9-46bf-be0b-7dda9c01959b",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "e3c6d3094ab9741b1df1eb57792cdd5bb49f4ac5d5e1c6f08a954651568b2f2e",
+  "clean_sha256": "5999df321db090f67e2f40a227fbc3385bd07c20f52cf2874fa9c0ec77b83992",
+  "clean_bytes": 3598
+ },
+ {
+  "source": "nws",
+  "file": "nws/FFW_TWC_1.txt",
+  "url": "https://api.weather.gov/products/79068c6f-2907-4fbd-a33d-bca299841421",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "c7e45b653632d92867545956c69fc72a43414a6c09e0495b29c392fc73f93a97",
+  "clean_sha256": "5c82c6ff88f93b0a05ae4226f80748498fa356585b44aef102e71f713e93bf2e",
+  "clean_bytes": 1922
+ },
+ {
+  "source": "nws",
+  "file": "nws/FFW_EPZ_0.txt",
+  "url": "https://api.weather.gov/products/21e4d126-5168-431b-86b3-2c1070e11b98",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "339bb42fd48c9ede16d209586db290f5015b642f127ec6c81f15c2544bae0b77",
+  "clean_sha256": "5f79b2b197ec2a4e2109b5dad694ea05e66a4b88e7fa5e206b1d3179c3fea2be",
+  "clean_bytes": 1351
+ },
+ {
+  "source": "nws",
+  "file": "nws/FFW_ABQ_0.txt",
+  "url": "https://api.weather.gov/products/daf706ae-f219-446b-ad01-9beec2df29dc",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "5e8de60df9295c979e3f90cafd08ed7c1bc3ff5544bf4e1f1e40f8e51bdfdb48",
+  "clean_sha256": "2746bea737da599bb67b76dfbe3f9f123a75b1611780401a442d5b115c592f54",
+  "clean_bytes": 2093
+ },
+ {
+  "source": "nws",
+  "file": "nws/FFW_ABQ_1.txt",
+  "url": "https://api.weather.gov/products/e7d7134c-3ea8-471d-bc62-0cd6707d9c37",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "770e0ceb5c4e1d9dc051f9efc24ff1bdb7b9e466b7dc7394551eda5cc960c529",
+  "clean_sha256": "2c6ff755756ddce62c2b7cefe050a6a156417082a09ae6e7679c7122b93a2f3b",
+  "clean_bytes": 1907
+ },
+ {
+  "source": "nws",
+  "file": "nws/NPW_ILN_0.txt",
+  "url": "https://api.weather.gov/products/efaa077c-1286-4f63-a44d-c0994aa07e3e",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "f31ac73dc6a6d171937c254aa1bef9479af91559bdf9aa4f595600f97f418e79",
+  "clean_sha256": "1bd44e474b0d81cd3cc5e1ff9d3df9509ab3929cf8e851e48718af81f63b37fc",
+  "clean_bytes": 1756
+ },
+ {
+  "source": "nws",
+  "file": "nws/NPW_ILN_1.txt",
+  "url": "https://api.weather.gov/products/b45e27c4-8b65-4eef-8fe9-fe957e845d52",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "c660c81100b89f90d79cdf3f55b030be888b5c6c8f1b1e0f491676382214ef1a",
+  "clean_sha256": "2872502f80c1a7a2e5c08cf3b759fa28784c07a1d790e290c34c48f80e40b6b3",
+  "clean_bytes": 1822
+ },
+ {
+  "source": "nws",
+  "file": "nws/NPW_CTP_0.txt",
+  "url": "https://api.weather.gov/products/41c9c0e6-4f36-445e-bb9c-6c9ffa32c54d",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "bf87a468503253b52883790d9ee8ba7cae133788720666b7b2cc21f8f008c9f9",
+  "clean_sha256": "c636db3f57f82b2e26a8b989f6076e3c37ef92fb13153f35f3818d2cf1d038c2",
+  "clean_bytes": 794
+ },
+ {
+  "source": "nws",
+  "file": "nws/NPW_CTP_1.txt",
+  "url": "https://api.weather.gov/products/e81593d9-17f6-4688-beb3-a3c114d8fb58",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "65e5380c38cde966d3289010844f13fd84e9f85b06b3f7b2bd93b8d4584ccc08",
+  "clean_sha256": "e993d4dcb37faee830fbc5fb0c219834265b445b3f31780c03fd644b964b5472",
+  "clean_bytes": 1085
+ },
+ {
+  "source": "nws",
+  "file": "nws/NPW_OKX_0.txt",
+  "url": "https://api.weather.gov/products/db82b9f7-9efe-40ba-8e39-2db47b697de4",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "7be64cddc8a3716a15cd5f36387e6012b9f826c46afe99a01b857b90de2fe718",
+  "clean_sha256": "14b9cc4864c903473dfd8bdc3c14d1e4734ac0d55a1b0b8813ba6e7dc8ccec91",
+  "clean_bytes": 1037
+ },
+ {
+  "source": "nws",
+  "file": "nws/NPW_RLX_0.txt",
+  "url": "https://api.weather.gov/products/bacc45de-7492-460c-8bce-8c68a0a9ebfa",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "54a1fec080ddf51d07d2e32dcaba5a94a40921657f524e071eddd1c9c2ca8272",
+  "clean_sha256": "fad062c1038527de014622a05deac5bc3cae1311e029e4d1fc8a87c5bfce53b5",
+  "clean_bytes": 1510
+ },
+ {
+  "source": "nws",
+  "file": "nws/NPW_RLX_1.txt",
+  "url": "https://api.weather.gov/products/f628e007-35ea-4ee3-a5ce-e385e5200161",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "287ca575dec4e08565a50ac0a3d1ac1ffee6f8250d85231ca14bf2760c166c1f",
+  "clean_sha256": "2c59bf3eee00ac2d07ccf655104be77bfe27347269a2b61dcf3f00dcdfc3b118",
+  "clean_bytes": 1543
+ },
+ {
+  "source": "nws",
+  "file": "nws/NPW_LWX_0.txt",
+  "url": "https://api.weather.gov/products/e7933788-d301-4f9f-bc88-2e905e8c0f5d",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "b51fa02664b295e82372ceceacf6f9fa823848982af37182f887b9b05ec8923b",
+  "clean_sha256": "2d196526b551029099d65c543505d1b0fa1cdd4674d58c9bc937e46edd6d6fb0",
+  "clean_bytes": 2499
+ },
+ {
+  "source": "nws",
+  "file": "nws/NPW_LWX_1.txt",
+  "url": "https://api.weather.gov/products/487b1934-8ea2-4540-8383-baa4faf306c0",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "9b474879f67c3a2ee339d8ec2f20d1304cdd19f51c94c68f6ca3d6a4948db41d",
+  "clean_sha256": "c6d65f122dff5e3e7408a3ab00a74e96de9f9d89ccf6a511e612375c2ff7913e",
+  "clean_bytes": 2572
+ },
+ {
+  "source": "nws",
+  "file": "nws/NPW_RAH_0.txt",
+  "url": "https://api.weather.gov/products/3ba994b1-2ac4-4c0b-8007-71301ac882b4",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "453fa5a6702c468d39fd3344e051adae6d052b74e103d1842563adecc91b12a0",
+  "clean_sha256": "d5a91b61f7033979a791be241a15a1f71eeb457a7b6944d2315aae66f235f4c0",
+  "clean_bytes": 922
+ },
+ {
+  "source": "nws",
+  "file": "nws/NPW_RAH_1.txt",
+  "url": "https://api.weather.gov/products/3e12fb0d-5608-4489-8848-234b609d1691",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "61d3a78f890814216bbe287270099c90c008c844515d862f530b113fd68a72c3",
+  "clean_sha256": "04f8f5e951484f2d348aee8b6162570c779dff12655cd53b08af808cab538b75",
+  "clean_bytes": 1464
+ },
+ {
+  "source": "nws",
+  "file": "nws/NPW_ILM_0.txt",
+  "url": "https://api.weather.gov/products/de8b9b3d-88bc-40ef-9b41-a370c849a9aa",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "3acb6bd0b9d993359ab3f3ad74d20589f0b0765e3ea31630e72ca5bc373ef48f",
+  "clean_sha256": "3f84d6e7718930ab51b0d105cf0d06395932f4af4a375f7a79b17f2a5e95bea5",
+  "clean_bytes": 446
+ },
+ {
+  "source": "nws",
+  "file": "nws/NPW_ILM_1.txt",
+  "url": "https://api.weather.gov/products/86068bf8-39d9-4393-bb74-190645c8c6b3",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "71b4f827bed231e1eaea905c4eaec6303fde68730b3a2976c1d86237af28ecd5",
+  "clean_sha256": "77fb29d1b866faea5a4f4c96468287d047af117f1883a2bd675703bfe39f7b09",
+  "clean_bytes": 774
+ },
+ {
+  "source": "nws",
+  "file": "nws/NPW_CAE_0.txt",
+  "url": "https://api.weather.gov/products/fd23ea97-9aa3-4eb0-b718-3fc6a5817e48",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "d0839bc63c88b79c733d73c6ef22a94f71afe2e1ab0d82fc7412d44acb7a55ad",
+  "clean_sha256": "abb426b9d83a0fcd26bc850e014a44a1d160737057488f00dc0bf9b6781b1e10",
+  "clean_bytes": 1137
+ },
+ {
+  "source": "nws",
+  "file": "nws/NPW_CAE_1.txt",
+  "url": "https://api.weather.gov/products/41c75b4e-b40c-41a9-a1dc-32386c2bbbc8",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "5b50e0ae14a9397392ca6bf93d34f657f1d1dc4baa74f6ef87ca80fa18d1dd8a",
+  "clean_sha256": "9473425abe6f6a12972a8bdfc56f95be587184336b1103d4d13843426267e929",
+  "clean_bytes": 1032
+ },
+ {
+  "source": "nws",
+  "file": "nws/NPW_FFC_0.txt",
+  "url": "https://api.weather.gov/products/35d716ce-0392-4425-8d3d-427c58633397",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "d01644789f521fbb9c71d03127b7a6c62b990bb0028015150bb39e5fdc63c93f",
+  "clean_sha256": "1ccf210c602593e4e63a21d5ad9e943d9f16be1a0c1b0038c577acd352be3dde",
+  "clean_bytes": 1708
+ },
+ {
+  "source": "nws",
+  "file": "nws/NPW_FFC_1.txt",
+  "url": "https://api.weather.gov/products/f388ddcb-9be8-46cf-a2cb-9209caac3d07",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "0beffbc8528e371add05514d682c7ff0e370b415c6702215ad8b055033becb36",
+  "clean_sha256": "2f2d92f220c4d10ad062e65312524cf7eb3058cebc8d5ceaa7e5430c577c0b8c",
+  "clean_bytes": 897
+ },
+ {
+  "source": "nws",
+  "file": "nws/NPW_BMX_0.txt",
+  "url": "https://api.weather.gov/products/1718cd0e-fb2d-4647-a504-9c91e307b772",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "ee180abbbdfc32890b628c826dc43b8414c48273184bd7e40869b630f45af364",
+  "clean_sha256": "0e116ecaeafa24a162cc8545ee32af984b5b2dffd3aa9f3ce16f1e909c03de85",
+  "clean_bytes": 1514
+ },
+ {
+  "source": "nws",
+  "file": "nws/NPW_BMX_1.txt",
+  "url": "https://api.weather.gov/products/fe4a2dd7-7e5d-4c88-85c6-8aa79b8724c3",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "8068e69761a8fd77652b17cc96d7b229beae8cd2584a506ff9ca247fb4bb533b",
+  "clean_sha256": "3e8e141c11f62c82ee5e5007639c02fd7b48409dae60bfb62b30f65300ea8dd4",
+  "clean_bytes": 1540
+ },
+ {
+  "source": "nws",
+  "file": "nws/NPW_JAN_0.txt",
+  "url": "https://api.weather.gov/products/46de49a7-ad9d-4054-b9dc-d79e185fa3dc",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "d55f1e11a4279547a7768c726e565c2d89b5914e929224a6724de54a14c82927",
+  "clean_sha256": "622bc0e64d2f0a323f2fd92ebe81170ffd38cdb5a32547b11a5603f18cab5d9f",
+  "clean_bytes": 1833
+ },
+ {
+  "source": "nws",
+  "file": "nws/NPW_JAN_1.txt",
+  "url": "https://api.weather.gov/products/2da18b96-4565-4ee5-9a52-242304ea9dbe",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "daba6a8d42404eeed787499af3cea6396e8c24d0e188e05ca3cb04172f7ae5fa",
+  "clean_sha256": "acc1443d24934c41abd0f511ef0886035229dc5c7348a153badac25551a01197",
+  "clean_bytes": 2820
+ },
+ {
+  "source": "nws",
+  "file": "nws/NPW_LIX_0.txt",
+  "url": "https://api.weather.gov/products/b2f4326f-5538-4023-b550-b02f31e03901",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "e5697a3a8f0352c3a5579c5a2d5f2656afcb6fc0df0e8117c97180b6c2c28ad6",
+  "clean_sha256": "a4ef2395a8f476162d19d222765c5ce510e269fa86ada81dbd3ed3681da37b99",
+  "clean_bytes": 897
+ },
+ {
+  "source": "nws",
+  "file": "nws/NPW_LIX_1.txt",
+  "url": "https://api.weather.gov/products/3395cbe1-0952-4f1a-a23c-3e00c90ef85c",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "104511911f70752b3b6c5bb252eaaec03f2be17463b947bf56640a890291032f",
+  "clean_sha256": "add28c6cf64fca7dcd1daa1e6671fb9d0d47c7a739222764b418c5372f59f06e",
+  "clean_bytes": 1258
+ },
+ {
+  "source": "nws",
+  "file": "nws/NPW_HGX_0.txt",
+  "url": "https://api.weather.gov/products/224a9817-7ba4-40d4-9f30-a471f2e8f633",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "e2605eff6aacbfb08fd3eaee291aebfad8b488454c2a650947716db317f10692",
+  "clean_sha256": "aca0e64df541f4d16a33b489a3c0214822d045270a4271ae7a017afee95ba336",
+  "clean_bytes": 2135
+ },
+ {
+  "source": "nws",
+  "file": "nws/NPW_HGX_1.txt",
+  "url": "https://api.weather.gov/products/f5db3c03-338f-4331-9186-834d2deb9148",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "e247eaee19885aafd62110de8ef0cdd7b17437a84ab9660df5a5ac8e1d711d5f",
+  "clean_sha256": "6b5286e6a093bce58926ef7ada0b9ecca0a78109adfbbad071c588eada4eb34d",
+  "clean_bytes": 1428
+ },
+ {
+  "source": "nws",
+  "file": "nws/NPW_FWD_0.txt",
+  "url": "https://api.weather.gov/products/2ee485d3-a476-496d-a754-26f60b806cc5",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "b1c4ab5bfe85cc598ccc28b4bb47c915bf3e28cabc3517e7b79b09cb9ea01a4b",
+  "clean_sha256": "8289631e8a8b5b08d47dfc3c77c74916e3f3e2ad119f6b24ce34e9b3c795149e",
+  "clean_bytes": 1469
+ },
+ {
+  "source": "nws",
+  "file": "nws/NPW_FWD_1.txt",
+  "url": "https://api.weather.gov/products/8a9e8783-d546-4b94-87fd-aceb2efc6978",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "8990f70fb2b4b6e71ccfc2a6500c2283b385576fc1a0b8eea8d12a9de4b13023",
+  "clean_sha256": "523e28ca217660baeb28f8eb6f0639d296a08580909433866fd8869e7481098a",
+  "clean_bytes": 2298
+ },
+ {
+  "source": "nws",
+  "file": "nws/NPW_OUN_0.txt",
+  "url": "https://api.weather.gov/products/055ea881-3591-4a63-a224-52c5d3214d5a",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "f45f4fa7c59e6ddf0fa8a8432053e122fd85361fd64d7baa3acc8271c9656b87",
+  "clean_sha256": "dd6e4742aaf41daf2b1337efaf7565fb1ab49fd80d9388426cf67de0cfc63fc6",
+  "clean_bytes": 1052
+ },
+ {
+  "source": "nws",
+  "file": "nws/NPW_OUN_1.txt",
+  "url": "https://api.weather.gov/products/f3a0bf84-ee1d-4e80-9449-74d4b9bbe91d",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "cd51b339f638f798962fe2db49eec034ce6a01e4e14ecbbe6b938fffc215876e",
+  "clean_sha256": "6ba4b6b5e73faa816a79c8a43382ac28d8c91580d3de2f0e3d09a6b1fa52c3e2",
+  "clean_bytes": 1590
+ },
+ {
+  "source": "nws",
+  "file": "nws/NPW_TSA_0.txt",
+  "url": "https://api.weather.gov/products/301fb925-bc41-4a83-9d4e-89d4443d006d",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "bbd5eba84c644a13f51daa194e73010481e8ed74b08c7ac8fdd2540a4de79383",
+  "clean_sha256": "0ed5be1e8944885b474fa41743b2b2217c071467996a2c8b5f3d8d20264dc919",
+  "clean_bytes": 1229
+ },
+ {
+  "source": "nws",
+  "file": "nws/NPW_TSA_1.txt",
+  "url": "https://api.weather.gov/products/15108946-a925-4dde-86f3-625a22ab102f",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "807370c15a019d92d3680d42b544d10beec226ed35cf726ada30c95b012fbf39",
+  "clean_sha256": "a1f88a0a608095621dccfdef6b101fd36c53dddfc3e551070aace25ed4cdb378",
+  "clean_bytes": 1259
+ },
+ {
+  "source": "nws",
+  "file": "nws/NPW_EAX_0.txt",
+  "url": "https://api.weather.gov/products/53a7b580-e500-4c8c-b916-a942895a86c3",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "524c153c5c07b341c7d2d28ef8cd59895257298aca50b3307cdc6d67ca008301",
+  "clean_sha256": "06ba7dedcfe63b9536fd6a518dc188be634420f1a2b8a11be3306d959bbf5ca6",
+  "clean_bytes": 1029
+ },
+ {
+  "source": "nws",
+  "file": "nws/NPW_EAX_1.txt",
+  "url": "https://api.weather.gov/products/e833d871-1d05-4ea3-a1ef-f3feebc22fa0",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "51cffa4e051d319f23910e39a5ed744bcc6de7a38435b04a50deb166ab733bc5",
+  "clean_sha256": "bef786de66947c3fa48706596da6cae085c791a954a6938858886754cff5454d",
+  "clean_bytes": 2147
+ },
+ {
+  "source": "nws",
+  "file": "nws/NPW_SGF_0.txt",
+  "url": "https://api.weather.gov/products/ba6bdd9f-5448-4549-822f-0cfff8f8ec1e",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "eb394d7e1c8e95150348283ced9d28eb6d51cbf23a8092d1e3cf9ba4a9aeddc5",
+  "clean_sha256": "b663035ff6d21a756b5b582f86d239e87403f636be61f45dcbd9da49efdf3f4e",
+  "clean_bytes": 2690
+ },
+ {
+  "source": "nws",
+  "file": "nws/NPW_SGF_1.txt",
+  "url": "https://api.weather.gov/products/888197f5-49c0-42f8-a2a0-3eed0771f31d",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "2fbd00f4e792179ed95d3e488ad5712ee2a9e779216e96f393201399ff3a022b",
+  "clean_sha256": "7fef7f245982a140763c9a4cb2d9994c258cb902dcc15f760fe51b4e8b57402f",
+  "clean_bytes": 2603
+ },
+ {
+  "source": "nws",
+  "file": "nws/NPW_LSX_0.txt",
+  "url": "https://api.weather.gov/products/965e5b67-05d4-4161-a26c-c5f5bead4586",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "da6336c7c6c0ec341f5d4d38a11859589fdb7394f6043fb1ea54c72bc96e0650",
+  "clean_sha256": "dd693df4a0f3a4cfe1f0f06cd60f5da00933410c882309955508d0c967b53e13",
+  "clean_bytes": 1237
+ },
+ {
+  "source": "nws",
+  "file": "nws/NPW_LSX_1.txt",
+  "url": "https://api.weather.gov/products/3e4bf052-1780-4444-9e10-f91b69511426",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "c7d26bf10e93aa209add8641c8c7af246c848c2b71887970eed5e223b7b9bc62",
+  "clean_sha256": "c1d4d313ea2bd2d96ec81a208ef0aee7abfbf27709f431bd9db3c9a0a8801e81",
+  "clean_bytes": 1798
+ },
+ {
+  "source": "nws",
+  "file": "nws/NPW_FGF_0.txt",
+  "url": "https://api.weather.gov/products/a17d68c0-a8e5-4b9d-9811-e14ae98c90df",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "9136c3981d10e25904d15ac1c21ac799d8b0ad408c2a9b6629f7b52c8298a62f",
+  "clean_sha256": "91d91fd3bc6feae55f017876bba11a6bb105f4ad204421d5542dc6a937fcd055",
+  "clean_bytes": 497
+ },
+ {
+  "source": "nws",
+  "file": "nws/NPW_FGF_1.txt",
+  "url": "https://api.weather.gov/products/2eb899f7-313e-45ee-9682-d046deae1998",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "989a8bd9c20c2dac163b3efea57d3f63091d64db0548528d6677509e9fce23ea",
+  "clean_sha256": "0f0e2827dc674fc3b47f3c75ecb2bf664f1deeb5ce1118dfa6b92bd2ee35138d",
+  "clean_bytes": 769
+ },
+ {
+  "source": "nws",
+  "file": "nws/NPW_ABR_0.txt",
+  "url": "https://api.weather.gov/products/ee5ebc8b-56f0-4fd0-87cd-729e46738ea7",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "a2b25cfa5c97adf13f6ace40b5940adea7d71c83e7e065afd5c46e5beef00e4a",
+  "clean_sha256": "978b100b87f357f1bf42e9c1c09868d2aca37c7f0284e5f506a6c4fdca65d6fd",
+  "clean_bytes": 485
+ },
+ {
+  "source": "nws",
+  "file": "nws/NPW_ABR_1.txt",
+  "url": "https://api.weather.gov/products/8320f4a5-3871-402b-b5a4-430599620ae4",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "5af16bf2c7b045e33f138f7e5e04e6cf9c57f23c6bfbc25324a4eecacc2befb4",
+  "clean_sha256": "da95791f5a571aeb010f9a50b3407a5738c75b851f9d2df791972b8ccd452974",
+  "clean_bytes": 1210
+ },
+ {
+  "source": "nws",
+  "file": "nws/NPW_BIS_0.txt",
+  "url": "https://api.weather.gov/products/888e33b5-aa75-41dd-b52f-9c8082193c02",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "8364dad75107fee96b92a009ee0766b9befd1a9572b73c372daeb90e7901125c",
+  "clean_sha256": "6f0dcbe6e6ef2e9deb4f785cda0282816d0752e8006b924ac7437276a88a6fc1",
+  "clean_bytes": 596
+ },
+ {
+  "source": "nws",
+  "file": "nws/NPW_BIS_1.txt",
+  "url": "https://api.weather.gov/products/ad18cbeb-f57d-4093-8b5b-4dac9a365db9",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "f767d9af7c3cad38d7fd27401bffed3361f347d92f46bba49ff96b28aab44d3d",
+  "clean_sha256": "f269db85314d717bd9389af79a06f958f18537a8f7ff397dabda0e13ee66612c",
+  "clean_bytes": 1516
+ },
+ {
+  "source": "nws",
+  "file": "nws/NPW_UNR_0.txt",
+  "url": "https://api.weather.gov/products/4caa8791-a7e4-45ad-b544-189d13226dd0",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "eadff3497b0069e93d46d51fd2ef33be8ca1f82a02b98e24f5a8bab95a27e97f",
+  "clean_sha256": "329d866958f33660778ea7f9caab64a556f20062bcec0fabda813a94c14671f3",
+  "clean_bytes": 423
+ },
+ {
+  "source": "nws",
+  "file": "nws/NPW_UNR_1.txt",
+  "url": "https://api.weather.gov/products/c659c538-a59b-42c0-88f1-76981eda60f4",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "f8db69851e5215586680eb8493f6c075c5694647c9027a56bf0cca12b11f41d5",
+  "clean_sha256": "13c22b488ff94dccba1dd23a9dbea369cda8b501703358d6e676b0dff5a28203",
+  "clean_bytes": 1401
+ },
+ {
+  "source": "nws",
+  "file": "nws/NPW_BOU_0.txt",
+  "url": "https://api.weather.gov/products/169d3b47-6116-4799-a124-d02464578fad",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "fa1700370909e808222a165094f065aa1aa3757939fb98879a8fd1352aac18bb",
+  "clean_sha256": "2724e90b054557c8730ec28a8db5445b0fa99265a909d6000f319e3fbc3bb15b",
+  "clean_bytes": 914
+ },
+ {
+  "source": "nws",
+  "file": "nws/NPW_BOU_1.txt",
+  "url": "https://api.weather.gov/products/4a2c9c10-2514-4eea-9f1e-711dd7d00ffc",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "120fcf79c2bd219b9ab2677aec7cef5c2ec2e8f3652ff3f7208c7e20c39a27a6",
+  "clean_sha256": "41cfd9cf53544d7c0dd013c21979e1cf18e8d182f2640e26bd3dfbcf5cfc6a47",
+  "clean_bytes": 1118
+ },
+ {
+  "source": "nws",
+  "file": "nws/NPW_TFX_0.txt",
+  "url": "https://api.weather.gov/products/0cfdae07-bfea-4776-b1cc-e1fcaaa224b5",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "f931eac077346e6e0e668e2eef49d12ce83dd54ece6f1de69ca165d3a05028cd",
+  "clean_sha256": "cd3c5690e0fe16d4ec21cdb97d7de4699b5ed36311ab8471bed87ade84792f58",
+  "clean_bytes": 3230
+ },
+ {
+  "source": "nws",
+  "file": "nws/NPW_TFX_1.txt",
+  "url": "https://api.weather.gov/products/5c7b0235-3180-4e52-aadd-6454f3747f4e",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "80fdc83a07930a8ed77d2bd031081bac2e1d4284d109b27f86229bd220894a00",
+  "clean_sha256": "e6ab73763f4d39598ca7aa5829889a495972948d06db784eef01230a0cd1d4c0",
+  "clean_bytes": 2701
+ },
+ {
+  "source": "nws",
+  "file": "nws/NPW_PDT_0.txt",
+  "url": "https://api.weather.gov/products/54637b71-bc25-418b-bd62-f7e9d5be499d",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "bff0ad946d9b285a40fb1c144cc1c04f183e392af169f78df242ea01d3e8fe62",
+  "clean_sha256": "96163c5e459a0cd647c8fce06343c832874724442336e20789f214b0b2384800",
+  "clean_bytes": 1484
+ },
+ {
+  "source": "nws",
+  "file": "nws/NPW_PDT_1.txt",
+  "url": "https://api.weather.gov/products/62d58571-bb84-4923-83f3-373be7c7aa5a",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "7bc94beea6b0015bbe70d48c6a4d19287823978adbc03fcf6f1d58fc90385e6a",
+  "clean_sha256": "2e589d786efcabd530607e451181a91e398a1c9b6c47e1581e36407ed764d23e",
+  "clean_bytes": 1859
+ },
+ {
+  "source": "nws",
+  "file": "nws/NPW_PQR_0.txt",
+  "url": "https://api.weather.gov/products/b29f7f4f-0e59-4b0c-8b01-8329b52f1116",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "9a168f47e424c76cc4aeeacf9dda1f7cc9a90a173974681f971159346611433b",
+  "clean_sha256": "27fcdb7604c0bca79da7640e185bc2284ce04ce23532064bc35b7184d0b667a7",
+  "clean_bytes": 1395
+ },
+ {
+  "source": "nws",
+  "file": "nws/NPW_PQR_1.txt",
+  "url": "https://api.weather.gov/products/211bd02f-b5a8-423b-8f00-16570a62d1c1",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "259640a649c9319868b26f4547aee017694a4a10c76a7d78170d73cf7b76daf2",
+  "clean_sha256": "b01e6c2793253d8bae9908e7d54779bc15a3ef2910a6900d14bedd1b0de8e765",
+  "clean_bytes": 2322
+ },
+ {
+  "source": "nws",
+  "file": "nws/NPW_SEW_0.txt",
+  "url": "https://api.weather.gov/products/9616fd84-9a18-415f-953a-20cc22994600",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "9f2dbf4d5f5bc6905ebdc438549ca20c33f763cc4ca461ba90a52931694bc4ff",
+  "clean_sha256": "5d6d2e70932a305d643845626e06d7735741ad38a22a142f3bcae20443c4a996",
+  "clean_bytes": 4432
+ },
+ {
+  "source": "nws",
+  "file": "nws/NPW_SEW_1.txt",
+  "url": "https://api.weather.gov/products/1c8301ad-d67e-46d4-a6ad-3a8a533ce03e",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "4c5214754d7e984da901863c2e0bb2194ad5050828f6e242e8d184f5d61fc521",
+  "clean_sha256": "5628adf2ce3f07607da64c3b011302a8b5f4c9ac24902bb7ab0a6531607511aa",
+  "clean_bytes": 3636
+ },
+ {
+  "source": "nws",
+  "file": "nws/NPW_MFR_0.txt",
+  "url": "https://api.weather.gov/products/8241f57e-f353-4118-9ba7-f05192c1e6eb",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "7e8a715801e919859c3e19eeae89c194e7089808e27b1cbe4842206b92c7e668",
+  "clean_sha256": "a68d1a930d959d54b57ac84d285ab4ed082c28cc6949ecefe138b9ea532f6aff",
+  "clean_bytes": 382
+ },
+ {
+  "source": "nws",
+  "file": "nws/NPW_MFR_1.txt",
+  "url": "https://api.weather.gov/products/727b7965-58f7-41a2-895b-f02be46ffe72",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "ea9aa6f1d4fe3c241e41fb421ad6ff0dd1b220b11c292898c375c51bcec5064b",
+  "clean_sha256": "4214b595e599505d1f6fb2df3d43857a77b6a105460e28b3c4685263ca03870d",
+  "clean_bytes": 724
+ },
+ {
+  "source": "nws",
+  "file": "nws/NPW_HNX_0.txt",
+  "url": "https://api.weather.gov/products/832dc7be-369b-4fe6-a46c-e3efa79f33bf",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "cbac3888d501a8b9dc50f12dc30334005d807756767c78934bda5d100859ce2c",
+  "clean_sha256": "adccd6f11bd3267fa7ebf38844b19a23a18d0b3e6b63e45cc21a7688b98448de",
+  "clean_bytes": 1108
+ },
+ {
+  "source": "nws",
+  "file": "nws/NPW_HNX_1.txt",
+  "url": "https://api.weather.gov/products/19fe56d8-ae4f-4764-90a2-f6d927f42344",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "5e9c2d76bbd218aa1219d7022c59ab4c6d4d38a0df4af5293c72342caeba4909",
+  "clean_sha256": "fa79b64d6bc78e268764128c76144ed24e4ff502762e3e699c80eb8abb600eea",
+  "clean_bytes": 777
+ },
+ {
+  "source": "nws",
+  "file": "nws/NPW_VEF_0.txt",
+  "url": "https://api.weather.gov/products/c2fdcd41-5ee9-4afb-a118-7f8e20fe3c09",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "830e871edc39c34b2a824beff4f0ee5d7a6335adea10cff312981808b84176bf",
+  "clean_sha256": "36fbfd800c7877459748ca801b5e15826aa20d754590bf883ceff18f7f274ff3",
+  "clean_bytes": 652
+ },
+ {
+  "source": "nws",
+  "file": "nws/NPW_VEF_1.txt",
+  "url": "https://api.weather.gov/products/7c9a45c7-b46d-4c6a-aafd-15ee799fcba4",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "83db7acb72551ae416459844228f10f14860aff35a70e3ab443c8a344a2555e4",
+  "clean_sha256": "181052e87e26ff541ee1b268c23ebe00396517b01f0761745a4f219792228f77",
+  "clean_bytes": 1107
+ },
+ {
+  "source": "nws",
+  "file": "nws/NPW_FGZ_0.txt",
+  "url": "https://api.weather.gov/products/80b1ab62-79d3-41fb-b543-d2942733bac3",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "2723c2605a426f0e4f859b7c8b86b139d1be3e59a67ebea2f89bd72eec785026",
+  "clean_sha256": "290d93eeb095ca3926acf8396551d383473920175de068501d95ad929b7982e1",
+  "clean_bytes": 742
+ },
+ {
+  "source": "nws",
+  "file": "nws/NPW_EPZ_0.txt",
+  "url": "https://api.weather.gov/products/19fd248f-ee12-448e-ae6f-ea74045248fb",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "af66612ccfad3d7de523c8990e0b650253325ba45a42f40a88aa13ec17d999b8",
+  "clean_sha256": "2d037feaa4d074882a8036e24bb936042937c5e08629b2a2e84b7794b54a6704",
+  "clean_bytes": 1005
+ },
+ {
+  "source": "nws",
+  "file": "nws/NPW_EPZ_1.txt",
+  "url": "https://api.weather.gov/products/a78cc5c4-7ea6-4348-a074-2b7678999219",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "9b0ca4d827af1eecdb0a20b1188f974454e61f7405461753d3034f12971239a5",
+  "clean_sha256": "3a8ecd0914816edf05225aca41e66c796d2816224f3ee722dc01e5b9c23324d2",
+  "clean_bytes": 1539
+ },
+ {
+  "source": "nws",
+  "file": "nws/NPW_ABQ_0.txt",
+  "url": "https://api.weather.gov/products/0fff08a9-23ae-42f6-bc1a-cf83a825646a",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "47aed5679ba0db3cf542901e31fd38e881e4cdce35850d8fbc846e462f9410ba",
+  "clean_sha256": "2d815ead4b0c248fdedb234d5630428e7baa92b866de37aacd1fdd133983b8fa",
+  "clean_bytes": 394
+ },
+ {
+  "source": "nws",
+  "file": "nws/NPW_ABQ_1.txt",
+  "url": "https://api.weather.gov/products/89d1907b-ad6e-4547-9c36-466c98bb4e06",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "18e5d950ed03cc4a29e1531b7ff3ce3467a0e5060adcd36dd580afdf1ee27e39",
+  "clean_sha256": "7cd2ebfa1fe03fb0d5a7e14a54f95e21400fc00f14e23f9b88ea4c5fa45dc3d8",
+  "clean_bytes": 700
+ },
+ {
+  "source": "nws",
+  "file": "nws/NPW_AMA_0.txt",
+  "url": "https://api.weather.gov/products/eb4a6d1e-42bf-460c-a4c4-22b8ba113e33",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "bd7fc25d82be245f26c9940be43f87866617022a91a763f74328fc2685112811",
+  "clean_sha256": "5eac6e550d1aec920e44f8c1439385f5ecd217d941682cb0f046c69dae9a1470",
+  "clean_bytes": 548
+ },
+ {
+  "source": "nws",
+  "file": "nws/NPW_AMA_1.txt",
+  "url": "https://api.weather.gov/products/644d14e9-b9bd-4ff2-af0f-69bcf23e72f6",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "b4721ec4aeeccb019c3d17b8366459f2050134cec2321aba766d73279c765b28",
+  "clean_sha256": "4cc1a4195a3e4da2980632d98d8f1a2eff88715166a3a9d3319421aca99ebf72",
+  "clean_bytes": 1628
+ },
+ {
+  "source": "nws",
+  "file": "nws/NPW_LUB_0.txt",
+  "url": "https://api.weather.gov/products/85a22d1f-77db-4d76-88dc-f5957da4e18a",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "c16d107eeabe31b0ce1e6158fb82d9662c2482e01d9a36382afad680034d3d90",
+  "clean_sha256": "442054d83ffd9a4674f82864c67d925ac1cda5b94ab126abb6ef990c4cc6e139",
+  "clean_bytes": 935
+ },
+ {
+  "source": "nws",
+  "file": "nws/NPW_LUB_1.txt",
+  "url": "https://api.weather.gov/products/0e6f0432-bb37-4b00-a9cf-8e6a33eb44cd",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "d56e7382863d9a4ddf7cd71231959dbc7a4f2fa10b28b8b8b7b063e24cc0e398",
+  "clean_sha256": "dbf2754fa9ecab5b0bef3414a1e70d19dc08288d0d3f0a39aa27fb165a19353e",
+  "clean_bytes": 1109
+ },
+ {
+  "source": "nws",
+  "file": "nws/RVS_PBZ_0.txt",
+  "url": "https://api.weather.gov/products/afce233b-9775-4766-b199-8414f20a0530",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "a769434fa669b04e6236e2cc54c4f00780097bda4b0e129bb88b46f3256ac789",
+  "clean_sha256": "b6a284272d4c3b60a397a3446abd33ae17291a9305cba181e74efefaf337ca3d",
+  "clean_bytes": 2382
+ },
+ {
+  "source": "nws",
+  "file": "nws/RVS_PBZ_1.txt",
+  "url": "https://api.weather.gov/products/06841c04-098a-4be6-9aff-fa536ea677e8",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "d76e67c62ad3c4fcb75768b60a33628dec999664655996e6ce4379c9e3bd867f",
+  "clean_sha256": "27f65955039c3ac3ba69fcd5af693bd2466b2f81e3e28009e7d5acaddcb96478",
+  "clean_bytes": 2485
+ },
+ {
+  "source": "nws",
+  "file": "nws/RVS_LIX_0.txt",
+  "url": "https://api.weather.gov/products/77517285-81c8-4ab1-b5f6-92a7a56fbba6",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "a58a85a9d3bbd3108e2e91d523675abf407b47f2331352923beac08e55d42a65",
+  "clean_sha256": "81567a0e039779839abbe3db9a8d99cffeae9f2a3d51365fd6c7200c1d976e37",
+  "clean_bytes": 2782
+ },
+ {
+  "source": "nws",
+  "file": "nws/RVS_LIX_1.txt",
+  "url": "https://api.weather.gov/products/9e80b5b7-450e-4def-a9c4-b0f63840e0ae",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "8aecbb2771ebd993c8f6e9fdac6de8ef710edacebd9a417d4b95ad73449d1615",
+  "clean_sha256": "01e91ef73641fe44cae17b8874c20017f05a7cfe49322908361acab0c12505d0",
+  "clean_bytes": 2786
+ },
+ {
+  "source": "nws",
+  "file": "nws/RVS_EAX_0.txt",
+  "url": "https://api.weather.gov/products/c6d2c524-4f81-4a0a-a8e0-02caff3edca3",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "041bd2b39977fe3e66882666c450438aabaf67b42aba438943e7ab927f9e12c0",
+  "clean_sha256": "3e049b8a30f84173a73a4dfbc8a151f360417ca215238450f13a64a7af9806ee",
+  "clean_bytes": 590
+ },
+ {
+  "source": "nws",
+  "file": "nws/RVS_EAX_1.txt",
+  "url": "https://api.weather.gov/products/dd7eef9e-7ab9-4cf8-a8eb-995e1ff7eb28",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "861cbacf0355c7a32fd544f30f0282d72ed6c0f71f947dac55e017d6ad3c71d8",
+  "clean_sha256": "92295925042aced939cb60c1e21ead666b0a32589fc4bebec266d69fdc60fca2",
+  "clean_bytes": 699
+ },
+ {
+  "source": "nws",
+  "file": "nws/RVS_LSX_0.txt",
+  "url": "https://api.weather.gov/products/f772b614-7909-4298-aa56-8c1e751d5b44",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "0713c04931a025929dc2483925de8484b7d241896667cb26c39d376919180a4d",
+  "clean_sha256": "937ec6886a8c5e37252ee3683a11a4d7dd376d7774929fe68b3d3953fc7b0427",
+  "clean_bytes": 821
+ },
+ {
+  "source": "nws",
+  "file": "nws/RVS_LSX_1.txt",
+  "url": "https://api.weather.gov/products/6c141c1e-3cf0-46ec-98d6-f47d742531b2",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "49fe416b34c230a56076b4c552a4ae70c4fcb91f2e86652c76d64af81bd5d503",
+  "clean_sha256": "be0d7a40d66b747823eb2e20fc9cc86ea0aaabb0fc33758a3b72d2ece8e86acf",
+  "clean_bytes": 378
+ },
+ {
+  "source": "nws",
+  "file": "nws/RVS_EPZ_0.txt",
+  "url": "https://api.weather.gov/products/275aa2e6-743e-4d90-92f2-f528f4114594",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "3543e5c95e1903c482eedf64cd7f42328c28229145d4bab2947ccfbf3bdbb0d2",
+  "clean_sha256": "e6f332460d2243fa0338514c6b6aeeac061805153c2ab2b937d80c506dd5a227",
+  "clean_bytes": 450
+ },
+ {
+  "source": "nws",
+  "file": "nws/RVS_EPZ_1.txt",
+  "url": "https://api.weather.gov/products/0ebe9c2d-7e2a-4564-a072-710ed4b1d8d6",
+  "retrieved": "2026-11-07",
+  "raw_sha256": "f398393e3007de87517902515007d9297f76f8d25d0c2009a79de6b56124b0a7",
+  "clean_sha256": "dc5a73d7e8688f4dffcf56e293b5a6a258ba8e8f491927c9bf6546e4345ca133",
+  "clean_bytes": 450
+ }
+]

@@ -1,0 +1,43 @@
+WWUS74 KAMA 022356 NPWAMA
+
+URGENT - WEATHER MESSAGE National Weather Service Amarillo TX 556 PM CST Mon Nov 2 2026
+
+OKZ002-TXZ002-007-011-031000- /O.EXA.KAMA.WI.Y.0016.000000T0000Z-261103T1000Z/ Texas-Sherman-Moore-Oldham- Including the cities of Boys Ranch, Masterson, Stratford, Guymon, Vega, Four Way, Dumas, and Wildorado 556 PM CST Mon Nov 2 2026
+
+...WIND ADVISORY IN EFFECT UNTIL 4 AM CST TUESDAY...
+
+* WHAT...Northwest winds 25 to 35 mph with gusts up to 50 mph expected.
+
+* WHERE...In Oklahoma, Texas County. In Texas, Moore, Oldham, and Sherman Counties.
+
+* WHEN...Until 4 AM CST Tuesday.
+
+* IMPACTS...Gusty winds will blow around unsecured objects. Tree limbs could be blown down and a few power outages may result.
+
+PRECAUTIONARY/PREPAREDNESS ACTIONS...
+
+Winds this strong can make driving difficult, especially for high profile vehicles. Use extra caution.
+
+&&
+
+$$
+
+OKZ001-TXZ001-006-031000- /O.CON.KAMA.WI.Y.0016.000000T0000Z-261103T1000Z/ Cimarron-Dallam-Hartley- Including the cities of Keyes, Channing, Romero, Dalhart, Hartley, Conlen, Boise City, and Ware 556 PM CST Mon Nov 2 2026
+
+...WIND ADVISORY REMAINS IN EFFECT UNTIL 4 AM CST TUESDAY...
+
+* WHAT...Northwest winds 25 to 35 mph with gusts up to 50 mph expected.
+
+* WHERE...In Oklahoma, Cimarron County. In Texas, Dallam and Hartley Counties.
+
+* WHEN...Until 4 AM CST Tuesday.
+
+* IMPACTS...Gusty winds will blow around unsecured objects. Tree limbs could be blown down and a few power outages may result.
+
+PRECAUTIONARY/PREPAREDNESS ACTIONS...
+
+Winds this strong can make driving difficult, especially for high profile vehicles. Use extra caution.
+
+&&
+
+$$

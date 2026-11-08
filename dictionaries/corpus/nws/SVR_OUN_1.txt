@@ -1,0 +1,33 @@
+WUUS54 KOUN 030438 SVROUN OKC005-029-069-095-123-030515- /O.NEW.KOUN.SV.W.1020.261103T0438Z-261103T0515Z/
+
+BULLETIN - IMMEDIATE BROADCAST REQUESTED Severe Thunderstorm Warning National Weather Service Norman OK 1038 PM CST Mon Nov 2 2026
+
+The National Weather Service in Norman has issued a
+
+* Severe Thunderstorm Warning for... Eastern Johnston County in southeastern Oklahoma... Coal County in southeastern Oklahoma... Southeastern Pontotoc County in east central Oklahoma... Northeastern Marshall County in southeastern Oklahoma... Western Atoka County in southeastern Oklahoma...
+
+* Until 1115 PM CST.
+
+* At 1038 PM CST, severe thunderstorms were located along a line extending from near Fittstown to near Little City, moving east at 40 mph.
+
+HAZARD...60 mph wind gusts.
+
+SOURCE...Radar indicated.
+
+IMPACT...Expect damage to roofs, siding, and trees.
+
+* Locations impacted include... Atoka, Tishomingo, Coalgate, Wapanucka, Lehigh, Tupelo, Milburn, Tushka, Caney, Bromide, Centrahoma, Pontotoc, Clarita, Olney, Fillmore, Connerville, Coleman, Little City, Nida, and northeastern Lake Texoma.
+
+PRECAUTIONARY/PREPAREDNESS ACTIONS...
+
+For your protection move to an interior room on the lowest floor of a building.
+
+A Tornado Watch remains in effect for the warned area.
+
+&&
+
+LAT...LON 3416 9645 3411 9646 3412 9658 3409 9657 3407 9672 3460 9667 3471 9609 3416 9610 TIME...MOT...LOC 0438Z 248DEG 37KT 3461 9659 3412 9662
+
+HAIL THREAT...RADAR INDICATED MAX HAIL SIZE...<.75 IN WIND THREAT...RADAR INDICATED MAX WIND GUST...60 MPH
+
+$$

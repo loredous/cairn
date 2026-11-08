@@ -1,0 +1,47 @@
+FXUS64 KTSA 072331 AFDTSA
+
+Area Forecast Discussion National Weather Service Tulsa OK 531 PM CST Sat Nov 7 2026
+
+...New AVIATION...
+
+.KEY MESSAGES... Updated at 531 PM CST Sat Nov 7 2026
+
+- Patchy frost likely NE OK into far NW AR tonight.
+
+- Warming trend through early week with low chance of rain mid week.
+
+- Cooler weather likely by late week into next weekend.
+
+&&
+
+.SHORT TERM... (Through tonight ) Issued at 1230 PM CST Sat Nov 7 2026
+
+Sfc high is forecast to settle across the forecast area tonight, however cooling potential will be somewhat mitigated by increasing high clouds across the south and air that is not particularly dry. Forecast will side toward a cooler scenario with patchy fog possible. Areas of frost are likely across northern locations and colder valleys may see a brief light freeze.
+
+&&
+
+.LONG TERM... (Sunday through Saturday) Issued at 1230 PM CST Sat Nov 7 2026
+
+Warming trend begins Sunday with above normal temperatures returning and persisting through mid next week. The upper low currently across far SW TX will weaken as it slowly evolves northeastward and the majority of guidance keep any rains well south of the local area. A fast moving wave will move across the region Tuesday night or Wednesday with a low chance of light rain.
+
+Stronger ridging aloft is forecast to develop across the western CONUS placing dry and cooler northwesterly flow aloft downstream. This will act to reinforce the airmass change behind the Wednesday wave and bring cooler temperatures, nearer to seasonal normals, for late week into next weekend. Dry weather also appears likely to continue into next weekend.
+
+&&
+
+.AVIATION... (00Z TAFS) Issued at 531 PM CST Sat Nov 7 2026
+
+VFR conditions with variable amounts of high cloudiness will continue across ern OK and nwrn AR until after midnight, when MVFR VSBYS in fog are expected to develop, with TEMPO IFR VSBY likely at some sites. All sites will have a good chance of being impacted by fog late tonight through mid-morning Sunday. VFR conditions will redevelop by late morning areawide and continue through the end of the forecast period. Calm wind becomes light SW or W late Sunday morning.
+
+&&
+
+.PRELIMINARY POINT TEMPS/POPS... TUL 36 69 41 72 / 0 0 0 0 FSM 39 66 42 70 / 0 0 0 0 MLC 35 68 39 73 / 0 0 0 0 BVO 32 70 37 72 / 0 0 0 0 FYV 32 65 34 71 / 0 0 0 0 BYV 38 66 42 71 / 0 0 0 0 MKO 34 66 40 70 / 0 0 0 0 MIO 34 66 41 70 / 0 0 0 0 F10 34 69 40 72 / 0 0 0 0 HHW 45 70 42 71 / 0 0 0 0
+
+&&
+
+.TSA WATCHES/WARNINGS/ADVISORIES... OK...Frost Advisory from midnight tonight to 9 AM CST Sunday for OKZ055>071-154-254-354.
+
+AR...Frost Advisory from midnight tonight to 9 AM CST Sunday for ARZ001-002-010-011.
+
+&&
+
+$$

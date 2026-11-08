@@ -1,0 +1,27 @@
+FLUS43 KSGF 070731 HWOSGF
+
+Hazardous Weather Outlook National Weather Service Springfield MO 131 AM CST Sat Nov 7 2026
+
+KSZ073-097-101-MOZ055>058-066>071-077>083-088>098-101>106-080745- Bourbon-Crawford-Cherokee-Benton-Morgan-Miller-Maries-Vernon- St. Clair-Hickory-Camden-Pulaski-Phelps-Barton-Cedar-Polk-Dallas- Laclede-Texas-Dent-Jasper-Dade-Greene-Webster-Wright-Newton- Lawrence-Christian-Douglas-Howell-Shannon-McDonald-Barry-Stone- Taney-Ozark-Oregon- 131 AM CST Sat Nov 7 2026
+
+This Hazardous Weather Outlook is for portions of the Missouri Ozarks and extreme southeast Kansas.
+
+.DAY ONE...Today and Tonight.
+
+Areas of frost and freeze are possible this morning, however persistent cloud cover leads to low confidence in this occuring.
+
+.DAYS TWO THROUGH SEVEN...Sunday through Friday.
+
+There is a higher chance of frost and freeze Sunday morning. The coldest temperatures are expected east of Highway 65, with lows in the low to mid 30s across much of the area.
+
+.SPOTTER INFORMATION STATEMENT...
+
+Spotter activation will not be needed through tonight.
+
+&&
+
+More detailed information can be accessed at: http://www.weather.gov/sgf/dsspacket
+
+This product in graphical format...along with other weather... hydrological and climate information...at http://www.weather.gov/sgf
+
+$$

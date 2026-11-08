@@ -1,0 +1,11 @@
+WWUS73 KLSX 071359 NPWLSX
+
+URGENT - WEATHER MESSAGE National Weather Service St Louis MO 759 AM CST Sat Nov 7 2026
+
+ILZ058>060-064-065-069-070-074-079-095>102-MOZ018-019-026-027- 034>036-041-042-047>052-059>065-072>075-084-085-099-071500- /O.EXP.KLSX.FZ.W.0002.000000T0000Z-261107T1400Z/ Greene IL-Macoupin IL-Montgomery IL-Bond IL-Fayette IL-Clinton IL- Marion IL-Washington IL-Randolph IL-Adams IL-Brown IL-Pike IL- Calhoun IL-Jersey IL-Madison IL-Saint Clair IL-Monroe IL-Knox MO- Lewis MO-Shelby MO-Marion MO-Monroe MO-Ralls MO-Pike MO-Boone MO- Audrain MO-Moniteau MO-Cole MO-Osage MO-Callaway MO-Montgomery MO- Lincoln MO-Gasconade MO-Warren MO-Saint Charles MO-Franklin MO- Saint Louis MO-Saint Louis City MO-Jefferson MO-Crawford MO- Washington MO-Saint Francois MO-Sainte Genevieve MO-Iron MO- Madison MO-Reynolds MO- Including the cities of Bowling Green, Sparta, Cahokia, Union, Edwardsville, Fulton, Quincy, Belleville, Jefferson City, Washington, Litchfield, Alton, Saint Louis, Hannibal, Centralia, Mexico, Chester, Columbia, Sullivan, Salem, Farmington, Pittsfield, Mount Sterling, Saint Charles, and Vandalia 759 AM CST Sat Nov 7 2026
+
+...FREEZE WARNING WILL EXPIRE AT 8 AM CST THIS MORNING...
+
+The threat has ended.
+
+$$

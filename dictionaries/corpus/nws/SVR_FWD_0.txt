@@ -1,0 +1,35 @@
+WUUS54 KFWD 030346 SVRFWD TXC093-133-143-030445- /O.NEW.KFWD.SV.W.0272.261103T0346Z-261103T0445Z/
+
+BULLETIN - IMMEDIATE BROADCAST REQUESTED Severe Thunderstorm Warning National Weather Service Fort Worth TX 946 PM CST Mon Nov 2 2026
+
+The National Weather Service in Fort Worth has issued a
+
+* Severe Thunderstorm Warning for... Northwestern Erath County in north central Texas... Southeastern Eastland County in north central Texas... Northwestern Comanche County in central Texas...
+
+* Until 1045 PM CST.
+
+* At 946 PM CST, a severe thunderstorm was located near Rising Star, or 20 miles northwest of Comanche, moving east at 40 mph.
+
+HAZARD...60 mph wind gusts and quarter size hail.
+
+SOURCE...Radar indicated.
+
+IMPACT...Hail damage to vehicles is expected. Expect wind damage to roofs, siding, and trees.
+
+* This severe thunderstorm will be near... Gorman around 1005 PM CST. De Leon around 1015 PM CST.
+
+Other locations impacted by this severe thunderstorm include Comyn, Rucker, Harbin, Beattie, Sipe Springs, Lingleville, Okra, Duster, Desdemona, and Bunyan.
+
+PRECAUTIONARY/PREPAREDNESS ACTIONS...
+
+A Tornado Watch remains in effect until 1100 PM CST for central and north central Texas.
+
+For your protection get inside a sturdy structure and stay away from windows.
+
+&&
+
+LAT...LON 3241 9836 3212 9822 3198 9886 3208 9893 3208 9897 3214 9899 TIME...MOT...LOC 0346Z 250DEG 34KT 3208 9887
+
+HAIL THREAT...RADAR INDICATED MAX HAIL SIZE...1.00 IN WIND THREAT...RADAR INDICATED MAX WIND GUST...60 MPH
+
+$$

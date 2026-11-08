@@ -1,0 +1,43 @@
+WWUS74 KJAN 050710 NPWJAN
+
+URGENT - WEATHER MESSAGE National Weather Service Jackson MS 110 AM CST Thu Nov 5 2026
+
+MSZ055>058-051500- /O.EXA.KJAN.FG.Y.0017.000000T0000Z-261105T1500Z/ Simpson-Smith-Jasper-Clarke- Including the cities of Bay Springs, Heidelberg, Stonewall, Taylorsville, Raleigh, Mendenhall, Magee, Shubuta, and Quitman 110 AM CST Thu Nov 5 2026
+
+...DENSE FOG ADVISORY IN EFFECT UNTIL 9 AM CST THIS MORNING...
+
+* WHAT...Visibility less than one quarter mile in areas of dense fog.
+
+* WHERE...Simpson, Smith, Clarke, and Jasper Counties.
+
+* WHEN...Until 9 AM CST this morning.
+
+* IMPACTS...Low visibility could make driving conditions hazardous.
+
+PRECAUTIONARY/PREPAREDNESS ACTIONS...
+
+If driving, slow down, use your low beam headlights, and leave plenty of distance ahead of you.
+
+&&
+
+$$
+
+ARZ074-075-LAZ007>009-015-016-023>026-MSZ018-019-025>054-059>061- 051500- /O.CON.KJAN.FG.Y.0017.000000T0000Z-261105T1500Z/ Ashley-Chicot-Morehouse-West Carroll-East Carroll-Richland- Madison LA-Franklin LA-Catahoula-Tensas-Concordia-Bolivar- Sunflower-Leflore-Grenada-Carroll-Montgomery-Webster-Clay-Lowndes- Choctaw-Oktibbeha-Washington-Humphreys-Holmes-Attala-Winston-Noxubee- Issaquena-Sharkey-Yazoo-Madison MS-Leake-Neshoba-Kemper-Warren-Hinds- Rankin-Scott-Newton-Lauderdale-Claiborne-Copiah-Jefferson-Adams- Franklin MS- Including the cities of West Crossett, Jackson, Carrollton, North Carrollton, Grenada, Cleveland, Harrisonburg, Philadelphia, Tchula, Conehatta, Yazoo City, Ridgeland, Hazlehurst, Port Gibson, Newellton, Jonesville, Richland, Fayette, Meridian, Vaiden, Ruleville, Carthage, Vicksburg, Roxie, Kosciusko, Winnsboro, Brooksville, Weir, Lake Providence, Macon, Crystal Springs, Starkville, Ferriday, St. Joseph, Rolling Fork, Crossett, Meadville, Hamburg, Ackerman, Greenville, Mayersville, Greenwood, Lexington, West Point, Eupora, Isola, Goodman, Bastrop, Waterproof, Canton, Oak Grove, Anguilla, Morton, Scooba, North Crossett, Decatur, Wesson, Delhi, Columbus, Winona, Pearl, Pearl River, Natchez, Lake Village, Union, Louisville, Brandon, Eudora, Dermott, Rayville, Pickens, Epps, Madison, Bude, Mathiston, West Ferriday, Indianola, Forest, Vidalia, Tallulah, Newton, Belzoni, Durant, and De Kalb 110 AM CST Thu Nov 5 2026
+
+...DENSE FOG ADVISORY REMAINS IN EFFECT UNTIL 9 AM CST THIS MORNING...
+
+* WHAT...Visibility less than one quarter mile in areas of dense fog.
+
+* WHERE...Portions of southeast Arkansas, northeast Louisiana, and central, east central, north central, northeast, northwest, southwest, and west central Mississippi.
+
+* WHEN...Until 9 AM CST this morning.
+
+* IMPACTS...Low visibility could make driving conditions hazardous.
+
+PRECAUTIONARY/PREPAREDNESS ACTIONS...
+
+If driving, slow down, use your low beam headlights, and leave plenty of distance ahead of you.
+
+&&
+
+$$

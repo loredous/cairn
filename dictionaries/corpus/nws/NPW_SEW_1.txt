@@ -1,0 +1,63 @@
+WWUS76 KSEW 072117 NPWSEW
+
+URGENT - WEATHER MESSAGE National Weather Service Seattle WA 117 PM PST Sat Nov 7 2026
+
+WAZ330-331-080730- /O.CON.KSEW.HW.W.0002.261108T0000Z-261108T1200Z/ Northern Washington Coast-Grays Harbor County Coast- Including La Push, Neah Bay, Ocean Shores, Quillayute, Queets, Ozette, and Westport 117 PM PST Sat Nov 7 2026
+
+...HIGH WIND WARNING REMAINS IN EFFECT UNTIL 4 AM PST SUNDAY...
+
+* WHAT...South winds 25 to 35 mph with gusts up to 60 mph expected.
+
+* WHERE...Grays Harbor County Coast and Northern Washington Coast.
+
+* WHEN...Until 4 AM PST Sunday.
+
+* IMPACTS...Damaging winds will blow down trees and power lines. Widespread power outages are expected. Travel will be difficult, especially for high profile vehicles.
+
+* ADDITIONAL DETAILS...Strongest winds will be this evening.
+
+PRECAUTIONARY/PREPAREDNESS ACTIONS...
+
+People are urged to secure loose objects that could be blown around or damaged by the wind.
+
+&&
+
+$$
+
+WAZ319-320-326-327-329-332-080730- /O.CON.KSEW.WI.Y.0010.261108T0000Z-261108T1200Z/ Middle Chehalis River Valley-Willapa and Black Hills-Western Strait of Juan de Fuca-Lake Crescent Area Including US 101- Foothills of the Western and Southern Olympic Peninsula-Lower Chehalis River Valley- Including Hoquiam, Joyce, Forks, Pe Ell, Clallam Bay, Clearwater, Grisdale, Elma, Aberdeen, Amanda Park, Quinault, Montesano, Humptulips, McCleary, Sekiu, and Beaver 117 PM PST Sat Nov 7 2026
+
+...WIND ADVISORY REMAINS IN EFFECT UNTIL 4 AM PST SUNDAY...
+
+* WHAT...South winds 15 to 25 mph with gusts up to 50 mph expected.
+
+* WHERE...Foothills of the Western and Southern Olympic Peninsula, Lake Crescent Area Including US 101, Lower Chehalis River Valley, Middle Chehalis River Valley, Western Strait of Juan de Fuca, and Willapa and Black Hills.
+
+* WHEN...Until 4 AM PST Sunday.
+
+* IMPACTS...Gusty winds will blow around unsecured objects. Tree limbs could be blown down and a few power outages may result.
+
+PRECAUTIONARY/PREPAREDNESS ACTIONS...
+
+Winds this strong can make driving difficult, especially for high profile vehicles. Use extra caution.
+
+&&
+
+$$
+
+WAZ001-310>316-324-333-080730- /O.CON.KSEW.WI.Y.0010.261108T0200Z-261108T1200Z/ San Juan County-Lowlands of Western Whatcom County-Lowlands of Western Skagit and Northwestern Snohomish Counties-Downtown Everett / Marysville Area-Shoreline / Lynnwood / South Everett Area-Eastside-City of Seattle-Lowlands of Pierce and Southern King Counties-Port Townsend Area-Island County- Including Newport Hills, Mercer Island, Federal Way, Seattle, Renton, Bothell, Kirkland, Bellingham, Everett, Langley, Kingsgate, Burlington, Freeland, Port Townsend, Marysville, Edmonds, Kenmore, Anacortes, Tacoma, Snohomish, Kent, Lake Stevens, Lynnwood, Mount Vernon, Friday Harbor, Richmond Highlands, Sedro-Woolley, and Redmond 117 PM PST Sat Nov 7 2026
+
+...WIND ADVISORY REMAINS IN EFFECT FROM 6 PM THIS EVENING TO 4 AM PST SUNDAY...
+
+* WHAT...South winds 15 to 25 mph with gusts 45 to 50 mph expected.
+
+* WHERE...Island County, Lowlands of Western Skagit and Northwestern Snohomish Counties, Lowlands of Western Whatcom County, Port Townsend Area, San Juan County, City of Seattle, Downtown Everett / Marysville Area, Eastside, Lowlands of Pierce and Southern King Counties, and Shoreline / Lynnwood / South Everett Area.
+
+* WHEN...From 6 PM this evening to 4 AM PST Sunday.
+
+* IMPACTS...Gusty winds will blow around unsecured objects. Tree limbs could be blown down and a few power outages may result.
+
+PRECAUTIONARY/PREPAREDNESS ACTIONS...
+
+Winds this strong can make driving difficult, especially for high profile vehicles. Use extra caution.
+
+&&

@@ -1,0 +1,41 @@
+FPUS53 KFGF 080423 ZFPFGF
+
+Zone Forecast Product for E ND and NW MN National Weather Service Grand Forks ND 1022 PM CST Sat Nov 7 2026
+
+NDZ027-081000- Grand Forks- Including the city of Grand Forks 1022 PM CST Sat Nov 7 2026
+
+.REST OF TONIGHT...Clear. Lows in the mid 30s. Breezy. Northwest winds 15 to 25 mph. .SUNDAY...Sunny. Highs 50 to 55. Northwest winds around 10 mph shifting to the southwest in the afternoon. .SUNDAY NIGHT...Mostly cloudy. Lows 35 to 40. Southwest winds 5 to 15 mph. .MONDAY...Mostly sunny. Breezy. Highs 55 to 60. .MONDAY NIGHT...Partly cloudy. Lows in the mid 30s. .TUESDAY AND TUESDAY NIGHT...Partly cloudy. Highs 50 to 55. Lows 30 to 35. .VETERANS DAY AND WEDNESDAY NIGHT...Mostly cloudy. Highs in the mid 40s. Lows in the mid 20s. .THURSDAY AND THURSDAY NIGHT...Partly cloudy. Highs 40 to 45. Lows in the mid 20s. .FRIDAY THROUGH SATURDAY...Partly cloudy. Highs 50 to 55. Lows 30 to 35.
+
+$$
+
+MNZ001-081000- West Polk- Including the cities of Crookston and East Grand Forks 1022 PM CST Sat Nov 7 2026
+
+.REST OF TONIGHT...Clear. Lows in the mid 30s. West winds 10 to 20 mph. .SUNDAY...Sunny. Highs 45 to 50. West winds 5 to 15 mph. .SUNDAY NIGHT...Mostly cloudy. Lows in the mid 30s. South winds 5 to 15 mph. .MONDAY...Mostly sunny. Highs 55 to 60. .MONDAY NIGHT...Partly cloudy. Lows in the mid 30s. .TUESDAY AND TUESDAY NIGHT...Partly cloudy. Highs 50 to 55. Lows 30 to 35. .VETERANS DAY AND WEDNESDAY NIGHT...Mostly cloudy. Highs 40 to 45. Lows in the mid 20s. .THURSDAY AND THURSDAY NIGHT...Partly cloudy. Highs 35 to 40. Lows in the mid 20s. .FRIDAY THROUGH SATURDAY...Partly cloudy. Highs 45 to 50. Lows 30 to 35.
+
+$$
+
+NDZ039-081000- Cass- Including the city of Fargo 1022 PM CST Sat Nov 7 2026
+
+.REST OF TONIGHT...Clear. Lows in the mid 30s. West winds 10 to 20 mph. .SUNDAY...Sunny. Highs 50 to 55. Northwest winds around 10 mph shifting to the southwest in the afternoon. .SUNDAY NIGHT...Mostly cloudy. Lows in the mid 30s. South winds 5 to 15 mph. .MONDAY...Partly sunny in the morning then clearing. Breezy. Highs 55 to 60. .MONDAY NIGHT...Partly cloudy. Lows in the mid 30s. .TUESDAY AND TUESDAY NIGHT...Partly cloudy. Highs 50 to 55. Lows in the mid 30s. .VETERANS DAY...Partly sunny. Highs in the mid 40s. .WEDNESDAY NIGHT THROUGH THURSDAY NIGHT...Partly cloudy. Highs 40 to 45. Lows in the mid 20s. .FRIDAY THROUGH SATURDAY...Partly cloudy. Highs 50 to 55. Lows 30 to 35.
+
+$$
+
+MNZ003-081000- Clay- Including the city of Moorhead 1022 PM CST Sat Nov 7 2026
+
+.REST OF TONIGHT...Clear. Lows in the mid 30s. Northwest winds 10 to 20 mph. .SUNDAY...Sunny. Highs 45 to 50. West winds 5 to 15 mph. .SUNDAY NIGHT...Mostly cloudy. Lows 35 to 40. South winds 5 to 15 mph. .MONDAY...Mostly sunny. Highs in the mid 50s. .MONDAY NIGHT...Partly cloudy. Lows in the mid 30s. .TUESDAY AND TUESDAY NIGHT...Partly cloudy. Highs 50 to 55. Lows in the mid 30s. .VETERANS DAY AND WEDNESDAY NIGHT...Mostly cloudy. Highs in the mid 40s. Lows 25 to 30. .THURSDAY AND THURSDAY NIGHT...Partly cloudy. Highs 40 to 45. Lows 25 to 30. .FRIDAY AND FRIDAY NIGHT...Partly cloudy. Highs in the mid 40s. Lows in the mid 30s. .SATURDAY...Mostly sunny. Highs 50 to 55.
+
+$$
+
+NDZ007-081000- Cavalier- Including the city of Langdon 1022 PM CST Sat Nov 7 2026
+
+.REST OF TONIGHT...Mostly clear. Lows 30 to 35. Northwest winds 10 to 20 mph with gusts to around 30 mph. .SUNDAY...Sunny. Highs 45 to 50. West winds around 5 mph shifting to the southwest in the afternoon. .SUNDAY NIGHT...Mostly cloudy. Lows 40 to 45. Southwest winds 10 to 20 mph. .MONDAY...Sunny, breezy. Highs in the mid 50s. .MONDAY NIGHT...Partly cloudy. Lows 30 to 35. .TUESDAY AND TUESDAY NIGHT...Partly cloudy. Highs 45 to 50. Lows 25 to 30. .VETERANS DAY AND WEDNESDAY NIGHT...Mostly cloudy. Highs 40 to 45. Lows in the mid 20s. .THURSDAY AND THURSDAY NIGHT...Partly cloudy. Highs 40 to 45. Lows in the mid 20s. .FRIDAY...Mostly sunny. Highs 45 to 50. .FRIDAY NIGHT...Mostly cloudy. Lows 30 to 35. .SATURDAY...Mostly sunny. Highs 50 to 55.
+
+$$
+
+NDZ054-081000- Western Walsh- Including the city of Lankin 1022 PM CST Sat Nov 7 2026
+
+.REST OF TONIGHT...Clear. Lows in the mid 30s. Breezy. Northwest winds 15 to 25 mph with gusts to around 40 mph. .SUNDAY...Sunny. Highs 45 to 50. West winds around 10 mph shifting to the southwest in the afternoon. .SUNDAY NIGHT...Mostly cloudy. Lows 40 to 45. Southwest winds 10 to 20 mph. .MONDAY...Mostly sunny. Breezy. Highs in the mid 50s. .MONDAY NIGHT...Partly cloudy. Lows in the mid 30s. .TUESDAY AND TUESDAY NIGHT...Partly cloudy. Highs 45 to 50. Lows 30 to 35. .VETERANS DAY AND WEDNESDAY NIGHT...Mostly cloudy. Highs 40 to 45. Lows in the mid 20s. .THURSDAY AND THURSDAY NIGHT...Partly cloudy. Highs 40 to 45. Lows in the mid 20s. .FRIDAY THROUGH SATURDAY...Partly cloudy. Highs 45 to 50. Lows 30 to 35.
+
+$$
+
+NDZ014-081000- Benson- Including the city of Leeds 1022 PM CST Sat Nov 7 2026

@@ -1,0 +1,7 @@
+FGUS84 KEPZ 061620 RVSEPZ
+
+Hydrologic Statement National Weather Service El Paso Tx/Santa Teresa NM 920 AM MST Fri Nov 6 2026
+
+Below are the latest river stages and forecasts (feet): Fld Obs Daily Forecasts at 7am Location Stg Stg Sat Sun Mon Tue Wed El Paso 8.5 2.3 2.3 2.3 2.3 2.3 2.3
+
+Below are the latest river stages and forecasts (meters): Fld Obs Daily Forecasts at 7am Location Stg Stg Sat Sun Mon Tue Wed El Paso 2.6 0.7 0.7 0.7 0.7 0.7 0.7

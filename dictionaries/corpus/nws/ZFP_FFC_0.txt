@@ -1,0 +1,27 @@
+FPUS52 KFFC 080512 ZFPFFC
+
+Zone Forecasts for North and Central Georgia National Weather Service Peachtree City GA 1212 AM EST Sun Nov 8 2026
+
+GAZ021-022-032>034-044>046-055-057-081300- Cherokee-Clayton-Cobb-DeKalb-Forsyth-Gwinnett-Henry-North Fulton- Rockdale-South Fulton- Including the cities of Atlanta, Conyers, Decatur, East Point, Lawrenceville, and Marietta 1212 AM EST Sun Nov 8 2026
+
+.REST OF TONIGHT...Clear late this evening, then becoming partly cloudy. Lows in the lower 40s. Light North winds. .SUNDAY...Mostly sunny. Highs in the upper 60s. Light East winds, becoming west in the afternoon. .SUNDAY NIGHT...Clear. Lows in the lower 40s. Light Northwest winds. .MONDAY...Sunny. Highs in the lower 70s. Northwest winds 5 to 10 mph. .MONDAY NIGHT...Mostly clear. Lows in the lower 40s. Light Northwest winds. .TUESDAY...Mostly sunny. Highs around 70. .TUESDAY NIGHT...Partly cloudy. Lows in the mid 40s. .VETERANS DAY...Mostly sunny. Highs around 70. .WEDNESDAY NIGHT...Partly cloudy. Lows in the upper 40s. .THURSDAY...Partly sunny with a 20 percent chance of showers. Highs in the mid 60s. .THURSDAY NIGHT...Partly cloudy. Lows in the lower 40s. .FRIDAY...Mostly sunny. Highs in the mid 50s. .FRIDAY NIGHT...Mostly clear. Lows in the mid 30s. .SATURDAY...Sunny. Highs in the mid 50s.
+
+$$
+
+GAZ052>054-066-067-081300- Coweta-Fayette-Heard-Meriwether-Troup- Including the cities of Newnan and Peachtree City 1212 AM EST Sun Nov 8 2026
+
+.REST OF TONIGHT...Clear late this evening, then becoming partly cloudy. Lows in the upper 30s. Light North winds. .SUNDAY...Sunny. Highs around 70. Light Northeast winds, becoming northwest in the afternoon. .SUNDAY NIGHT...Mostly clear. Lows in the upper 30s. Light Northwest winds. .MONDAY...Sunny. Highs in the lower 70s. Light Northwest winds. .MONDAY NIGHT...Mostly clear in the evening, then becoming partly cloudy. Lows in the upper 30s. Light Northwest winds in the evening, becoming light and variable. .TUESDAY...Mostly sunny. Highs in the lower 70s. .TUESDAY NIGHT...Mostly clear in the evening, then becoming partly cloudy. Lows in the lower 40s. .VETERANS DAY...Sunny. Highs in the lower 70s. .WEDNESDAY NIGHT...Mostly clear in the evening, then becoming partly cloudy. Lows in the mid 40s. .THURSDAY...Partly sunny. A slight chance of showers in the afternoon. Highs in the mid 60s. Chance of rain 20 percent. .THURSDAY NIGHT...Partly cloudy. Lows in the upper 30s. .FRIDAY...Sunny. Highs in the upper 50s. .FRIDAY NIGHT...Mostly clear. Lows in the lower 30s. .SATURDAY...Sunny. Highs in the upper 50s.
+
+$$
+
+GAZ078-089>091-102-103-081300- Chattahoochee-Harris-Marion-Muscogee-Stewart-Webster- Including the cities of Columbus and Lumpkin 1212 AM EST Sun Nov 8 2026
+
+.REST OF TONIGHT...Mostly clear. Lows in the lower 40s. Light North winds. .SUNDAY...Sunny. Highs in the lower 70s. Light Northeast winds. .SUNDAY NIGHT...Partly cloudy in the evening, then becoming mostly clear. Lows in the lower 40s. Light North winds. .MONDAY...Sunny. Highs in the mid 70s. Light Northwest winds. .MONDAY NIGHT...Partly cloudy. Lows in the lower 40s. Light Northwest winds in the evening, becoming light and variable. .TUESDAY...Mostly sunny. Highs in the mid 70s. .TUESDAY NIGHT...Mostly clear in the evening, then becoming partly cloudy. Lows in the mid 40s. .VETERANS DAY...Mostly sunny. Highs in the lower 70s. .WEDNESDAY NIGHT...Partly cloudy. Lows in the upper 40s. .THURSDAY...Partly sunny. A slight chance of showers in the afternoon. Highs around 70. Chance of rain 20 percent. .THURSDAY NIGHT...Partly cloudy. Lows in the lower 40s. .FRIDAY...Sunny. Highs around 60. .FRIDAY NIGHT...Mostly clear. Lows in the mid 30s. .SATURDAY...Sunny. Highs around 60.
+
+$$
+
+GAZ071-072-081>083-094-095-081300- Bibb-Crawford-Houston-Jones-Monroe-Peach-Twiggs- Including the cities of Macon and Warner Robins 1212 AM EST Sun Nov 8 2026
+
+.REST OF TONIGHT...Mostly clear. Lows in the lower 40s. Light North winds. .SUNDAY...Sunny. Highs in the lower 70s. Light Northeast winds in the morning, becoming light and variable. .SUNDAY NIGHT...Mostly clear. Lows in the lower 40s. Light and variable winds, becoming northwest around 5 mph after midnight. .MONDAY...Sunny. Highs in the mid 70s. Light Northwest winds. .MONDAY NIGHT...Mostly clear in the evening, then becoming partly cloudy. Lows in the lower 40s. Light Northwest winds in the evening, becoming light and variable. .TUESDAY...Mostly sunny. Highs in the mid 70s. .TUESDAY NIGHT...Mostly clear in the evening, then becoming partly cloudy. Lows in the mid 40s. .VETERANS DAY...Sunny. Highs in the mid 70s. .WEDNESDAY NIGHT...Mostly clear in the evening, then becoming partly cloudy. Lows in the upper 40s. .THURSDAY...Partly sunny. A slight chance of showers in the afternoon. Highs around 70. Chance of rain 20 percent. .THURSDAY NIGHT...Partly cloudy. Lows in the lower 40s. .FRIDAY...Sunny. Highs around 60. .FRIDAY NIGHT...Mostly clear. Lows in the mid 30s. .SATURDAY...Sunny. Highs around 60.
+
+$$

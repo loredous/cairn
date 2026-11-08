@@ -1,0 +1,27 @@
+FPUS51 KAKQ 080346 ZFPAKQ
+
+Zone Forecast Product National Weather Service Wakefield VA 1045 PM EST Sat Nov 7 2026
+
+VAZ064-081100- Caroline- Including the cities of Corbin, Burruss Corner, Cedar Fork, and Dawn 1045 PM EST Sat Nov 7 2026
+
+.REST OF TONIGHT...Clear. Lows in the upper 30s. West winds around 5 mph. .SUNDAY...Sunny. Highs in the lower 60s. Southwest winds around 5 mph. .SUNDAY NIGHT...Clear. Lows around 40. Southwest winds around 5 mph. .MONDAY...Sunny. Highs in the lower 60s. Northwest winds 5 to 10 mph. Gusts up to 20 mph in the afternoon. .MONDAY NIGHT...Clear. Lows in the upper 30s. Northwest winds around 5 mph in the evening, becoming light and variable. .TUESDAY...Sunny. Highs in the mid 60s. .TUESDAY NIGHT...Clear. Lows around 40. .VETERANS DAY...Mostly sunny. Highs in the upper 60s. .WEDNESDAY NIGHT...Partly cloudy. Lows in the lower 40s. .THURSDAY...Mostly cloudy. A chance of showers in the afternoon. Highs in the lower 60s. Chance of rain 40 percent. .THURSDAY NIGHT...Mostly cloudy with a 40 percent chance of showers. Lows around 40. .FRIDAY...Mostly cloudy in the morning, then becoming partly sunny. A 40 percent chance of showers. Highs in the mid 50s. .FRIDAY NIGHT...Partly cloudy. Lows in the lower 30s. .SATURDAY...Partly sunny. Highs in the lower 50s.
+
+$$
+
+NCZ017-081100- Western Currituck- Including the city of Knotts Island 1045 PM EST Sat Nov 7 2026
+
+.REST OF TONIGHT...Partly cloudy. Lows in the mid 40s. Northwest winds 5 to 10 mph. Gusts up to 20 mph. .SUNDAY...Mostly sunny. Highs in the lower 60s. Northwest winds 5 to 10 mph, becoming west in the afternoon. .SUNDAY NIGHT...Clear. Lows in the mid 40s. Southwest winds 5 to 10 mph with gusts up to 20 mph. .MONDAY...Sunny. Highs in the mid 60s. Northwest winds 5 to 10 mph. Gusts up to 20 mph in the morning. .MONDAY NIGHT...Clear. Lows in the mid 40s. Northwest winds around 5 mph. .TUESDAY...Sunny. Highs in the upper 60s. .TUESDAY NIGHT...Mostly clear. Lows in the mid 40s. .VETERANS DAY...Mostly sunny. Highs in the upper 60s. .WEDNESDAY NIGHT...Mostly clear in the evening, then becoming partly cloudy. Lows in the upper 40s. .THURSDAY...Partly sunny in the morning, then becoming mostly cloudy. Highs in the upper 60s. .THURSDAY NIGHT...Partly cloudy with a 30 percent chance of showers. Lows in the mid 40s. .FRIDAY...Partly sunny. A chance of showers in the afternoon. Breezy with highs in the upper 50s. Chance of rain 30 percent. .FRIDAY NIGHT...Partly cloudy. Lows in the upper 30s. .SATURDAY...Partly sunny and breezy. Highs in the mid 50s.
+
+$$
+
+VAZ061-081100- Cumberland- Including the cities of Angola, Guinea Mills, Hawk, Raines Tavern, Reeds, and Stoddert 1045 PM EST Sat Nov 7 2026
+
+.REST OF TONIGHT...Clear. Patchy frost. Lows in the mid 30s. Light and variable winds. .SUNDAY...Patchy frost in the morning. Sunny. Highs in the lower 60s. Southwest winds around 5 mph. .SUNDAY NIGHT...Clear. Lows in the upper 30s. Southwest winds around 5 mph. .MONDAY...Sunny. Highs in the mid 60s. West winds 5 to 10 mph. .MONDAY NIGHT...Clear. Lows in the mid 30s. Northwest winds around 5 mph in the evening, becoming light and variable. .TUESDAY...Sunny. Highs in the upper 60s. .TUESDAY NIGHT...Clear. Lows in the upper 30s. .VETERANS DAY...Mostly sunny. Highs in the upper 60s. .WEDNESDAY NIGHT...Mostly clear in the evening, then becoming partly cloudy. Lows in the lower 40s. .THURSDAY...Mostly cloudy. A chance of showers in the afternoon. Highs in the lower 60s. Chance of rain 30 percent. .THURSDAY NIGHT...Mostly cloudy with a 40 percent chance of showers. Lows in the upper 30s. .FRIDAY...Mostly cloudy in the morning, then becoming partly sunny. Highs in the mid 50s. .FRIDAY NIGHT...Partly cloudy. Lows around 30. .SATURDAY...Partly sunny. Highs in the lower 50s.
+
+$$
+
+NCZ016-081100- Camden- Including the cities of Horseshoe, Lilly, and Sharon 1045 PM EST Sat Nov 7 2026
+
+.REST OF TONIGHT...Partly cloudy. Lows around 40. Northwest winds around 5 mph. .SUNDAY...Mostly sunny. Highs in the lower 60s. Northwest winds around 5 mph, becoming west in the afternoon. .SUNDAY NIGHT...Clear. Lows in the lower 40s. Southwest winds 5 to 10 mph. .MONDAY...Sunny. Highs in the mid 60s. Northwest winds 5 to 10 mph. .MONDAY NIGHT...Clear. Lows in the lower 40s. Northwest winds around 5 mph in the evening, becoming light and variable. .TUESDAY...Sunny. Highs in the upper 60s. .TUESDAY NIGHT...Mostly clear. Lows in the lower 40s. .VETERANS DAY...Mostly sunny. Highs around 70. .WEDNESDAY NIGHT...Mostly clear in the evening, then becoming partly cloudy. Lows in the mid 40s. .THURSDAY...Partly sunny in the morning, then becoming mostly cloudy. Highs in the upper 60s. .THURSDAY NIGHT...Partly cloudy with a 30 percent chance of showers. Lows in the mid 40s. .FRIDAY...Partly sunny. A chance of showers in the afternoon. Breezy with highs around 60. Chance of rain 30 percent. .FRIDAY NIGHT...Partly cloudy. Lows in the mid 30s. .SATURDAY...Mostly sunny. Highs in the mid 50s.
+
+$$

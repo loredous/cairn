@@ -1,0 +1,29 @@
+WWUS81 KOKX 060723 SPSOKX
+
+Special Weather Statement National Weather Service New York NY 223 AM EST Fri Nov 6 2026
+
+CTZ005-009-010-060800- Northern Fairfield CT-Southern Fairfield CT-Southern New Haven CT- 223 AM EST Fri Nov 6 2026
+
+...A STRONG THUNDERSTORM WILL IMPACT SOUTHERN FAIRFIELD COUNTY THROUGH 300 AM EST...
+
+At 221 AM EST, Doppler radar was tracking a strong thunderstorm over Stamford, moving northeast at 40 mph.
+
+HAZARD...Pea size hail.
+
+SOURCE...Radar indicated.
+
+IMPACT...No hail damage is expected.
+
+This strong thunderstorm will be near... Stamford and Norwalk around 225 AM EST. Westport and Wilton around 230 AM EST. Weston around 235 AM EST. Fairfield around 240 AM EST. Bridgeport and Trumbull around 250 AM EST. Shelton and Stratford around 255 AM EST.
+
+PRECAUTIONARY/PREPAREDNESS ACTIONS...
+
+If outdoors, consider seeking shelter inside a building.
+
+&&
+
+LAT...LON 4135 7314 4124 7301 4111 7326 4112 7330 4110 7333 4105 7338 4099 7356 4100 7359 4098 7360 4104 7366 4138 7316 TIME...MOT...LOC 0721Z 230DEG 33KT 4103 7355
+
+MAX HAIL SIZE...0.25 IN MAX WIND GUST...<30 MPH
+
+$$

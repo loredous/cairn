@@ -1,0 +1,29 @@
+WGUS52 KRAH 061531 FFWRAH NCC037-063-183-061830- /O.NEW.KRAH.FF.W.0042.261106T1531Z-261106T1830Z/ /00000.0.ER.000000T0000Z.000000T0000Z.000000T0000Z.OO/
+
+BULLETIN - EAS ACTIVATION REQUESTED Flash Flood Warning National Weather Service Raleigh NC 1031 AM EST Fri Nov 6 2026
+
+The National Weather Service in Raleigh has issued a
+
+* Flash Flood Warning for... Northeastern Chatham County in central North Carolina... Southern Durham County in central North Carolina... Central Wake County in central North Carolina...
+
+* Until 130 PM EST.
+
+* At 1031 AM EST, Doppler radar indicated thunderstorms producing heavy rain across the warned area. Between 1 and 2 inches of rain have fallen. Additional rainfall amounts of 1 to 2 inches are possible in the warned area. Flash flooding is ongoing or expected to begin shortly.
+
+HAZARD...Flash flooding caused by thunderstorms.
+
+SOURCE...Radar indicated.
+
+IMPACT...Flash flooding of small creeks and streams, urban areas, highways, streets and underpasses as well as other poor drainage and low-lying areas.
+
+* Some locations that will experience flash flooding include... Raleigh, Durham, Cary, Wake Forest, Garner, RDU International, Apex, Morrisville, William B Umstead State Park, Research Triangle, Bethesda, Carpenter, Rollingview Marina, Falls Lake Boat Ramp, Parkwood, Falls Lake, Falls Lake State Rec Area, Gorman, Lake Wheeler and Jordan Lake.
+
+PRECAUTIONARY/PREPAREDNESS ACTIONS...
+
+Turn around, don't drown when encountering flooded roads. Most flood deaths occur in vehicles.
+
+&&
+
+LAT...LON 3584 7903 3609 7885 3598 7850 3569 7860 3571 7893 3584 7902
+
+FLASH FLOOD...RADAR INDICATED

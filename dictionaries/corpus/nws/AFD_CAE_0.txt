@@ -1,0 +1,31 @@
+FXUS62 KCAE 072333 AFDCAE
+
+Area Forecast Discussion National Weather Service Columbia SC 633 PM EST Sat Nov 7 2026
+
+.WHAT HAS CHANGED... 00z Aviation update.
+
+&&
+
+.KEY MESSAGES... - 1. Seasonable temperatures and dry conditions are expected this weekend and into mid next week.
+
+&&
+
+.DISCUSSION... Key Message 1: Seasonable temperatures and dry conditions are expected this weekend and into mid next week.
+
+Expansive high pressure continues this weekend bringing seasonable temperatures. Cool, dry air will drop low temperatures into the 40s tonight and Sunday night. Some patchy fog may develop in sheltered locations Sunday morning due to lingering low-level moisture, though widespread fog is not anticipated. High temperatures will trend slightly cooler but remain near climatological normals for this time of year. As the surface high gradually shifts southward, light southerly flow will allow temperatures to gradually rebound through the middle of next week, with widespread highs in the mid to upper 70s and overnight lows in the 40s. Attention will then turn to a complex trough digging across the eastern US late this week and cooler temps to follow behind it. While recent runs of the deterministic GFS have trended more aggressive with multiple shortwaves phasing, the amplitude of the trough has remained tempered in recent ECMWF, GEM, and ensemble runs. While rainfall chances will increase on Thursday into early Friday with this system, significant rainfall is not expected at this time.
+
+&&
+
+.AVIATION /00Z SUNDAY THROUGH THURSDAY/... VFR expected.
+
+Cooler air drier air has settled across the region as high pressure moves in at the surface. Winds will be light and variable through the period, and no ceiling or visibility restrictions expected. Only clouds will be thin cirrus passing through the region through Sunday.
+
+EXTENDED AVIATION OUTLOOK...Dry air will likely prevent widespread restrictions through the extended.
+
+&&
+
+.CAE WATCHES/WARNINGS/ADVISORIES... SC...None. GA...None.
+
+&&
+
+$$

@@ -1,0 +1,29 @@
+WWUS84 KEPZ 020130 SPSEPZ
+
+Special Weather Statement National Weather Service El Paso TX 630 PM MST Sun Nov 1 2026
+
+NMZ409-427-020200- Sierra County Lakes NM-West Central Tularosa Basin/White Sands NM- 630 PM MST Sun Nov 1 2026
+
+...GUSTY SHOWERS WILL IMPACT CENTRAL SIERRA COUNTY THROUGH 700 PM MST...
+
+At 630 PM MST, Doppler radar was tracking gusty showers along I- 25 near Arrey, moving northeast at 50 mph.
+
+HAZARD...Wind gusts up to 50 mph.
+
+SOURCE...Radar indicated.
+
+IMPACT...Gusty winds could knock down tree limbs and blow around unsecured objects.
+
+Locations impacted include... Upham, Truth or Consequences, Derry, Engle, Cutter, City of Elephant Butte, Palomas, Spaceport America, Williamsburg, Elephant Butte Lake, Lost Canyon, Ash Canyon, Rock Canyon, Hot Springs Landing, Caballo Lake, and Lions Beach.
+
+PRECAUTIONARY/PREPAREDNESS ACTIONS...
+
+If outdoors, consider seeking shelter inside a building.
+
+&&
+
+LAT...LON 3296 10672 3279 10729 3319 10730 3348 10676 TIME...MOT...LOC 0130Z 238DEG 49KT 3288 10726
+
+MAX HAIL SIZE...0.00 IN MAX WIND GUST...50 MPH
+
+$$

@@ -1,0 +1,31 @@
+FPUS52 KRAH 072108 ZFPRAH
+
+Zone Forecast Product for North Carolina National Weather Service Raleigh NC 407 PM EST Sat Nov 7 2026
+
+This is an automatically generated product that contains an area forecast using an average of the gridded forecast data for each county. The forecast may not be representative of the exact location you are interested in. For a more site specific forecast, please visit www.weather.gov/raleigh.
+
+NCZ021-080900- Forsyth- Including the city of Winston-Salem 407 PM EST Sat Nov 7 2026
+
+.TONIGHT...Partly cloudy. Lows in the upper 30s. Northwest winds around 5 mph. .SUNDAY...Sunny. Highs in the mid 60s. West winds around 5 mph. .SUNDAY NIGHT...Clear. Lows in the upper 30s. West winds around 5 mph. .MONDAY...Sunny. Highs in the upper 60s. Northwest winds 5 to 10 mph with gusts up to 20 mph. .MONDAY NIGHT...Clear. Lows in the mid 30s. Northwest winds around 5 mph in the evening, becoming light and variable. .TUESDAY...Sunny. Highs around 70. .TUESDAY NIGHT THROUGH WEDNESDAY NIGHT...Mostly clear. Lows in the lower 40s. Highs around 70. .THURSDAY AND THURSDAY NIGHT...Partly cloudy. A 30 percent chance of showers. Highs in the mid 60s. Lows around 40. .FRIDAY AND FRIDAY NIGHT...Partly cloudy. Highs in the mid 50s. Lows in the lower 30s. .SATURDAY...Mostly sunny. Highs in the mid 50s.
+
+$$
+
+NCZ022-080900- Guilford- Including the cities of Greensboro and High Point 407 PM EST Sat Nov 7 2026
+
+.TONIGHT...Partly cloudy. Lows in the upper 30s. Northwest winds around 5 mph. .SUNDAY...Sunny. Highs in the mid 60s. West winds around 5 mph. .SUNDAY NIGHT...Clear. Lows around 40. West winds around 5 mph. .MONDAY...Sunny. Highs around 70. Northwest winds 5 to 10 mph with gusts up to 20 mph. .MONDAY NIGHT...Clear. Lows in the upper 30s. Northwest winds around 5 mph in the evening, becoming light and variable. .TUESDAY...Sunny. Highs around 70. .TUESDAY NIGHT THROUGH WEDNESDAY NIGHT...Mostly clear. Lows in the mid 40s. Highs in the upper 60s. .THURSDAY AND THURSDAY NIGHT...Partly cloudy. A 30 percent chance of showers. Highs in the mid 60s. Lows in the lower 40s. .FRIDAY...Partly sunny. Highs in the mid 50s. .FRIDAY NIGHT AND SATURDAY...Mostly clear. Lows in the lower 30s. Highs in the mid 50s.
+
+$$
+
+NCZ023-080900- Alamance- Including the cities of Burlington, Graham, and Mebane 407 PM EST Sat Nov 7 2026
+
+.TONIGHT...Partly cloudy. Lows in the upper 30s. North winds around 5 mph. .SUNDAY...Sunny. Highs in the mid 60s. West winds around 5 mph. .SUNDAY NIGHT...Clear. Lows in the upper 30s. West winds around 5 mph. .MONDAY...Sunny. Highs around 70. Northwest winds 5 to 10 mph. .MONDAY NIGHT...Clear. Lows in the mid 30s. Northwest winds around 5 mph in the evening, becoming light and variable. .TUESDAY...Sunny. Highs around 70. .TUESDAY NIGHT THROUGH WEDNESDAY NIGHT...Mostly clear. Lows in the lower 40s. Highs around 70. .THURSDAY AND THURSDAY NIGHT...Partly cloudy. A 30 percent chance of showers. Highs in the mid 60s. Lows around 40. .FRIDAY...Partly sunny. A chance of showers in the morning. Highs in the upper 50s. Chance of rain 30 percent. .FRIDAY NIGHT AND SATURDAY...Mostly clear. Lows in the lower 30s. Highs in the mid 50s.
+
+$$
+
+NCZ024-080900- Orange- Including the cities of Hillsborough, Chapel Hill, and Carrboro 407 PM EST Sat Nov 7 2026
+
+.TONIGHT...Partly cloudy. Cooler with lows in the mid 30s. Northwest winds around 5 mph. .SUNDAY...Patchy frost in the morning. Sunny. Highs in the mid 60s. West winds around 5 mph. .SUNDAY NIGHT...Clear. Lows around 40. West winds around 5 mph. .MONDAY...Sunny. Highs in the upper 60s. Northwest winds 5 to 10 mph with gusts up to 20 mph. .MONDAY NIGHT...Clear. Lows in the upper 30s. Northwest winds around 5 mph in the evening, becoming light and variable. .TUESDAY...Sunny. Highs in the upper 60s. .TUESDAY NIGHT THROUGH WEDNESDAY NIGHT...Mostly clear. Lows in the mid 40s. Highs around 70. .THURSDAY AND THURSDAY NIGHT...Partly cloudy. A 30 percent chance of showers. Highs in the mid 60s. Lows around 40. .FRIDAY...Partly sunny. A chance of showers in the morning. Highs in the mid 50s. Chance of rain 30 percent. .FRIDAY NIGHT AND SATURDAY...Mostly clear. Lows in the lower 30s. Highs in the mid 50s.
+
+$$
+
+NCZ007-080900- Person- Including the city of Roxboro 407 PM EST Sat Nov 7 2026

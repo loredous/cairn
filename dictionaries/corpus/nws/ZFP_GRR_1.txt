@@ -1,0 +1,23 @@
+FPUS53 KGRR 080128 ZFPGRR
+
+Southwest Michigan Zone Forecast National Weather Service Grand Rapids MI 827 PM EST Sat Nov 7 2026
+
+MIZ057-080900- Kent- Including the city of Grand Rapids 827 PM EST Sat Nov 7 2026
+
+.TONIGHT...Mostly clear. Lows in the lower 30s. Southwest winds around 10 mph. Gusts up to 25 mph after midnight. .SUNDAY...Partly sunny in the morning then clearing. Highs in the upper 50s. West winds 10 to 20 mph with gusts to around 35 mph. .SUNDAY NIGHT...Partly cloudy. Lows in the mid 30s. Northwest winds around 10 mph. Gusts up to 25 mph in the evening. .MONDAY...Mostly sunny in the morning then becoming partly sunny. Highs in the mid 50s. Light winds becoming west 5 to 10 mph with gusts to around 20 mph in the afternoon. .MONDAY NIGHT...Partly cloudy. Lows in the lower 40s. Southwest winds 5 to 10 mph with gusts to around 20 mph. .TUESDAY...Sunny. Highs in the lower 60s. .TUESDAY NIGHT...Partly cloudy. Lows in the mid 30s. .VETERANS DAY...Partly sunny. Highs in the mid 50s. .WEDNESDAY NIGHT...Partly cloudy with a 20 percent chance of rain showers. Lows in the mid 30s. .THURSDAY...Partly sunny with a 20 percent chance of rain showers. Highs in the upper 40s. .THURSDAY NIGHT...Partly cloudy. Lows in the upper 20s. .FRIDAY...Mostly sunny. Highs in the mid 40s. .FRIDAY NIGHT...Partly cloudy. Lows in the upper 20s. .SATURDAY...Mostly sunny. Highs in the lower 50s.
+
+$$
+
+MIZ056-080900- Ottawa- Including the cities of Grand Haven and Jenison 827 PM EST Sat Nov 7 2026
+
+.TONIGHT...Partly cloudy. Lows in the upper 30s. Southwest winds around 10 mph with gusts to around 30 mph. .SUNDAY...Partly sunny in the morning then clearing. Highs in the upper 50s. West winds 10 to 20 mph with gusts to around 30 mph. .SUNDAY NIGHT...Partly cloudy. Lows in the upper 30s. Northwest winds 5 to 15 mph with gusts to around 30 mph in the evening becoming light. .MONDAY...Mostly sunny in the morning then becoming partly sunny. Highs in the upper 50s. Light winds becoming southwest 5 to 10 mph with gusts to around 20 mph in the afternoon. .MONDAY NIGHT...Partly cloudy. Lows in the mid 40s. Southwest winds 5 to 10 mph with gusts to around 25 mph. .TUESDAY...Sunny. Highs around 60. .TUESDAY NIGHT...Partly cloudy. Lows in the upper 30s. .VETERANS DAY...Partly sunny. Highs in the mid 50s. .WEDNESDAY NIGHT...Partly cloudy with a 20 percent chance of rain showers. Lows in the mid 30s. .THURSDAY...Partly sunny with a 20 percent chance of rain showers. Highs in the upper 40s. .THURSDAY NIGHT...Partly cloudy. Lows in the upper 20s. .FRIDAY...Mostly sunny. Highs in the upper 40s. .FRIDAY NIGHT...Partly cloudy. Lows in the lower 30s. .SATURDAY...Mostly sunny. Highs in the lower 50s.
+
+$$
+
+MIZ050-080900- Muskegon- Including the city of Muskegon 827 PM EST Sat Nov 7 2026
+
+.TONIGHT...Partly cloudy. Lows in the upper 30s. Southwest winds around 10 mph with gusts to around 30 mph. .SUNDAY...Partly sunny in the morning then clearing. Highs in the upper 50s. West winds 10 to 20 mph with gusts to around 30 mph. .SUNDAY NIGHT...Partly cloudy. Lows in the upper 30s. Northwest winds around 10 mph. Gusts up to 30 mph decreasing to 20 mph after midnight. .MONDAY...Mostly sunny in the morning then becoming partly sunny. Highs in the mid 50s. Light winds becoming southwest 5 to 10 mph with gusts to around 25 mph in the afternoon. .MONDAY NIGHT...Partly cloudy. Lows in the mid 40s. Southwest winds 5 to 10 mph becoming west after midnight. Gusts up to 25 mph. .TUESDAY...Sunny. Highs in the upper 50s. .TUESDAY NIGHT...Partly cloudy. Lows in the upper 30s. .VETERANS DAY...Partly sunny. Highs in the mid 50s. .WEDNESDAY NIGHT...Partly cloudy with a 20 percent chance of rain showers. Lows in the mid 30s. .THURSDAY...Partly sunny with a 20 percent chance of rain showers. Highs in the upper 40s. .THURSDAY NIGHT...Partly cloudy. Lows in the upper 20s. .FRIDAY...Partly sunny in the morning then becoming mostly sunny. Highs in the upper 40s. .FRIDAY NIGHT...Partly cloudy. Lows in the lower 30s. .SATURDAY...Mostly sunny. Highs in the lower 50s.
+
+$$
+
+MIZ072-080900- Kalamazoo- Including the city of Kalamazoo 827 PM EST Sat Nov 7 2026

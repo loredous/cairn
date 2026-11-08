@@ -1,0 +1,189 @@
+MEDICAL PLAN (ICS 206) 2. Operational Period: Date From: Time From:
+
+1. Incident Name:
+
+Date To: Time To:
+
+3. Medical Aid Stations: Name
+
+Contact Number(s)/Frequency
+
+Location
+
+Paramedics on Site? Yes No Yes No Yes No Yes No Yes No Yes No
+
+4. Transportation (indicate air or ground): Ambulance Service
+
+Contact Number(s)/Frequency
+
+Location
+
+Level of Service ALS BLS ALS BLS ALS BLS ALS BLS
+
+5. Hospitals:
+
+Hospital Name
+
+Address, Latitude & Longitude if Helipad
+
+Contact Number(s)/ Frequency
+
+Travel Time Air
+
+Trauma Center
+
+Burn Center
+
+Helipad
+
+Yes Level:____
+
+Yes No
+
+Yes No
+
+Yes Level:____
+
+Yes No
+
+Yes No
+
+Yes Level:____
+
+Yes No
+
+Yes No
+
+Yes Level:____
+
+Yes No
+
+Yes No
+
+Yes Level:____
+
+Yes No
+
+Yes No
+
+Ground
+
+6. Special Medical Emergency Procedures:
+
+Check box if aviation assets are utilized for rescue. If assets are used, coordinate with Air Operations. 7. Prepared by (Medical Unit Leader): Name:
+
+Signature:
+
+8. Approved by (Safety Officer): Name: ICS 206
+
+IAP Page ____
+
+Signature: Date/Time:
+
+ICS 206 Medical Plan Purpose. The Medical Plan (ICS 206) provides information on incident medical aid stations, transportation services, hospitals, and medical emergency procedures. Preparation. The ICS 206 is prepared by the Medical Unit Leader and reviewed by the Safety Officer to ensure ICS coordination. If aviation assets are utilized for rescue, coordinate with Air Operations. Distribution. The ICS 206 is duplicated and attached to the Incident Objectives (ICS 202) and given to all recipients as part of the Incident Action Plan (IAP). Information from the plan pertaining to incident medical aid stations and medical emergency procedures may be noted on the Assignment List (ICS 204). All completed original forms must be given to the Documentation Unit. Notes: * The ICS 206 serves as part of the IAP. * This form can include multiple pages. Block Number
+
+Block Title
+
+Instructions
+
+Incident Name
+
+Enter the name assigned to the incident.
+
+Operational Period * Date and Time From * Date and Time To
+
+Enter the start date (month/day/year) and time (using the 24-hour clock) and end date and time for the operational period to which the form applies.
+
+Medical Aid Stations
+
+Enter the following information on the incident medical aid station(s):
+
+* Name
+
+Enter name of the medical aid station.
+
+* Location
+
+Enter the location of the medical aid station (e.g., Staging Area, Camp Ground).
+
+* Contact Number(s)/Frequency
+
+Enter the contact number(s) and frequency for the medical aid station(s).
+
+* Paramedics on Site? Yes No
+
+Indicate (yes or no) if paramedics are at the site indicated.
+
+Transportation (indicate air or ground)
+
+Enter the following information for ambulance services available to the incident:
+
+* Ambulance Service
+
+Enter name of ambulance service.
+
+* Location
+
+Enter the location of the ambulance service.
+
+* Contact Number(s)/Frequency * Level of Service ALS BLS
+
+Enter the contact number(s) and frequency for the ambulance service.
+
+Indicate the level of service available for each ambulance, either ALS (Advanced Life Support) or BLS (Basic Life Support).
+
+Block Number
+
+Block Title
+
+Instructions
+
+Hospitals
+
+Enter the following information for hospital(s) that could serve this incident:
+
+* Hospital Name
+
+Enter hospital name and identify any predesignated medivac aircraft by name a frequency.
+
+* Address, Latitude & Longitude if Helipad
+
+Enter the physical address of the hospital and the latitude and longitude if the hospital has a helipad.
+
+* Contact Number(s)/ Frequency
+
+Enter the contact number(s) and/or communications frequency(s) for the hospital.
+
+* Travel Time * Air * Ground
+
+Enter the travel time by air and ground from the incident to the hospital.
+
+* Trauma Center Yes Level:____
+
+Indicate yes and the trauma level if the hospital has a trauma center.
+
+* Burn Center Yes No
+
+Indicate (yes or no) if the hospital has a burn center.
+
+* Helipad Yes No
+
+Indicate (yes or no) if the hospital has a helipad.
+
+Latitude and Longitude data format need to compliment Medical Evacuation Helicopters and Medical Air Resources
+
+Special Medical Emergency Procedures
+
+Note any special emergency instructions for use by incident personnel, including (1) who should be contacted, (2) how should they be contacted; and (3) who manages an incident within an incident due to a rescue, accident, etc. Include procedures for how to report medical emergencies.
+
+Check box if aviation assets are utilized for rescue. If assets are used, coordinate with Air Operations.
+
+Self explanatory. Incident assigned aviation assets should be included in ICS 220.
+
+Prepared by (Medical Unit Leader) * Name * Signature
+
+Enter the name and signature of the person preparing the form, typically the Medical Unit Leader. Enter date (month/day/year) and time prepared (24-hour clock).
+
+Approved by (Safety Officer) * Name * Signature * Date/Time
+
+Enter the name of the person who approved the plan, typically the Safety Officer. Enter date (month/day/year) and time reviewed (24-hour clock).

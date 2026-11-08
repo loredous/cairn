@@ -1,0 +1,49 @@
+FLUS43 KMKX 070606 HWOMKX
+
+Hazardous Weather Outlook National Weather Service Milwaukee/Sullivan WI 1206 AM CST Sat Nov 7 2026
+
+WIZ046-047-051-052-056>060-062>072-080615- Marquette-Green Lake-Fond du Lac-Sheboygan-Sauk-Columbia-Dodge- Washington-Ozaukee-Iowa-Dane-Jefferson-Waukesha-Milwaukee- Lafayette-Green-Rock-Walworth-Racine-Kenosha- 1206 AM CST Sat Nov 7 2026
+
+This Hazardous Weather Outlook is for portions of east central Wisconsin, south central Wisconsin and southeast Wisconsin.
+
+.DAY ONE...Today and Tonight
+
+No hazardous weather is expected at this time.
+
+.DAYS TWO THROUGH SEVEN...Sunday through Friday
+
+No hazardous weather is expected at this time.
+
+.SPOTTER INFORMATION STATEMENT...
+
+Spotter activation will not be needed.
+
+$$
+
+LMZ643>646-080615- Sheboygan to Port Washington WI- Port Washington to North Point Light WI- North Point Light to Wind Point WI- Wind Point WI to Winthrop Harbor IL- 1206 AM CST Sat Nov 7 2026
+
+This Hazardous Weather Outlook is for the nearshore waters from Sheboygan Wisconsin to Winthrop Harbor Illinois.
+
+.DAY ONE...Today and Tonight
+
+No hazardous weather is expected at this time.
+
+.DAYS TWO THROUGH SEVEN...Sunday through Friday
+
+Small Craft Advisory conditions will be possible Saturday night into Sunday.
+
+$$
+
+LMZ080-261-362-364-366-563-565-567-669-671-673-675-777-779-868- 870-872-874-876-878-080615- Lake Michigan Michigan City IN to St. Joseph MI 5 NM offshore to mid-line of lake.- Lake Michigan from Seul Choix Point to Rock Island Passage 5NM offshore to Mid Lake- Lake Michigan South of a line from Seul Choix Point to the Mackinac Bridge and North of a line from Charlevoix MI to South Fox Island 5NM offshore- Lake Michigan from Charlevoix to Point Betsie MI 5NM Offshore to mid lake- Lake Michigan from Point Betsie to Manistee MI 5NM offshore to Mid Lake- Lake Michigan from Rock Island Passage to Sturgeon Bay WI 5NM offshore to mid lake- Lake Michigan from Sturgeon Bay to Two Rivers WI 5NM offshore to Mid Lake- Lake Michigan from Two Rivers to Sheboygan WI 5NM offshore to Mid Lake- Lake Michigan from Sheboygan to Port Washington WI 5NM offshore to Mid Lake- Lake Michigan from Port Washington to North Point Light WI 5NM offshore to Mid Lake- Lake Michigan from North Point Light to Wind Point WI 5NM offshore to Mid Lake- Lake Michigan from Wind Point WI to Winthrop Harbor IL 5NM offshore to Mid Lake- Lake Michigan from Winthrop Harbor to Wilmette Harbor IL 5NM offshore to Mid Lake- Lake Michigan from Wilmette Harbor to Michigan City in 5NM offshore to Mid Lake- Lake Michigan from Pentwater to Manistee MI 5NM offshore to Mid Lake- Lake Michigan from Whitehall to Pentwater MI 5NM offshore to Mid Lake- Lake Michigan from Grand Haven to Whitehall MI 5NM offshore to Mid Lake- Lake Michigan from Holland to Grand Haven MI 5NM offshore to Mid Lake- Lake Michigan from South Haven to Holland MI 5NM offshore to Mid lake- Lake Michigan from St Joseph to South Haven MI 5NM offshore to Mid Lake- 1206 AM CST Sat Nov 7 2026
+
+This Hazardous Weather Outlook is for the open waters of Lake Michigan.
+
+.DAY ONE...Today and Tonight
+
+No hazardous weather is expected at this time.
+
+.DAYS TWO THROUGH SEVEN...Sunday through Friday
+
+No hazardous weather is expected at this time.
+
+$$ MRC

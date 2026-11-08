@@ -1,0 +1,45 @@
+FXUS61 KBOX 071816 AFDBOX
+
+Area Forecast Discussion National Weather Service Boston/Norton MA 116 PM EST Sat Nov 7 2026
+
+.WHAT HAS CHANGED... Extended the time of the Small Craft Advisory to Monday evening. Otherwise, no significant changes to the forecast.
+
+&&
+
+.KEY MESSAGES...
+
+- Unsettled weather continues this weekend as slow low pressure slowly moves away into the Gulf of Maine.
+
+- More clouds than sun for early to midweek, with seasonable temperatures.
+
+- Turning unsettled late this week potentially into part of the weekend.
+
+&&
+
+.DISCUSSION... KEY MESSAGE 1...Unsettled weather continues this weekend as slow low pressure slowly moves away into the Gulf of Maine.
+
+Current surface analysis shows that a weak area of low pressure has developed just SE of the islands early this afternoon. This feature will hold the most sway over the weekend's weather as it slowly deepens and moves NE into the Gulf of Maine over the next day or so. Aloft, a potent upper level low will provide enough instability for showers and low clouds providing for a generally raw and unsettled weekend.
+
+For today, expect periods of showers to redevelop this afternoon after a lull this morning. Shower activity will be driven by a rather potent mid level low. This low should pass overhead tonight. The colder air aloft will result in increased lapse rates, which in turn should increase shower coverage later today and tonight. These showers will be much lighter in intensity. The greatest coverage of showers should be towards northern and eastern MA.
+
+For Sunday, expect similarly raw and unsettled conditions as cyclonic flow results in a final round of wrap around showers. Greatest chance for additional appreciable rainfall exists across northern Massachusetts. Any lingering rainfall comes to an end by mid morning Sunday as a much drier air mass wraps in behind departing low pressure. Partial clearing by the afternoon helps to mix the boundary layer allowing for a breezy day with NW winds increasing to between 10 and 15 mph with gusts 20-30 mph.
+
+Temperatures both days increase into the lower to mid 50s with lows falling into the upper 30s to low 40s.
+
+KEY MESSAGE 2...More clouds than sun for early to midweek, with seasonable temperatures.
+
+Southern New England looks to be on the periphery of an active WNWly northern stream flow per ensembles and AI-based solutions through midweek, to go along with cooler profiles aloft (e.g. 850 mb temps around 0 to -2C). While generally dry weather looks to prevail, cooler profiles aloft should support more of a mix of clouds and sun. Highs should run mainly in the upper 40s interior/higher terrain to the mid 50s in the lower elevations, which are around seasonable for this time of year.
+
+KEY MESSAGE 3...Turning unsettled late this week potentially into part of the weekend.
+
+Model ensembles and AI-based guidance continue to point to the latter part of the upcoming workweek into a part of next weekend as becoming increasingly active, although there is still quite a bit of uncertainties in the details. This more active period of weather appears to stem from a rather potent northern stream trough coming out of the Canadian Prairie region potentially phasing with trough energy coming out of the central Rockies occurring around midweek. This stream-phasing is indicated more bullishly by the GFS/ECMWF ensemble means, which show a resulting deep closed low at 500 mb near the central Appalachians, and sfc offshore low pressure development near the mid-Atlc states which returns northward or northeastward near or east of the 40N/70W benchmark area around Friday night and continuing into Saturday. The Canadian GEM is more of an outlier, which shows cool but dry weather Fri-Sat as the two streams never phase, instead bringing a coastal low pressure in around Saturday night and/or Sunday.
+
+Given the above, and that is is still effectively a Day-6 to Day-7 forecast, there's still too much uncertainty at this point in time to really drill into the details. Generally speaking, pronounced easterly onshore flow would tend to favor coastal areas and potentially further inland staying as a cool, raw rain given SSTs which are still in the mid 50s. However there appears to be sufficient enough cold air aloft particularly in interior portions of Southern New England that could force a cool-rain-to-wet-snow scenario into the picture, and this is reflected in some ensemble members and in some AI-ensembles. But those are really just big picture pattern-recognition assessments, and we'll need to continue to monitor subsequent guidance for more agreement in terms of the sfc low track, its timing and how far east would sub-0C air aloft extend.
+
+&&
+
+.AVIATION /18Z SATURDAY THROUGH THURSDAY/... Forecaster Confidence Levels...
+
+Low - less than 30 percent. Moderate - 30 to 60 percent. High - greater than 60 percent.
+
+Today...High confidence.

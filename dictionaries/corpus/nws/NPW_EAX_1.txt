@@ -1,0 +1,17 @@
+WWUS73 KEAX 071352 NPWEAX
+
+URGENT - WEATHER MESSAGE National Weather Service Kansas City/Pleasant Hill MO 752 AM CST Sat Nov 7 2026
+
+MOZ006>008-015>017-023>025-031>033-039-040-045-046-071500- /O.EXP.KEAX.FZ.W.0003.000000T0000Z-261107T1400Z/ Mercer-Putnam-Schuyler-Grundy-Sullivan-Adair-Livingston-Linn MO- Macon-Carroll-Chariton-Randolph-Saline-Howard-Pettis-Cooper- Including the cities of Greentop, Princeton, Glenwood, Sedalia, Marceline, Queen City, New Franklin, Brunswick, Downing, Kirksville, Macon, Salisbury, Fayette, Glasgow, Moberly, Lancaster, La Plata, Boonville, Milan, Brookfield, Trenton, Green City, Unionville, Chillicothe, Carrollton, Mercer, Marshall, and Keytesville 752 AM CST Sat Nov 7 2026
+
+...FREEZE WARNING WILL EXPIRE AT 8 AM CST THIS MORNING...
+
+$$
+
+KSZ025-057-060-102>105-MOZ001>005-011>014-020>022-028>030-037-038- 043-044-053-054-071500- /O.EXP.KEAX.FR.Y.0005.000000T0000Z-261107T1400Z/ Atchison KS-Miami-Linn KS-Doniphan-Leavenworth-Wyandotte-Johnson KS-Atchison MO-Nodaway-Worth-Gentry-Harrison-Holt-Andrew-De Kalb- Daviess-Buchanan-Clinton-Caldwell-Platte-Clay-Ray-Jackson-Lafayette- Cass-Johnson MO-Bates-Henry- Including the cities of Fairfax, Country Club Villa, Excelsior Springs, Lawson, Lathrop, Osborn, Plattsburg, Maysville, Harrisonville, Higginsville, Windsor, Weston, Fort Leavenworth, King City, Cameron, Leavenworth, Louisburg, St. Joseph, Kearney, Weatherby Lake, Odessa, Jamesport, Lansing, Pleasant Hill, Bethany, Stanley, Liberty, Richmond, Mound City, Clarksdale, Grant City, Wathena, Savannah, Gallatin, Polo, Raymore, Lenexa, Albany, Warrensburg, Highland, Stewartsville, Maitland, Lexington, Kansas City Kansas, Breckenridge, Olathe, Belton, La Cygne, Rock Port, Maryville, Atchison, Adrian, Osawatomie, Elwood, Overland Park, Rich Hill, Oregon, Pleasanton, Troy, Braymer, Concordia, Clinton, Shawnee, Craig, Hamilton, St. Joseph Airport, Riverside, Stanberry, Forest City, Kansas City, Parkville, Paola, Butler, Tarkio, Union Star, Gladstone, Platte City, and Independence 752 AM CST Sat Nov 7 2026
+
+...FROST ADVISORY WILL EXPIRE AT 8 AM CST THIS MORNING...
+
+$$
+
+https://www.weather.gov/eax

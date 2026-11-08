@@ -1,0 +1,31 @@
+FXUS61 KGYX 072315 AFDGYX
+
+Area Forecast Discussion National Weather Service Gray ME 615 PM EST Sat Nov 7 2026
+
+.WHAT HAS CHANGED... No significant changes were needed to the forecast this Saturday evening. A raw breezy night with occasional drizzle and showers continues to be expected.
+
+&&
+
+.KEY MESSAGES... 1. Dreary and rainy conditions continue through tonight with rain turning to light snow in the higher elevations. Rain tapers off Sunday morning with conditions turning breezy and cooler.
+
+2. Cooler temperatures persist through next week with multiple chances for light precipitation, including light snow showers for the higher peaks of the White Mountains.
+
+&&
+
+.DISCUSSION... KEY MESSAGE 1 DESCRIPTION...
+
+It will remain a dreary rest of the day. A closed surface low pressure will continue to move across the Gulf of Maine while diffluent flow aloft adds extra lift with an upper low center just east of the Great Lakes. Areas south of the mountains will continue to see mostly light rain this afternoon along with drizzle and fog, although briefly embedded heavier rain rates are possible. Going into this evening and tonight, expect rain to also fill in more farther north and west across the interior with the upper low approaching and moving across New England. Hi-res guidance is in fairly good agreement with additional rain of 0.25-0.50" through Sunday morning, but there are indications of a pivot point setting up somewhere this evening or tonight to produce a period of slower-moving, persistent higher rain rates. Although not certain, guidance is pointing toward western NH, and if to occur, localized amounts of 1.00-1.50" are possible. However, with the airmass not as juicy as yesterday and with how dry it has been lately and interior areas not picking up much rain over the past 24 hours, am not anticipating any issues. As colder air works in late, expect snow to start mixing in and around the mountains with light accumulations possible in the higher peaks. Rain should start to taper off across southern NH late and toward daybreak, and as it does so, northwest winds look to become breezy with wind gusts up to 25 mph.
+
+Rain will continue to taper off south of the mountains from west to east Sunday morning and afternoon with increased mixing resulting in breezy northwest winds. Based on forecast soundings gusts of 25 to 35 mph look reasonable, but the top of the mixed layer suggests a few could approach 40 mph. Skies will be mostly cloudy in the morning, but drier air should bring some peaks of sunshine going into the afternoon hours. Highs will again be cooler ranging from the upper 40s to mid 50s south of the mountains. The mountains and areas to the northwest will remain mostly cloudy and cooler with upslope flow and ongoing chance for rain or snow showers.
+
+KEY MESSAGE 2 DESCRIPTION... Mean troughing dominates the 500 mb pattern from the period following this current system to the middle of this coming week. The result is going to be persistent northwesterly flow with several shortwaves providing the forcing for upslope rain and snow showers in the mountains. Looking at Froude Numbers from the current GFS it looks like flow is going to be mostly subcritical with precipitation confined to the mountains, but it is too early to completely rule it out downwind. Daytime temperatures during this time are going to be in the 50s south of the mountains and 40s to the north, so only the higher peaks of the White Mountains are likely to see snow. Nighttime temperatures in the low to mid-30s may facilitate some flakes down to the northern valley floors, but it isn't expected to amount to much.
+
+We see even cooler temperatures later in the week into the weekend as we get a brief extension of the polar jet overhead making for daytime temperatures more in the upper 30s and 40s. Deterministic global models have been consistent with bringing a disturbance into the area during this time as well so I think it is fair to say it is a window to watch, but ensemble support for any other aspect is low confidence at this time range. Let's see a few more days of model runs before drawing any conclusions.
+
+&&
+
+.AVIATION /00Z SUNDAY THROUGH THURSDAY/... Through 18Z Sunday...Conditions ranging from LIFR to MVFR due to rain, fog, and low ceilings continue through tonight...with -SN also possible at HIE. Condition begin to improve late tonight and through Sunday morning from west to east as precip tapers off and ceilings being to lift. However, MVFR ceilings will continue to be possible. Northwest winds could gust as high as 25 to 30 kt late tonight into Sunday morning.
+
+Outlook:
+
+Rest of Sunday: Gusty northwest winds of around possible through 21Z before diminishing. There could be a mix of MVFR to VFR ceilings along with a few light showers lingering in the RKD/AUG vicinity.

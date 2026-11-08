@@ -1,0 +1,107 @@
+ACTIVITY LOG (ICS 214) 1. Incident Name: 3. Name:
+
+2. Operational Period: Date From:
+
+Date To:
+
+Time From:
+
+Time To:
+
+4. ICS Position:
+
+5. Home Agency (and Unit):
+
+6. Resources Assigned: Name
+
+ICS Position
+
+Home Agency (and Unit)
+
+7. Activity Log: Date/Time
+
+Notable Activities
+
+8. Prepared by: Name:
+
+Position/Title:
+
+ICS 214, Page 1
+
+Date/Time:
+
+Signature:
+
+ACTIVITY LOG (ICS 214) 1. Incident Name:
+
+2. Operational Period: Date From:
+
+Date To:
+
+Time From:
+
+Time To:
+
+7. Activity Log (continuation): Date/Time
+
+Notable Activities
+
+8. Prepared by: Name:
+
+Position/Title:
+
+ICS 214, Page 2
+
+Date/Time:
+
+Signature:
+
+ICS 214 Activity Log Purpose. The Activity Log (ICS 214) records details of notable activities at any ICS level, including single resources, equipment, Task Forces, etc. These logs provide basic incident activity documentation, and a reference for any afteraction report. Preparation. An ICS 214 can be initiated and maintained by personnel in various ICS positions as it is needed or appropriate. Personnel should document how relevant incident activities are occurring and progressing, or any notable events or communications. Distribution. Completed ICS 214s are submitted to supervisors, who forward them to the Documentation Unit. All completed original forms must be given to the Documentation Unit, which maintains a file of all ICS 214s. It is recommended that individuals retain a copy for their own records. Notes: * The ICS 214 can be printed as a two-sided form. * Use additional copies as continuation sheets as needed, and indicate pagination as used. Block Number
+
+Block Title
+
+Instructions
+
+Incident Name
+
+Enter the name assigned to the incident.
+
+Operational Period * Date and Time From * Date and Time To
+
+Enter the start date (month/day/year) and time (using the 24-hour clock) and end date and time for the operational period to which the form applies.
+
+Name
+
+Enter the title of the organizational unit or resource designator (e.g., Facilities Unit, Safety Officer, Strike Team).
+
+ICS Position
+
+Enter the name and ICS position of the individual in charge of the Unit.
+
+Home Agency (and Unit)
+
+Enter the home agency of the individual completing the ICS 214. Enter a unit designator if utilized by the jurisdiction or discipline.
+
+Resources Assigned
+
+Enter the following information for resources assigned:
+
+* Name
+
+Use this section to enter the resource's name. For all individuals, use at least the first initial and last name. Cell phone number for the individual can be added as an option.
+
+* ICS Position
+
+Use this section to enter the resource's ICS position (e.g., Finance Section Chief).
+
+* Home Agency (and Unit)
+
+Use this section to enter the resource's home agency and/or unit (e.g., Des Moines Public Works Department, Water Management Unit).
+
+Activity Log * Date/Time * Notable Activities
+
+* Enter the time (24-hour clock) and briefly describe individual notable activities. Note the date as well if the operational period covers more than one day. * Activities described may include notable occurrences or events such as task assignments, task completions, injuries, difficulties encountered, etc. * This block can also be used to track personal work habits by adding columns such as "Action Required," "Delegated To," "Status," etc.
+
+Prepared by * Name * Position/Title * Signature * Date/Time
+
+Enter the name, ICS position/title, and signature of the person preparing the form. Enter date (month/day/year) and time prepared (24-hour clock).

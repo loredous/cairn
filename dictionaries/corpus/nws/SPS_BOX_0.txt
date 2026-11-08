@@ -1,0 +1,27 @@
+WWUS81 KBOX 070043 SPSBOX
+
+Special Weather Statement National Weather Service Boston/Norton MA 743 PM EST Fri Nov 6 2026
+
+MAZ005-007-013>019-070145- Eastern Essex MA-Eastern Plymouth MA-Suffolk MA-Western Norfolk MA- Northern Bristol MA-Central Middlesex County MA-Eastern Norfolk MA- Western Plymouth MA-Southeast Middlesex MA- 743 PM EST Fri Nov 6 2026
+
+...HEAVY RAINFALL CAUSING MINOR FLOODING IN THE BOSTON AREA...
+
+At 742 PM EST, Doppler radar was tracking a thunderstorm with heavy rainfall over Dover, or near Needham, moving northeast at 25 mph.
+
+HAZARD...Heavy rain.
+
+SOURCE...Radar indicated.
+
+IMPACT...Minimal. Water on roads that flood easily. Expect ponding on flood prone road ways and travel delays.
+
+Locations impacted include... Boston, Cambridge, Brockton, Quincy, Lynn, Newton, Somerville, Framingham, Waltham, Malden, Brookline, Medford, Weymouth, Revere, Arlington, Everett, Braintree, Chelsea, Natick, and Randolph.
+
+PRECAUTIONARY/PREPAREDNESS ACTIONS...
+
+Do not drive through flooded roads or underpasses.
+
+&&
+
+LAT...LON 4240 7092 4238 7095 4234 7087 4221 7076 4200 7110 4226 7142 4249 7100 TIME...MOT...LOC 0042Z 235DEG 21KT 4223 7127
+
+$$

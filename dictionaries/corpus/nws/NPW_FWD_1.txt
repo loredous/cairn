@@ -1,0 +1,43 @@
+WWUS74 KFWD 011250 NPWFWD
+
+URGENT - WEATHER MESSAGE National Weather Service Fort Worth TX 650 AM CST Sun Nov 1 2026
+
+TXZ091>093-102>104-117>119-131-133-134-145-158-159-011600- /O.EXA.KFWD.FG.Y.0005.000000T0000Z-261101T1600Z/ Montague-Cooke-Grayson-Wise-Denton-Collin-Parker-Tarrant-Dallas-Hood- Johnson-Ellis-Hill-Bell-McLennan- Including the cities of Hillsboro, Granbury, Burleson, Fort Worth, Temple, Sherman, McKinney, Ennis, Waxahachie, Plano, Decatur, Briar, Denison, Nocona, Cleburne, Midlothian, Allen, Waco, Oak Trail Shores, Lewisville, Denton, Bridgeport, Bowie, Weatherford, Gainesville, Dallas, Frisco, Flower Mound, Fort Hood, Carrollton, Killeen, and Arlington 650 AM CST Sun Nov 1 2026
+
+...DENSE FOG ADVISORY IN EFFECT UNTIL 10 AM CST THIS MORNING...
+
+* WHAT...Visibility one quarter mile or less in dense fog.
+
+* WHERE...Portions of North and Central Texas.
+
+* WHEN...Until 10 AM CST this morning.
+
+* IMPACTS...Low visibility could make driving conditions hazardous.
+
+PRECAUTIONARY/PREPAREDNESS ACTIONS...
+
+If driving, slow down, use your low beam headlights, and leave plenty of distance between you and others.
+
+&&
+
+$$
+
+TXZ094-095-105>107-120>123-135-146>148-160>162-174-175-011600- /O.CON.KFWD.FG.Y.0005.000000T0000Z-261101T1600Z/ Fannin-Lamar-Hunt-Delta-Hopkins-Rockwall-Kaufman-Van Zandt-Rains- Henderson-Navarro-Freestone-Anderson-Falls-Limestone-Leon-Milam- Robertson- Including the cities of Sulphur Springs, Marlin, Teague, Cooper, Centerville, Mexia, Fairfield, Oakwood, Edgewood, East Tawakoni, Paris, Cameron, Rockdale, Gun Barrel City, Heath, Athens, Palestine, Forney, Calvert, Van, Wills Point, Franklin, Hearne, Corsicana, Terrell, Commerce, Normangee, Wortham, Emory, Buffalo, Canton, Jewett, Groesbeck, Greenville, Bonham, Kaufman, Rockwall, Grand Saline, and Point 650 AM CST Sun Nov 1 2026
+
+...DENSE FOG ADVISORY REMAINS IN EFFECT UNTIL 10 AM CST THIS MORNING...
+
+* WHAT...Visibility one quarter mile or less in dense fog.
+
+* WHERE...Portions of north central, northeast, and south central Texas.
+
+* WHEN...Until 10 AM CST this morning.
+
+* IMPACTS...Low visibility could make driving conditions hazardous.
+
+PRECAUTIONARY/PREPAREDNESS ACTIONS...
+
+If driving, slow down, use your low beam headlights, and leave plenty of distance between you and others.
+
+&&
+
+$$

@@ -1,0 +1,31 @@
+WWUS85 KPSR 012252 SPSPSR
+
+Special Weather Statement National Weather Service Phoenix AZ 352 PM MST Sun Nov 1 2026
+
+AZZ531-533>545-550-553-554-559-020045- Buckeye/Avondale AZ-Gila River Valley AZ-Northwest Pinal County AZ-Central Phoenix AZ-Central La Paz AZ-West Pinal County AZ- North Phoenix/Glendale AZ-Deer Valley AZ-Aguila Valley AZ-Gila Bend AZ-Northwest Valley AZ-New River Mesa AZ-South Mountain/Ahwatukee AZ-Sonoran Desert Natl Monument AZ-Kofa AZ- Southeast Yuma County AZ-Tonopah Desert AZ-Cave Creek/New River AZ- 352 PM MST Sun Nov 1 2026
+
+...A LINE OF SHOWERS WILL IMPACT WESTERN MARICOPA...SOUTHEASTERN LA PAZ AND SOUTHEASTERN YUMA COUNTIES UNTIL 545 PM MST...
+
+At 352 PM MST, Doppler radar was tracking a line of showers extending from near Morristown to 33 miles south of Mohawk, or extending from 6 miles northwest of Circle City to 48 miles southeast of Fortuna Foothills, moving east at 35 mph.
+
+HAZARD...Wind gusts up to 50 mph possible.
+
+SOURCE...Radar indicated.
+
+IMPACT...Gusty winds could knock down tree limbs and blow around unsecured objects.
+
+Locations impacted include... Phoenix, Glendale, Peoria, Surprise, Avondale, Goodyear, Buckeye, El Mirage, Tolleson, Wickenburg, Youngtown, Gila Bend, Tonopah, Cashion, Waddell, Wittmann, Circle City, Sun City West, Sun City and Laveen.
+
+PRECAUTIONARY/PREPAREDNESS ACTIONS...
+
+Monitor the weather situation closely and be alert for threatening weather conditions.
+
+These showers and storms may intensify, so be certain to monitor local radio stations and available television stations for additional information and possible warnings from the National Weather Service.
+
+&&
+
+LAT...LON 3227 11407 3400 11302 3400 11274 3388 11228 3392 11224 3396 11224 3397 11220 3401 11218 3401 11216 3404 11216 3404 11215 3405 11216 3404 11209 3290 11214 3251 11253 3250 11333 3204 11333 TIME...MOT...LOC 2251Z 247DEG 31KT 3389 11265 3320 11303 3270 11331 3225 11374
+
+MAX HAIL SIZE...0.00 IN MAX WIND GUST...50 MPH
+
+$$

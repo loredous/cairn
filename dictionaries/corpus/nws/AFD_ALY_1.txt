@@ -1,0 +1,25 @@
+FXUS61 KALY 080027 AFDALY
+
+Area Forecast Discussion National Weather Service Albany NY 727 PM EST Sat Nov 7 2026
+
+.WHAT HAS CHANGED... [403 PM] The pivoting band is stalling over the Adirondacks for longer than was previously anticipated. Therefore, we have increased the QPF to reflect the combination of latest obs and guidance trends. New storm total rainfall amounts are now expected to reach 0.4" to nearly 0.9" across the Adirondacks, Mohawk Valley, Upper-Hudson Valley, and Southern Vermont. Elsewhere, QPF remains unchanged.
+
+&&
+
+.KEY MESSAGES... 1) Periods of rain tonight can result in isolated instances of poor drainage flooding in low-lying and typical trouble spots mainly near and north of I-90 but widespread flooding in not expected. Conditions dry out tomorrow morning.
+
+2) Additional opportunities for scattered, light showers come throughout early to the middle of the upcoming week, though flooding continues to not be a concern.
+
+3) Confidence is increasing in a cooler pattern developing towards the end of the upcoming week. However, there is very low confidence in the overall precipitation chances and types.
+
+&&
+
+.DISCUSSION... KEY MESSAGE 1... Latest GOES Water Vapor imagery continues to reflect the slow approach of an upper-level low from western New York. Meanwhile, the latest SPC Mesoscale Analysis places a strengthening surface cyclone just off the coast of Cape Cod, extending an inverted trough westward across the northern portion of our CWA. Aloft, strong divergent flow enhances the necessary forcing to sustain periods of rain showers currently seen throughout eastern New York and western New England. Enhanced low-level convergence associated with the inverted surface trough, along with an appreciable band of FGEN along the baroclinic zone at 850 mb, has supported the organized rain bands currently pivoting through portions of the Eastern Catskills, Mohawk Valley, and Southern Adirondacks. In these areas, 0.75" to 1.50" of rain has fallen over the 24hrs per MRMS as of 00 UTC/08.
+
+As the closed low aloft gradually shifts into New England tonight, the bands of steady rain will shift south and eastward into the Capital District, eastern Catskills, Taconics, western MA and southern VT. While rainfall rates up to 0.15-0.30" are still favored under the more organized rain bands, the closed low will become more progressive. This should limit the duration of moderate rainfall rates. Storm total rainfall amounts of 0.50 - 2" are likely for areas mainly near and north of I-90 by 12 UTC Sunday when most of the steady rain should exit to our east. Despite areas of 1-2 inches of rain, only expected isolated instances of poor drainage flooding in low- lying and typical trouble spots. Widespread flooding is not expected given the recent, very dry stretch of weather.
+
+Heights rise in the wake of our exiting closed low tomorrow resulting in dry conditions and increasing afternoon sun. Sufficient mixing courtesy of increasing subsidence under the incoming ridge will also favor breezy westerly winds with gusts up to 20-25mph and high temperatures rising into the mid/upper 40s to low 50s across higher elevations with mid 50s to pockets of 60 in the valleys.
+
+KEY MESSAGE 2... Multiple shortwaves are anticipated to track through the region beginning tomorrow night through Wednesday, leading to the potential for additional rounds of scattered, light, and non- impactful showers. That said, the most potent disturbances will rotate through tomorrow night and Monday, leading to the next best chances for precipitation. Most of the showers look to be confined to lake-adjacent and higher terrain areas as west to west-northwesterly flow will induce a lake response amid cold air advection. And while most of these showers will again predominantly be rain, a few snowflakes could mix into the Adirondacks tomorrow night and Monday.
+
+KEY MESSAGE 3... Medium- to long-range deterministic and ensemble guidance continues to align in the portrayal of a large-scale trough developing towards the end of the upcoming week. According to the latest NAEFs, by Thursday, upper-level; mid-level; and low- level heights look to fall to roughly 1-2 STDEVs below normal. The direct impact of this outcome will be temperatures dipping below normal Thursday and Friday, though only by about 0.5 to 1 STDEV as of this update.

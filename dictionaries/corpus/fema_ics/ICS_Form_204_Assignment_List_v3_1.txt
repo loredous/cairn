@@ -1,0 +1,123 @@
+ASSIGNMENT LIST (ICS 204) 1. Incident Name:
+
+3.
+
+2. Operational Period: Date From:
+
+Date To:
+
+Time From:
+
+Time To:
+
+4. Operations Personnel: Name
+
+Branch:
+
+Contact Number(s)
+
+Operations Section Chief:
+
+Division: Group:
+
+Branch Director:
+
+Staging Area:
+
+5. Resources Assigned: Resource Identifier
+
+Leader
+
+# of Persons
+
+Division/Group Supervisor:
+
+Contact (e.g., phone, pager, radio frequency, etc.)
+
+Reporting Location, Special Equipment and Supplies, Remarks, Notes, Information
+
+6. Work Assignments:
+
+7. Special Instructions:
+
+8. Communications (radio and/or phone contact numbers needed for this assignment): Name/Function Primary Contact: indicate cell, pager, or radio (frequency/system/channel) / / / / 9. Prepared by: Name: ICS 204
+
+Position/Title: IAP Page ____
+
+Date/Time:
+
+Signature:
+
+ICS 204 Assignment List Purpose. The Assignment List(s) (ICS 204) informs Division and Group supervisors of incident assignments. Once the Command and General Staffs agree to the assignments, the assignment information is given to the appropriate Divisions and Groups. Preparation. The ICS 204 is normally prepared by the Resources Unit, using guidance from the Incident Objectives (ICS 202), Operational Planning Worksheet (ICS 215), and the Operations Section Chief. It must be approved by the Incident Commander, but may be reviewed and initialed by the Planning Section Chief and Operations Section Chief as well. Distribution. The ICS 204 is duplicated and attached to the ICS 202 and given to all recipients as part of the Incident Action Plan (IAP). In some cases, assignments may be communicated via radio/telephone/fax. All completed original forms must be given to the Documentation Unit. Notes: * The ICS 204 details assignments at Division and Group levels and is part of the IAP. * Multiple pages/copies can be used if needed. * If additional pages are needed, use a blank ICS 204 and repaginate as needed. Block Number
+
+Block Title
+
+Instructions
+
+Incident Name
+
+Enter the name assigned to the incident.
+
+Operational Period * Date and Time From * Date and Time To
+
+Enter the start date (month/day/year) and time (using the 24-hour clock) and end date and time for the operational period to which the form applies.
+
+Branch
+
+This block is for use in a large IAP for reference only.
+
+Division Group Staging Area
+
+Write the alphanumeric abbreviation for the Branch, Division, Group, and Staging Area (e.g., "Branch 1," "Division D," "Group 1A") in large letters for easy referencing.
+
+Operations Personnel * Name, Contact Number(s) - Operations Section Chief - Branch Director - Division/Group Supervisor
+
+Enter the name and contact numbers of the Operations Section Chief, applicable Branch Director(s), and Division/Group Supervisor(s).
+
+Resources Assigned
+
+Enter the following information about the resources assigned to the Division or Group for this period:
+
+* Resource Identifier
+
+The identifier is a unique way to identify a resource (e.g., ENG-13, IA-SCC-413). If the resource has been ordered but no identification has been received, use TBD (to be determined).
+
+* Leader
+
+Enter resource leader's name.
+
+* # of Persons
+
+Enter total number of persons for the resource assigned, including the leader.
+
+* Contact (e.g., phone, pager, radio frequency, etc.)
+
+Enter primary means of contacting the leader or contact person (e.g., radio, phone, pager, etc.). Be sure to include the area code when listing a phone number.
+
+* Reporting Location, Special Equipment and Supplies, Remarks, Notes, Information
+
+Provide special notes or directions specific to this resource. If required, add notes to indicate: (1) specific location/time where the resource should report or be dropped off/picked up; (2) special equipment and supplies that will be used or needed; (3) whether or not the resource received briefings; (4) transportation needs; or (5) other information.
+
+(continued)
+
+Block Number
+
+Block Title
+
+Instructions
+
+Work Assignments
+
+Provide a statement of the tactical objectives to be achieved within the operational period by personnel assigned to this Division or Group.
+
+Special Instructions
+
+Enter a statement noting any safety problems, specific precautions to be exercised, dropoff or pickup points, or other important information.
+
+Communications (radio and/or phone contact numbers needed for this assignment) * Name/Function * Primary Contact: indicate cell, pager, or radio (frequency/system/channel)
+
+Enter specific communications information (including emergency numbers) for this Branch/Division/Group. If radios are being used, enter function (command, tactical, support, etc.), frequency, system, and channel from the Incident Radio Communications Plan (ICS 205). Phone and pager numbers should include the area code and any satellite phone specifics. In light of potential IAP distribution, use sensitivity when including cell phone number. Add a secondary contact (phone number or radio) if needed.
+
+Prepared by * Name * Position/Title * Signature * Date/Time
+
+Enter the name, ICS position, and signature of the person preparing the form. Enter date (month/day/year) and time prepared (24-hour clock).

@@ -1,0 +1,41 @@
+WWUS72 KFFC 072022 NPWFFC
+
+URGENT - WEATHER MESSAGE National Weather Service Peachtree City GA 322 PM EST Sat Nov 7 2026
+
+GAZ001>004-011-012-019-020-030-031-041-042-081400- /O.EXA.KFFC.FR.Y.0005.261108T0600Z-261108T1400Z/ Dade-Walker-Catoosa-Whitfield-Chattooga-Gordon-Floyd-Bartow-Polk- Paulding-Haralson-Carroll- Including the cities of Rome, Summerville, Calhoun, Bremen, Cedartown, Carrollton, Fort Oglethorpe, LaFayette, Dallas, Trenton, Cartersville, and Dalton 322 PM EST Sat Nov 7 2026
+
+...FROST ADVISORY IN EFFECT FROM 1 AM TO 9 AM EST SUNDAY...
+
+* WHAT...Temperatures as low as 35 will result in frost formation.
+
+* WHERE...Portions of northwest Georgia.
+
+* WHEN...From 1 AM to 9 AM EST Sunday.
+
+* IMPACTS...Frost could harm sensitive outdoor vegetation. Sensitive outdoor plants may be killed if left uncovered.
+
+PRECAUTIONARY/PREPAREDNESS ACTIONS...
+
+Take steps now to protect tender plants from the cold.
+
+&&
+
+$$
+
+GAZ005>009-013>016-081400- /O.CON.KFFC.FR.Y.0005.261108T0600Z-261108T1400Z/ Murray-Fannin-Gilmer-Union-Towns-Pickens-Dawson-Lumpkin-White- Including the cities of Chatsworth, Dawsonville, Ellijay, Blairsville, Jasper, Cleveland, Blue Ridge, Dahlonega, and Hiawassee 322 PM EST Sat Nov 7 2026
+
+...FROST ADVISORY REMAINS IN EFFECT FROM 1 AM TO 9 AM EST SUNDAY...
+
+* WHAT...Temperatures as low as 33 will result in frost formation.
+
+* WHERE...Dawson, Fannin, Gilmer, Lumpkin, Pickens, Union, Towns, White, and Murray Counties.
+
+* WHEN...From 1 AM to 9 AM EST Sunday.
+
+* IMPACTS...Frost could harm sensitive outdoor vegetation. Sensitive outdoor plants may be killed if left uncovered.
+
+PRECAUTIONARY/PREPAREDNESS ACTIONS...
+
+Take steps now to protect tender plants from the cold.
+
+&&

@@ -1,0 +1,33 @@
+WUUS55 KVEF 012152 SVRVEF NVC003-012230- /O.NEW.KVEF.SV.W.0082.261101T2152Z-261101T2230Z/
+
+BULLETIN - IMMEDIATE BROADCAST REQUESTED Severe Thunderstorm Warning National Weather Service Las Vegas NV 152 PM PST Sun Nov 1 2026
+
+The National Weather Service in Las Vegas has issued a
+
+* Severe Thunderstorm Warning for... Central Clark County in southern Nevada...
+
+* Until 230 PM PST.
+
+* At 152 PM PST, a severe thunderstorm was located over Enterprise, moving northeast at 35 mph.
+
+HAZARD...60 mph wind gusts.
+
+SOURCE...Radar indicated.
+
+IMPACT...Expect damage to roofs, siding, and trees.
+
+* Locations impacted include... Las Vegas, Henderson, North Las Vegas, Sam Boyd Stadium, East Las Vegas, Green Valley, Paradise, Fremont Street, The Strip, Nellis AFB, Lake Las Vegas, Anthem, The Motor Speedway, Enterprise, Southern Highlands, Spring Valley, Las Vegas Bay, Mountains Edge, Summerlin and Harry Reid International Airport.
+
+PRECAUTIONARY/PREPAREDNESS ACTIONS...
+
+Seek shelter inside a well-built structure and stay away from windows. This storm is capable of producing damaging winds.
+
+Wind damage with this storm will occur before any rain or lightning. Do not wait for the sound of thunder before taking cover. Seek shelter immediately inside a sturdy structure and stay away from windows.
+
+&&
+
+LAT...LON 3592 11519 3613 11536 3632 11500 3610 11476 TIME...MOT...LOC 2151Z 236DEG 30KT 3604 11521
+
+HAIL THREAT...RADAR INDICATED MAX HAIL SIZE...0.00 IN WIND THREAT...RADAR INDICATED MAX WIND GUST...60 MPH
+
+$$

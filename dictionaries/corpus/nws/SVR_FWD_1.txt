@@ -1,0 +1,37 @@
+WUUS54 KFWD 030252 SVRFWD TXC337-030330- /O.NEW.KFWD.SV.W.0271.261103T0252Z-261103T0330Z/
+
+BULLETIN - IMMEDIATE BROADCAST REQUESTED Severe Thunderstorm Warning National Weather Service Fort Worth TX 852 PM CST Mon Nov 2 2026
+
+The National Weather Service in Fort Worth has issued a
+
+* Severe Thunderstorm Warning for... Montague County in north central Texas...
+
+* Until 930 PM CST.
+
+* At 851 PM CST, a severe thunderstorm was located near Bellevue, or 13 miles southeast of Henrietta, moving east at 50 mph.
+
+HAZARD...60 mph wind gusts and quarter size hail.
+
+SOURCE...Radar indicated.
+
+IMPACT...Hail damage to vehicles is expected. Expect wind damage to roofs, siding, and trees.
+
+* This severe thunderstorm will be near... Nocona around 910 PM CST.
+
+Other locations impacted by this severe thunderstorm include Spanish Fort, Stoneburg, Belcherville, Bonita, Capps Corner, Montague, Illinois Bend, Ringgold, and Nocona Hills.
+
+PRECAUTIONARY/PREPAREDNESS ACTIONS...
+
+A Tornado Watch remains in effect until 1100 PM CST for north central Texas.
+
+For your protection get inside a sturdy structure and stay away from windows.
+
+Continuous cloud to ground lightning is occurring with this storm. Move indoors immediately. Lightning can kill.
+
+&&
+
+LAT...LON 3398 9763 3395 9759 3392 9760 3390 9758 3391 9748 3366 9749 3355 9798 3389 9798 3385 9787 3386 9783 3388 9782 3388 9780 3390 9780 3390 9778 3392 9778 3391 9776 3394 9776 3394 9773 3399 9768 TIME...MOT...LOC 0251Z 257DEG 44KT 3368 9803
+
+HAIL THREAT...RADAR INDICATED MAX HAIL SIZE...1.00 IN WIND THREAT...RADAR INDICATED MAX WIND GUST...60 MPH
+
+$$

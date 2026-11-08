@@ -1,0 +1,35 @@
+WUUS54 KTSA 030710 SVRTSA OKC035-097-030745- /O.NEW.KTSA.SV.W.0392.261103T0710Z-261103T0745Z/
+
+BULLETIN - IMMEDIATE BROADCAST REQUESTED Severe Thunderstorm Warning National Weather Service Tulsa OK 110 AM CST Tue Nov 3 2026
+
+The National Weather Service in Tulsa has issued a
+
+* Severe Thunderstorm Warning for... Southeastern Craig County in northeastern Oklahoma... Northwestern Mayes County in northeastern Oklahoma...
+
+* Until 145 AM CST.
+
+* At 110 AM CST, a severe thunderstorm was located over Adair, moving northeast at 35 mph.
+
+HAZARD...60 mph wind gusts and penny size hail.
+
+SOURCE...Radar indicated.
+
+IMPACT...Expect damage to roofs, siding, and trees.
+
+* Locations in or near the path include... Vinita... Adair... Big Cabin... White Oak...
+
+This includes Interstate 44 between mile markers 266 and 290.
+
+PRECAUTIONARY/PREPAREDNESS ACTIONS...
+
+Remain alert for a possible tornado! Tornadoes can develop quickly from severe thunderstorms. If you spot a tornado go at once into the basement or small central room in a sturdy structure.
+
+For your protection move to an interior room on the lowest floor of a building.
+
+A Tornado Watch remains in effect until 300 AM CST for northeastern Oklahoma.
+
+&&
+
+LAT...LON 3674 9529 3667 9500 3666 9500 3638 9519 3643 9538 3651 9536 3651 9533 3660 9533 TIME...MOT...LOC 0710Z 203DEG 31KT 3645 9525
+
+TORNADO...POSSIBLE HAIL THREAT...RADAR INDICATED MAX HAIL SIZE...0.75 IN WIND THREAT...RADAR INDICATED MAX WIND GUST...60 MPH

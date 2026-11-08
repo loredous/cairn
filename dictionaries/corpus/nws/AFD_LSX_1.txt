@@ -1,0 +1,39 @@
+FXUS63 KLSX 072336 AFDLSX
+
+Area Forecast Discussion National Weather Service St Louis MO 536 PM CST Sat Nov 7 2026
+
+.KEY MESSAGES...
+
+- The area will remain free of hazardous weather through at least late next week.
+
+&&
+
+.SHORT TERM /THROUGH SUNDAY NIGHT/... Issued at 212 PM CST Sat Nov 7 2026
+
+The upper-level trough responsible for our recent cool down can be seen in water vapor imagery moving into New England as the center of a surface high slowly passes over the CWA. This high has local conditions dry and mainly clear aside from passing high clouds. With the high only slightly scooting eastward tonight, another round of efficient radiative cooling is expected, with temperatures falling in the mid to low 30s, especially over southeastern Missouri and southern Illinois closer to the center of the high.
+
+Tomorrow, upper-level ridging begins to edge into the Middle Mississippi Valley, though the region remains beneath at least weak northwesterly flow aloft. Closer to the surface, low-level ridging draws closer to the region, with temperatures rebounding at 850 mb from their lows the previous two days. This, paired with mostly clear skies, will allow for a notable jump in afternoon temperatures when compared to today with values in the low to mid-60s expected for most locations.
+
+&&
+
+.LONG TERM /MONDAY THROUGH SATURDAY/... Issued at 212 PM CST Sat Nov 7 2026
+
+The primary focus during the extended forecast period is a robust upper-level trough impacting at least the eastern half of the CONUS during the latter half of next week. Prior to that, guidance consensus remains that weak, broad upper-level ridging will continue to build into the Midwest as low-level flow becomes increasingly southwesterly. This will boost temperatures on Monday compared to Sunday. Thanks to a warmer start to the day Tuesday and continued low-level warm air advection, Tuesday will be even warmer, with global ensemble members tightly focused on highs around 70 degrees.
+
+On Wednesday, the aforementioned upper-level trough will begin digging equatorward. The majority of guidance continues to trend toward a solution that supports a more aggressive and westward trough. This has led to decreasing spread among ensemble members for our temperatures toward the end of the week, with confidence increasing in at least a brief period of below-normal temperatures.
+
+Despite this increasing consensus, the phasing of the trough and more so the embedded shortwaves has and continues to vary greatly run-to-run and source-to-source. This will dictate specifics on how quickly we'll cool, precipitation chances with at least an initial FROPA, and how quickly temperatures moderate afterwards. If we do see precipitation with this trough, Wednesday-Thursday is when confidence is highest it would occur. Despite uncertainty in how quickly temperatures cool mid-week and rebound later in the weekend, guidance consensus has consistently shown Friday to be the coolest day of the period.
+
+&&
+
+.AVIATION /00Z TAFS THROUGH 06Z MONDAY/... Issued at 533 PM CST Sat Nov 7 2026
+
+VFR flight conditions are expected to prevail across the majority of the area through Sunday. Expect steam fog to develop again in the vicinity of area rivers after 06Z and to persist through sunrise. Visibilities will likely drop to 1SM or less in these locations. Other sheltered spots will probably see some radiation fog as well, although the visibility in these locations isn't likely to drop below 2-3SM. Fog should rapidly dissipate after sunrise.
+
+&&
+
+.LSX WATCHES/WARNINGS/ADVISORIES... MO...None. IL...None.
+
+&&
+
+$$

@@ -1,0 +1,69 @@
+GENERAL MESSAGE (ICS 213) 1. Incident Name (Optional): 2. To (Name and Position): 3. From (Name and Position): 4. Subject:
+
+5. Date:
+
+7. Message:
+
+8. Approved by: Name:
+
+Signature:
+
+Position/Title:
+
+9. Reply:
+
+10. Replied by: Name:
+
+Position/Title:
+
+ICS 213
+
+Date/Time:
+
+Signature:
+
+6. Time
+
+ICS 213 General Message Purpose. The General Message (ICS 213) is used by the incident dispatchers to record incoming messages that cannot be orally transmitted to the intended recipients. The ICS 213 is also used by the Incident Command Post and other incident personnel to transmit messages (e.g., resource order, incident name change, other ICS coordination issues, etc.) to the Incident Communications Center for transmission via radio or telephone to the addressee. This form is used to send any message or notification to incident personnel that requires hard-copy delivery. Preparation. The ICS 213 may be initiated by incident dispatchers and any other personnel on an incident. Distribution. Upon completion, the ICS 213 may be delivered to the addressee and/or delivered to the Incident Communication Center for transmission. Notes: * The ICS 213 is a three-part form, typically using carbon paper. The sender will complete Part 1 of the form and send Parts 2 and 3 to the recipient. The recipient will complete Part 2 and return Part 3 to the sender. * A copy of the ICS 213 should be sent to and maintained within the Documentation Unit. * Contact information for the sender and receiver can be added for communications purposes to confirm resource orders. Refer to 213RR example (Appendix B) Block Number
+
+Block Title
+
+Instructions
+
+Incident Name (Optional)
+
+Enter the name assigned to the incident. This block is optional.
+
+To (Name and Position)
+
+Enter the name and position the General Message is intended for. For all individuals, use at least the first initial and last name. For Unified Command, include agency names.
+
+From (Name and Position)
+
+Enter the name and position of the individual sending the General Message. For all individuals, use at least the first initial and last name. For Unified Command, include agency names.
+
+Subject
+
+Enter the subject of the message.
+
+Date
+
+Enter the date (month/day/year) of the message.
+
+Time
+
+Enter the time (using the 24-hour clock) of the message.
+
+Message
+
+Enter the content of the message. Try to be as concise as possible.
+
+Approved by * Name * Signature * Position/Title Reply
+
+Enter the name, signature, and ICS position/title of the person approving the message.
+
+Replied by * Name * Position/Title * Signature * Date/Time
+
+Enter the name, ICS position/title, and signature of the person replying to the message. Enter date (month/day/year) and time prepared (24hour clock).
+
+The intended recipient will enter a reply to the message and return it to the originator.

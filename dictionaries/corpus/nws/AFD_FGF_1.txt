@@ -1,0 +1,33 @@
+FXUS63 KFGF 072328 AFDFGF
+
+Area Forecast Discussion National Weather Service Grand Forks ND 528 PM CST Sat Nov 7 2026
+
+.KEY MESSAGES...
+
+- Above average temperatures and generally dry conditions are expected.
+
+&&
+
+.DISCUSSION... Issued at 241 PM CST Sat Nov 7 2026
+
+...Synopsis...
+
+Split flow is aloft is in place across the US with dry/war west- northwest flow over the Northern Plains as the more active northern jet stream and storm track remains in Canada. This is resulting in above average temperatures (close to 2 standard deviations from seasonal normals for highs) and dry/breezy conditions.
+
+There is a trough that deepens Tuesday-Wedesnay that brings a brief period of stronger north-northwest flow aloft and a quick moving shortwave trough and cold front. The track of organized forcing is east of our CWA with the ma and deeper dry air preceding the arrival even the subset of ensemble members that show rain are very light (less than 0.1"). The consensus in ensembles with that system is for no measurable precipitation (may remain virga or sprinkles). The main result will be a brief return to seasonable temperatures Wednesday into Friday.
+
+There is a strong signal in all ensembles than upper level ridging and anomalous heights/temperatures aloft (NAEFS percentiles 90% or higher/SD 1.5-2) by next weekend and early the next week. The net result will be continued dry conditions and a return to above average temperatures that my extend well beyond the end of the 7 day period.
+
+&&
+
+.AVIATION /00Z TAFS THROUGH 00Z MONDAY/... Issued at 528 PM CST Sat Nov 7 2026
+
+VFR conditions for all TAF sites that should continue throughout the period. Winds will be the primary aviation impact, with the southwesterly to westerly surface winds around 10 to 15 kts topped by a 40-45 kt jet out of the west-northwest that will create some low level wind shear. The LLWS will continue for much of the night before dropping off as surface winds become northwesterly towards morning. Light and variable by afternoon, but should steady out of the south at KDVL by the end of the period.
+
+&&
+
+.FGF WATCHES/WARNINGS/ADVISORIES... ND...None. MN...None.
+
+&&
+
+$$

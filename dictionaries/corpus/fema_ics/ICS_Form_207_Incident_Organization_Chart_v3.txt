@@ -1,0 +1,87 @@
+INCIDENT ORGANIZATION CHART (ICS 207) 1. Incident Name:
+
+2. Operational Period: Date From:
+
+Date To:
+
+Time From:
+
+Time To:
+
+3. Organization Chart
+
+Liaison Officer Incident Commander(s)
+
+Safety Officer Operations Section Chief Public Information Officer Staging Area Manager
+
+Planning Section Chief
+
+Resources Unit Ldr.
+
+Logistics Section Chief
+
+Finance/Admin Section Chief
+
+Support Branch Dir.
+
+Time Unit Ldr.
+
+Situation Unit Ldr.
+
+Supply Unit Ldr.
+
+Procurement Unit Ldr.
+
+Documentation Unit Ldr.
+
+Facilities Unit Ldr.
+
+Comp./Claims Unit Ldr.
+
+Demobilization Unit Ldr.
+
+Ground Spt. Unit Ldr.
+
+Cost Unit Ldr.
+
+Service Branch Dir.
+
+Comms Unit Ldr.
+
+Medical Unit Ldr.
+
+Food Unit Ldr.
+
+ICS 207
+
+IAP Page ____
+
+4. Prepared by: Name:
+
+Position/Title:
+
+Signature:
+
+Date/Time:
+
+ICS 207 Incident Organization Chart Purpose. The Incident Organization Chart (ICS 207) provides a visual wall chart depicting the ICS organization position assignments for the incident. The ICS 207 is used to indicate what ICS organizational elements are currently activated and the names of personnel staffing each element. An actual organization will be event-specific. The size of the organization is dependent on the specifics and magnitude of the incident and is scalable and flexible. Personnel responsible for managing organizational positions are listed in each box as appropriate. Preparation. The ICS 207 is prepared by the Resources Unit Leader and reviewed by the Incident Commander. Complete only the blocks where positions have been activated, and add additional blocks as needed, especially for Agency Representatives and all Operations Section organizational elements. For detailed information about positions, consult the NIMS ICS Field Operations Guide. The ICS 207 is intended to be used as a wall-size chart and printed on a plotter for better visibility. A chart is completed for each operational period, and updated when organizational changes occur. Distribution. The ICS 207 is intended to be wall mounted at Incident Command Posts and other incident locations as needed, and is not intended to be part of the Incident Action Plan (IAP). All completed original forms must be given to the Documentation Unit. Notes: * The ICS 207 is intended to be wall mounted (printed on a plotter). Document size can be modified based on individual needs. * Also available as 8 x 14 (legal size) chart. * ICS allows for organizational flexibility, so the Intelligence/Investigative Function can be embedded in several different places within the organizational structure. * Use additional pages if more than three branches are activated. Additional pages can be added based on individual need (such as to distinguish more Division/Groups and Branches as they are activated). Block Number
+
+Block Title
+
+Instructions
+
+Incident Name
+
+Print the name assigned to the incident.
+
+Operational Period * Date and Time From * Date and Time To
+
+Enter the start date (month/day/year) and time (using the 24-hour clock) and end date and time for the operational period to which the form applies.
+
+Organization Chart
+
+* Complete the incident organization chart. * For all individuals, use at least the first initial and last name. * List agency where it is appropriate, such as for Unified Commanders. * If there is a shift change during the specified operational period, list both names, separated by a slash.
+
+Prepared by * Name * Position/Title * Signature * Date/Time
+
+Enter the name, ICS position, and signature of the person preparing the form. Enter date (month/day/year) and time prepared (24-hour clock).

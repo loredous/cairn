@@ -1,0 +1,9 @@
+NOUS46 KHNX 040943 PNSHNX CAZ300>339-042143-
+
+Public Information Statement National Weather Service Hanford CA 143 AM PST Wed Nov 4 2026
+
+...HIGHEST WIND REPORTS...
+
+Location Speed Time/Date Lat/Lon 12 SE Oynx 68 MPH 1127 PM 11/03 35.54N/118.14W 5 SW Lake Wishon 64 MPH 1005 AM 11/03 36.97N/119.06W 8 E Shaver Lake 62 MPH 0145 PM 11/03 37.06N/119.18W 13 W Red Rock Canyon 48 MPH 1114 PM 11/03 35.29N/118.23W 7 NW Indian Wells Valley 46 MPH 1232 AM 11/04 35.71N/117.97W 9 E Oynx 45 MPH 1200 AM 11/04 35.67N/118.06W 9 N Neenach 45 MPH 1110 PM 11/03 34.91N/118.52W 12 NE Neenach 44 MPH 0740 PM 11/03 34.93N/118.50W 8 S Kennedy Meadows 43 MPH 1210 AM 11/04 35.88N/118.08W 11 N Coalinga 43 MPH 0940 AM 11/03 36.30N/120.40W Grapevine 42 MPH 0310 AM 11/03 34.94N/118.93W 2 SW Indian Wells Valley 42 MPH 0500 PM 11/03 35.64N/117.88W 1 S Grapevine 40 MPH 0340 AM 11/03 34.93N/118.93W
+
+Observations are collected from a variety of sources with varying equipment and exposures. We thank all volunteer weather observers for their dedication. Not all data listed are considered official.

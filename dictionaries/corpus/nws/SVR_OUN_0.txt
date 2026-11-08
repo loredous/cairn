@@ -1,0 +1,33 @@
+WUUS54 KOUN 030510 SVROUN OKC005-029-030600- /O.NEW.KOUN.SV.W.1021.261103T0510Z-261103T0600Z/
+
+BULLETIN - IMMEDIATE BROADCAST REQUESTED Severe Thunderstorm Warning National Weather Service Norman OK 1110 PM CST Mon Nov 2 2026
+
+The National Weather Service in Norman has issued a
+
+* Severe Thunderstorm Warning for... Southeastern Coal County in southeastern Oklahoma... Atoka County in southeastern Oklahoma...
+
+* Until midnight CST.
+
+* At 1109 PM CST, a severe thunderstorm was located near Lehigh, moving northeast at 40 mph.
+
+HAZARD...60 mph wind gusts.
+
+SOURCE...Radar indicated.
+
+IMPACT...Expect damage to roofs, siding, and trees.
+
+* Locations impacted include... Atoka, Coalgate, Stringtown, Lehigh, Tupelo, Tushka, Caney, Centrahoma, Lane, Olney, Wardville, Daisy, Phillips, Atoka Reservoir, Chockie, Bentley, McGee Creek Lake, Redden, Boggy Depot Park, and Darwin.
+
+PRECAUTIONARY/PREPAREDNESS ACTIONS...
+
+For your protection move to an interior room on the lowest floor of a building.
+
+A Tornado Watch remains in effect for the warned area.
+
+&&
+
+LAT...LON 3451 9578 3423 9578 3416 9629 3416 9633 3441 9634 3461 9642 3471 9609 3468 9609 3468 9589 3459 9588 3459 9567 3451 9567 TIME...MOT...LOC 0509Z 245DEG 34KT 3443 9624
+
+HAIL THREAT...RADAR INDICATED MAX HAIL SIZE...<.75 IN WIND THREAT...RADAR INDICATED MAX WIND GUST...60 MPH
+
+$$

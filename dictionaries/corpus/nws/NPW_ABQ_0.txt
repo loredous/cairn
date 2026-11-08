@@ -1,0 +1,11 @@
+WWUS75 KABQ 031431 NPWABQ
+
+URGENT - WEATHER MESSAGE National Weather Service Albuquerque NM 731 AM MST Tue Nov 3 2026
+
+NMZ230-031545- /O.EXP.KABQ.WI.Y.0034.000000T0000Z-261103T1500Z/ Union County- 731 AM MST Tue Nov 3 2026
+
+...WIND ADVISORY WILL EXPIRE AT 8 AM MST THIS MORNING...
+
+Winds will continue to decrease through the morning, therefore the Wind Advisory will be allowed to expire.
+
+$$

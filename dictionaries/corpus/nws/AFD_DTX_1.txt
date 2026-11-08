@@ -1,0 +1,51 @@
+FXUS63 KDTX 072353 AFDDTX
+
+Area Forecast Discussion National Weather Service Detroit/Pontiac MI 653 PM EST Sat Nov 7 2026
+
+.KEY MESSAGES...
+
+- Cloud clearing trend into tonight.
+
+- Slightly milder and breezy tomorrow.
+
+- Temperatures stay on the warmer side of average through mid week before a cool down arrives late week.
+
+&&
+
+.AVIATION...
+
+Shortwave ridging aloft and a surge in westerlies will bring result in dry air advection across Southeast Michigan tonight. While some MVFR stratus will hold on the first couple of hours of the period, there is overwhelming signal for active and lowering subsidence below 8.0 kft agl tonight. Southwest gradient flow will increasing substantially ahead of a weak cold front on Sunday. Some uncertainty exists on the coverage of boundary layer cloud as model sounding show the layer of saturation to be very shallow.
+
+.DTW THRESHOLD PROBABILITIES...
+
+* Low for ceiling 5000 ft tonight.
+
+&&
+
+.PREV DISCUSSION... Issued at 406 PM EST Sat Nov 7 2026
+
+DISCUSSION...
+
+Closed low pressure system continues its trek further east and eventually swinging through the New England region into tomorrow. Showers chances have come to an end though cloud cover will linger through the remainder of the afternoon supported by the lower level moisture. Drier air will eventually arrive tonight with an inbound shortwave ridge leading to a cloud clearing trend. The back edge of the cloud shield can already be seen on satellite arriving into western portions of the CWA. The clearing skies affords favorable cooling conditions and temperatures dipping to around freezing or below. Coldest overnight lows will be across the Thumb with upper 20s forecast.
+
+The Pacific jet will trigger amplification of a shortwave moving across Ontario and into Quebec throughout tomorrow on the heals of the progressive shortwave ridge. Westerly flow develops between these features allowing warm advection to bring temperatures up into the mid-upper 50s range. Afternoon mixing and increasing pressure gradient will allow for winds to gusty to around 30 mph at times. Canadian shortwave will send a cold front through southeast Michigan. The best lift and moisture availability will be tied closer to the center of the low pressure system with bulk of precipitation focused across Lake Huron while parts of the northern carry low end PoPs along and behind the front into Sunday evening.
+
+Cold advection/thermal trough is quick to exit Sunday night with another period of warm advection starting Monday morning as 850 mb temperatures climb to around 5C with the arrival of the next ridge. This keeps temperatures on the mild side with mid 50s on Monday and climbing into the low 60s for Tuesday. Dry conditions prevailing into Tuesday as well with surface high pressure holding influence over the central Great Lakes. Conditions expected to become more unsettled into Wednesday and troughing returns to the region. This will bring the next chances for precipitation and cooler temperatures as long range models point toward phasing systems triggering high amplitude troughing by late week.
+
+MARINE...
+
+Lighter winds across the central Great Lakes will be short-lived as the next low pressure system clips the northern waterways Sunday into the early morning hours Monday. This will initially support breezy southwest flow with gusts at or below 30 knots, taking into consideration the more stable conditions under the stream of warm air aloft. However, as this low departs, winds will veer to the northwest, ushering in the next dose of colder air. This boosts instability over the warmer lake waters to help deepen mixing depths, tapping the stronger winds above the surface. Opted to upgrade the Gale Watch to a Gale Warning given the cold advection and consensus in lower column wind speeds. Gusts should hover near the gale threshold across the open waters of northern Lake Huron Sunday evening through early Monday. For locations further south, Small Craft Advisories have been added for the southern Huron basin nearshores with periods of gust at/above 25 knots and waves in excess of 4 feet. Quick shifts to shortwave ridging Monday and then back to a troughing pattern or dry frontal passage ensues early next week with lower potential to reach marine thresholds.
+
+&&
+
+.DTX WATCHES/WARNINGS/ADVISORIES... MI...None. Lake Huron...Gale Warning from 4 PM Sunday to 4 AM EST Monday for LHZ361-362.
+
+Small Craft Advisory from 4 AM Sunday to 4 AM EST Monday for LHZ421- 422.
+
+Small Craft Advisory from 10 AM Sunday to 4 AM EST Monday for LHZ441>443.
+
+Lake St Clair...None. Michigan waters of Lake Erie...None. &&
+
+$$
+
+AVIATION.....CB DISCUSSION...AA MARINE.......AA

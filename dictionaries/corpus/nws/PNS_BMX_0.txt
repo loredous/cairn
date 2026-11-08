@@ -1,0 +1,17 @@
+NOUS44 KBMX 051931 PNSBMX ALZ011>015-017>050-060745-
+
+Public Information Statement National Weather Service Birmingham AL 131 PM CST Thu Nov 5 2026
+
+...NWS Storm Survey Results for November 4th Radar Rotation and Debris Signatures in Northeast Bibb and Northwest Chilton Counties...
+
+National Weather Service meteorologists surveyed areas of northeast Bibb County and northwest Chilton County today following storms that moved through the area yesterday afternoon (November 4). The surveys focused on two distinct areas of rotation associated with the same storm, both of which produced signatures of lowered correlation coefficient consistent with lofted debris on dual-polarization radar.
+
+No damage was found in either location. Damage indicators consistent with a tornado (convergent tree or structural damage, a continuous path of snapped or uprooted trees, or other EF-scale damage indicators) were absent. Several eyewitnesses were interviewed; their accounts did not support the presence of a tornado on the ground.
+
+The most likely scenario is that sub-tornadic vortices lofted light tree debris (leaves and small branches). This lofted material produced the observed lowering of the correlation coefficient co-located with the rotational couplets. Such signatures can occur with weak or transient circulations that do not reach the intensity or ground contact required to produce surveyable tornado damage.
+
+Considering the scientific definition of a tornado (a violently rotating column of air in contact with the ground) and the damage- based Enhanced Fujita rating system, it would not be prudent to classify either of these features as a tornado. The radar signatures are best explained by lofted light debris from sub- tornadic vortices rather than a confirmed tornado.
+
+The information in this statement is preliminary and subject to change pending final review of the event and publication in NWS Storm Data.
+
+17/klaws

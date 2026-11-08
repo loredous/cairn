@@ -1,0 +1,181 @@
+INCIDENT BRIEFING (ICS 201) 1. Incident Name:
+
+2. Incident Number:
+
+3. Date/Time Initiated: Date:
+
+Time:
+
+4. Map/Sketch (include sketch, showing the total area of operations, the incident site/area, impacted and threatened areas, overflight results, trajectories, impacted shorelines, or other graphics depicting situational status and resource assignment):
+
+5. Situation Summary and Health and Safety Briefing (for briefings or transfer of command): Recognize potential incident Health and Safety Hazards and develop necessary measures (remove hazard, provide personal protective equipment, warn people of the hazard) to protect responders from those hazards.
+
+6. Prepared by: Name: ICS 201, Page 1
+
+Position/Title: Date/Time:
+
+Signature:
+
+INCIDENT BRIEFING (ICS 201) 1. Incident Name:
+
+2. Incident Number:
+
+3. Date/Time Initiated: Date:
+
+7. Current and Planned Objectives:
+
+8. Current and Planned Actions, Strategies, and Tactics: Time:
+
+Actions:
+
+6. Prepared by: Name:
+
+Position/Title:
+
+ICS 201, Page 2
+
+Date/Time:
+
+Signature:
+
+Time:
+
+INCIDENT BRIEFING (ICS 201) 1. Incident Name:
+
+2. Incident Number:
+
+3. Date/Time Initiated: Date:
+
+Time:
+
+9. Current Organization (fill in additional organization as appropriate): Liaison Officer Incident Commander(s) Safety Officer
+
+Public Information Officer
+
+Operations Section Chief
+
+Planning Section Chief
+
+6. Prepared by: Name:
+
+Position/Title:
+
+ICS 201, Page 3
+
+Date/Time:
+
+Logistics Section Chief
+
+Finance/Admin Section Chief
+
+Signature:
+
+INCIDENT BRIEFING (ICS 201) 1. Incident Name:
+
+2. Incident Number:
+
+3. Date/Time Initiated: Date:
+
+Time:
+
+Resource
+
+Resource Identifier
+
+Date/Time Ordered
+
+ETA
+
+Arrived
+
+10. Resource Summary:
+
+Notes (location/assignment/status)
+
+6. Prepared by: Name:
+
+Position/Title:
+
+ICS 201, Page 4
+
+Date/Time:
+
+Signature:
+
+ICS 201 Incident Briefing Purpose. The Incident Briefing (ICS 201) provides the Incident Commander (and the Command and General Staffs) with basic information regarding the incident situation and the resources allocated to the incident. In addition to a briefing document, the ICS 201 also serves as an initial action worksheet. It serves as a permanent record of the initial response to the incident. Preparation. The briefing form is prepared by the Incident Commander for presentation to the incoming Incident Commander along with a more detailed oral briefing. Distribution. Ideally, the ICS 201 is duplicated and distributed before the initial briefing of the Command and General Staffs or other responders as appropriate. The "Map/Sketch" and "Current and Planned Actions, Strategies, and Tactics" sections (pages 1-2) of the briefing form are given to the Situation Unit, while the "Current Organization" and "Resource Summary" sections (pages 3-4) are given to the Resources Unit. Notes: * The ICS 201 can serve as part of the initial Incident Action Plan (IAP). * If additional pages are needed for any form page, use a blank ICS 201 and repaginate as needed. Block Number
+
+Block Title
+
+Instructions
+
+Incident Name
+
+Enter the name assigned to the incident.
+
+Incident Number
+
+Enter the number assigned to the incident.
+
+Date/Time Initiated * Date, Time
+
+Enter date initiated (month/day/year) and time initiated (using the 24hour clock).
+
+Map/Sketch (include sketch, showing the total area of operations, the incident site/area, impacted and threatened areas, overflight results, trajectories, impacted shorelines, or other graphics depicting situational status and resource assignment)
+
+Show perimeter and other graphics depicting situational status, resource assignments, incident facilities, and other special information on a map/sketch or with attached maps. Utilize commonly accepted ICS map symbology. If specific geospatial reference points are needed about the incident's location or area outside the ICS organization at the incident, that information should be submitted on the Incident Status Summary (ICS 209). North should be at the top of page unless noted otherwise.
+
+Situation Summary and Health and Safety Briefing (for briefings or transfer of command): Recognize potential incident Health and Safety Hazards and develop necessary measures (remove hazard, provide personal protective equipment, warn people of the hazard) to protect responders from those hazards.
+
+Self-explanatory.
+
+Prepared by * Name * Position/Title * Signature * Date/Time
+
+Enter the name, ICS position/title, and signature of the person preparing the form. Enter date (month/day/year) and time prepared (24-hour clock).
+
+Current and Planned Objectives
+
+Enter the objectives used on the incident and note any specific problem areas.
+
+Block Number
+
+Block Title
+
+Instructions
+
+Current and Planned Actions, Strategies, and Tactics * Time * Actions
+
+Enter the current and planned actions, strategies, and tactics and time they may or did occur to attain the objectives. If additional pages are needed, use a blank sheet or another ICS 201 (Page 2), and adjust page numbers accordingly.
+
+Current Organization (fill in additional organization as appropriate) * Incident Commander(s) * Liaison Officer * Safety Officer * Public Information Officer * Planning Section Chief * Operations Section Chief * Finance/Administration Section Chief * Logistics Section Chief
+
+* Enter on the organization chart the names of the individuals assigned to each position.
+
+Resource Summary
+
+Enter the following information about the resources allocated to the incident. If additional pages are needed, use a blank sheet or another ICS 201 (Page 4), and adjust page numbers accordingly.
+
+* Resource
+
+Enter the number and appropriate category, kind, or type of resource ordered.
+
+* Resource Identifier
+
+Enter the relevant agency designator and/or resource designator (if any).
+
+* Date/Time Ordered
+
+Enter the date (month/day/year) and time (24-hour clock) the resource was ordered.
+
+* ETA
+
+Enter the estimated time of arrival (ETA) to the incident (use 24-hour clock).
+
+* Arrived
+
+Enter an "X" or a checkmark upon arrival to the incident.
+
+* Notes (location/ assignment/status)
+
+Enter notes such as the assigned location of the resource and/or the actual assignment and status.
+
+* Modify the chart as necessary, and add any lines/spaces needed for Command Staff Assistants, Agency Representatives, and the organization of each of the General Staff Sections. * If Unified Command is being used, split the Incident Commander box. * Indicate agency for each of the Incident Commanders listed if Unified Command is being used.

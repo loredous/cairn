@@ -1,0 +1,71 @@
+RESOURCE STATUS CHANGE (ICS 210) 1. Incident Name: 3. Resource Number
+
+4. New Status (Available, Assigned, O/S)
+
+2. Operational Period: Date From:
+
+Date To:
+
+Time From:
+
+Time To:
+
+5. From (Assignment and Status):
+
+6. To (Assignment and Status):
+
+7. Time and Date of Change:
+
+8. Comments:
+
+9. Prepared by: Name:
+
+Position/Title:
+
+ICS 210
+
+Date/Time:
+
+Signature:
+
+ICS 210 Resource Status Change Purpose. The Resource Status Change (ICS 210) is used by the Incident Communications Center Manager to record status change information received on resources assigned to the incident. This information could be transmitted with a General Message (ICS 213). The form could also be used by Operations as a worksheet to track entry, etc. Preparation. The ICS 210 is completed by radio/telephone operators who receive status change information from individual resources, Task Forces, Strike Teams, and Division/Group Supervisors. Status information could also be reported by Staging Area and Helibase Managers and fixed-wing facilities. Distribution. The ICS 210 is maintained by the Communications Unit and copied to Resources Unit and filed by Documentation Unit. Notes: * The ICS 210 is essentially a message form that can be used to update Resource Status Cards or T-Cards (ICS 219) for incident-level resource management. * If additional pages are needed, use a blank ICS 210 and repaginate as needed. Block Number
+
+Block Title
+
+Instructions
+
+Incident Name
+
+Enter the name assigned to the incident.
+
+Operational Period * Date and Time From * Date and Time To
+
+Enter the start date (month/day/year) and time (using the 24-hour clock) and end date and time for the operational period to which the form applies.
+
+Resource Number
+
+Enter the resource identification (ID) number (this may be a letter and number combination) assigned by either the sending unit or the incident.
+
+New Status (Available, Assigned, Out of Service)
+
+Indicate the current status of the resource: * Available - Indicates resource is available for incident use immediately. * Assigned - Indicates resource is checked in and assigned a work task on the incident. * Out of Service - Indicates resource is assigned to the incident but unable to respond for mechanical, rest, or personnel reasons. If space permits, indicate the estimated time of return (ETR). It may be useful to indicate the reason a resource is out of service (e.g., "O/S - Mech" (for mechanical issues), "O/S - Rest" (for off shift), or "O/S - Pers" (for personnel issues).
+
+From (Assignment and Status)
+
+Indicate the current location of the resource (where it came from) and the status. When more than one Division, Staging Area, or Camp is used, identify the specific location (e.g., Division A, Staging Area, Incident Command Post, Western Camp).
+
+To (Assignment and Status)
+
+Indicate the assigned incident location of the resource and status. When more than one Division, Staging Area, or Camp is used, identify the specific location.
+
+Time and Date of Change
+
+Enter the time and location of the status change (24-hour clock). Enter the date as well if relevant (e.g., out of service).
+
+Comments
+
+Enter any special information provided by the resource or dispatch center. This may include details about why a resource is out of service, or individual identifying designators (IDs) of Strike Teams and Task Forces.
+
+Prepared by * Name * Position/Title * Signature * Date/Time
+
+Enter the name, ICS position/title, and signature of the person preparing the form. Enter date (month/day/year) and time prepared (24-hour clock).

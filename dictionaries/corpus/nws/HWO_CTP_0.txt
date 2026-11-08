@@ -1,0 +1,41 @@
+FLUS41 KCTP 070805 HWOCTP
+
+Hazardous Weather Outlook National Weather Service State College PA 305 AM EST Sat Nov 7 2026
+
+PAZ019-025>028-034>036-045-046-049>053-056>059-063>066-080815- Southern Centre-Blair-Huntingdon-Mifflin-Juniata-Bedford-Fulton- Franklin-Southern Clinton-Southern Lycoming-Union-Snyder-Montour- Northumberland-Columbia-Perry-Dauphin-Schuylkill-Lebanon-Cumberland- Adams-York-Lancaster- 305 AM EST Sat Nov 7 2026
+
+This Hazardous Weather Outlook is for central Pennsylvania.
+
+.DAY ONE...Tonight.
+
+No hazardous weather is expected at this time.
+
+.DAYS TWO THROUGH SEVEN...Saturday through Thursday.
+
+The probability for widespread hazardous weather is low.
+
+.SPOTTER INFORMATION STATEMENT...
+
+Spotter activation is not expected at this time.
+
+$$
+
+PAZ004>006-010>012-017-018-024-033-037-041-042-080815- Warren-McKean-Potter-Elk-Cameron-Northern Clinton-Clearfield- Northern Centre-Cambria-Somerset-Tioga-Northern Lycoming-Sullivan- 305 AM EST Sat Nov 7 2026
+
+This Hazardous Weather Outlook is for central Pennsylvania.
+
+.DAY ONE...Tonight.
+
+No hazardous weather is expected at this time.
+
+.DAYS TWO THROUGH SEVEN...Saturday through Thursday.
+
+There is the potential for the first accumulating snow of the season Thursday night into Friday as a deep area of low pressure and very cold air aloft moves over the region with a developing surface low along the Mid Atlantic Coast.
+
+Prior to that, the probability for widespread hazardous weather is low.
+
+.SPOTTER INFORMATION STATEMENT...
+
+Spotter activation is not expected at this time.
+
+$$

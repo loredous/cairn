@@ -1,0 +1,23 @@
+FPUS51 KBUF 072100 ZFPBUF
+
+Zone Forecasts for Western New York National Weather Service Buffalo NY 400 PM EST Sat Nov 7 2026
+
+NYZ001-080500- Niagara- Including the city of Niagara Falls 400 PM EST Sat Nov 7 2026
+
+.TONIGHT...Cloudy. A chance of showers early. Lows in the upper 30s. Northwest winds 5 to 10 mph, becoming west. Chance of rain 50 percent. .SUNDAY...Mostly sunny in the morning, then becoming partly sunny. Breezy with highs in the mid 50s. West winds 10 to 20 mph, becoming southwest with gusts up to 40 mph. .SUNDAY NIGHT...Showers likely. Lows in the upper 30s. West winds 10 to 20 mph with gusts up to 30 mph. Chance of rain 60 percent. .MONDAY...Mostly cloudy. A chance of showers in the morning. Highs in the lower 50s. Northwest winds 10 to 20 mph with gusts up to 30 mph in the morning, becoming west. Chance of rain 40 percent. .MONDAY NIGHT...Mostly cloudy. Lows in the upper 30s. West winds 10 mph or less, becoming southwest. .TUESDAY...Mostly sunny. Highs around 60. .TUESDAY NIGHT...Mainly clear. Lows in the upper 30s. .VETERANS DAY...Partly sunny. Highs in the lower 50s. .WEDNESDAY NIGHT...Mostly cloudy. Lows in the mid 30s. .THURSDAY...Mostly cloudy with a 40 percent chance of rain showers. Highs in the upper 40s. .THURSDAY NIGHT...Mostly cloudy with a 40 percent chance of rain and snow showers. Lows around 30. .FRIDAY...Mostly cloudy with a 40 percent chance of rain and snow showers. Highs in the mid 40s. .FRIDAY NIGHT...Mostly cloudy with a chance of rain showers. Lows around 30. Chance of rain 30 percent. .SATURDAY...Mostly cloudy. Highs in the upper 40s.
+
+$$
+
+NYZ010-080500- Northern Erie- Including the city of Buffalo 400 PM EST Sat Nov 7 2026
+
+.TONIGHT...Cloudy. Showers likely early, then a chance of showers late this evening. Lows in the upper 30s. West winds 5 to 10 mph. Chance of rain 70 percent. .SUNDAY...Partly to mostly sunny. Breezy with highs in the mid 50s. West winds 5 to 10 mph, becoming southwest 15 to 20 mph with gusts up to 40 mph. .SUNDAY NIGHT...Showers likely. Lows in the upper 30s. West winds 10 to 15 mph with gusts up to 30 mph in the evening. Chance of rain 60 percent. .MONDAY...Mostly cloudy with a 40 percent chance of showers. Highs in the lower 50s. West winds 10 to 15 mph. .MONDAY NIGHT...Mostly cloudy. Lows ranging from the upper 30s inland to the lower 40s along the Lake Erie shore. Light winds. .TUESDAY...Mostly sunny. Highs in the upper 50s. .TUESDAY NIGHT...Mainly clear. Lows in the upper 30s. .VETERANS DAY...Partly sunny. Highs in the lower 50s. .WEDNESDAY NIGHT...Mostly cloudy with a 30 percent chance of rain showers. Lows in the mid 30s. .THURSDAY...Mostly cloudy with a 40 percent chance of rain showers. Highs in the upper 40s. .THURSDAY NIGHT...Mostly cloudy with a 40 percent chance of rain and snow showers. Lows in the upper 20s. .FRIDAY...Mostly cloudy with a 40 percent chance of rain and snow showers. Highs in the lower 40s. .FRIDAY NIGHT...Mostly cloudy with a 40 percent chance of rain and snow showers. Lows in the upper 20s. .SATURDAY...Mostly cloudy with a chance of snow showers. Highs in the upper 40s. Chance of snow 30 percent.
+
+$$
+
+NYZ002-080500- Orleans- Including the city of Medina 400 PM EST Sat Nov 7 2026
+
+.TONIGHT...Cloudy. Showers likely early, then a chance of showers late this evening. A chance of showers late. Lows in the upper 30s. Northwest winds 5 to 10 mph, becoming west 10 to 15 mph. Chance of rain 60 percent. .SUNDAY...Mostly sunny. Highs in the mid 50s. West winds 10 to 20 mph with gusts up to 35 mph. .SUNDAY NIGHT...Showers likely. Breezy with lows around 40. West winds 10 to 20 mph with gusts up to 30 mph. Chance of rain 70 percent. .MONDAY...Mostly cloudy with a 40 percent chance of showers. Breezy with highs in the lower 50s. Northwest winds 10 to 20 mph with gusts up to 30 mph in the morning, becoming west. .MONDAY NIGHT...Mostly cloudy. Lows in the upper 30s. West winds 5 to 10 mph, becoming light. .TUESDAY...Mostly sunny. Highs in the upper 50s. .TUESDAY NIGHT...Partly cloudy. Lows in the upper 30s. .VETERANS DAY...Partly sunny. Highs in the lower 50s. .WEDNESDAY NIGHT...Mostly cloudy with a 30 percent chance of rain showers. Lows in the mid 30s. .THURSDAY...Mostly cloudy with a 40 percent chance of rain showers. Highs in the upper 40s. .THURSDAY NIGHT...Mostly cloudy with a 40 percent chance of rain and snow showers. Lows around 30. .FRIDAY...Mostly cloudy with a 40 percent chance of rain and snow showers. Highs in the mid 40s. .FRIDAY NIGHT...Mostly cloudy with a 30 percent chance of rain and snow showers. Lows around 30. .SATURDAY...Mostly cloudy. Highs in the upper 40s.
+
+$$
+
+NYZ011-080500- Genesee- Including the city of Batavia 400 PM EST Sat Nov 7 2026

@@ -1,0 +1,39 @@
+FXUS62 KFFC 080551 AFDFFC
+
+Area Forecast Discussion National Weather Service Peachtree City GA 1251 AM EST Sun Nov 8 2026
+
+...New 06Z Aviation Discussion...
+
+.KEY MESSAGES...
+
+- Overnight/early morning low temperatures in the mid-30s could result in frost across parts of north and west Georgia.
+
+- Little to no precipitation is likely through at least early next week, as rain chances are below 10 percent across north and central Georgia.
+
+- Seasonal temperatures are expected this weekend and into early next week, with frost possible across parts of north and west Georgia on Monday morning.
+
+&&
+
+.SHORT TERM... (This afternoon through Sunday) Issued at 102 PM EST Sat Nov 7 2026
+
+Temperatures this afternoon will climb into the upper 60s and lower 70s with temperatures similar if not slightly warmer during the day tomorrow. A frost advisory is out of the NE Georgia mountains as temperatures are expected to fall between 32 and 26 during the overnight hours. As the center of a high pressure settles over Georgia, winds will become light and variable and the combination of these two will lead to likely frost formation over the highest elevations.
+
+Temps should begin a warming trend tomorrow as the high slowly works it's way off to the east with temps in the upper 60s and lower 70s. Overnight lows in the mountains could fall towards freezing again and while another frost advisory might be needed, a hard freeze is not expected at this time. Winds through the short term will be out of the north at less than 10 mph, becoming light and variable overnight.
+
+&&
+
+.LONG TERM... (Monday morning through next Friday) Issued at 102 PM EST Sat Nov 7 2026
+
+The long term forecast remains a tale of two halves. On the front half will be above average temperatures for November as a relatively warm and dry airmass creeps into the area on the beginning of the work week. The back half will feature a system moving across the eastern half the US that may bring some rain but seems highly likely to bring a cool down to more seasonable temperatures for mid-November.
+
+Starting on the front end Monday, the main polar jet should be to the north of the CWA despite a strong upper level low rotating across the NE. The air mass over the CWA will remain dry, but repeated rounds of solar insolation each day should lead to warming into the upper 60s to 70s for most by the late afternoon. This is a good 5 to 10 degrees above average for daytime highs this time of year. Flow remains to the north of the CWA through Wednesday with only a cutoff low over Texas ejecting into the area but bringing no precip with it. Forecast confidence is high through this time period.
+
+Moving into Thursday, forecast confidence begins to lower. Multiple waves look to interact over the eastern coast, and the details of those interactions including how and where they phase will have big impacts on the forecast. EOF analysis of the 500 mb heights shows highest variance along the western half of the trough digging into the east coast, which isn't surprising when looking at some of the individual members. Several shortwaves are embedded in the larger wave here, and the details of exactly where those will be this far out is a challenging model problem to say the least. K-mean cluster analysis of the grand ensemble (US, Canada, and Euro) shows this challenge beautifully, with each of the ensembles contributing members to each cluster. Some clusters are less phased (think 06Z GFS) on the western side, leading to greater chances of rainfall across the southeast with a surface low that develops and taps into moisture further to the south. The others show better phasing further east, which leads to less rainfall across the area. There has been a trend towards the less phased solution across the ensemble members, so the increase in PoPs for Thursday reflects that.
+
+What is a bit more certain within the forecast on and after Thursday is that a cold front should sweep through the area, regardless of what the outcome of the above is. Highs on Friday will be in the 50s and 60s for most - much more seasonable. Lows will drop into the 30s by Friday night, with some areas across north Georgia seeing subfreezing temperatures. Parts of the mountains and some of the valleys are forecast to have a hard freeze with temperatures dropping into the mid 20s. The growing season has mostly wrapped up, but those with vulnerable plants will need to get them indoors (or sheltered in some way).
+
+&&
+
+.AVIATION... (06Z TAFS) Issued at 1246 AM EST Sun Nov 8 2026
+
+VFR conditions are expected to prevail across the majority of the area. Some low clouds may develop in portions of east-central Georgia, with SCT clouds around 004 being carried at MCN between 11-14Z this morning. Winds will be 5 kts or less through the period due to high pressure building over the area. At ATL, winds will shift from NW to NE at 11Z and shift back to NW at 18Z.

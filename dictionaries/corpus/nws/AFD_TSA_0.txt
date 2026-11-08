@@ -1,0 +1,47 @@
+FXUS64 KTSA 080439 AFDTSA
+
+Area Forecast Discussion National Weather Service Tulsa OK 1039 PM CST Sat Nov 7 2026
+
+...New SHORT TERM, LONG TERM, AVIATION...
+
+.KEY MESSAGES... Updated at 1030 PM CST Sat Nov 7 2026
+
+- Patchy frost likely NE OK into far NW AR tonight. Areas of fog possible through early Sunday morning. Fog may become locally dense, especially across NE OK and NW AR.
+
+- Warming trend through early week with low chance of rain mid week.
+
+- Cooler weather likely by late week into next weekend.
+
+&&
+
+.SHORT TERM... (Through Sunday) Issued at 1030 PM CST Sat Nov 7 2026
+
+It is another chilly night across the region with high pressure and light winds producing effective radiational cooling. Lows in the 30s are expected across NE OK and NW AR, with low 40s near the Red River. A brief freeze is possible in the typical cold drainage locations, though this will depend heavily on fog development. At least patchy fog is possible areawide overnight, though the greatest coverage and potential for significant visibility reductions are expected along and north of I-40. Anywhere that remains fog-free is likely to experience the coldest temperatures. Frost will also be a concern and a Frost Advisory is in effect from midnight through 9 AM.
+
+Any fog is likely to burn off by mid-late Sunday morning with mostly clear skies expected during the day. Temperatures will recover nicely into at least the mid-upper 60s areawide. With winds remaining light, it should be a pleasant fall day for the local area.
+
+&&
+
+.LONG TERM... (Sunday Night through Saturday) Issued at 1030 PM CST Sat Nov 7 2026
+
+Overnight lows will be a tad warmer Sunday night, though still below average. Fog development will once again be possible across NE OK and NW AR. By Monday, high pressure will be sliding east, with southerly low level flow returning to the forecast area. This will promote a warming trend into mid week, with highs warming into the mid 70s Tuesday and Wednesday. An upper level low will move east across N TX Tuesday, potentially leading to a few isolated showers across SE OK, but any rainfall likely remains negligible. Then, on Wednesday, a shortwave will drop southeast through the central Plains, perhaps leading to some low rain and storm chances across far E OK and NW AR. From here, a pair of cold fronts are projected to sweep through the region with deep troughing developing over the eastern US and ridging to our west. Dry northwest flow aloft and post-frontal high pressure are likely to keep conditions dry and seasonably cool through the weekend.
+
+&&
+
+.AVIATION... (06Z TAFS) Issued at 1030 PM CST Sat Nov 7 2026
+
+VFR conditions under variable high cloudiness across ern OK and nwrn AR to start the forecast period, but MVFR VSBYS in fog are expected to develop in the next few hours most sites, with TEMPO IFR VSBY likely at some sites. Fog will continue through mid-morning Sunday. VFR conditions will redevelop by late morning areawide and continue through the end of the forecast period. Calm wind becomes light SW or W late Sunday morning.
+
+&&
+
+.PRELIMINARY POINT TEMPS/POPS... TUL 36 69 40 72 / 0 0 0 0 FSM 39 66 41 70 / 0 0 0 0 MLC 35 69 40 73 / 0 0 0 0 BVO 32 70 35 72 / 0 0 0 0 FYV 32 64 34 70 / 0 0 0 0 BYV 38 65 41 70 / 0 0 0 0 MKO 34 66 40 70 / 0 0 0 0 MIO 34 66 41 70 / 0 0 0 0 F10 34 69 41 72 / 0 0 0 0 HHW 45 70 44 72 / 0 0 0 0
+
+&&
+
+.TSA WATCHES/WARNINGS/ADVISORIES... OK...Frost Advisory until 9 AM CST Sunday for OKZ055>071-154-254-354.
+
+AR...Frost Advisory until 9 AM CST Sunday for ARZ001-002-010-011.
+
+&&
+
+$$

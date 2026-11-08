@@ -1,0 +1,41 @@
+FXUS63 KSGF 080532 AFDSGF
+
+Area Forecast Discussion National Weather Service Springfield MO 1132 PM CST Sat Nov 7 2026
+
+.KEY MESSAGES...
+
+- Frost Advisory in effect tonight into Sunday morning. Low temps will fall into the lower to middle 30s.
+
+- Patchy fog is expected to develop overnight across the area with the highest chances west of Highway 65. Visibilities may drop below one mile at times.
+
+- Warming trend returns early next week, with temperatures 5 to 10 degrees above normal. There is a 20-30 percent chance of rain on Wednesday.
+
+&&
+
+.SHORT TERM /THROUGH TONIGHT/... Issued at 130 PM CST Sat Nov 7 2026
+
+Current Conditions and Synoptic Overview: Water vapor and upper air analysis continues to show a northwest flow pattern across the area with a weak shortwave moving into northwest Missouri. A more significant system was located south of Arizona. Morning regional soundings continue to show low level moisture trapped underneath a low level version with significant dry air above. Clouds lingered through the morning however clouds were breaking up this afternoon with several areas seeing sunshine. Temps have already exceeded yesterdays highs with many areas in the upper 40s to middle 50s. A surface high pressure axis was over the area with calm to light/variable winds.
+
+Frost and Fog Potential Overnight/Sunday Morning: The REFS guidance, which has been performing well with clouds and temps, suggests that clouds should continue to clear this afternoon and evening. Afternoon dews are several degrees lower than yesterday (in the middle to upper 30s) which combined with clearing, does increase confidence in temps dropping lower than last night. If sufficient clearing occurs, then given the light winds, temps should fall decently overnight. Most guidance suggests a high probability that temps will not drop below 32 degrees, rather dropping into the lower to middle 30s. The main reason for this may be the development of fog and light south wind. Latest REFS has a 40-70% chance of fog with visibility less than 1 mile across portions of southwest Missouri. This would keep temps from dropping further below freezing. Given the high likelihood in temps reaching the lower to middle 30s, a Frost Advisory is in effect for the whole area tonight into Sunday morning. Coldest temps are expected across the far eastern ozarks where a light freeze may occur. If fog does form then frost may be more confined to elevated areas versus the warmer ground surface.
+
+If trends/confidence increases in the fog potential then a Dense Fog Advisory may be needed for portions of the area. Once any fog erodes Sunday morning, mostly clear skies are expected the rest of the day. Winds will be turning southwesterly and temps will likely climb well into the 60s.
+
+&&
+
+.LONG TERM /SUNDAY THROUGH SATURDAY/... Issued at 130 PM CST Sat Nov 7 2026
+
+Warmer and Mostly Dry Week: Ensemble Cluster Analysis continues to suggest a west/northwest flow pattern across our area for early and mid week. Shortwave energy southwest of the area will come close to the region on Tuesday but it looks to largely stay south. Another system then moves down from the northwest on Wednesday. Ensembles suggest some rain potential with this quick hitting system however moisture is in question. Current precip chances on Wednesday are in the 20-30% chance range. Temps in the 60s to around 70 are likely Monday and Tuesday then a decrease is likely mid to late week as the trough and cooler air aloft moves through.
+
+&&
+
+.AVIATION /06Z TAFS THROUGH 06Z MONDAY/... Issued at 1129 PM CST Sat Nov 7 2026
+
+VFR conditions will prevail at KSGF and KBBG for the entirety of the TAF period. Fog will be possible at KJLN, primarily between 12Z-15Z, with visibilities dropping between 4-5SM. Otherwise, light and variable winds will persist through the forecast period.
+
+&&
+
+.SGF WATCHES/WARNINGS/ADVISORIES... KS...Frost Advisory until 8 AM CST Sunday for KSZ073-097-101. MO...Frost Advisory until 8 AM CST Sunday for MOZ055>058-066>071- 077>083-088>098-101>106.
+
+&&
+
+$$

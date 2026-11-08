@@ -1,0 +1,29 @@
+FPUS53 KLSX 080612 ZFPLSX
+
+Zone Forecasts National Weather Service Saint Louis MO 1212 AM CST Sun Nov 8 2026
+
+ILZ100-101-MOZ061-063-064-081400- Madison IL-Saint Clair IL-Saint Charles MO-Saint Louis MO- Saint Louis City MO- Including the cities of Alton, Edwardsville, Belleville, Cahokia, Saint Charles, and Saint Louis 1212 AM CST Sun Nov 8 2026
+
+.REST OF TONIGHT...Clear. Areas of fog. Near steady temperature in the lower 30s. Southwest winds around 5 mph. .SUNDAY...Sunny. Highs in the lower 60s. West winds 5 to 10 mph. .SUNDAY NIGHT...Mostly clear. Lows in the upper 30s. Northwest winds around 5 mph. .MONDAY...Areas of dense fog in the morning. Sunny. Highs in the mid 60s. Southwest winds around 5 mph. .MONDAY NIGHT...Clear. Lows in the mid 40s. Southwest winds around 5 mph. .TUESDAY...Sunny. Highs in the upper 60s. .TUESDAY NIGHT...Mostly clear. Lows in the mid 40s. .VETERANS DAY...Partly sunny. A slight chance of rain in the morning, then a chance of rain in the afternoon. Highs in the mid 60s. Chance of rain 30 percent. .WEDNESDAY NIGHT...Mostly cloudy with a slight chance of rain in the evening, then partly cloudy after midnight. Lows in the lower 40s. Chance of rain 20 percent. .THURSDAY...Mostly sunny. A slight chance of rain in the morning. Cooler with highs in the mid 50s. Chance of rain 20 percent. .THURSDAY NIGHT AND FRIDAY...Partly cloudy. Lows in the lower 30s. Highs in the lower 50s. .FRIDAY NIGHT AND SATURDAY...Mostly clear. Lows in the lower 30s. Highs in the upper 50s.
+
+$$
+
+MOZ042-049-050-081400- Audrain MO-Osage MO-Callaway MO- Including the cities of Mexico and Fulton 1212 AM CST Sun Nov 8 2026
+
+.REST OF TONIGHT...Mostly clear. Near steady temperature in the mid 30s. Southwest winds around 5 mph. .SUNDAY...Sunny. Not as cool with highs in the lower 60s. West winds 5 to 10 mph. .SUNDAY NIGHT...Clear in the evening, then becoming partly cloudy. Lows in the mid 30s. Northwest winds around 5 mph in the evening, becoming light and variable. .MONDAY...Sunny. Highs in the mid 60s. Southwest winds 5 to 10 mph. .MONDAY NIGHT...Clear. Lows in the lower 40s. Southwest winds around 5 mph. .TUESDAY...Sunny. Highs in the upper 60s. .TUESDAY NIGHT...Mostly clear. Lows in the mid 40s. .VETERANS DAY...Mostly sunny with a 20 percent chance of rain. Highs in the mid 60s. .WEDNESDAY NIGHT AND THURSDAY...Partly cloudy. Lows around 40. Highs in the lower 50s. .THURSDAY NIGHT...Partly cloudy. Lows in the lower 30s. .FRIDAY AND FRIDAY NIGHT...Mostly clear. Highs in the lower 50s. Lows in the lower 30s. .SATURDAY...Sunny. Highs in the upper 50s.
+
+$$
+
+MOZ041-047-048-081400- Boone MO-Moniteau MO-Cole MO- Including the cities of Columbia and Jefferson City 1212 AM CST Sun Nov 8 2026
+
+.REST OF TONIGHT...Mostly clear. Patchy fog. Near steady temperature in the mid 30s. Southwest winds around 5 mph. .SUNDAY...Sunny. Not as cool with highs in the lower 60s. West winds around 5 mph. .SUNDAY NIGHT...Clear in the evening, then becoming partly cloudy. Lows in the upper 30s. Northwest winds around 5 mph in the evening, becoming light and variable. .MONDAY...Sunny. Highs in the mid 60s. Southwest winds around 5 mph. .MONDAY NIGHT...Clear. Lows in the mid 40s. Southwest winds around 5 mph. .TUESDAY AND TUESDAY NIGHT...Mostly clear. Highs in the upper 60s. Lows in the upper 40s. .VETERANS DAY...Mostly sunny with a 20 percent chance of rain. Highs in the mid 60s. .WEDNESDAY NIGHT AND THURSDAY...Partly cloudy. Lows in the lower 40s. Highs in the mid 50s. .THURSDAY NIGHT...Partly cloudy in the evening, then clearing. Lows in the lower 30s. .FRIDAY AND FRIDAY NIGHT...Mostly clear. Highs in the lower 50s. Lows in the mid 30s. .SATURDAY...Sunny. Highs around 60.
+
+$$
+
+ILZ095>097-MOZ018-019-026-027-034>036-081400- Adams IL-Brown IL-Pike IL-Knox MO-Lewis MO-Shelby MO-Marion MO- Monroe MO-Ralls MO-Pike MO- Including the cities of Quincy, Mount Sterling, Pittsfield, Hannibal, and Bowling Green 1212 AM CST Sun Nov 8 2026
+
+.REST OF TONIGHT...Mostly clear. Near steady temperature in the mid 30s. Southwest winds 5 to 10 mph with gusts up to 20 mph. .SUNDAY...Sunny. Highs in the lower 60s. West winds 5 to 10 mph. .SUNDAY NIGHT...Mostly clear. Lows in the mid 30s. Northwest winds around 5 mph in the evening, becoming light and variable. .MONDAY...Sunny. Highs in the mid 60s. Southwest winds 5 to 10 mph. .MONDAY NIGHT...Clear. Lows in the mid 40s. Southwest winds around 5 mph. .TUESDAY AND TUESDAY NIGHT...Mostly clear. Highs in the mid 60s. Lows in the mid 40s. .VETERANS DAY...Mostly sunny with a 20 percent chance of rain. Highs in the lower 60s. .WEDNESDAY NIGHT AND THURSDAY...Partly cloudy. Lows around 40. Highs in the lower 50s. .THURSDAY NIGHT...Partly cloudy. Lows in the lower 30s. .FRIDAY AND FRIDAY NIGHT...Mostly clear. Highs around 50. Lows in the mid 30s. .SATURDAY...Sunny. Highs in the upper 50s.
+
+$$
+
+ILZ069-070-074-081400- Clinton IL-Marion IL-Washington IL- Including the cities of Centralia and Salem 1212 AM CST Sun Nov 8 2026

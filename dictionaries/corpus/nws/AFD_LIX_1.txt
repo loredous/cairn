@@ -1,0 +1,47 @@
+FXUS64 KLIX 072313 AFDLIX
+
+Area Forecast Discussion National Weather Service New Orleans LA 513 PM CST Sat Nov 7 2026
+
+...New AVIATION...
+
+.KEY MESSAGES... Updated at 512 PM CST Sat Nov 7 2026
+
+- Cooler and much drier conditions are expected to persist through Tuesday before moderating somewhat midweek. A second cold front will bring another round of cool and dry conditions to the area toward the end of the work week and into the weekend.
+
+- Dry air and ongoing drought conditions will elevate fire spread concerns Sunday through Tuesday. Residents in areas under burn bans should not conduct outdoor burning of any kind. Residents in areas without official burn bans should take extra precautions if burning outdoors.
+
+&&
+
+.SHORT TERM... (Now through Tuesday) Issued at 1230 PM CST Sat Nov 7 2026
+
+Cool and dry surface high pressure will dominate the area's weather through the short term. Expect to see larger than normal diurnal temperature ranges with lows running near to below normal and highs running near to slightly above normal. Generally speaking morning lows will bottom out in the 40s for northern areas and in the upper 40s to mid 50s in southern areas. Afternoon temperatures will generally rise into the low to mid 70s, perhaps a little higher on Tuesday.
+
+&&
+
+.LONG TERM... (Tuesday night through Friday) Issued at 1230 PM CST Sat Nov 7 2026
+
+The main question in the long term continues to be what happens with the southern stream shortwave as it ejects out of Texas Tuesday night and into Wednesday. Medium range guidance is in decent agreement with the overall pattern of a deepening longwave trough across the eastern CONUS, but there are still differences in timing and progression of the southern stream energy. The GFS remains somewhat of an outlier with the evolution of the embedded shortwaves, while ensemble guidance continues to suggest at least some precipitation potential across the Lower Mississippi Valley.
+
+With that being said, the biggest limiting factor for rainfall will be moisture. Although the forcing associated with the shortwave should be sufficient for some precipitation, the lack of significant low-level moisture return ahead of the system will likely keep rainfall rather limited. Some light showers will be possible Tuesday night and into Wednesday, but confidence in widespread measurable rainfall remains low. For now, keeping PoPs on the lower end seems reasonable, although that could change if better moisture manages to work its way northward.
+
+By Wednesday night and into Thursday, attention turns to the northern stream as another shortwave digs into the eastern CONUS and helps amplify the longwave trough. This will send another cold front through the area sometime Wednesday night into Thursday. Similar to the previous system, moisture return ahead of the front looks rather limited, so not expecting much in the way of rainfall with its passage. Temperatures ahead of the front will remain above average, with highs generally in the mid to upper 70s Wednesday and Thursday.
+
+Behind the front, northerly flow and cold air advection will bring another round of cooler and drier conditions to the area. Highs on Friday look to struggle to get out of the 60s for much of the area, while lows Thursday night should fall into the 40s across the northern half of the CWA and 50s closer to the coast. There is still some uncertainty regarding just how strong the cold air advection will be, as some guidance suggests temperatures could end up even cooler than currently forecast. Overall, confidence is fairly high in the cooler and drier pattern returning by Friday, with the exact magnitude of the cooldown being the main thing to watch.
+
+&&
+
+.AVIATION... (00Z TAFS) Issued at 512 PM CST Sat Nov 7 2026
+
+VFR conditions through the forecast period.
+
+&&
+
+.MARINE... Issued at 1230 PM CST Sat Nov 7 2026
+
+Cold air advection will continue to result in moderate northeast winds across the coastal waters through this afternoon. the remainder of today. Winds will subside a bit this evening and overnight somewhat by evening but will remain around 15 knots across the open waters. Conditions will improve Sunday into the middle of the week as the area remains under the southeast flank of surface high pressure.
+
+&&
+
+.LIX WATCHES/WARNINGS/ADVISORIES... LA...None. GM...None. MS...None. GM...None. &&
+
+$$

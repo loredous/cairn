@@ -1,0 +1,23 @@
+FPUS51 KGYX 072201 ZFPGYX
+
+Zone Forecasts for New Hampshire and western Maine National Weather Service Gray ME 500 PM EST Sat Nov 7 2026
+
+MEZ024-081200- Coastal Cumberland- Including the cities of Portland, Cape Elizabeth, South Portland, Westbrook, Yarmouth, and Brunswick 500 PM EST Sat Nov 7 2026
+
+.TONIGHT...A chance of rain in the evening, then rain after midnight. Patchy fog. Lows around 40. North winds around 10 mph with gusts up to 20 mph. Chance of rain 90 percent. .SUNDAY...Cloudy with rain likely in the morning, then partly sunny with a slight chance of showers in the afternoon. Highs in the lower 50s. Northwest winds 10 to 15 mph with gusts up to 30 mph. Chance of rain 70 percent. .SUNDAY NIGHT...Mostly clear in the evening, then becoming partly cloudy. Lows in the lower 30s. Light and variable winds. .MONDAY...Partly sunny. Highs in the mid 50s. West winds around 10 mph with gusts up to 20 mph. .MONDAY NIGHT...Partly cloudy. Lows in the lower 30s. .TUESDAY...Partly sunny. Highs in the mid 50s. .TUESDAY NIGHT...Partly cloudy in the evening, then clearing. Lows in the lower 30s. .VETERANS DAY...Partly sunny. Highs in the mid 50s. .WEDNESDAY NIGHT...Partly cloudy. Lows in the upper 20s. .THURSDAY...Partly sunny. Highs around 50. .THURSDAY NIGHT...Partly cloudy. Lows in the mid 20s. .FRIDAY...Partly sunny. A chance of rain in the afternoon. Highs in the upper 40s. Chance of rain 40 percent.
+
+$$
+
+MEZ019-081200- Central Interior Cumberland- Including the cities of New Gloucester, Gray, North Windham, and Gorham 500 PM EST Sat Nov 7 2026
+
+.TONIGHT...A chance of rain in the evening, then rain after midnight. Patchy fog. Lows in the upper 30s. North winds around 10 mph with gusts up to 20 mph. Chance of rain 90 percent. .SUNDAY...Cloudy with rain in the morning, then partly sunny with a slight chance of showers in the afternoon. Highs in the lower 50s. Northwest winds 10 to 15 mph with gusts up to 30 mph. Chance of rain 90 percent. .SUNDAY NIGHT...Partly cloudy. Lows in the lower 30s. Light and variable winds. .MONDAY...Partly sunny. Highs in the mid 50s. West winds around 10 mph. .MONDAY NIGHT...Partly cloudy. Lows around 30. .TUESDAY...Partly sunny. Highs in the mid 50s. .TUESDAY NIGHT...Partly cloudy in the evening, then clearing. Lows in the lower 30s. .VETERANS DAY...Partly sunny. Highs in the lower 50s. .WEDNESDAY NIGHT...Partly cloudy. Lows in the mid 20s. .THURSDAY...Partly sunny. Highs around 50. .THURSDAY NIGHT...Partly cloudy. Lows in the mid 20s. .FRIDAY...Partly sunny. A chance of rain and snow in the afternoon. Highs in the mid 40s. Chance of precipitation 30 percent.
+
+$$
+
+MEZ033-081200- Interior Cumberland Highlands- Including the cities of Bridgton, Harrison, and Naples 500 PM EST Sat Nov 7 2026
+
+.TONIGHT...Rain. Patchy fog. Lows in the upper 30s. North winds around 10 mph. Gusts up to 25 mph after midnight. Chance of rain 90 percent. .SUNDAY...Cloudy with rain in the morning, then partly sunny with a slight chance of showers in the afternoon. Highs in the lower 50s. Northwest winds around 10 mph with gusts up to 30 mph. Chance of rain 90 percent. .SUNDAY NIGHT...Partly cloudy. Lows in the lower 30s. Light and variable winds. .MONDAY...Partly sunny. Highs in the lower 50s. Light and variable winds, becoming west around 10 mph in the afternoon. .MONDAY NIGHT...Partly cloudy. Lows in the upper 20s. .TUESDAY...Partly sunny. Highs in the lower 50s. .TUESDAY NIGHT...Partly cloudy. Lows in the lower 30s. .VETERANS DAY...Partly sunny. Highs in the lower 50s. .WEDNESDAY NIGHT...Partly cloudy. Lows in the mid 20s. .THURSDAY...Partly sunny. Highs in the upper 40s. .THURSDAY NIGHT...Partly cloudy. Lows in the lower 20s. .FRIDAY...Partly sunny. A chance of rain and snow in the afternoon. Highs in the mid 40s. Chance of precipitation 30 percent.
+
+$$
+
+MEZ023-081200- Coastal York- Including the cities of Biddeford, Saco, Old Orchard Beach, and Kittery 500 PM EST Sat Nov 7 2026

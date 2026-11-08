@@ -1,0 +1,37 @@
+WGUS55 KTWC 012355 FFWTWC AZC009-011-020130- /O.EXT.KTWC.FF.W.0255.000000T0000Z-261102T0130Z/ /00000.0.ER.000000T0000Z.000000T0000Z.000000T0000Z.OO/
+
+BULLETIN - EAS ACTIVATION REQUESTED Flash Flood Warning National Weather Service Tucson AZ 455 PM MST Sun Nov 1 2026
+
+The National Weather Service in Tucson has extended the
+
+* Flash Flood Warning for... Eastern Graham County in southeastern Arizona... Greenlee County in southeastern Arizona...
+
+* Until 630 PM MST.
+
+* At 455 PM MST, Doppler radar and automated rain gauges indicated 1 to 2 inches of rain had fallen across eastern Graham and Greenlee county earlier today, with light to moderate showers persisting across the area. Rainfall runoff on already saturated soils will result in swift water runoff... resulting in a persisting threat for flash flooding.
+
+HAZARD...Flash flooding caused by heavy rain.
+
+SOURCE...Radar and automated gauges.
+
+IMPACT...Flash flooding of small creeks and streams, urban areas, highways, streets and underpasses as well as other poor drainage and low-lying areas.
+
+* Some locations that will experience flash flooding include... Safford, Clifton, Solomon, Morenci, San Jose, Safford Regional Airport, Roper Lake State Park, Hannagan Meadow, Blue, Duncan, York, Franklin, Guthrie, Three Way, Rose Peak, Point-Of-Pines and Swift Trail Junction.
+
+This includes the following Flash Flood Prone Locations... Ward Canyon Rd.
+
+This includes the following streams and drainages... San Francisco River, Snake Creek, Bush Creek, Cottonwood Creek, Apache Creek, Bear Wallow Creek, Sheep Wash, Turkey Creek, Rose Creek, Willow Creek, Bitter Creek, McKittrick Creek, Rainville Wash, Coal Creek, Pace Creek, Coyote Wash, Sanders Wash, Sardine Creek, Alder Creek, KP Creek, Sand Wash, Little Blue Creek, Shoat Tank Wash, Tutt Creek, Burro Wash, Foote Creek, South Fork Bear Wallow Creek, Peck Wash, Martinez Wash, Dromedary Creek, Johnny Creek, Whitlock Wash, Freezeout Creek, White Mule Creek, Gila River, Marijilda Wash, McDonald Creek, Pat Creek, Right Fork Foote Creek, Pigeon Creek, Cave Creek, North Corral Creek, Salt House Creek, San Simon River, Conklin Creek, Clear Creek, Indian Creek, Dix Creek, Raspberry Creek, Right Prong Dix Creek, Slick Rock Wash, Cat Creek, Harden Cienega Creek, Beaver Creek, Stockton Wash, W A Wash, Jacobson Creek, Greaser Wash, Owl Wash, Willow Spring Wash, Linden Creek, Gold Gulch, Watson Wash, Wet Prong Creek, Whitewater Creek, Cold Creek, Dry Creek, Eagle Creek, Double Cienega Creek, Point of Pines Creek, Blue River, Hannagan Creek, Markham Wash, Silver Creek, Malay Creek, Oak Creek, Thomas Creek, Limestone Gulch, Yuma Wash, Corduroy Creek, Grant Creek, Lone Star Wash, Coleman Creek, Tule Creek, Hot Well Draw, Oak Draw, Cienega Creek, Middle Prong Creek, Park Creek, Rousensock Creek, Campbell Blue Creek, Tidwell Wash, Bonita Creek, Hannah Springs Creek, Horton Creek, East Eagle Creek, Black River, Dutch Blue Creek, Right Fork Markham Creek, Fish Creek, Dial Wash, Chase Creek, Strayhorse Creek, Midnight Creek, Dry Prong Creek, Left Prong Dix Creek, Canyon Creek and Silver Basin Creek.
+
+PRECAUTIONARY/PREPAREDNESS ACTIONS...
+
+Turn around, don't drown when encountering flooded roads. Most flood deaths occur in vehicles.
+
+Be aware of your surroundings and do not drive on flooded roads.
+
+&&
+
+LAT...LON 3243 10965 3323 10982 3348 10977 3352 10973 3356 10967 3357 10968 3358 10966 3358 10962 3361 10961 3363 10956 3362 10952 3363 10953 3365 10952 3366 10948 3370 10947 3373 10935 3374 10936 3378 10935 3378 10905 3243 10905
+
+FLASH FLOOD...RADAR AND GAUGE INDICATED
+
+$$

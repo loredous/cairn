@@ -1,0 +1,149 @@
+National Incident Management System Incident Command System September 2010
+
+ICS Forms
+
+NATIONAL INCIDENT MANAGEMENT SYSTEM INCIDENT COMMAND SYSTEM ICS FORMS BOOKLET FEMA 502-2
+
+September 2010
+
+INTRODUCTION TO ICS FORMS The National Incident Management System (NIMS) Incident Command System (ICS) Forms Booklet, FEMA 502-2, is designed to assist emergency response personnel in the use of ICS and corresponding documentation during incident operations. This booklet is a companion document to the NIMS ICS Field Operations Guide (FOG), FEMA 502-1, which provides general guidance to emergency responders on implementing ICS. This booklet is meant to complement existing incident management programs and does not replace relevant emergency operations plans, laws, and ordinances. These forms are designed for use within the Incident Command System, and are not targeted for use in Area Command or in multiagency coordination systems. These forms are intended for use as tools for the creation of Incident Action Plans (IAPs), for other incident management activities, and for support and documentation of ICS activities. Personnel using the forms should have a basic understanding of NIMS, including ICS, through training and/or experience to ensure they can effectively use and understand these forms. These ICS Forms represent an all-hazards approach and update to previously used ICS Forms. While the layout and specific blocks may have been updated, the functionality of the forms remains the same. It is recommended that all users familiarize themselves with the updated forms and instructions. A general description of each ICS Form's purpose, suggested preparation, and distribution are included immediately after the form, including block-by-block completion instructions to ensure maximum clarity on specifics, or for those personnel who may be unfamiliar with the forms. The ICS organizational charts contained in these forms are examples of how an ICS organization is typically developed for incident response. However, the flexibility and scalability of ICS allow modifications, as needed, based on experience and particular incident requirements. These forms are designed to include the essential data elements for the ICS process they address. The use of these standardized ICS Forms is encouraged to promote consistency in the management and documentation of incidents in the spirit of NIMS, and to facilitate effective use of mutual aid. In many cases, additional pages can be added to the existing ICS Forms when needed, and several forms are set up with this specific provision. The section after the ICS Forms List provides details on adding appendixes or fields to the forms for jurisdiction- or discipline-specific needs. It may be appropriate to compile and maintain other NIMS-related forms with these ICS Forms, such as resource management and/or ordering forms that are used to support incidents. Examples of these include the following Emergency Management Assistance Compact (EMAC) forms: REQ-A (Interstate Mutual Aid Request), Reimbursement Form R-1 (Interstate Reimbursement Form), and Reimbursement Form R-2 (Intrastate Reimbursement Form).
+
+ICS FORMS LIST This table lists all of the ICS Forms included in this publication. Notes: * In the following table, the ICS Forms identified with an asterisk (*) are typically included in an IAP. * Forms identified with two asterisks (**) are additional forms that could be used in the IAP. * The other ICS Forms are used in the ICS process for incident management activities, but are not typically included in the IAP. * The date and time entered in the form blocks should be determined by the Incident Command or Unified Command. Local time is typically used. ICS Form #:
+
+Form Title:
+
+Typically Prepared by:
+
+ICS 201
+
+Incident Briefing
+
+Initial Incident Commander
+
+*ICS 202
+
+Incident Objectives
+
+Planning Section Chief
+
+*ICS 203
+
+Organization Assignment List
+
+Resources Unit Leader
+
+*ICS 204
+
+Assignment List
+
+Resources Unit Leader and Operations Section Chief
+
+*ICS 205
+
+Incident Radio Communications Plan
+
+Communications Unit Leader
+
+**ICS 205A
+
+Communications List
+
+Communications Unit Leader
+
+*ICS 206
+
+Medical Plan
+
+Medical Unit Leader (reviewed by Safety Officer)
+
+ICS 207
+
+Incident Organization Chart (wall-mount size, optional 8 x 14 )
+
+Resources Unit Leader
+
+**ICS 208
+
+Safety Message/Plan
+
+Safety Officer
+
+ICS 209
+
+Incident Status Summary
+
+Situation Unit Leader
+
+ICS 210
+
+Resource Status Change
+
+Communications Unit Leader
+
+ICS 211
+
+Incident Check-In List (optional 8 x 14 and 11 x 17 )
+
+Resources Unit/Check-In Recorder
+
+ICS 213
+
+General Message (3-part form)
+
+Any Message Originator
+
+ICS 214
+
+Activity Log (optional 2-sided form)
+
+All Sections and Units
+
+ICS 215
+
+Operational Planning Worksheet (optional 8 x 14 and 11 x 17 )
+
+Operations Section Chief
+
+ICS 215A
+
+Incident Action Plan Safety Analysis
+
+Safety Officer
+
+ICS 218
+
+Support Vehicle/Equipment Inventory (optional 8 x 14 and 11 x 17 )
+
+Ground Support Unit
+
+ICS 219-1 to ICS 219-8, ICS 219-10 (Cards)
+
+Resource Status Card (T-Card) (may be printed on cardstock)
+
+Resources Unit
+
+ICS 220
+
+Air Operations Summary Worksheet
+
+Operations Section Chief or Air Branch Director
+
+ICS 221
+
+Demobilization Check-Out
+
+Demobilization Unit Leader
+
+ICS 225
+
+Incident Personnel Performance Rating
+
+Supervisor at the incident
+
+ICS FORM ADAPTION, EXTENSION, AND APPENDIXES The ICS Forms in this booklet are designed to serve all-hazards, cross-discipline needs for incident management across the Nation. These forms include the essential data elements for the ICS process they address, and create a foundation within ICS for complex incident management activities. However, the flexibility and scalability of NIMS should allow for needs outside this foundation, so the following are possible mechanisms to add to, extend, or adapt ICS Forms when needed. Because the goal of NIMS is to have a consistent nationwide approach to incident management, jurisdictions and disciplines are encouraged to use the ICS Forms as they are presented here - unless these forms do not meet an organization's particular incident management needs for some unique reason. If changes are needed, the focus on essential information elements should remain, and as such the spirit and intent of particular fields or "information elements" on the ICS Forms should remain intact to maintain consistency if the forms are altered. Modifications should be clearly indicated as deviations from or additions to the ICS Forms. The following approaches may be used to meet any unique needs.
+
+ICS Form Adaptation When agencies and organizations require specialized forms or information for particular kinds of incidents, events, or disciplines, it may be beneficial to utilize the essential data elements from a particular ICS Form to create a more localized or field-specific form. When this occurs, organizations are encouraged to use the relevant essential data elements and ICS Form number, but to clarify that the altered form is a specific organizational adaptation of the form. For example, an altered form should clearly indicate in the title that it has been changed to meet a specific need, such as "ICS 215A, Hazard Risk Analysis Worksheet, Adapted for Story County Hazmat Program."
+
+Extending ICS Form Fields Particular fields on an ICS Form may need to include further breakouts or additional related elements. If such additions are needed, the form itself should be clearly labeled as an adapted form (see above), and the additional sub-field numbers should be clearly labeled as unique to the adapted form. Letters or other indicators may be used to label the new sub-fields (if the block does not already include sub-fields). Examples of possible field additions are shown below for the ICS 209: * Block 2: Incident Number. * Block 2A (adapted): Full agency accounting cost charge number for primary authority having jurisdiction. * Block 29: Primary Materials or Hazards Involved (hazardous chemicals, fuel types, infectious agents, radiation, etc.). * Block 29A (adapted): Indicate specific wildland fire fuel model number.
+
+Creating ICS Form Appendixes Certain ICS Forms may require appendixes to include additional information elements needed by a particular jurisdiction or discipline. When an appendix is needed for a given form, it is expected that the jurisdiction or discipline will determine standardized fields for such an appendix and make the form available as needed. Any ICS Form appendixes should be clearly labeled with the form name and an indicator that it is a discipline- or jurisdiction-specific appendix. Appendix field numbering should begin following the last identified block in the corresponding ICS Form.

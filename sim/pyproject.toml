@@ -8,6 +8,7 @@ dependencies = [
     "numpy>=2.0",
     "scipy>=1.13",
     "matplotlib>=3.9",
+    "zstandard==0.25.0",   # dict_eval: dictionary training and ratios (SPEC 12.2, 20.9)
 ]
 
 [project.optional-dependencies]

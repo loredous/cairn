@@ -1,0 +1,29 @@
+WWUS84 KTSA 030817 SPSTSA
+
+Special Weather Statement National Weather Service Tulsa OK 217 AM CST Tue Nov 3 2026
+
+ARZ001-010-119-OKZ069-172-030845- Benton AR-Washington AR-Northern Crawford AR-Northern Sequoyah OK- Adair OK- 217 AM CST Tue Nov 3 2026
+
+...STRONG THUNDERSTORMS WILL IMPACT SOUTH CENTRAL BENTON... NORTHWESTERN CRAWFORD...WESTERN WASHINGTON AND EASTERN ADAIR COUNTIES THROUGH 245 AM CST...
+
+At 217 AM CST, Doppler radar indicated strong thunderstorms along a line extending from 3 miles southeast of Baron to 8 miles east of Bunch. Movement was northeast at 45 mph.
+
+HAZARD...Wind gusts up to 40 mph.
+
+SOURCE...Radar indicated.
+
+IMPACT...Gusty winds could knock down small tree limbs and blow around unsecured objects.
+
+Locations in or near the path include... Stilwell... Prairie Grove... Lincoln... Westville... Adair State Park... Cincinnati... Maryetta... Baron... Clyde... Wedington... Rhea... Canehill... Odell... Summers... Morrow...
+
+PRECAUTIONARY/PREPAREDNESS ACTIONS...
+
+If outdoors, consider seeking shelter inside a building.
+
+A Tornado Watch remains in effect until 300 AM CST for northwestern Arkansas...and northeastern and east central Oklahoma.
+
+&&
+
+LAT...LON 3623 9440 3586 9430 3563 9448 3562 9474 3594 9466 TIME...MOT...LOC 0817Z 203DEG 39KT 3590 9456 3566 9462
+
+MAX HAIL SIZE...0.00 IN MAX WIND GUST...40 MPH

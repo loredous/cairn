@@ -1,0 +1,51 @@
+FXUS61 KRLX 080512 AFDRLX
+
+Area Forecast Discussion National Weather Service Charleston WV 1212 AM EST Sun Nov 8 2026
+
+.WHAT HAS CHANGED...
+
+No significant changes from previous forecast.
+
+A Freeze Warning is in effect until 10AM Sunday morning.
+
+&&
+
+.KEY MESSAGES... 1) High pressure provides dry conditions through at least Tuesday.
+
+2) Low pressure system ushers in colder weather and first flakes of the season.
+
+&&
+
+.DISCUSSION... KEY MESSAGE 1...
+
+Freezing conditions are expected across much of the CWA this morning, as sky cover gradually clears, and winds remain light to calm, as high pressure nudges into the area from the west. This will set up a period of dry conditions through at least early next week, along with a gradual warming trend, particularly by Tuesday as southerly flow increases out ahead of an approaching system.
+
+KEY MESSAGE 2...
+
+By Wednesday into Thursday, a potent upper level trough and associated cold front will approach the area. Precipitation will start out as rain across the area, and could be moderate in intensity at times. Precipitation will gradually transition over to snow, or a rain snow mix at times, as a deep upper trough forms across the eastern U.S., ushering in much colder and blustery conditions. At least minor accumulations are possible across the mountains, as a prolonged period of northwesterly upslope flow takes hold.
+
+&&
+
+.AVIATION /06Z SUNDAY THROUGH THURSDAY/...
+
+Area of MVFR ceilings will continue to slowly erode from west to east through 12-14Z Sunday. Some patchy MVFR/IFR valley fog is possible for a period this morning as sky cover clears, but confidence is low. Widespread VFR conditions with light surface winds taking hold from 14Z onward.
+
+FORECAST CONFIDENCE AND ALTERNATE SCENARIOS THROUGH 06Z MONDAY...
+
+FORECAST CONFIDENCE: Medium.
+
+ALTERNATE SCENARIOS: Valley fog tonight could be denser and more widespread than currently anticipated.
+
+EXPERIMENTAL TABLE OF FLIGHT CATEGORY OBJECTIVELY SHOWS CONSISTENCY OF WFO FORECAST TO AVAILABLE MODEL INFORMATION: H = HIGH: TAF CONSISTENT WITH ALL MODELS OR ALL BUT ONE MODEL. M = MEDIUM: TAF HAS VARYING LEVEL OF CONSISTENCY WITH MODELS. L = LOW: TAF INCONSISTENT WITH ALL MODELS OR ALL BUT ONE MODEL.
+
+DATE SUN UTC 1HRLY 00 01 02 03 04 05 06 07 08 09 10 11 EST 1HRLY 19 20 21 22 23 00 01 02 03 04 05 06 CRW CONSISTENCY H M M M M M L L L L L L HTS CONSISTENCY H H H H H H M L L L L L BKW CONSISTENCY H H H H M M M M M M M L EKN CONSISTENCY H H H H H H H H H M L M PKB CONSISTENCY H M M H M H L L L L L L CKB CONSISTENCY H H H H H H H M M M L L
+
+AFTER 06Z MONDAY... IFR conditions possible in river valley fog each night through at least Tuesday.
+
+&&
+
+.RLX WATCHES/WARNINGS/ADVISORIES... WV...Freeze Warning until 10 AM EST this morning for WVZ005-006- 013>015-024>027-033-034. OH...Freeze Warning until 10 AM EST this morning for OHZ087. KY...Freeze Warning until 10 AM EST this morning for KYZ101>103-105. VA...Freeze Warning until 10 AM EST this morning for VAZ003-004.
+
+&&
+
+$$

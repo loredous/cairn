@@ -1,0 +1,11 @@
+WWUS73 KBIS 071201 NPWBIS
+
+URGENT - WEATHER MESSAGE National Weather Service Bismarck ND 601 AM CST Sat Nov 7 2026
+
+NDZ046>048-050-051-071315- /O.CAN.KBIS.FG.Y.0028.000000T0000Z-261107T1500Z/ Emmons-Logan-La Moure-McIntosh-Dickey- Including the cities of Napoleon, Gackle, Ashley, Wishek, Edgeley, Lamoure, Oakes, Linton, Strasburg, Ellendale, and Kulm 601 AM CST Sat Nov 7 2026
+
+...DENSE FOG ADVISORY IS CANCELLED...
+
+Although patchy fog is possible across southeastern portions early this morning, widespread dense fog is no longer expected. Thus the Dense Fog Advisory has been cancelled.
+
+$$

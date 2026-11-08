@@ -1,0 +1,35 @@
+FPUS52 KILM 071836 ZFPILM
+
+Zone Forecast Product National Weather Service Wilmington NC 136 PM EST Sat Nov 7 2026
+
+NCZ106-080745- Coastal Pender- Including the city of Surf City 136 PM EST Sat Nov 7 2026
+
+.THIS AFTERNOON...Sunny. Highs around 70. North winds 5 to 10 mph. .TONIGHT...Mostly cloudy in the evening, then becoming partly cloudy. Lows in the lower 40s. North winds 5 to 10 mph. .SUNDAY...Sunny. Highs in the upper 60s. North winds 5 to 10 mph, becoming northwest in the afternoon. .SUNDAY NIGHT...Mostly clear. Lows in the mid 40s. West winds around 5 mph. .MONDAY...Sunny. Highs in the lower 70s. Northwest winds 5 to 10 mph. .MONDAY NIGHT AND TUESDAY...Clear. Lows in the mid 40s. Highs in the lower 70s. .TUESDAY NIGHT THROUGH THURSDAY...Partly cloudy. Lows in the lower 50s. Highs in the lower 70s. .THURSDAY NIGHT...Mostly cloudy. Lows in the upper 40s. .FRIDAY...Mostly sunny. Highs in the lower 60s.
+
+$$
+
+NCZ105-080745- Inland Pender- Including the city of Burgaw 136 PM EST Sat Nov 7 2026
+
+.THIS AFTERNOON...Sunny. Highs around 70. North winds 5 to 10 mph. .TONIGHT...Partly cloudy. Lows in the upper 30s. North winds around 5 mph. .SUNDAY...Sunny. Highs in the upper 60s. Northwest winds around 5 mph. .SUNDAY NIGHT...Mostly clear. Lows in the lower 40s. Light and variable winds, becoming southwest around 5 mph after midnight. .MONDAY...Sunny. Highs in the lower 70s. West winds 5 to 10 mph. .MONDAY NIGHT AND TUESDAY...Clear. Lows in the upper 30s. Highs in the mid 70s. .TUESDAY NIGHT THROUGH THURSDAY NIGHT...Partly cloudy. Lows in the mid 40s. Highs in the lower 70s. .FRIDAY...Mostly sunny. Highs in the lower 60s.
+
+$$
+
+NCZ108-080745- Coastal New Hanover- Including the cities of Masonboro, Myrtle Grove, Ogden, Carolina Beach, and Seagate 136 PM EST Sat Nov 7 2026
+
+.THIS AFTERNOON...Mostly sunny. Near steady temperature in the upper 60s. North winds 5 to 10 mph. .TONIGHT...Mostly cloudy in the evening, then clearing. Lows in the mid 40s. North winds 5 to 10 mph. .SUNDAY...Sunny. Highs in the mid 60s. Northwest winds 5 to 10 mph. .SUNDAY NIGHT...Mostly clear. Lows in the upper 40s. West winds 5 to 10 mph. .MONDAY...Sunny. Highs in the lower 70s. Northwest winds 5 to 10 mph. .MONDAY NIGHT...Clear. Lows in the upper 40s. .TUESDAY...Sunny. Highs in the lower 70s. .TUESDAY NIGHT THROUGH THURSDAY...Partly cloudy. Lows in the lower 50s. Highs in the lower 70s. .THURSDAY NIGHT...Mostly cloudy in the evening, then becoming partly cloudy. Lows in the upper 40s. .FRIDAY...Mostly sunny. Highs in the lower 60s.
+
+$$
+
+NCZ107-080745- Inland New Hanover- Including the city of Wilmington 136 PM EST Sat Nov 7 2026
+
+.THIS AFTERNOON...Sunny. Highs in the lower 70s. North winds 5 to 10 mph. .TONIGHT...Mostly cloudy in the evening, then becoming partly cloudy. Lows in the lower 40s. North winds around 5 mph. .SUNDAY...Sunny. Highs in the upper 60s. Northwest winds around 5 mph. .SUNDAY NIGHT...Mostly clear. Lows in the lower 40s. Southwest winds around 5 mph. .MONDAY...Sunny. Highs in the lower 70s. Northwest winds around 5 mph. .MONDAY NIGHT...Clear. Lows in the lower 40s. .TUESDAY...Sunny. Highs in the lower 70s. .TUESDAY NIGHT THROUGH THURSDAY...Partly cloudy. Lows in the upper 40s. Highs in the lower 70s. .THURSDAY NIGHT...Mostly cloudy. Lows in the mid 40s. .FRIDAY...Mostly sunny. Highs in the lower 60s.
+
+$$
+
+NCZ110-080745- Coastal Brunswick- Including the cities of Oak Island, Long Beach, Southport, and Sunset Beach 136 PM EST Sat Nov 7 2026
+
+.THIS AFTERNOON...Mostly sunny. Highs in the lower 70s. North winds 5 to 10 mph. .TONIGHT...Mostly cloudy in the evening, then clearing. Lows in the lower 40s. North winds 5 to 10 mph. .SUNDAY...Sunny. Highs in the upper 60s. North winds 5 to 10 mph. .SUNDAY NIGHT...Mostly clear. Lows in the mid 40s. West winds 5 to 10 mph. .MONDAY...Sunny. Highs in the lower 70s. West winds 5 to 10 mph. .MONDAY NIGHT...Clear. Lows in the mid 40s. .TUESDAY...Sunny. Highs in the lower 70s. .TUESDAY NIGHT THROUGH THURSDAY...Partly cloudy. Lows in the lower 50s. Highs in the lower 70s. .THURSDAY NIGHT...Mostly cloudy. Lows in the upper 40s. .FRIDAY...Mostly sunny. Highs in the lower 60s.
+
+$$
+
+NCZ109-080745- Inland Brunswick- Including the cities of Boiling Spring Lakes, Leland, and Shallotte 136 PM EST Sat Nov 7 2026

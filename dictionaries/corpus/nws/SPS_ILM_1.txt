@@ -1,0 +1,31 @@
+WWUS82 KILM 061831 SPSILM
+
+Special Weather Statement National Weather Service Wilmington NC 131 PM EST Fri Nov 6 2026
+
+NCZ105-061915- Inland Pender NC- 131 PM EST Fri Nov 6 2026
+
+...A STRONG THUNDERSTORM WILL IMPACT PENDER COUNTY UNTIL 215 PM EST...
+
+At 131 PM EST, Doppler radar was tracking a strong thunderstorm 6 miles north of Rowan, or 18 miles east of Elizabethtown, moving east at 25 mph.
+
+HAZARD...Wind gusts up to 50 mph.
+
+SOURCE...Radar indicated.
+
+IMPACT...Gusty winds could knock down tree limbs and blow around unsecured objects.
+
+Locations impacted include... Penderlea, Willard and Watha.
+
+PRECAUTIONARY/PREPAREDNESS ACTIONS...
+
+Monitor the weather situation closely and be alert for threatening weather conditions.
+
+This storm may intensify, so monitor for possible warnings from the National Weather Service.
+
+&&
+
+LAT...LON 3460 7792 3456 7825 3468 7816 3471 7812 3473 7810 3473 7801 3472 7799 3472 7796 TIME...MOT...LOC 1831Z 258DEG 23KT 3461 7829
+
+MAX HAIL SIZE...0.00 IN MAX WIND GUST...50 MPH
+
+$$

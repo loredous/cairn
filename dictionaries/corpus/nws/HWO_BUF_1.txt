@@ -1,0 +1,83 @@
+FLUS41 KBUF 070624 HWOBUF
+
+Hazardous Weather Outlook National Weather Service Buffalo NY 124 AM EST Sat Nov 7 2026
+
+NYZ001>003-010>012-085-080630- Niagara-Orleans-Monroe-Northern Erie-Genesee-Wyoming-Southern Erie- 124 AM EST Sat Nov 7 2026
+
+This Hazardous Weather Outlook is for portions of western New York.
+
+.DAY ONE...Today and tonight.
+
+Hazardous weather is not expected at this time.
+
+.DAYS TWO THROUGH SEVEN...Sunday through Friday.
+
+West to southwest winds will increase on Sunday, peaking during the afternoon. Gusts may reach or exceed 45 mph at times.
+
+.SPOTTER INFORMATION STATEMENT...
+
+Spotter activation is not expected at this time.
+
+This product, along with other watches, warnings, advisories, and statements issued by the National Weather Service office in Buffalo can be found on the internet at http://www.weather.gov/buf
+
+$$
+
+NYZ004>008-013-014-019>021-080630- Wayne-Northern Cayuga-Oswego-Jefferson-Lewis-Livingston-Ontario- Chautauqua-Cattaraugus-Allegany- 124 AM EST Sat Nov 7 2026
+
+This Hazardous Weather Outlook is for portions of western and north central New York.
+
+.DAY ONE...Today and tonight.
+
+No hazardous weather is expected at this time.
+
+.DAYS TWO THROUGH SEVEN...Sunday through Friday.
+
+No hazardous weather is expected at this time.
+
+.SPOTTER INFORMATION STATEMENT...
+
+Spotter activation is not expected at this time.
+
+This product, along with other watches, warnings, advisories, and statements issued by the National Weather Service office in Buffalo can be found on the internet at http://www.weather.gov/buf
+
+$$
+
+LEZ040-041-LOZ042>045-062>065-080630- Lake Erie nearshore waters from Ripley to Dunkirk- Lake Erie nearshore waters from Dunkirk to Buffalo- Lake America nearshore waters from the Niagara River to Hamlin Beach- Lake America nearshore waters from Hamlin Beach to Sodus Bay- Lake America nearshore waters from Sodus Bay to Mexico Bay- Lake America nearshore waters from Mexico Bay to the Saint Lawrence River- Lake America open waters from the Niagara River to Hamlin Beach- Lake America open waters from Hamlin Beach to Sodus Bay- Lake America open waters from Sodus Bay to Mexico Bay- Lake America open waters from Mexico Bay to the Saint Lawrence River- 124 AM EST Sat Nov 7 2026
+
+This Hazardous Weather Outlook is for portions of Lake America and Lake Erie.
+
+.DAY ONE...Today and tonight.
+
+Waterspouts are possible across the lower Great Lakes today through tonight.
+
+.DAYS TWO THROUGH SEVEN...Sunday through Friday.
+
+Waterspouts are possible across the lower Great Lakes Sunday through Monday morning.
+
+.SPOTTER INFORMATION STATEMENT...
+
+Spotter activation is not expected at this time.
+
+This product, along with other watches, warnings, advisories, and statements issued by the National Weather Service office in Buffalo can be found on the internet at http://www.weather.gov/buf
+
+$$
+
+LEZ020-LOZ030-SLZ022-024-080630- Upper Niagara River and Buffalo Harbor-Lower Niagara River- Saint Lawrence River from Cape Vincent to Ogdensburg- Saint Lawrence River from Ogdensburg to Saint Regis- 124 AM EST Sat Nov 7 2026
+
+This Hazardous Weather Outlook is for portions of Lake America, Lake Erie and Saint Lawrence River.
+
+.DAY ONE...Today and tonight.
+
+No hazardous weather is expected at this time.
+
+.DAYS TWO THROUGH SEVEN...Sunday through Friday.
+
+No hazardous weather is expected at this time.
+
+.SPOTTER INFORMATION STATEMENT...
+
+Spotter activation is not expected at this time.
+
+This product, along with other watches, warnings, advisories, and statements issued by the National Weather Service office in Buffalo can be found on the internet at http://www.weather.gov/buf
+
+$$

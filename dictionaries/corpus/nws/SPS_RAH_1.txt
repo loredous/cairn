@@ -1,0 +1,33 @@
+WWUS82 KRAH 061754 SPSRAH
+
+Special Weather Statement National Weather Service Raleigh NC 1254 PM EST Fri Nov 6 2026
+
+NCZ077-088-089-061830- Sampson NC-Harnett NC-Cumberland NC- 1254 PM EST Fri Nov 6 2026
+
+...A STRONG THUNDERSTORM WILL IMPACT NORTHWESTERN SAMPSON... SOUTHEASTERN HARNETT AND NORTHEASTERN CUMBERLAND COUNTIES THROUGH 130 PM EST...
+
+At 1254 PM EST, Doppler radar was tracking a strong thunderstorm 8 miles east of Pope AAF, or 8 miles north of Fayetteville, moving east at 20 mph.
+
+HAZARD...Wind gusts up to 40 mph.
+
+SOURCE...Radar indicated.
+
+IMPACT...Gusty winds could knock down tree limbs and blow around unsecured objects.
+
+Locations impacted include... Fayetteville, Dunn, Godwin, Erwin, Eastover, Coats, Wade, Falcon, Linden, and Anderson Creek.
+
+This includes Interstate 95 between Mile Markers 77 and 58.
+
+PRECAUTIONARY/PREPAREDNESS ACTIONS...
+
+If outdoors, consider seeking shelter inside a building.
+
+This storm may intensify, so be certain to monitor local radio stations and available television stations for additional information and possible warnings from the National Weather Service.
+
+&&
+
+LAT...LON 3527 7896 3542 7861 3541 7860 3540 7860 3539 7858 3536 7856 3535 7854 3531 7854 3530 7853 3511 7847 3510 7892 TIME...MOT...LOC 1754Z 261DEG 18KT 3520 7886
+
+MAX HAIL SIZE...0.00 IN MAX WIND GUST...40 MPH
+
+$$

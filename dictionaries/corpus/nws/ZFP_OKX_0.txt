@@ -1,0 +1,29 @@
+FPUS51 KOKX 072103 ZFPOKX
+
+Zone Forecast Product National Weather Service New York NY 402 PM EST Sat Nov 7 2026
+
+NYZ072-081100- New York (Manhattan)- 402 PM EST Sat Nov 7 2026
+
+.TONIGHT...Partly cloudy. Lows in the upper 40s. West winds 10 to 15 mph with gusts up to 25 mph. .SUNDAY...Sunny. Highs in the lower 60s. West winds 10 to 15 mph with gusts up to 30 mph. .SUNDAY NIGHT...Mostly clear. Lows in the mid 40s. West winds 10 to 15 mph. .MONDAY...Mostly sunny. Highs around 60. West winds 15 to 20 mph with gusts up to 30 mph. .MONDAY NIGHT...Mostly clear in the evening, then becoming partly cloudy. Lows in the lower 40s. West winds 10 to 15 mph. Gusts up to 25 mph in the evening. .TUESDAY...Mostly sunny. Highs in the lower 60s. .TUESDAY NIGHT...Mostly clear. Lows in the mid 40s. .VETERANS DAY...Sunny. Highs in the lower 60s. .WEDNESDAY NIGHT...Mostly cloudy. Lows in the lower 40s. .THURSDAY...Partly sunny. A chance of rain in the afternoon. Highs in the upper 50s. Chance of rain 30 percent. .THURSDAY NIGHT...Rain likely. Lows around 40. Chance of rain 60 percent. .FRIDAY...Partly sunny with a 50 percent chance of rain. Highs in the lower 50s. .FRIDAY NIGHT...Mostly cloudy with a 40 percent chance of rain. Lows in the mid 30s. .SATURDAY...Mostly sunny. Highs in the lower 50s.
+
+$$
+
+NYZ073-081100- Bronx- 402 PM EST Sat Nov 7 2026
+
+.TONIGHT...Partly cloudy. Lows in the upper 40s. West winds 15 to 20 mph with gusts up to 30 mph. .SUNDAY...Sunny. Highs in the lower 60s. West winds 15 to 20 mph with gusts up to 30 mph. .SUNDAY NIGHT...Mostly clear. Lows in the mid 40s. West winds 10 to 15 mph with gusts up to 25 mph. .MONDAY...Mostly sunny. Highs in the upper 50s. West winds 15 to 20 mph with gusts up to 30 mph. .MONDAY NIGHT...Mostly clear in the evening, then becoming partly cloudy. Lows in the lower 40s. West winds 10 to 15 mph. Gusts up to 25 mph in the evening. .TUESDAY...Mostly sunny. Highs in the lower 60s. .TUESDAY NIGHT...Mostly clear. Lows in the mid 40s. .VETERANS DAY...Sunny. Highs in the lower 60s. .WEDNESDAY NIGHT...Mostly cloudy. Lows in the mid 40s. .THURSDAY...Partly sunny. A chance of rain in the afternoon. Highs in the upper 50s. Chance of rain 30 percent. .THURSDAY NIGHT...Rain likely. Breezy with lows in the lower 40s. Chance of rain 60 percent. .FRIDAY...Partly sunny with a 50 percent chance of rain. Breezy with highs around 50. .FRIDAY NIGHT...Mostly cloudy with a 40 percent chance of rain. Breezy with lows in the mid 30s. .SATURDAY...Mostly sunny. Highs around 50.
+
+$$
+
+NYZ176-081100- Northern Queens- 402 PM EST Sat Nov 7 2026
+
+.TONIGHT...Partly cloudy. Lows in the upper 40s. West winds 15 to 20 mph with gusts up to 30 mph. .SUNDAY...Sunny. Highs in the mid 60s. West winds 15 to 20 mph with gusts up to 30 mph. .SUNDAY NIGHT...Mostly clear. Lows in the upper 40s. West winds around 15 mph. .MONDAY...Sunny. Highs around 60. West winds 15 to 20 mph with gusts up to 30 mph. .MONDAY NIGHT...Mostly clear in the evening, then becoming partly cloudy. Lows in the mid 40s. West winds 10 to 15 mph. Gusts up to 25 mph in the evening. .TUESDAY...Mostly sunny. Highs in the lower 60s. .TUESDAY NIGHT...Mostly clear. Lows in the mid 40s. .VETERANS DAY...Sunny. Highs in the lower 60s. .WEDNESDAY NIGHT...Mostly cloudy. Lows in the mid 40s. .THURSDAY...Partly sunny. A chance of rain in the afternoon. Highs in the upper 50s. Chance of rain 30 percent. .THURSDAY NIGHT...Rain likely. Lows in the lower 40s. Chance of rain 60 percent. .FRIDAY...Partly sunny with a 50 percent chance of rain. Highs in the lower 50s. .FRIDAY NIGHT...Mostly cloudy with a 40 percent chance of rain. Lows in the mid 30s. .SATURDAY...Mostly sunny. Highs in the lower 50s.
+
+$$
+
+NYZ178-081100- Southern Queens- 402 PM EST Sat Nov 7 2026
+
+.TONIGHT...Partly cloudy this evening, then becoming mostly clear. Breezy with lows in the upper 40s. West winds 20 to 25 mph. .SUNDAY...Sunny. Highs in the lower 60s. West winds 15 to 20 mph with gusts up to 30 mph. .SUNDAY NIGHT...Mostly clear. Lows in the upper 40s. West winds 15 to 20 mph. .MONDAY...Sunny. Highs in the upper 50s. West winds 15 to 20 mph with gusts up to 30 mph. .MONDAY NIGHT...Mostly clear in the evening, then becoming partly cloudy. Lows in the mid 40s. Northwest winds 15 to 20 mph. .TUESDAY...Mostly sunny. Highs in the lower 60s. .TUESDAY NIGHT...Mostly clear. Lows in the upper 40s. .VETERANS DAY...Sunny. Highs in the lower 60s. .WEDNESDAY NIGHT...Mostly cloudy. Lows in the upper 40s. .THURSDAY...Partly sunny. A chance of rain in the afternoon. Highs in the upper 50s. Chance of rain 30 percent. .THURSDAY NIGHT...Rain likely. Breezy with lows in the lower 40s. Chance of rain 60 percent. .FRIDAY...Partly sunny with a 50 percent chance of rain. Breezy with highs in the lower 50s. .FRIDAY NIGHT...Mostly cloudy with a 40 percent chance of rain. Breezy with lows in the upper 30s. .SATURDAY...Mostly sunny. Highs in the lower 50s.
+
+$$
+
+NYZ075-081100- Kings (Brooklyn)- 402 PM EST Sat Nov 7 2026

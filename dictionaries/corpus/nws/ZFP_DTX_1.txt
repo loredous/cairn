@@ -1,0 +1,27 @@
+FPUS53 KDTX 070856 ZFPDTX
+
+Southeast Michigan Zone Forecasts National Weather Service Detroit/Pontiac MI 356 AM EST Sat Nov 7 2026
+
+MIZ047-072115- Midland- Including the city of Midland 356 AM EST Sat Nov 7 2026
+
+.TODAY...Cloudy until late afternoon, then becoming partly cloudy. Highs in the lower 50s. Northwest winds 5 to 10 mph. .TONIGHT...Mostly clear. Lows in the lower 30s. Southwest winds 5 to 10 mph. Gusts up to 25 mph after midnight. .SUNDAY...Partly cloudy. Highs in the upper 50s. West winds 10 to 15 mph with gusts up to 30 mph. .SUNDAY NIGHT...Mostly cloudy in the evening, then becoming partly cloudy. Lows in the mid 30s. West winds 5 to 10 mph. .MONDAY...Partly cloudy. Highs in the upper 50s. West winds 5 to 10 mph. .MONDAY NIGHT...Partly cloudy. Lows around 40. .TUESDAY...Mostly sunny. Highs in the lower 60s. Temperatures falling into the in the lower 50s in the afternoon. .TUESDAY NIGHT...Partly cloudy. Lows in the lower 30s. .VETERANS DAY...Partly cloudy. Highs in the mid 50s. .WEDNESDAY NIGHT...Partly cloudy. Lows in the lower 30s. .THURSDAY...Mostly cloudy. Highs in the upper 40s. .THURSDAY NIGHT...Mostly cloudy in the evening, then becoming partly cloudy. Lows in the upper 20s. .FRIDAY...Partly cloudy. Highs in the mid 40s.
+
+$$
+
+MIZ048-072115- Bay- Including the city of Bay City 356 AM EST Sat Nov 7 2026
+
+.TODAY...Mostly cloudy. Highs in the lower 50s. Northwest winds 5 to 15 mph. .TONIGHT...Mostly clear. Lows around 30. Southwest winds 5 to 10 mph. Gusts up to 25 mph after midnight. .SUNDAY...Partly cloudy. Highs in the upper 50s. West winds 10 to 20 mph with gusts up to 30 mph. .SUNDAY NIGHT...Mostly cloudy in the evening, then becoming partly cloudy. Lows in the mid 30s. West winds 5 to 15 mph with gusts up to 25 mph. .MONDAY...Partly cloudy. Highs in the mid 50s. West winds 5 to 10 mph. .MONDAY NIGHT...Partly cloudy. Lows in the upper 30s. .TUESDAY...Mostly sunny. Highs in the lower 60s. .TUESDAY NIGHT...Partly cloudy. Lows in the lower 30s. .VETERANS DAY...Partly cloudy. Highs in the mid 50s. .WEDNESDAY NIGHT...Mostly cloudy in the evening, then becoming partly cloudy. Lows in the lower 30s. .THURSDAY...Mostly cloudy. Highs in the upper 40s. .THURSDAY NIGHT...Mostly cloudy in the evening, then becoming partly cloudy. Lows in the upper 20s. .FRIDAY...Partly cloudy in the morning, then becoming mostly cloudy. Highs in the mid 40s.
+
+$$
+
+MIZ049-072115- Huron- Including the city of Bad Axe 356 AM EST Sat Nov 7 2026
+
+.TODAY...Cloudy. A slight chance of rain until late afternoon. Highs around 50. Northwest winds 5 to 15 mph with gusts up to 25 mph. Chance of rain 20 percent. .TONIGHT...Mostly clear in the evening, then becoming partly cloudy. Lows in the lower 30s. West winds 5 to 15 mph. Gusts up to 30 mph after midnight. .SUNDAY...Partly cloudy. Highs in the mid 50s. West winds 10 to 20 mph with gusts up to 35 mph. .SUNDAY NIGHT...Mostly cloudy. Lows in the upper 30s. Northwest winds 10 to 15 mph with gusts up to 30 mph. .MONDAY...Partly cloudy in the morning, then becoming mostly cloudy. Highs in the lower 50s. West winds 5 to 15 mph with gusts up to 25 mph. .MONDAY NIGHT...Mostly cloudy in the evening, then becoming partly cloudy. Lows in the upper 30s. .TUESDAY...Mostly sunny. Highs in the upper 50s. .TUESDAY NIGHT...Partly cloudy in the evening, then becoming mostly cloudy. Lows in the mid 30s. .VETERANS DAY...Partly cloudy. Highs in the lower 50s. .WEDNESDAY NIGHT...Mostly cloudy with a 40 percent chance of rain. Lows in the lower 30s. .THURSDAY...Mostly cloudy with a 50 percent chance of rain. Highs in the upper 40s. .THURSDAY NIGHT...Cloudy with a chance of rain, possibly mixed with snow. Lows around 30. Chance of precipitation 50 percent. .FRIDAY...Mostly cloudy with a chance of rain, possibly mixed with snow. Highs in the mid 40s. Chance of precipitation 40 percent.
+
+$$
+
+MIZ053-072115- Saginaw- Including the city of Saginaw 356 AM EST Sat Nov 7 2026
+
+.TODAY...Mostly cloudy. Highs in the lower 50s. Northwest winds 5 to 10 mph with gusts up to 20 mph. .TONIGHT...Mostly clear. Lows in the lower 30s. Southwest winds 5 to 15 mph. .SUNDAY...Partly cloudy. Highs in the upper 50s. West winds 10 to 20 mph with gusts up to 30 mph. .SUNDAY NIGHT...Partly cloudy. Lows in the mid 30s. West winds 5 to 15 mph with gusts up to 25 mph. .MONDAY...Partly cloudy. Highs in the mid 50s. West winds 5 to 10 mph with gusts up to 20 mph. .MONDAY NIGHT...Partly cloudy. Lows in the lower 40s. .TUESDAY...Mostly sunny. Highs in the lower 60s. Temperatures falling into the in the lower 50s in the afternoon. .TUESDAY NIGHT...Partly cloudy. Lows in the mid 30s. .VETERANS DAY...Mostly cloudy in the morning, then becoming partly cloudy. Highs in the lower 50s. .WEDNESDAY NIGHT...Mostly cloudy in the evening, then becoming partly cloudy. Lows in the lower 30s. .THURSDAY...Mostly cloudy. Highs in the upper 40s. .THURSDAY NIGHT...Mostly cloudy. Lows in the upper 20s. .FRIDAY...Mostly cloudy. Highs in the mid 40s.
+
+$$

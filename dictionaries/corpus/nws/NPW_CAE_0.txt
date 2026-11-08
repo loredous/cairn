@@ -1,0 +1,29 @@
+WWUS72 KCAE 071111 NPWCAE
+
+URGENT - WEATHER MESSAGE National Weather Service Columbia SC 611 AM EST Sat Nov 7 2026
+
+SCZ031-071215- /O.CAN.KCAE.FG.Y.0011.000000T0000Z-261107T1200Z/ Sumter- Including the cities of Sumter 611 AM EST Sat Nov 7 2026
+
+...DENSE FOG ADVISORY IS CANCELLED...
+
+$$
+
+SCZ037-038-135>137-071300- /O.EXT.KCAE.FG.Y.0011.000000T0000Z-261107T1300Z/ Calhoun-Clarendon-Northwestern Orangeburg-Central Orangeburg- Southeastern Orangeburg- Including the cities of Manning, Summerton, Holly Hill, Santee, Branchville, Brookdale, Neeses, Bowman, St. Matthews, Eutawville, Springfield, Elloree, North, and Orangeburg 611 AM EST Sat Nov 7 2026
+
+...DENSE FOG ADVISORY NOW IN EFFECT UNTIL 8 AM EST THIS MORNING...
+
+* WHAT...Visibility one quarter mile or less in dense fog.
+
+* WHERE...Calhoun, Central Orangeburg, Clarendon, Northwestern Orangeburg, and Southeastern Orangeburg Counties.
+
+* WHEN...Until 8 AM EST this morning.
+
+* IMPACTS...Low visibility could make driving conditions hazardous.
+
+PRECAUTIONARY/PREPAREDNESS ACTIONS...
+
+If driving, slow down, use your headlights, and leave plenty of distance ahead of you.
+
+&&
+
+$$

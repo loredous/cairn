@@ -1,0 +1,125 @@
+INCIDENT RADIO COMMUNICATIONS PLAN (ICS 205) 1. Incident Name:
+
+2. Date/Time Prepared:
+
+3. Operational Period:
+
+Date:
+
+Date From:
+
+Date To:
+
+Time:
+
+Time From:
+
+Time To:
+
+4. Basic Radio Channel Use: Zone Grp.
+
+Ch #
+
+Function
+
+Channel Name/Trunked Radio System Talkgroup
+
+Assignment
+
+RX Freq N or W
+
+RX Tone/NAC
+
+TX Freq N or W
+
+TX Tone/NAC
+
+Mode (A, D, or M)
+
+5. Special Instructions:
+
+6. Prepared by (Communications Unit Leader) Name: ICS 205
+
+IAP Page ____
+
+Signature: Date/Time:
+
+Remarks
+
+ICS 205 Incident Radio Communications Plan Purpose. The Incident Radio Communications Plan (ICS 205) provides information on all radio frequency or trunked radio system talkgroup assignments for each operational period. The plan is a summary of information obtained about available radio frequencies or talkgroups and the assignments of those resources by the Communications Unit Leader for use by incident responders. Information from the Incident Radio Communications Plan on frequency or talkgroup assignments is normally placed on the Assignment List (ICS 204). Preparation. The ICS 205 is prepared by the Communications Unit Leader and given to the Planning Section Chief for inclusion in the Incident Action Plan. Distribution. The ICS 205 is duplicated and attached to the Incident Objectives (ICS 202) and given to all recipients as part of the Incident Action Plan (IAP). All completed original forms must be given to the Documentation Unit. Information from the ICS 205 is placed on Assignment Lists. Notes: * The ICS 205 is used to provide, in one location, information on all radio frequency assignments down to the Division/Group level for each operational period. * The ICS 205 serves as part of the IAP. Block Number
+
+Block Title
+
+Instructions
+
+Incident Name
+
+Enter the name assigned to the incident.
+
+Date/Time Prepared
+
+Enter date prepared (month/day/year) and time prepared (using the 24-hour clock).
+
+Operational Period * Date and Time From * Date and Time To
+
+Enter the start date (month/day/year) and time (using the 24-hour clock) and end date and time for the operational period to which the form applies.
+
+Basic Radio Channel Use
+
+Enter the following information about radio channel use:
+
+Zone Group Channel Number
+
+Use at the Communications Unit Leader's discretion. Channel Number (Ch #) may equate to the channel number for incident radios that are programmed or cloned for a specific Communications Plan, or it may be used just as a reference line number on the ICS 205 document.
+
+Function
+
+Enter the Net function each channel or talkgroup will be used for (Command, Tactical, Ground-to-Air, Air-to-Air, Support, Dispatch).
+
+Channel Name/Trunked Radio System Talkgroup
+
+Enter the nomenclature or commonly used name for the channel or talk group such as the National Interoperability Channels which follow DHS frequency Field Operations Guide (FOG).
+
+Assignment
+
+Enter the name of the ICS Branch/Division/Group/Section to which this channel/talkgroup will be assigned.
+
+RX (Receive) Frequency (N or W)
+
+Enter the Receive Frequency (RX Freq) as the mobile or portable subscriber would be programmed using xxx.xxxx out to four decimal places, followed by an "N" designating narrowband or a "W" designating wideband emissions. The name of the specific trunked radio system with which the talkgroup is associated may be entered across all fields on the ICS 205 normally used for conventional channel programming information.
+
+RX Tone/NAC
+
+Enter the Receive Continuous Tone Coded Squelch System (CTCSS) subaudible tone (RX Tone) or Network Access Code (RX NAC) for the receive frequency as the mobile or portable subscriber would be programmed.
+
+Block Number
+
+Block Title
+
+Instructions
+
+TX (Transmit) Frequency (N or W)
+
+Enter the Transmit Frequency (TX Freq) as the mobile or portable subscriber would be programmed using xxx.xxxx out to four decimal places, followed by an "N" designating narrowband or a "W" designating wideband emissions.
+
+TX Tone/NAC
+
+Enter the Transmit Continuous Tone Coded Squelch System (CTCSS) subaudible tone (TX Tone) or Network Access Code (TX NAC) for the transmit frequency as the mobile or portable subscriber would be programmed.
+
+Mode (A, D, or M)
+
+Enter "A" for analog operation, "D" for digital operation, or "M" for mixed mode operation.
+
+Remarks
+
+Enter miscellaneous information concerning repeater locations, information concerning patched channels or talkgroups using links or gateways, etc.
+
+Special Instructions
+
+Enter any special instructions (e.g., using cross-band repeaters, securevoice, encoders, private line (PL) tones, etc.) or other emergency communications needs). If needed, also include any special instructions for handling an incident within an incident.
+
+Prepared by (Communications Unit Leader) * Name * Signature * Date/Time
+
+Enter the name and signature of the person preparing the form, typically the Communications Unit Leader. Enter date (month/day/year) and time prepared (24-hour clock).
+
+(continued)

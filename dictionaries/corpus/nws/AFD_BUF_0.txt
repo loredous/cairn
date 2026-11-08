@@ -1,0 +1,37 @@
+FXUS61 KBUF 072223 AFDBUF
+
+Area Forecast Discussion National Weather Service Buffalo NY 523 PM EST Sat Nov 7 2026
+
+.WHAT HAS CHANGED... Minor changes to the forecast with this update.
+
+&&
+
+.KEY MESSAGES... 1) Cool and unsettled through the weekend with periods of lake enhanced rain showers.
+
+2) Windy Sunday, especially across Western NY.
+
+3) Somewhat milder weather returns early next week, followed by colder temperatures by the end of next week.
+
+&&
+
+.DISCUSSION... KEY MESSAGE 1...Cool and unsettled through the weekend with periods of lake enhanced rain showers.
+
+A well defined mid level closed low will cross NY/PA this afternoon before reaching New England tonight. The associated surface low will weaken over the eastern Great Lakes, giving way to secondary coastal low along the New England coast. The resulting coastal low will deepen as it moves northward through Sunday. The more widespread shower activity will be across central New York and the North Country through this afternoon, as the mid level closed low moves east providing better synoptic forcing. Farther west, ongoing lake effect showers will tend to break up and weaken through the afternoon as the mid level closed low shifts eastward.
+
+Cool northwest flow will become established by early this evening as the coastal low deepens off the New England coast. Deep wrap around moisture will combine with lake instability and northwest upslope flow to support widespread showers and light rain, peaking in coverage this evening through the early overnight. The deeper moisture will pull away late tonight through Sunday morning, with showers ending from west to east. The last of the showers across Central NY should end by midday Sunday.
+
+Another progressive mid level closed circulation will dive southeast across Ontario and Quebec late Sunday through Monday morning. Increasing moisture and synoptic scale ascent will combine with lake induced instability to support another round of rain showers developing Sunday evening and lasting through Monday morning. The lake enhancement will initially be found east of the lakes Sunday evening in westerly flow, moving southeast of the lakes overnight through Monday morning as boundary layer flow veers to the northwest. Boundary layer temperatures will continue to support all liquid.
+
+KEY MESSAGE 2...Windy Sunday, especially across Western NY.
+
+A tight pressure gradient will persist Sunday across the Great Lakes ahead of a potent and fast moving mid level closed low. Forecast BUFKIT soundings show 40-45 knots of flow in the boundary layer Sunday afternoon, with adequate low level lapse rates to support mixing of stronger winds aloft to the surface. The strongest winds will be found across the Niagara Frontier northeast of Lake Erie, where gusts will reach or exceed 40 mph at a minimum. There is a low potential for a few hours of near 50 mph gusts during the time of peak mixing in the afternoon. A Wind Advisory may eventually be needed if it appears these higher gusts will be realized. Gusts across the remainder of the area will be in the 25-35 mph range. Winds will diminish Sunday night as boundary layer flow veers to the northwest and the strongest winds aloft exit.
+
+KEY MESSAGE 3...Somewhat milder weather returns early next week, followed by colder temperatures by the end of next week.
+
+The pattern will become less active late Monday through the middle of next week as a WNW zonal flow develops across the northern tier of the CONUS. Dry weather will prevail much of the time, although shortwaves passing just north of the area combined with weak lake induced instability may support a chance of a few scattered showers at times, especially across the North Country. Temperatures will trend back to a little above average Tuesday through Wednesday.
+
+The pattern will become more active again by the end of next week as a deep trough carves out over the Great Lakes and Northeast, evolving into a slow moving closed low by Friday and Saturday. In a general sense, this will bring a trend towards colder temperatures by the end of next week along with increasing chances for some rain and wet snow. There have been several individual deterministic model runs showing a stronger surface low and potential for an early season accumulating snowfall by Friday and Saturday. While such an event is within the realm of possibility, the airmass is not particularly cold and medium range models often show a cold bias at this time range early in the season. Rain with some minor higher elevation snow is a much more likely scenario, but model trends will continue to be monitored closely.
+
+&&
+
+.AVIATION /21Z SATURDAY THROUGH THURSDAY/...

@@ -1,0 +1,23 @@
+FPUS54 KHGX 071854 ZFPHGX
+
+Zone Forecast Product for Southeast Texas National Weather Service Houston/Galveston TX 1254 PM CST Sat Nov 7 2026
+
+TXZ211-080200- Austin- Including the cities of Sealy and Bellville 1254 PM CST Sat Nov 7 2026
+
+.THIS AFTERNOON...Mostly cloudy. Near steady temperature in the upper 70s. Northeast winds around 5 mph. .TONIGHT...Mostly cloudy. A chance of showers after midnight. Lows in the upper 50s. Northeast winds 5 to 10 mph. Chance of rain 40 percent. .SUNDAY...Mostly cloudy. A chance of showers in the morning, then showers likely in the afternoon. Cooler with highs in the upper 60s. Northeast winds 5 to 10 mph. Chance of rain 60 percent. .SUNDAY NIGHT...Mostly cloudy with a 50 percent chance of showers. Lows in the mid 50s. Northeast winds around 5 mph. .MONDAY...Mostly cloudy with a 40 percent chance of showers. Highs in the upper 60s. Northeast winds around 5 mph. .MONDAY NIGHT...Mostly cloudy. Lows in the mid 50s. .TUESDAY...Partly sunny. Highs in the lower 70s. .TUESDAY NIGHT...Mostly cloudy. Lows in the upper 50s. .VETERANS DAY...Mostly cloudy with a chance of showers. Highs in the mid 70s. Chance of rain 40 percent. .WEDNESDAY NIGHT...Mostly cloudy. Lows in the upper 50s. .THURSDAY...Mostly sunny. Highs in the mid 70s. .THURSDAY NIGHT...Mostly clear. Lows in the upper 40s. .FRIDAY...Sunny. Highs in the lower 70s.
+
+$$
+
+TXZ237-080200- Inland Brazoria- Including the cities of Pearland, Alvin, and Angleton 1254 PM CST Sat Nov 7 2026
+
+.THIS AFTERNOON...Partly sunny. Highs around 80. East winds 5 to 10 mph. .TONIGHT...Mostly cloudy. Lows around 60. East winds 5 to 10 mph. .SUNDAY...Mostly cloudy. A chance of showers in the afternoon. Highs in the lower 70s. Northeast winds 5 to 10 mph with gusts up to 20 mph. Chance of rain 30 percent. .SUNDAY NIGHT...Mostly cloudy. Lows in the upper 50s. Northeast winds 5 to 10 mph. .MONDAY...Mostly cloudy. A chance of showers in the afternoon. Highs in the lower 70s. Northeast winds 5 to 10 mph. Chance of rain 30 percent. .MONDAY NIGHT...Mostly cloudy. Lows in the mid 50s. .TUESDAY...Partly sunny. Highs in the upper 70s. .TUESDAY NIGHT...Mostly cloudy. A chance of showers after midnight. Lows in the lower 60s. Chance of rain 30 percent. .VETERANS DAY...A chance of thunderstorms in the morning. Mostly cloudy with a chance of showers. Highs in the upper 70s. Chance of rain 50 percent. .WEDNESDAY NIGHT...Mostly cloudy. Lows in the upper 50s. .THURSDAY...Mostly sunny. Highs in the upper 70s. .THURSDAY NIGHT...Mostly clear. Lows in the lower 50s. .FRIDAY...Sunny. Highs in the lower 70s.
+
+$$
+
+TXZ196-080200- Brazos- Including the cities of College Station and Bryan 1254 PM CST Sat Nov 7 2026
+
+.THIS AFTERNOON...Mostly cloudy. Near steady temperature in the mid 70s. Northeast winds around 5 mph. .TONIGHT...Mostly cloudy. A slight chance of showers in the evening, then a chance of showers after midnight. Lows in the mid 50s. Northeast winds 5 to 10 mph. Chance of rain 30 percent. .SUNDAY...Mostly cloudy with a 50 percent chance of showers. Highs in the upper 60s. Northeast winds 5 to 10 mph. .SUNDAY NIGHT...Mostly cloudy. A chance of showers in the evening. Lows in the mid 50s. North winds around 5 mph. Chance of rain 50 percent. .MONDAY...Mostly cloudy. Highs around 70. East winds around 5 mph. .MONDAY NIGHT...Mostly cloudy. Lows in the mid 50s. .TUESDAY...Partly sunny. Highs in the lower 70s. .TUESDAY NIGHT...Mostly cloudy. Lows in the upper 50s. .VETERANS DAY...Mostly cloudy in the morning, then becoming partly sunny. Highs in the upper 70s. .WEDNESDAY NIGHT...Partly cloudy. Lows in the mid 50s. .THURSDAY...Sunny. Highs in the mid 70s. .THURSDAY NIGHT...Clear. Lows in the mid 40s. .FRIDAY...Sunny. Highs in the lower 70s.
+
+$$
+
+TXZ195-080200- Burleson- Including the cities of Caldwell and Somerville 1254 PM CST Sat Nov 7 2026

@@ -1,0 +1,27 @@
+WWUS81 KBOX 070015 SPSBOX
+
+Special Weather Statement National Weather Service Boston/Norton MA 715 PM EST Fri Nov 6 2026
+
+MAZ017>022-RIZ001-002-004>007-070115- Eastern Plymouth MA-Southern Bristol MA-Northern Bristol MA- Southern Plymouth MA-Western Plymouth MA-Barnstable MA- Northwest Providence RI-Bristol RI-Washington RI-Eastern Kent RI- Newport RI-Southeast Providence RI- 715 PM EST Fri Nov 6 2026
+
+...HEAVY RAINFALL CAUSING MINOR FLOODING IN PORTIONS OF EASTERN RHODE ISLAND AND SE MASSACHUSETTS...
+
+At 714 PM EST, Doppler radar was tracking a thunderstorm with heavy rainfall over Warwick, moving northeast at 55 mph.
+
+HAZARD...Heavy rain.
+
+SOURCE...Radar indicated.
+
+IMPACT...Minimal. Water on roads that flood easily. Expect ponding on flood-prone roadways and impacts to travel.
+
+Locations impacted include... Providence, New Bedford, Brockton, Fall River, Warwick, Cranston, Pawtucket, Plymouth, Taunton, East Providence, Dartmouth, Cumberland, North Providence, West Warwick, Johnston, Bridgewater, North Kingstown, Marshfield, Newport, and Bristol.
+
+PRECAUTIONARY/PREPAREDNESS ACTIONS...
+
+Do not drive through flooded roads or underpasses.
+
+&&
+
+LAT...LON 4150 7135 4182 7161 4216 7077 4175 7053 TIME...MOT...LOC 0014Z 235DEG 48KT 4168 7143
+
+$$

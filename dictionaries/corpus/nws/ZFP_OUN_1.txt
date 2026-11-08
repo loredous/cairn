@@ -1,0 +1,29 @@
+FPUS54 KOUN 071831 ZFPOUN
+
+Zone Forecast Product for Oklahoma National Weather Service Norman OK 1229 PM CST Sat Nov 7 2026
+
+OKZ025-080200- Oklahoma- Including the city of Oklahoma City 1229 PM CST Sat Nov 7 2026
+
+.THIS AFTERNOON...Mostly sunny. Highs in the upper 50s. North winds around 5 mph. .TONIGHT...Mostly cloudy in the evening, then clearing. Areas of fog after midnight. Lows in the upper 30s. Light and variable winds, becoming southwest around 5 mph after midnight. .SUNDAY...Areas of fog in the morning. Sunny. Highs in the upper 60s. Southwest winds around 5 mph. .SUNDAY NIGHT...Mostly clear. Areas of fog after midnight. Lows in the mid 40s. Southwest winds around 5 mph. .MONDAY...Areas of fog in the morning. Sunny. Highs around 70. Southwest winds 5 to 10 mph. .MONDAY NIGHT...Mostly clear. Lows in the mid 50s. .TUESDAY...Sunny. Highs in the mid 70s. .TUESDAY NIGHT...Mostly clear. Lows in the mid 50s. .VETERANS DAY...Sunny. Highs in the lower 70s. .WEDNESDAY NIGHT...Clear. Lows in the upper 40s. .THURSDAY...Sunny. Highs in the mid 60s. .THURSDAY NIGHT...Clear. Lows in the lower 40s. .FRIDAY...Sunny. Highs in the mid 60s.
+
+$$
+
+TXZ086-080200- Wichita- Including the cities of Sheppard AFB and Wichita Falls 1229 PM CST Sat Nov 7 2026
+
+.THIS AFTERNOON...Mostly cloudy. Highs in the lower 60s. Northeast winds around 5 mph. .TONIGHT...Mostly cloudy. Patchy fog after midnight. Lows in the mid 40s. Northeast winds around 5 mph in the evening, becoming light and variable. .SUNDAY...Patchy fog in the morning. Mostly sunny. Highs around 70. Light and variable winds. .SUNDAY NIGHT...Mostly cloudy in the evening, then clearing. Lows in the upper 40s. Light and variable winds, becoming southwest around 5 mph after midnight. .MONDAY...Sunny. Highs in the lower 70s. Southwest winds 5 to 10 mph. .MONDAY NIGHT...Mostly clear. Lows in the mid 50s. .TUESDAY...Sunny. Highs in the mid 70s. .TUESDAY NIGHT...Mostly clear. Lows in the mid 50s. .VETERANS DAY...Sunny. Highs in the upper 70s. .WEDNESDAY NIGHT...Clear. Lows in the upper 40s. .THURSDAY...Sunny. Highs in the lower 70s. .THURSDAY NIGHT...Clear. Lows in the mid 40s. .FRIDAY...Sunny. Highs around 70.
+
+$$
+
+OKZ029-080200- Cleveland- Including the cities of Norman and Moore 1229 PM CST Sat Nov 7 2026
+
+.THIS AFTERNOON...Partly sunny. Highs around 60. North winds around 5 mph. .TONIGHT...Mostly cloudy in the evening, then becoming partly cloudy. Areas of fog after midnight. Lows in the upper 30s. Light and variable winds. .SUNDAY...Areas of fog in the morning. Sunny. Highs in the upper 60s. West winds around 5 mph. .SUNDAY NIGHT...Mostly clear. Areas of fog after midnight. Lows in the mid 40s. Southwest winds around 5 mph. .MONDAY...Areas of fog in the morning. Sunny. Highs around 70. Southwest winds 5 to 10 mph. .MONDAY NIGHT...Mostly clear. Lows in the lower 50s. .TUESDAY...Sunny. Highs in the mid 70s. .TUESDAY NIGHT...Mostly clear. Lows in the mid 50s. .VETERANS DAY...Sunny. Highs in the lower 70s. .WEDNESDAY NIGHT...Clear. Lows in the upper 40s. .THURSDAY...Sunny. Highs in the mid 60s. .THURSDAY NIGHT...Clear. Lows in the lower 40s. .FRIDAY...Sunny. Highs in the mid 60s.
+
+$$
+
+OKZ038-080200- Comanche- Including the city of Lawton 1229 PM CST Sat Nov 7 2026
+
+.THIS AFTERNOON...Mostly cloudy. Highs in the lower 60s. Northeast winds around 5 mph. .TONIGHT...Mostly cloudy in the evening, then becoming partly cloudy. Patchy fog after midnight. Lows in the lower 40s. Light and variable winds. .SUNDAY...Patchy fog in the morning. Mostly sunny. Highs in the upper 60s. Southwest winds around 5 mph. .SUNDAY NIGHT...Partly cloudy in the evening, then clearing. Lows in the upper 40s. Light and variable winds, becoming southwest around 5 mph after midnight. .MONDAY...Sunny. Highs in the lower 70s. South winds 5 to 10 mph. .MONDAY NIGHT...Mostly clear. Lows in the lower 50s. .TUESDAY...Sunny. Highs in the mid 70s. .TUESDAY NIGHT...Mostly clear. Lows in the mid 50s. .VETERANS DAY...Sunny. Highs in the mid 70s. .WEDNESDAY NIGHT...Clear. Lows around 50. .THURSDAY...Sunny. Highs around 70. .THURSDAY NIGHT...Clear. Lows in the mid 40s. .FRIDAY...Sunny. Highs in the upper 60s.
+
+$$
+
+OKZ024-080200- Canadian- Including the cities of Yukon, Concho, El Reno, and Mustang 1229 PM CST Sat Nov 7 2026

@@ -1,0 +1,9 @@
+NOUS41 KRLX 021414 PNSRLX OHZ075-076-085-086-WVZ007>011-014-016>019-029-030215-
+
+Public Information Statement National Weather Service Charleston WV 914 AM EST Mon Nov 2 2026
+
+...WXM70 Garfield NOAA Weather Radio Degraded...
+
+WXM70 Garfield NOAA Weather Radio transmitter covering parts of southeast Ohio and west central West Virginia is operating but degraded. A replacement transmitter has been ordered but it is unknown when the replacement will arrive.
+
+$$

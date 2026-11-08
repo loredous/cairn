@@ -1,0 +1,45 @@
+FXUS63 KLOT 072310 AFDLOT
+
+Area Forecast Discussion National Weather Service Chicago/Romeoville, IL 510 PM CST Sat Nov 7 2026
+
+.KEY MESSAGES...
+
+- Dry conditions and a warming trend will occur through the weekend into early next week.
+
+- The next chance for precipitation is forecast mid-late next week and will likely be accompanied by cooler temperatures.
+
+&&
+
+.DISCUSSION... Issued at 129 PM CST Sat Nov 7 2026
+
+The low pressure system that has been resulting in the cooler, more seasonable temperatures is moving eastwards into the northeastern CONUS. Across the southwestern CONUS, a large upper-level low embedded within the subtropical jet is slowly moving eastward into New Mexico and west Texas, resulting in the ridge in the western CONUS moving into the central CONUS. The eastward moving ridge is causing warm air to begin advecting into our region today and over the next couple of days as the core of the polar jet remains north of our area. Temperatures tonight look to be a few degrees warmer than last night, so most of the area will be staying just above freezing. However, a few areas well outside of the Chicago metro could see temperatures drop to right around the freezing point. It appears winds will increase tomorrow as a subtle trough with the polar jet will increase the rate of WAA in our region tomorrow. High temperatures will rise above normal tomorrow through Tuesday with highs in the low to possibly mid 60s during those days.
+
+With clear skies tonight along with persistent warm air advection, low stratus and perhaps some regions of fog could develop later tonight as low-level moistening occurs. If any fog does form, it appears it will remain rather localized and focused west- northwest of most of the Chicago metro area through early Sunday morning.
+
+Looking ahead to later in the week, deterministic and ensemble models are all showing a substantial cool down next week. An upper- level low looks to form in east-central Canada early to mid next week, then move southwards into our region, arriving here later Wednesday and into Thursday. It appears pop chances will remain rather low during the arrival of the upper- level low, deterministic models show the possibility of lake effect precipitation beginning later Wednesday and into Thursday. Depending on the level of cold air that gets advected into our region, there is a possibility of someone near downtown Chicago and northwest Indiana getting their first snowflakes of the season.
+
+Parsons/KJB
+
+&&
+
+.AVIATION /00Z TAFS THROUGH 06Z MONDAY/... Issued at 510 PM CST Sat Nov 7 2026
+
+Key messages:
+
+- Threat for brief period of IFR cigs Sunday morning
+
+- Gusty westerly winds developing late tonight through Sunday afternoon
+
+VFR conditions will prevail this evening and much of the overnight with southwesterly winds. A weak cold front will push across the region Sunday morning, and may be accompanied by a narrow axis of IFR/low-MVFR stratus. Recent short-range and high-resolution guidance appears to be trending both slower and less robust with the potential for low cigs. Given this, have continued just to mention SCT IFR clouds in the outgoing 00z TAFs. May need to TEMPO IFR conditions in future TAF issuances, but confidence on coverage and specific timing remains too low for formal introduction at this time (main window appears to be from roughly 12-16z at ORD and an hour or two earlier at RFD.
+
+Westerly winds will gust around 20-25 kts Sunday afternoon before easing quickly around sunset.
+
+Carlaw
+
+&&
+
+.LOT WATCHES/WARNINGS/ADVISORIES... IL...None. IN...None. LM...None.
+
+&&
+
+$$

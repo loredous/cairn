@@ -1,0 +1,41 @@
+FGUS81 KPBZ 061424 RVSPBZ
+
+Hydrologic Statement National Weather Service Pittsburgh PA 924 AM EST Fri Nov 6 2026
+
+Past 24 hour precipitation... Scattered light showers along the WV and PA ridges as well as northwestern PA produced light rainfall totals of 0.01 to 0.25 inches.
+
+Forecast precipitation for the next 48 hours... A slow moving upper level low pressure system will return lake-enhanced and upslope showers in the ridges and north of Pittsburgh through Saturday. Some wet snow may mix in in the higher elevation. Basin average rainfall and/or liquid equivalent of snow is forecast to range from 0.01 to 0.25 inches.
+
+River trends... Area rivers are forecast to remain steady through the weekend.
+
+This text product /PITRVSPBZ/ will be issued routinely in the morning, and on an as needed basis in the evening. The latest forecast and observations are always available at: water.noaa.gov/wfo/pbz
+
+During flooding the latest crest updates may be obtained in river Flood Warnings /PITFLWPBZ/ or river flood statements /PITFLSPBZ/.
+
+&&
+
+Fld Observed Forecast 7am Location Stg Stg 7am Sat Sun Mon
+
+Ohio River Pittsburgh 22.0 17.4 17.1 17.0 16.9 Dashields 25.0 14.6 14.1 14.0 14.0 Montgomery 33.0 13.4 13.1 12.9 12.8 New Cumberland 36.0 12.4 12.3 12.2 12.2 Pike Island 37.0 13.2 13.1 13.0 13.0 Wheeling 36.0 15.9 15.8 15.7 15.6 Hannibal 35.0 12.8 12.6 12.5 12.5
+
+Monongahela River Morgantown 22.0 9.9 9.9 9.8 9.8 Point Marion 26.0 10.4 9.9 9.9 9.8 Grays Landing 21.0 10.4 10.1 10.0 10.0 Maxwell 32.0 10.0 10.0 9.9 9.9 Charleroi 28.0 8.0 7.2 7.1 7.0 Elizabeth 20.0 7.3 M M M Braddock 22.0 14.8 14.7 14.7 14.7
+
+Allegheny River West Hickory 14.0 4.0 4.1 4.1 4.1 Franklin 17.0 3.5 3.7 3.7 3.7 Parker 20.0 2.5 2.4 2.5 2.5 Kittanning 21.0 10.7 10.4 10.4 10.4 Clinton 21.0 10.6 10.4 10.4 10.4 Freeport 23.0 9.7 9.5 9.4 9.5 Natrona 21.0 11.0 10.7 10.6 10.7 CW Bill Young Dam 17.0 10.6 10.2 10.2 10.2 Sharpsburg 21.0 10.6 10.4 10.3 10.4
+
+Redbank Creek Saint Charles 17.0 3.0 3.0 3.0 2.9
+
+Cheat River Parsons 18.5 3.2 3.1 3.0 2.9 Rowlesburg 16.0 1.9 1.9 1.7 1.7 Albright 27.0 10.7 10.6 10.4 10.4
+
+Youghiogheny River Ohiopyle 20.0 2.5 2.4 2.4 2.4 Connellsville 12.0 3.1 3.0 3.0 2.9 Sutersville 20.0 4.5 4.3 4.3 4.2
+
+Conemaugh River Seward 12.0 2.6 2.5 2.5 2.4
+
+Beaver River Beaver Falls 15.0 5.0 4.9 4.9 4.9
+
+Wills Creek Cambridge 15.0 2.6 2.3 2.2 2.2
+
+Tuscarawas River New Philadelphia 7.5 1.4 1.1 1.1 1.1
+
+Muskingum River Coshocton 15.0 6.4 6.3 6.1 6.0 Zanesville 25.0 8.9 9.1 9.0 8.9
+
+$$

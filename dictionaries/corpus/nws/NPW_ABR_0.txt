@@ -1,0 +1,11 @@
+WWUS73 KABR 071447 NPWABR
+
+URGENT - WEATHER MESSAGE National Weather Service Aberdeen SD 847 AM CST Sat Nov 7 2026
+
+SDZ006-051-071600- /O.EXP.KABR.FG.Y.0026.000000T0000Z-261107T1500Z/ Brown-Buffalo- Including the cities of Aberdeen and Fort Thompson 847 AM CST Sat Nov 7 2026
+
+...DENSE FOG ADVISORY WILL EXPIRE AT 9 AM CST THIS MORNING...
+
+Patchy fog will continue through around 10 AM. Dense fog, with visibility to a quarter mile or less, is no longer expected to be widespread.
+
+$$

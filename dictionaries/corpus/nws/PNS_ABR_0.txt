@@ -1,0 +1,9 @@
+NOUS43 KABR 031757 PNSABR MNZ039-046-SDZ003>011-015>023-033>037-045-048-051-040557-
+
+Public Information Statement National Weather Service Aberdeen SD 1157 AM CST Tue Nov 3 2026
+
+...HIGHEST WIND REPORTS...
+
+Location Speed Time/Date Provider 3 SE Reliance 48 MPH 0230 AM 11/03 SDDOT 6 SW Fort Pierre 45 MPH 1025 PM 11/02 Mesonet 6 N Vivian 44 MPH 1025 PM 11/02 Mesonet 1 E Parade 43 MPH 1250 AM 11/03 Mesonet 2 W Oacoma 43 MPH 1236 AM 11/03 Mesonet 11 NW Wendte 43 MPH 0247 AM 11/03 SDDOT 4 W Trail City 43 MPH 1248 AM 11/03 SDDOT 1 NE Timber Lake 43 MPH 0639 PM 11/02 SDDOT 5 SW Klein Ranch 43 MPH 1020 PM 11/02 SDDOT 5 N Reliance 43 MPH 0437 AM 11/03 SDDOT 12 S Vivian 42 MPH 0335 AM 11/03 Mesonet 11 S Bullhead 42 MPH 0906 PM 11/02 RAWS 9 N Vivian 42 MPH 1026 PM 11/02 SDDOT 1 SW Timber Lake 41 MPH 0655 PM 11/02 Mesonet 1 NE Ridgeview 41 MPH 1221 AM 11/03 SDDOT 4 W Chantier Creek Recreatio 40 MPH 1235 AM 11/03 Mesonet 6 NW Lantry 40 MPH 1130 PM 11/02 Mesonet 13 N Vivian 40 MPH 1059 PM 11/02 RAWS 5 NW Mclaughlin 40 MPH 0926 PM 11/02 SDDOT 6 SW Joe Creek Rec Area 40 MPH 0408 AM 11/03 SDDOT
+
+Observations are collected from a variety of sources with varying equipment and exposures. We thank all volunteer weather observers for their dedication. Not all data listed are considered official.

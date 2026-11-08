@@ -330,7 +330,7 @@ def main() -> int:
         parts += [findings.read_text().strip(), ""]
     parts += (thresholds_section() + clip_section() + header_section() + interleaver_section()
               + papr_section() + budget_section())
-    for extra in ("ldpc", "preamble", "channel"):
+    for extra in ("ldpc", "preamble", "channel", "dict_eval"):
         f = RESULTS / f"{extra}.md"
         if f.exists():
             parts += [f.read_text().strip(), ""]

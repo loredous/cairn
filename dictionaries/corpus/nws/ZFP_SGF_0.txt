@@ -1,0 +1,39 @@
+FPUS53 KSGF 080522 ZFPSGF
+
+Zone Forecast Product for Missouri National Weather Service Springfield MO 1121 PM CST Sat Nov 7 2026
+
+MOZ090-081300- Greene- Including the city of Springfield 1121 PM CST Sat Nov 7 2026
+
+...FROST ADVISORY IN EFFECT UNTIL 8 AM CST SUNDAY...
+
+.OVERNIGHT...Mostly clear. Patchy frost. Near steady temperature in the mid 30s. Light and variable winds, becoming southwest around 5 mph. .SUNDAY...Areas of frost in the morning. Sunny, warmer with highs in the mid 60s. West winds around 5 mph. .SUNDAY NIGHT...Mostly clear. Lows in the upper 30s. West winds around 5 mph. .MONDAY...Sunny. Highs in the upper 60s. Southwest winds 5 to 10 mph. .MONDAY NIGHT...Clear. Lows in the lower 40s. Southwest winds around 5 mph. .TUESDAY AND TUESDAY NIGHT...Mostly clear. Highs in the lower 70s. Lows in the lower 50s. .VETERANS DAY...Mostly sunny. A slight chance of showers in the afternoon. Highs in the upper 60s. Chance of rain 20 percent. .WEDNESDAY NIGHT...Partly cloudy. Cooler with lows in the upper 30s. .THURSDAY THROUGH FRIDAY NIGHT...Mostly clear. Highs in the mid 50s. Lows in the lower 30s. .SATURDAY...Sunny. Highs in the lower 60s.
+
+$$
+
+MOZ088-081300- Jasper- Including the cities of Joplin and Carthage 1121 PM CST Sat Nov 7 2026
+
+...FROST ADVISORY IN EFFECT UNTIL 8 AM CST SUNDAY...
+
+.OVERNIGHT...Mostly clear. Patchy frost. Near steady temperature in the mid 30s. Light and variable winds, becoming south around 5 mph. .SUNDAY...Patchy frost in the morning. Sunny, warmer with highs in the mid 60s. Southwest winds around 5 mph. .SUNDAY NIGHT...Mostly clear. Lows in the lower 40s. Southwest winds around 5 mph. .MONDAY...Sunny. Highs in the upper 60s. Southwest winds 5 to 10 mph. .MONDAY NIGHT...Clear. Lows in the mid 40s. Southwest winds around 5 mph. .TUESDAY AND TUESDAY NIGHT...Mostly clear. Highs in the lower 70s. Lows in the lower 50s. .VETERANS DAY...Mostly sunny. Highs in the upper 60s. .WEDNESDAY NIGHT AND THURSDAY...Mostly clear. Lows in the lower 40s. Highs in the upper 50s. .THURSDAY NIGHT THROUGH FRIDAY NIGHT...Mostly clear. Lows in the mid 30s. Highs in the upper 50s. .SATURDAY...Sunny. Highs in the mid 60s.
+
+$$
+
+MOZ058-081300- Maries- Including the city of Vichy 1121 PM CST Sat Nov 7 2026
+
+...FROST ADVISORY IN EFFECT UNTIL 8 AM CST SUNDAY...
+
+.OVERNIGHT...Mostly clear. Patchy frost. Near steady temperature in the mid 30s. Southwest winds around 5 mph. .SUNDAY...Areas of frost in the morning. Sunny. Not as cool with highs in the lower 60s. West winds 5 to 10 mph. .SUNDAY NIGHT...Mostly clear. Lows in the upper 30s. West winds around 5 mph. .MONDAY...Sunny. Highs in the upper 60s. Southwest winds around 5 mph. .MONDAY NIGHT...Clear. Lows in the lower 40s. Southwest winds around 5 mph. .TUESDAY AND TUESDAY NIGHT...Mostly clear. Highs in the upper 60s. Lows in the upper 40s. .VETERANS DAY...Partly sunny. A slight chance of showers in the afternoon. Highs in the mid 60s. Chance of rain 20 percent. .WEDNESDAY NIGHT AND THURSDAY...Partly cloudy. Lows in the upper 30s. Highs in the lower 50s. .THURSDAY NIGHT...Partly cloudy in the evening, then clearing. Cold with lows in the lower 30s. .FRIDAY AND FRIDAY NIGHT...Mostly clear. Highs in the lower 50s. Lows in the lower 30s. .SATURDAY...Sunny. Highs around 60.
+
+$$
+
+MOZ097-081300- Howell- Including the cities of Pomona, Pottersville, Siloam Springs, South Fork, West Plains, and White Church 1121 PM CST Sat Nov 7 2026
+
+...FROST ADVISORY IN EFFECT UNTIL 8 AM CST SUNDAY...
+
+.OVERNIGHT...Mostly clear. Areas of frost. Cold. Near steady temperature in the mid 30s. Light and variable winds. .SUNDAY...Areas of frost in the morning. Sunny, warmer with highs in the mid 60s. West winds around 5 mph. .SUNDAY NIGHT...Clear. Lows in the mid 30s. Northwest winds around 5 mph. .MONDAY...Sunny. Highs in the upper 60s. Southwest winds around 5 mph. .MONDAY NIGHT...Mostly clear. Lows in the upper 30s. Light and variable winds, becoming west around 5 mph after midnight. .TUESDAY AND TUESDAY NIGHT...Mostly clear. Highs in the lower 70s. Lows in the mid 40s. .VETERANS DAY...Mostly sunny. A chance of showers with a slight chance of thunderstorms in the afternoon. Highs around 70. Chance of rain 30 percent. .WEDNESDAY NIGHT...Partly cloudy. Lows around 40. .THURSDAY THROUGH SATURDAY...Mostly clear. Highs in the upper 50s. Lows around 30.
+
+$$
+
+MOZ104-081300- Taney- Including the cities of Branson, Hollister, Kirbyville, Edgewater Beach, Forsyth, Ozark Beach, and Powersite 1121 PM CST Sat Nov 7 2026
+
+...FROST ADVISORY IN EFFECT UNTIL 8 AM CST SUNDAY...

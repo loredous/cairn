@@ -1,0 +1,21 @@
+NOUS44 KEPZ 021757 PNSEPZ NMZ401-403>411-414>417-425>429-TXZ418>424-030557-
+
+Public Information Statement National Weather Service El Paso Tx/Santa Teresa NM 1057 AM MST Mon Nov 2 2026
+
+...PRECIPITATION REPORTS FOR NOVEMBER 1, 2026...
+
+Location Amount Time/Date Lat/Lon
+
+...New Mexico...
+
+...Dona Ana County... 11 N Organ 1.31 Inch 1001 AM 11/02 32.58N/106.53W 6 N White Sands 1.11 Inch 1030 AM 11/02 32.47N/106.50W Organ 0.98 Inch 0959 AM 11/02 32.42N/106.60W 1 S White Sands 0.97 Inch 1030 AM 11/02 32.37N/106.49W 6 NE Las Cruces 0.92 Inch 0700 AM 11/02 32.39N/106.68W 2 E Organ 0.91 Inch 1030 AM 11/02 32.43N/106.57W
+
+...Grant County... 6 NE Pinos Altos 1.80 Inch 0900 AM 11/02 32.92N/108.15W 4 W Silver City 1.58 Inch 1024 AM 11/02 32.77N/108.33W 6 W Tyrone 1.41 Inch 0730 AM 11/02 32.69N/108.46W 3 N Silver City 1.40 Inch 0720 AM 11/02 32.82N/108.27W 3 N Silver City 1.39 Inch 1030 AM 11/02 32.82N/108.28W 2 W Silver City 1.36 Inch 0600 AM 11/02 32.78N/108.30W 4 SW Mimbres 1.35 Inch 0700 AM 11/02 32.82N/108.02W 13 N Virden 1.30 Inch 0530 AM 11/02 32.87N/108.94W 3 SW Pinos Altos 1.29 Inch 0700 AM 11/02 32.85N/108.26W 3 N Silver City 1.26 Inch 0700 AM 11/02 32.82N/108.28W 3 N Silver City 1.22 Inch 0700 AM 11/02 32.82N/108.27W 1 E Fort Bayard 1.21 Inch 0700 AM 11/02 32.80N/108.13W 3 NE Fort Bayard 1.21 Inch 0700 AM 11/02 32.83N/108.12W Fort Bayard 1.20 Inch 0800 PM 11/01 32.79N/108.15W 3 SW Mimbres 1.18 Inch 0700 AM 11/02 32.82N/108.00W 5 W Silver City 1.17 Inch 0730 AM 11/02 32.77N/108.34W 11 W Tyrone 1.13 Inch 0959 AM 11/02 32.67N/108.54W 2 NW Silver City 1.13 Inch 0700 AM 11/02 32.80N/108.29W 6 NW Tyrone 1.03 Inch 1030 AM 11/02 32.72N/108.42W 3 SE Silver City 1.01 Inch 0800 AM 11/02 32.76N/108.23W 3 E Silver City 1.01 Inch 0700 AM 11/02 32.78N/108.22W 12 NE Mimbres 1.00 Inch 1000 AM 11/02 33.01N/107.87W Gila 1.00 Inch 0700 AM 11/02 32.97N/108.58W 2 N Silver City 1.00 Inch 0700 AM 11/02 32.81N/108.26W 3 S Silver City 0.99 Inch 0700 AM 11/02 32.73N/108.27W 4 SE Pinos Altos 0.96 Inch 0700 AM 11/02 32.84N/108.20W 3 SE Silver City 0.94 Inch 0600 AM 11/02 32.75N/108.24W Silver City 0.94 Inch 0700 AM 11/02 32.78N/108.27W 2 NW Tyrone 0.94 Inch 1030 AM 11/02 32.68N/108.39W Gila Hot Springs 0.93 Inch 0700 AM 11/02 33.19N/108.20W Silver City 0.92 Inch 0800 AM 11/02 32.79N/108.27W Buckhorn 0.91 Inch 0530 PM 11/01 33.04N/108.71W 4 NE Gila 0.91 Inch 0700 AM 11/02 33.02N/108.54W 1 W Silver City 0.91 Inch 0700 AM 11/02 32.78N/108.29W 1 W Silver City 0.91 Inch 0700 AM 11/02 32.78N/108.28W 2 S Bayard 0.91 Inch 1030 AM 11/02 32.74N/108.13W
+
+...Hidalgo County... 5 NE Road Forks 0.93 Inch 1030 AM 11/02 32.29N/108.96W
+
+...Otero County... 2 SW Cloudcroft 2.29 Inch 0700 AM 11/02 32.93N/105.76W Cloudcroft 2.15 Inch 0800 AM 11/02 32.95N/105.74W 5 S High Rolls 1.66 Inch 1030 AM 11/02 32.88N/105.79W 2 SW High Rolls 1.35 Inch 1031 AM 11/02 32.94N/105.84W 3 W Sacramento 0.90 Inch 0455 AM 11/02 32.79N/105.62W 4 SW Alto 0.90 Inch 1024 AM 11/02 33.37N/105.75W
+
+...Sierra County... Kingston 1.13 Inch 1025 AM 11/02 32.91N/107.71W 17 E Beaverhead 1.00 Inch 0900 AM 11/02 33.36N/107.83W
+
+Observations are collected from a variety of sources with varying equipment and exposures. We thank all volunteer weather observers for their dedication. Not all data listed are considered official.

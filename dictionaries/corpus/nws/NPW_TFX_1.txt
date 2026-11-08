@@ -1,0 +1,65 @@
+WWUS75 KTFX 071800 NPWTFX
+
+URGENT - WEATHER MESSAGE National Weather Service Great Falls MT 1100 AM MST Sat Nov 7 2026
+
+MTZ301>303-308-081200- /O.EXT.KTFX.HW.W.0037.261108T1200Z-261109T0300Z/ East Glacier Park Region-Northern High Plains-Eastern Glacier, Western Toole, and Central Pondera-Southern High Plains- Including the cities of Kiowa, Pendroy, Marias Pass, Santa Rita, Ethridge, Browning, East Glacier Park, Cut Bank, Babb, Heart Butte, Bynum, Choteau, Dupuyer, Saint Mary, and Logan Pass 1100 AM MST Sat Nov 7 2026
+
+...HIGH WIND WARNING NOW IN EFFECT FROM 5 AM TO 8 PM MST SUNDAY...
+
+* WHAT...West winds 35 to 55 mph with gusts up to 85 mph expected.
+
+* WHERE...East Glacier Park Region Zone, and Eastern Glacier, Western Toole, and Central Pondera, Northern High Plains, and Southern High Plains.
+
+* WHEN...From 5 AM to 8 PM MST Sunday.
+
+* IMPACTS...Damaging winds will blow down trees and power lines. Widespread power outages are expected. Travel will be difficult, especially for high profile vehicles.
+
+* ADDITIONAL DETAILS...Isolated wind gusts up to 90 mph are expected along the immediate eastern slopes of the Northern Rocky Mountain Front.
+
+PRECAUTIONARY/PREPAREDNESS ACTIONS...
+
+People are urged to secure loose objects that could be blown around or damaged by the wind.
+
+&&
+
+$$
+
+MTZ313-081200- /O.EXA.KTFX.HW.A.0033.261108T1500Z-261109T0300Z/ Judith Basin County and Judith Gap- Including the cities of Windham, Geyser, Hobson, Raynesford, Benchland, Moccasin, and Stanford 1100 AM MST Sat Nov 7 2026
+
+...HIGH WIND WATCH IN EFFECT FROM SUNDAY MORNING THROUGH SUNDAY EVENING...
+
+* WHAT...Southwest winds 25 to 40 mph with gusts up to 60 mph possible.
+
+* WHERE...Judith Basin County and Judith Gap.
+
+* WHEN...From Sunday morning through Sunday evening.
+
+* IMPACTS...Travel could be difficult, especially for high profile vehicles
+
+PRECAUTIONARY/PREPAREDNESS ACTIONS...
+
+Monitor the latest forecasts and warnings for updates.
+
+&&
+
+$$
+
+MTZ304-305-312-081200- /O.CON.KTFX.HW.A.0033.261108T1500Z-261109T0300Z/ Eastern Toole and Liberty-Hill County-Cascade County below 5000ft- Including the cities of Havre, Chester, Shelby, Galata, Lothair, Devon, Joplin, Great Falls, and Whitlash 1100 AM MST Sat Nov 7 2026
+
+...HIGH WIND WATCH REMAINS IN EFFECT FROM SUNDAY MORNING THROUGH SUNDAY EVENING...
+
+* WHAT...Southwest winds 25 to 40 mph with gusts up to 60 mph possible.
+
+* WHERE...Cascade County below 5000ft, Eastern Toole and Liberty, and Hill County.
+
+* WHEN...From Sunday morning through Sunday evening.
+
+* IMPACTS...Travel could be difficult, especially for high profile vehicles.
+
+PRECAUTIONARY/PREPAREDNESS ACTIONS...
+
+Monitor the latest forecasts and warnings for updates.
+
+&&
+
+$$

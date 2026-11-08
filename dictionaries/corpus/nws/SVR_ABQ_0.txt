@@ -1,0 +1,33 @@
+WUUS55 KABQ 020137 SVRABQ NMC019-021-033-047-020215- /O.NEW.KABQ.SV.W.0429.261102T0137Z-261102T0215Z/
+
+BULLETIN - IMMEDIATE BROADCAST REQUESTED Severe Thunderstorm Warning National Weather Service Albuquerque NM 637 PM MST Sun Nov 1 2026
+
+The National Weather Service in Albuquerque has issued a
+
+* Severe Thunderstorm Warning for... Northern Guadalupe County in east central New Mexico... Northwestern Harding County in northeastern New Mexico... Southeastern Mora County in northeastern New Mexico... Central San Miguel County in northeastern New Mexico...
+
+* Until 715 PM MST.
+
+* At 637 PM MST, severe thunderstorms were located along a line from 14 miles northeast of Maes to near Dilia, moving east at 55 mph.
+
+HAZARD...60 mph wind gusts and small hail.
+
+SOURCE...Radar indicated.
+
+IMPACT...Expect damage to roofs, siding, and trees.
+
+* Locations impacted include... Mosquero, Roy, Variadero, Maes, Trujillo, Conchas Dam, Conchas Lake State Park, Conchas, Solano and Dilia.
+
+This includes State Road 104 between Mile Markers 18 and 81.
+
+PRECAUTIONARY/PREPAREDNESS ACTIONS...
+
+Seek shelter inside a well-built structure and stay away from windows. These storms are capable of producing damaging winds.
+
+Tornadoes can develop quickly from severe thunderstorms. Seek shelter immediately in an interior room on the lowest floor of a well-built structure.
+
+&&
+
+LAT...LON 3510 10522 3588 10473 3610 10383 3520 10414 TIME...MOT...LOC 0137Z 252DEG 47KT 3585 10448 3552 10474 3522 10501
+
+TORNADO...POSSIBLE HAIL THREAT...RADAR INDICATED MAX HAIL SIZE...<1.00 IN WIND THREAT...RADAR INDICATED MAX WIND GUST...60 MPH

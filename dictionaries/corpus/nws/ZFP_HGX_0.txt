@@ -1,0 +1,29 @@
+FPUS54 KHGX 080508 ZFPHGX
+
+Zone Forecast Product for Southeast Texas National Weather Service Houston/Galveston TX 1108 PM CST Sat Nov 7 2026
+
+TXZ211-081300- Austin- Including the cities of Sealy and Bellville 1108 PM CST Sat Nov 7 2026
+
+.OVERNIGHT...Mostly cloudy. A slight chance of showers. Lows in the upper 50s. Northeast winds 5 to 10 mph. Chance of rain 20 percent. .SUNDAY...Showers likely. Cooler with highs in the mid 60s. Northeast winds 5 to 10 mph. Chance of rain 70 percent. .SUNDAY NIGHT...Mostly cloudy. A chance of showers in the evening. Lows in the mid 50s. North winds around 5 mph. Chance of rain 40 percent. .MONDAY...Cloudy. A chance of showers in the morning. Highs in the upper 60s. Northeast winds around 5 mph. Chance of rain 50 percent. .MONDAY NIGHT...Mostly cloudy. Lows in the mid 50s. West winds around 5 mph in the evening, becoming light and variable. .TUESDAY...Mostly cloudy. Highs in the lower 70s. .TUESDAY NIGHT...Mostly cloudy. Lows in the upper 50s. .VETERANS DAY...Mostly cloudy. Highs in the mid 70s. .WEDNESDAY NIGHT...Mostly cloudy. Lows in the upper 50s. .THURSDAY...Mostly sunny. Highs in the lower 70s. .THURSDAY NIGHT...Mostly clear. Lows in the upper 40s. .FRIDAY...Sunny. Highs in the lower 70s. .FRIDAY NIGHT...Clear. Lows in the mid 40s. .SATURDAY...Sunny. Highs in the lower 70s.
+
+$$
+
+TXZ237-081300- Inland Brazoria- Including the cities of Pearland, Alvin, and Angleton 1108 PM CST Sat Nov 7 2026
+
+.OVERNIGHT...Mostly cloudy. Lows in the lower 60s. Northeast winds 5 to 10 mph. .SUNDAY...Cloudy. A slight chance of showers in the morning, then a chance of showers in the afternoon. Highs in the lower 70s. Northeast winds 5 to 10 mph. Chance of rain 40 percent. .SUNDAY NIGHT...Mostly cloudy. Lows in the mid 50s. Northeast winds around 5 mph. .MONDAY...Cloudy with a 50 percent chance of showers. Highs in the upper 60s. Northeast winds 5 to 10 mph. .MONDAY NIGHT...Mostly cloudy. Lows in the mid 50s. Northeast winds around 5 mph. .TUESDAY...Mostly cloudy. Highs in the mid 70s. .TUESDAY NIGHT...Mostly cloudy. Lows in the upper 50s. .VETERANS DAY...Mostly cloudy with a chance of showers. Highs in the upper 70s. Chance of rain 40 percent. .WEDNESDAY NIGHT...Mostly cloudy. Lows in the upper 50s. .THURSDAY...Mostly sunny. Highs in the upper 70s. .THURSDAY NIGHT...Mostly clear. Lows in the lower 50s. .FRIDAY...Sunny. Highs in the lower 70s. .FRIDAY NIGHT...Clear. Lows in the upper 40s. .SATURDAY...Sunny. Highs in the mid 70s.
+
+$$
+
+TXZ196-081300- Brazos- Including the cities of College Station and Bryan 1108 PM CST Sat Nov 7 2026
+
+.OVERNIGHT...Mostly cloudy. A slight chance of showers late this evening, then a chance of showers. Lows in the upper 50s. Northeast winds 5 to 10 mph. Chance of rain 50 percent. .SUNDAY...Cloudy with a 50 percent chance of showers. Highs in the upper 60s. Northeast winds 5 to 10 mph. .SUNDAY NIGHT...Mostly cloudy. Lows in the mid 50s. North winds around 5 mph. .MONDAY...Mostly cloudy. Highs around 70. Northeast winds around 5 mph. .MONDAY NIGHT...Mostly cloudy. Lows in the mid 50s. East winds around 5 mph in the evening, becoming light and variable. .TUESDAY...Mostly cloudy in the morning, then becoming partly sunny. Highs in the mid 70s. .TUESDAY NIGHT...Mostly cloudy. Lows in the mid 50s. .VETERANS DAY...Partly sunny. Highs in the upper 70s. .WEDNESDAY NIGHT...Partly cloudy. Lows in the mid 50s. .THURSDAY...Sunny. Highs in the mid 70s. .THURSDAY NIGHT...Mostly clear. Lows in the mid 40s. .FRIDAY...Sunny. Highs in the lower 70s. .FRIDAY NIGHT...Clear. Lows in the lower 40s. .SATURDAY...Sunny. Highs in the lower 70s.
+
+$$
+
+TXZ195-081300- Burleson- Including the cities of Caldwell and Somerville 1108 PM CST Sat Nov 7 2026
+
+.OVERNIGHT...Cloudy. A slight chance of showers late this evening, then a chance of showers. Lows in the mid 50s. Northeast winds 5 to 10 mph. Chance of rain 50 percent. .SUNDAY...Cloudy. Showers likely, mainly in the morning. Cooler with highs in the mid 60s. Northeast winds 5 to 10 mph. Chance of rain 70 percent. .SUNDAY NIGHT...Mostly cloudy. A chance of showers in the evening. Lows in the lower 50s. North winds around 5 mph. Chance of rain 30 percent. .MONDAY...Mostly cloudy. Highs in the upper 60s. Northeast winds around 5 mph. .MONDAY NIGHT...Mostly cloudy. Lows in the mid 50s. Northwest winds around 5 mph in the evening, becoming light and variable. .TUESDAY...Mostly cloudy. Highs in the mid 70s. .TUESDAY NIGHT...Mostly cloudy. Lows in the mid 50s. .VETERANS DAY...Partly sunny. Highs in the upper 70s. .WEDNESDAY NIGHT...Partly cloudy. Lows in the mid 50s. .THURSDAY...Sunny. Highs in the mid 70s. .THURSDAY NIGHT...Mostly clear. Lows in the mid 40s. .FRIDAY...Sunny. Highs in the lower 70s. .FRIDAY NIGHT...Clear. Lows in the lower 40s. .SATURDAY...Sunny. Highs in the lower 70s.
+
+$$
+
+TXZ214-081300- Chambers- Including the cities of Winnie, Mont Belvieu, Anahuac, Stowell, and Old River-Winfree 1108 PM CST Sat Nov 7 2026

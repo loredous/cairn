@@ -1,0 +1,31 @@
+WUUS51 KBOX 070057 SVRBOX MAC001-005-023-RIC005-070200- /O.NEW.KBOX.SV.W.0055.261107T0057Z-261107T0200Z/
+
+BULLETIN - IMMEDIATE BROADCAST REQUESTED Severe Thunderstorm Warning National Weather Service Boston/Norton MA 757 PM EST Fri Nov 6 2026
+
+The National Weather Service in Boston/Norton has issued a
+
+* Severe Thunderstorm Warning for... Southwestern Barnstable County in southeastern Massachusetts... Southwestern Plymouth County in southeastern Massachusetts... Southeastern Bristol County in southeastern Massachusetts... Northeastern Newport County in Rhode Island...
+
+* Until 900 PM EST.
+
+* At 756 PM EST, a severe thunderstorm was located over Fall River, moving east at 25 mph.
+
+HAZARD...60 mph wind gusts.
+
+SOURCE...Radar indicated.
+
+IMPACT...Expect damage to trees and power lines.
+
+* Locations impacted include... New Bedford, Fall River, Plymouth, Dartmouth, Falmouth, Marion, Middleborough, Wareham, Bourne, Somerset, Fairhaven, Swansea, Tiverton, Westport, Carver, Lakeville, Acushnet, Freetown, Mattapoisett, and Rochester.
+
+PRECAUTIONARY/PREPAREDNESS ACTIONS...
+
+For your protection move to an interior room on the lowest floor of a building.
+
+&&
+
+LAT...LON 4157 7119 4175 7123 4184 7067 4162 7063 4161 7070 4165 7069 4161 7076 TIME...MOT...LOC 0056Z 259DEG 21KT 4168 7110
+
+HAIL THREAT...RADAR INDICATED MAX HAIL SIZE...<.75 IN WIND THREAT...RADAR INDICATED MAX WIND GUST...60 MPH
+
+$$

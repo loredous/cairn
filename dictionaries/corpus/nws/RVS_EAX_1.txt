@@ -1,0 +1,11 @@
+FGUS83 KEAX 041520 RVSEAX KSC043-209-MOC003-021-047-053-089-095-165-051530-
+
+Hydrologic Statement National Weather Service Kansas City/Pleasant Hill MO 919 AM CST Wed Nov 4 2026
+
+National Weather Service Four Week Extended River Stage Forecast Stream/Station FS Today Week 1 Week 2 Week 3 Week 4
+
+Missouri River St Joseph 17 9.8 7.1 3.2 2.6 2.4 Kansas City 32 13.0 11.2 6.5 6.0 5.7 Boonville 21 9.1 10.2 4.6 3.8 3.3
+
+These forecast stages assume no additional precipitation will occur over the next four weeks. This means that these stages may, and will likely increase as precipitation occurs.
+
+This product along with additional weather and stream information is available at www.weather.gov/kc/.
