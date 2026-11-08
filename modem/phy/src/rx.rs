@@ -194,6 +194,17 @@ impl RxResult {
         avg + cfg.clip_db - params::CLIP_DB_REFERENCE
     }
 
+    /// Per tone, the signal and noise powers behind
+    /// [`snr_7db_equivalent`](Self::snr_7db_equivalent), with the signal on
+    /// the 7 dB-equivalent scale: over any set of measured tones,
+    /// 10 log10(sum of signal / sum of noise) is the channel SNR that set of
+    /// tones would report. None without a channel SNR measurement.
+    pub fn tone_powers_7db_equivalent(&self, cfg: &FrameConfig) -> Option<Vec<(f64, f64)>> {
+        let c = self.channel_snr.as_ref()?;
+        let scale = 10f64.powf((cfg.clip_db - params::CLIP_DB_REFERENCE) / 10.0);
+        Some(c.tone_signal.iter().zip(&c.tone_noise).map(|(&s, &n)| (s * scale, n)).collect())
+    }
+
     /// The sample-clock offset, ppm, and its standard deviation, from the
     /// drift estimate (as `cairn-bench rx` reports it).
     pub fn clock_ppm(&self, cfg: &FrameConfig) -> (f64, f64) {
@@ -240,6 +251,14 @@ pub struct ChannelSnr {
     /// Too little was known to rebuild: the decoder's estimate, which counts
     /// the designed clipping and errs low (ADR 0006).
     pub fallback: bool,
+    /// Per tone, linear and average-referenced: the signal power and the
+    /// noise power that `effective_db` sums over the data symbols' active
+    /// tones (both 0 on a tone that was not measured). Summing them over
+    /// another set of tones gives the channel SNR that set would see, for
+    /// example the tones a proposed mask keeps.
+    pub tone_signal: Vec<f64>,
+    /// See `tone_signal`.
+    pub tone_noise: Vec<f64>,
 }
 
 struct Estimate {
@@ -2146,7 +2165,16 @@ fn rebuild_snr(
     for (k, v) in per_tone.iter_mut().enumerate() {
         *v = dsp::interp(k as f64, &measured, &values);
     }
-    ChannelSnr { per_tone_db: per_tone, effective_db: effective, known_symbols: n_known, fallback: false }
+    let tone_signal: Vec<f64> = (0..w).map(|k| if ok[k] { sig[k] } else { 0.0 }).collect();
+    let tone_noise: Vec<f64> = (0..w).map(|k| if ok[k] { noise[k] } else { 0.0 }).collect();
+    ChannelSnr {
+        per_tone_db: per_tone,
+        effective_db: effective,
+        known_symbols: n_known,
+        fallback: false,
+        tone_signal,
+        tone_noise,
+    }
 }
 
 /// Per-tone gains g (and the own gains a of the `settle` symbols, 1 for the
@@ -2208,7 +2236,15 @@ fn fallback_snr(cfg: &FrameConfig, est: &DecoderEstimate, known_symbols: usize) 
     let overall = 10.0 * (t.iter().map(|&k| p[k]).sum::<f64>() / t.iter().map(|&k| est.noise[k]).sum::<f64>()).log10();
     let per_tone =
         p.iter().zip(est.noise).map(|(p, n)| 10.0 * (p / n.max(1e-30)).log10() - FALLBACK_MARGIN_DB).collect();
-    ChannelSnr { per_tone_db: per_tone, effective_db: overall - FALLBACK_MARGIN_DB, known_symbols, fallback: true }
+    let margin = 10f64.powf(-FALLBACK_MARGIN_DB / 10.0);
+    ChannelSnr {
+        per_tone_db: per_tone,
+        effective_db: overall - FALLBACK_MARGIN_DB,
+        known_symbols,
+        fallback: true,
+        tone_signal: p.iter().map(|v| v * margin).collect(),
+        tone_noise: est.noise.to_vec(),
+    }
 }
 
 /// Noise variance the preamble and pilots predict for header symbols: the

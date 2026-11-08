@@ -283,9 +283,9 @@ impl Session {
 
     /// (Re-)answer a CONNECT: measure it, owe CONNECT-ACK.
     pub(crate) fn answer_connect(&mut self, f: &RxFrame, ctx: &mut Ctx) {
-        self.rate.on_reply_rule(f.meas.snr_db);
         self.mask = MaskTracker::new(self.rx_width(ctx.cfg), ctx.cfg.track_masks);
         self.mask.setup(f.meas.tone_snr_db.as_deref(), ctx.now);
+        self.rate.on_reply_rule(self.reply_rule_snr(&f.meas, ctx.cfg));
         self.tx_mask = (ALL_TONES, 0);
         self.tx_mcs = 0;
         self.tx_long_prefix = ctx.cfg.repeater;
@@ -375,6 +375,21 @@ impl Session {
 
     /// The peer's session width: its cap + 1 when this station advertised
     /// capability bit 0.
+    /// The SNR the reply rule (§10.1, ADR 0010) uses for a CONNECT,
+    /// CONNECT-ACK or SOUND: the channel SNR over the tones the receive mask
+    /// keeps, up to the receive width, so call it after the mask is set up.
+    /// Those frames carry every base tone, so a few dead tones (a radio's
+    /// low-frequency roll-off) that the mask is about to drop would otherwise
+    /// set the first rung far below what the kept tones carry: on the
+    /// 2026-11-08 1.25 m captures, 13 dB over all 24 tones against 28 dB
+    /// without tones 0-2. The channel SNR itself when the receiver gave no
+    /// per-tone powers.
+    fn reply_rule_snr(&self, meas: &Measurement, cfg: &Config) -> f64 {
+        let (mask, _) = self.mask.reported();
+        let width = usize::from(self.rx_width(cfg)).min(56);
+        meas.snr_over((0..width).filter(|&k| mask >> k & 1 == 1)).unwrap_or(meas.snr_db)
+    }
+
     pub(crate) fn rx_width(&self, cfg: &Config) -> u8 {
         if cfg.capabilities & caps::WIDE != 0 { self.peer_width_cap + 1 } else { BASE_WIDTH }
     }
@@ -612,7 +627,7 @@ impl Session {
         self.fresh = true;
         self.mask.on_measurement(f.meas.tone_snr_db.as_deref(), f.meas.probe, ctx.now);
         if ftype == FrameType::Sound {
-            self.rate.on_reply_rule(f.meas.snr_db);
+            self.rate.on_reply_rule(self.reply_rule_snr(&f.meas, ctx.cfg));
             self.replying_to_sound = true;
         } else {
             let stats = FrameStats {
@@ -702,9 +717,9 @@ impl Session {
         self.tx_mcs = b3.requested_mcs.min(6);
         self.tx_mask = (b3.mask, 0);
         self.tx_long_prefix = ctx.cfg.repeater;
-        self.rate.on_reply_rule(f.meas.snr_db);
         self.mask = MaskTracker::new(self.rx_width(ctx.cfg), ctx.cfg.track_masks);
         self.mask.setup(f.meas.tone_snr_db.as_deref(), ctx.now);
+        self.rate.on_reply_rule(self.reply_rule_snr(&f.meas, ctx.cfg));
         let mut resumed = false;
         if self.resume {
             if b3.resume {

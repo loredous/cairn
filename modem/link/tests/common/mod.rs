@@ -135,6 +135,11 @@ pub struct Sim {
     seq: u64,
     pub rng: Rng,
     pub meas_noise_db: f64,
+    /// Frames carry per-tone powers, and their channel SNR is summed over
+    /// the tones the frame used (signal 1 per tone, noise from the tone's
+    /// SNR), as the receiver measures it: an impaired tone in use then
+    /// drags the reported SNR down, as the radios' dead low tones do.
+    pub tone_powers: bool,
     pub csma_violations: Vec<String>,
     pub turn_holder_overlaps: Vec<String>,
     pub mask_mismatches: usize,
@@ -157,6 +162,7 @@ impl Sim {
             seq: 0,
             rng: Rng::new(seed ^ 0xA1A1),
             meas_noise_db: 0.25,
+            tone_powers: false,
             csma_violations: Vec::new(),
             turn_holder_overlaps: Vec::new(),
             mask_mismatches: 0,
@@ -489,12 +495,22 @@ impl Sim {
                 tones[*t as usize] -= depth;
             }
         }
+        let (snr_db, tone_powers) = if self.tone_powers {
+            let p: Vec<(f64, f64)> = tones.iter().map(|&t| (1.0, 10f64.powf(-t / 10.0))).collect();
+            let w = usize::from(frame.tx.width).min(tones.len());
+            let (s, n) =
+                (0..w).filter(|&k| frame.tx.mask >> k & 1 == 1).fold((0.0, 0.0), |(s, n), k| (s + p[k].0, n + p[k].1));
+            (10.0 * (s / n).log10(), Some(p))
+        } else {
+            (snr + noise, None)
+        };
         rx.meas = Measurement {
-            snr_db: snr + noise,
+            snr_db,
             distortion: 0,
             adc_clipped: false,
             tone_snr_db: Some(tones),
             probe: frame.flags.probe,
+            tone_powers,
         };
         Some(Event::Frame(rx))
     }

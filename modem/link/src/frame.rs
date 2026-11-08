@@ -703,6 +703,26 @@ pub struct Measurement {
     pub tone_snr_db: Option<Vec<f64>>,
     /// The frame carried a width probe.
     pub probe: bool,
+    /// Per tone, tone 0 first: the (signal, noise) powers behind `snr_db`,
+    /// linear, signal on the 7 dB-equivalent scale; (0, 0) on a tone not
+    /// measured. None when the receiver gave no per-tone powers.
+    pub tone_powers: Option<Vec<(f64, f64)>>,
+}
+
+impl Measurement {
+    /// The channel SNR (7 dB-equivalent, dB) over the measured tones among
+    /// `tones`: what a frame using only those tones would measure, for
+    /// choosing a rung under a mask that drops weak tones. None without
+    /// per-tone powers or with no measured tone in the set.
+    pub fn snr_over(&self, tones: impl IntoIterator<Item = usize>) -> Option<f64> {
+        let p = self.tone_powers.as_ref()?;
+        let (s, n) = tones
+            .into_iter()
+            .filter_map(|k| p.get(k))
+            .filter(|(s, n)| *s > 0.0 && *n > 0.0)
+            .fold((0.0, 0.0), |(a, b), (s, n)| (a + s, b + n));
+        (n > 0.0).then(|| 10.0 * (s / n).log10())
+    }
 }
 
 /// A received frame whose header decoded.
@@ -778,6 +798,22 @@ impl RxFrame {
 
 #[cfg(test)]
 mod tests {
+
+    #[test]
+    fn snr_over_sums_signal_and_noise_of_the_chosen_tones() {
+        // Tone 0 dead (noise 100x), tones 1-3 at 20 dB.
+        let m = Measurement {
+            snr_db: 1.0,
+            tone_powers: Some(vec![(1.0, 100.0), (1.0, 0.01), (1.0, 0.01), (0.0, 0.0)]),
+            ..Measurement::default()
+        };
+        let all = m.snr_over(0..4).unwrap();
+        assert!((all - 10.0 * (3.0f64 / 100.02).log10()).abs() < 1e-9);
+        // Unmeasured tone 3 is skipped; without tone 0: 20 dB.
+        assert!((m.snr_over(1..4).unwrap() - 20.0).abs() < 1e-9);
+        assert_eq!(m.snr_over([3usize]), None);
+        assert_eq!(Measurement::default().snr_over(0..4), None);
+    }
     use super::*;
 
     fn call(s: &str) -> Address {
