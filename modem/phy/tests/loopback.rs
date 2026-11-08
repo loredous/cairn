@@ -114,6 +114,53 @@ fn awgn_above_threshold() {
     }
 }
 
+/// A 32-tone frame with its width probe, tones 0-2 swamped by interferers
+/// (0 dB there): the rebuilt per-tone SNR is finite on every tone, measured
+/// on every probed tone above 23 (even in a header-only frame, where only
+/// the two probe symbols cover them), and tones 3-4 next to the bad ones read
+/// their own SNR (mask decisions use these values). As the simulator's
+/// `test_per_tone_snr_on_probed_tones_next_to_bad_tones`.
+#[test]
+fn per_tone_snr_on_probed_tones_next_to_bad_tones() {
+    let snr = 20.0;
+    for n_blocks in [4usize, 0] {
+        let mut rng = Rng::new(77);
+        let cfg = FrameConfig::new(32, 0, n_blocks).unwrap().with_probe(true).unwrap();
+        let header = rng.bits(128);
+        let payloads: Vec<Vec<u8>> = (0..n_blocks).map(|_| rng.bits(params::DATA_PAYLOAD_BITS)).collect();
+        let frame = Transmitter::new().build(&cfg, &header, &payloads);
+        let last = if n_blocks > 0 { cfg.first_data() } else { cfg.first_probe() };
+        let tail = &frame.samples[last * cfg.stride()..];
+        let p = tail.iter().map(|v| v * v).sum::<f64>() / tail.len() as f64;
+        let mut x = vec![0.0; 600];
+        x.extend_from_slice(&frame.samples);
+        x.extend(vec![0.0; 600]);
+        let mut y = awgn(&x, snr, cfg.width, &mut rng, Some(p));
+        for k in 0..3 {
+            let phase = 2.0 * std::f64::consts::PI * rng.uniform();
+            let a = (2.0 * p / cfg.width as f64).sqrt();
+            for (i, v) in y.iter_mut().enumerate() {
+                *v += a * (2.0 * std::f64::consts::PI * params::tone_freq(k) * i as f64 / 48_000.0 + phase).cos();
+            }
+        }
+        let r = Receiver::new().receive(&y, &cfg, 600, &RxOptions::default());
+        assert!(r.header_ok && r.block_ok.iter().all(|&b| b), "{n_blocks} blocks");
+        let c = r.channel_snr.as_ref().unwrap();
+        assert!(!c.fallback);
+        let per = &c.per_tone_db; // average-referenced; MCS 0 has no clip offset
+        eprintln!("{n_blocks} blocks: per-tone {per:.1?}");
+        assert_eq!(per.len(), 32);
+        assert!(per.iter().all(|v| v.is_finite()), "{per:?}");
+        assert!(per[..3].iter().all(|&v| v < 6.0), "{:?}", &per[..3]);
+        // A header-only frame measures each base tone on 9 symbols: +-1.7 dB
+        // (the simulator over 30 seeds: tones 3-4 average 19.3 dB, unbiased).
+        let near = if n_blocks > 0 { 2.5 } else { 5.0 };
+        assert!(per[3..5].iter().all(|&v| (v - snr).abs() < near), "{:?}", &per[3..5]);
+        let tol = if n_blocks > 0 { 3.0 } else { 6.0 };
+        assert!(per[24..].iter().all(|&v| (v - snr).abs() < tol), "{:?}", &per[24..]);
+    }
+}
+
 /// The level settling at the start of a transmission, as the 2026-11-07
 /// over-the-air captures show it: 1 - (1 - g0) exp(-t / tau) from the first
 /// preamble sample, g0 -14 dB, tau 19 ms, signal and noise alike.

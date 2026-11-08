@@ -57,5 +57,5 @@ Values with the receivers of this commit (default clock prior):
 | A to B UI | 1/1 | -9.3 +- 8.3 | 13.7 |
 | B to A 1 block | 0/1 (gap) | -49.7 +- 48.2 | -1.7 (fallback) |
 | B to A 4 s (full capture) | 11/13 | +2.2 +- 0.8 | 13.7 |
-| B to A PROBE | - | -24.6 +- 48.7 | 14.4 |
+| B to A PROBE | - | -24.6 +- 48.7 | 14.5 |
 | B to A UI | 1/1 | -3.8 +- 7.7 | 13.9 |

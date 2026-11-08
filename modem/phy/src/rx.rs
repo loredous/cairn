@@ -209,7 +209,9 @@ impl std::fmt::Display for HeaderError {
 /// Channel SNR measured against the rebuilt transmitted symbols (ADR 0006).
 #[derive(Clone, Debug, PartialEq)]
 pub struct ChannelSnr {
-    /// Per tone, dB (interpolated across tones with fewer than three known symbols).
+    /// Per tone, dB: measured on every tone with two known symbols or more
+    /// after the preamble (a probed tone always), interpolated across the rest
+    /// (masked and silent tones).
     pub per_tone_db: Vec<f64>,
     /// Over the data symbols' active tones: total signal over total noise, dB,
     /// average-referenced (add the clip offset for the 7 dB scale).
@@ -1250,6 +1252,9 @@ pub const FALLBACK_H_BIAS: f64 = 1.0 / 6.0;
 pub const SNR_SETTLE_SYMBOLS: usize = 8;
 /// Alternations between the per-tone and per-symbol gains in the SNR fit.
 const SETTLE_ITERATIONS: usize = 4;
+/// A tone measured on two symbols only (a probed tone the data did not
+/// reach) pools its noise with such tones within this many tones.
+const LOW_DOF_POOL: usize = 2;
 
 /// The decoder's own estimate, for the fallback.
 struct DecoderEstimate<'a> {
@@ -1374,13 +1379,14 @@ fn rebuild_snr(
         vec![false; n]
     };
     let mut a = vec![one; n];
+    let ones = vec![1.0; w];
     let mut yc = vec![zero; n * w];
     let mut g = vec![zero; w];
     for _ in 0..3 {
         for c in 0..n * w {
             yc[c] = y[c] / dc[c];
         }
-        fit_gains(&yc, &x, w, &settle, &mut a, &mut g);
+        fit_gains(&yc, &x, w, &settle, &ones, &mut a, &mut g);
         // The common phase drift (alpha + beta f) per symbol re-fit against
         // the rebuilt tones: pilots alone leave a few hundredths of a radian
         // of the designed clipping's phase noise.
@@ -1420,38 +1426,61 @@ fn rebuild_snr(
     for c in 0..n * w {
         yc[c] = y[c] / dc[c];
     }
-    fit_gains(&yc, &x, w, &settle, &mut a, &mut g);
+    fit_gains(&yc, &x, w, &settle, &ones, &mut a, &mut g);
     // Each own gain takes one complex degree of freedom from its symbol's tones.
     let row_live: Vec<f64> = (0..n).map(|i| live[i * w..(i + 1) * w].iter().filter(|&&l| l).count() as f64).collect();
     let mut per_tone = vec![f64::NAN; w];
     let mut sig = vec![0.0; w];
     let mut noise = vec![0.0; w];
     let mut ok = vec![false; w];
-    for k in 0..w {
-        let (mut nk, mut mk, mut resid, mut den, mut xx) = (0.0, 0.0, 0.0, 0.0, 0.0);
-        for i in 0..n {
-            let c = i * w + k;
-            if !live[c] {
-                continue;
+    let mut measured_tone = vec![false; w];
+    let mut resid_k = vec![0.0; w];
+    let mut dof_k = vec![0.0; w];
+    // Twice: then again with each tone weighted by its inverse noise in the
+    // settling symbols' gains, so a few very noisy tones (an interferer, a
+    // tone the mask will drop) do not spread their noise over the others.
+    let any_settle = settle.iter().any(|&v| v);
+    for pass in 0..2 {
+        if pass == 1 {
+            if !any_settle {
+                break;
             }
-            let xa = a[i] * x[c];
-            nk += 1.0;
-            if settle[i] {
-                mk += 1.0 / row_live[i];
-            }
-            // A settling symbol's level scales its noise too (the radios'
-            // clipping, which follows the level): its residual counts at the
-            // steady level.
-            resid += (yc[c] - g[k] * xa).norm_sqr() / a[i].norm_sqr().max(1e-30);
-            den += xa.norm_sqr();
-            xx += x[c].norm_sqr();
+            let floor = 1e-12 * noise.iter().copied().fold(1e-30, f64::max);
+            let wt: Vec<f64> = noise.iter().map(|&v| 1.0 / v.max(floor)).collect();
+            fit_gains(&yc, &x, w, &settle, &wt, &mut a, &mut g);
         }
-        noise[k] = resid / (nk - 1.0 - mk).max(1.0);
-        // |g|^2 over-reads by the noise left in the fit (noise / sum |x|^2).
-        let g2 = g[k].norm_sqr();
-        let h2 = (g2 - noise[k] / den.max(1e-30)).max(0.05 * g2);
-        sig[k] = h2 * xx / nk.max(1.0);
-        ok[k] = nk >= 3.0;
+        for k in 0..w {
+            let (mut nk, mut mk, mut resid, mut den, mut xx) = (0.0, 0.0, 0.0, 0.0, 0.0);
+            for i in 0..n {
+                let c = i * w + k;
+                if !live[c] {
+                    continue;
+                }
+                let xa = a[i] * x[c];
+                nk += 1.0;
+                if settle[i] {
+                    mk += 1.0 / row_live[i];
+                }
+                // A settling symbol's level scales its noise too (the radios'
+                // clipping, which follows the level): its residual counts at the
+                // steady level.
+                resid += (yc[c] - g[k] * xa).norm_sqr() / a[i].norm_sqr().max(1e-30);
+                den += xa.norm_sqr();
+                xx += x[c].norm_sqr();
+            }
+            noise[k] = resid / (nk - 1.0 - mk).max(1.0);
+            resid_k[k] = resid;
+            dof_k[k] = nk - 1.0 - mk;
+            // |g|^2 over-reads by the noise left in the fit (noise / sum |x|^2).
+            let g2 = g[k].norm_sqr();
+            let h2 = (g2 - noise[k] / den.max(1e-30)).max(0.05 * g2);
+            sig[k] = h2 * xx / nk.max(1.0);
+            ok[k] = nk >= 3.0;
+            // A tone with one degree of freedom left (a probed tone above 23 in
+            // a frame whose data did not reach it: its two probe symbols) is
+            // measured in its own right, not taken from its neighbours.
+            measured_tone[k] = dof_k[k] >= 1.0 - 1e-9;
+        }
     }
     let tiny = 1e-12 * sig.iter().copied().fold(1e-30, f64::max);
     let t: Vec<usize> = cfg.data_active_tones.iter().copied().filter(|&k| k < w && ok[k]).collect();
@@ -1460,8 +1489,22 @@ fn rebuild_snr(
     }
     let effective =
         10.0 * (t.iter().map(|&k| sig[k]).sum::<f64>() / t.iter().map(|&k| noise[k]).sum::<f64>().max(tiny)).log10();
-    let measured: Vec<f64> = (0..w).filter(|&k| ok[k]).map(|k| k as f64).collect();
-    let values: Vec<f64> = (0..w).filter(|&k| ok[k]).map(|k| 10.0 * (sig[k] / noise[k].max(tiny)).log10()).collect();
+    // One degree of freedom scatters a tone's noise by +-9 dB: such tones
+    // pool their residual with their like within LOW_DOF_POOL tones.
+    let low: Vec<bool> = (0..w).map(|k| measured_tone[k] && dof_k[k] < 2.0 - 1e-9).collect();
+    let noise_tone: Vec<f64> = (0..w)
+        .map(|k| {
+            if !low[k] {
+                return noise[k];
+            }
+            let js = k.saturating_sub(LOW_DOF_POOL)..(k + LOW_DOF_POOL + 1).min(w);
+            let (r, d) = js.filter(|&j| low[j]).fold((0.0, 0.0), |(r, d), j| (r + resid_k[j], d + dof_k[j]));
+            r / d
+        })
+        .collect();
+    let measured: Vec<f64> = (0..w).filter(|&k| measured_tone[k]).map(|k| k as f64).collect();
+    let values: Vec<f64> =
+        (0..w).filter(|&k| measured_tone[k]).map(|k| 10.0 * (sig[k] / noise_tone[k].max(tiny)).log10()).collect();
     for (k, v) in per_tone.iter_mut().enumerate() {
         *v = dsp::interp(k as f64, &measured, &values);
     }
@@ -1469,8 +1512,18 @@ fn rebuild_snr(
 }
 
 /// Per-tone gains g (and the own gains a of the `settle` symbols, 1 for the
-/// rest) of yc = g_k a_s x by alternating least squares.
-fn fit_gains(yc: &[Complex64], x: &[Complex64], w: usize, settle: &[bool], a: &mut [Complex64], g: &mut [Complex64]) {
+/// rest) of yc = g_k a_s x by alternating least squares, each tone weighted
+/// by `wt` in the symbols' gains.
+#[allow(clippy::too_many_arguments)]
+fn fit_gains(
+    yc: &[Complex64],
+    x: &[Complex64],
+    w: usize,
+    settle: &[bool],
+    wt: &[f64],
+    a: &mut [Complex64],
+    g: &mut [Complex64],
+) {
     let n = a.len();
     let tone_gains = |a: &[Complex64], g: &mut [Complex64]| {
         for (k, gk) in g.iter_mut().enumerate() {
@@ -1491,12 +1544,12 @@ fn fit_gains(yc: &[Complex64], x: &[Complex64], w: usize, settle: &[bool], a: &m
         tone_gains(a, g);
         for i in (0..n).filter(|&i| settle[i]) {
             let (mut num, mut den) = (Complex64::new(0.0, 0.0), 0.0);
-            for k in 0..w {
-                let r = g[k] * x[i * w + k];
-                num += yc[i * w + k] * r.conj();
-                den += r.norm_sqr();
+            for (k, (gk, wk)) in g.iter().zip(wt).enumerate() {
+                let r = gk * x[i * w + k];
+                num += yc[i * w + k] * r.conj() * *wk;
+                den += r.norm_sqr() * wk;
             }
-            a[i] = num / den.max(1e-30);
+            a[i] = num / den.max(1e-300);
         }
     }
     tone_gains(a, g);

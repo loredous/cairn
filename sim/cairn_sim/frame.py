@@ -1387,12 +1387,13 @@ FALLBACK_H_BIAS = 1 / 6  # noise power left in |h|^2: two S2 symbols averaged (1
 # symbol after the preamble and before this has a gain of its own.
 SNR_SETTLE_SYMBOLS = 8
 SETTLE_ITERATIONS = 4   # alternations between the per-tone and per-symbol gains
+LOW_DOF_POOL = 2        # a tone measured on two symbols only pools its noise over +-2 such tones
 
 
 @dataclass
 class ChannelSnr:
     snr_db: float             # 7 dB-equivalent channel SNR, saturated at SNR_MAX_DB
-    per_tone_db: np.ndarray   # (width,) same scale; tones without enough known symbols are interpolated
+    per_tone_db: np.ndarray   # (width,) same scale; measured on tones with 2+ known symbols (probed tones), else interpolated
     known_symbols: int        # symbols whose content the receiver knew
     fallback: bool            # the estimate counts the designed clipping (errs low)
 
@@ -1536,19 +1537,26 @@ def channel_snr(rx: np.ndarray, cfg: FrameConfig, res: RxResult) -> ChannelSnr:
         drift_c = drift_c * np.exp(1j * (sol[0] * uu + sol[1] * uu * ff))
     y = y / drift_c
     h, a = _fit_gains(y, x, a, settle)
-    xa = a[:, None] * x
     n_k = np.sum(live, axis=0)
     # Each settling symbol's own gain takes one complex degree of freedom
     # from the tones it carries.
     m_k = np.sum(live[settle] / np.maximum(np.sum(live[settle], axis=1, keepdims=True), 1), axis=0)
-    den = np.sum(np.abs(xa) ** 2, axis=0)
-    # Only the cells a tone carries something in: a silent cell (upper tones
-    # in the preamble, header and control symbols, masked tones) holds noise
-    # but no fit, and is not counted in n_k either.
-    # A settling symbol's level scales its noise too (the radios' clipping,
-    # which follows the level): its residual counts at the steady level.
-    resid = np.sum(np.abs(y - h[None, :] * xa) ** 2 * live / np.abs(a[:, None]) ** 2, axis=0)
-    noise = resid / np.maximum(n_k - 1 - m_k, 1)    # one complex gain fitted per tone
+    # Twice: then again with each tone weighted by its inverse noise in the
+    # settling symbols' gains, so a few very noisy tones (an interferer, a
+    # tone the mask will drop) do not spread their noise over the others.
+    for rnd in range(2 if settle.any() else 1):
+        if rnd == 1:
+            h, a = _fit_gains(y, x, a, settle, 1 / np.maximum(noise, 1e-12 * max(float(np.max(noise)), 1e-30)))
+        xa = a[:, None] * x
+        den = np.sum(np.abs(xa) ** 2, axis=0)
+        # Only the cells a tone carries something in: a silent cell (upper
+        # tones in the preamble, header and control symbols, masked tones)
+        # holds noise but no fit, and is not counted in n_k either. A
+        # settling symbol's level scales its noise too (the radios'
+        # clipping, which follows the level): its residual counts at the
+        # steady level.
+        resid = np.sum(np.abs(y - h[None, :] * xa) ** 2 * live / np.abs(a[:, None]) ** 2, axis=0)
+        noise = resid / np.maximum(n_k - 1 - m_k, 1)    # one complex gain fitted per tone
     # |h|^2 over-reads by the noise left in the fit (noise / sum |x|^2).
     h2 = np.maximum(np.abs(h) ** 2 - noise / np.maximum(den, 1e-30), 0.05 * np.abs(h) ** 2)
     sig = h2 * np.sum(np.abs(x) ** 2, axis=0) / np.maximum(n_k, 1)     # the mask's boost counts
@@ -1559,14 +1567,29 @@ def channel_snr(rx: np.ndarray, cfg: FrameConfig, res: RxResult) -> ChannelSnr:
         return ChannelSnr(min(fb_snr, SNR_MAX_DB), np.minimum(fb_tone, SNR_MAX_DB), n_known, True)
     overall = 10 * np.log10(np.sum(sig[t]) / max(np.sum(noise[t]), tiny)) + off
     per = np.full(w, np.nan)
-    per[ok] = 10 * np.log10(sig[ok] / np.maximum(noise[ok], tiny)) + off
-    per = np.interp(np.arange(w), np.flatnonzero(ok), per[ok])
+    # A tone with one degree of freedom left (a probed tone above 23 in a
+    # frame whose data did not reach it: its two probe symbols) is measured in
+    # its own right, not taken from its neighbours.
+    # One degree of freedom scatters a tone's noise by +-9 dB: such tones
+    # pool their residual with their like within LOW_DOF_POOL tones.
+    dof = n_k - 1 - m_k
+    meas = dof >= 1 - 1e-9
+    low = meas & (dof < 2 - 1e-9)
+    noise_tone = noise.copy()
+    for k in np.flatnonzero(low):
+        js = [j for j in range(k - LOW_DOF_POOL, k + LOW_DOF_POOL + 1) if 0 <= j < w and low[j]]
+        noise_tone[k] = np.sum(resid[js]) / np.sum(dof[js])
+    per[meas] = 10 * np.log10(sig[meas] / np.maximum(noise_tone[meas], tiny)) + off
+    per = np.interp(np.arange(w), np.flatnonzero(meas), per[meas])
     return ChannelSnr(float(min(overall, SNR_MAX_DB)), np.minimum(per, SNR_MAX_DB), n_known, False)
 
 
-def _fit_gains(y: np.ndarray, x: np.ndarray, a: np.ndarray, settle: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+def _fit_gains(y: np.ndarray, x: np.ndarray, a: np.ndarray, settle: np.ndarray,
+               wt: np.ndarray | None = None) -> tuple[np.ndarray, np.ndarray]:
     """Per-tone gains h, and the gains a of the ``settle`` symbols (1 for the
-    rest), of y = h_k a_s x by alternating least squares from ``a``."""
+    rest), of y = h_k a_s x by alternating least squares from ``a``, each
+    tone weighted by ``wt`` (default 1) in the symbols' gains."""
+    wt = np.ones(x.shape[1]) if wt is None else wt
     def tone_gains(a):
         xa = a[:, None] * x
         return np.sum(y * np.conj(xa), axis=0) / np.maximum(np.sum(np.abs(xa) ** 2, axis=0), 1e-30)
@@ -1576,7 +1599,8 @@ def _fit_gains(y: np.ndarray, x: np.ndarray, a: np.ndarray, settle: np.ndarray) 
     for _ in range(SETTLE_ITERATIONS):
         h = tone_gains(a)
         ref = h[None, :] * x[settle]
-        a[settle] = np.sum(y[settle] * np.conj(ref), axis=1) / np.maximum(np.sum(np.abs(ref) ** 2, axis=1), 1e-30)
+        a[settle] = (np.sum(y[settle] * np.conj(ref) * wt, axis=1)
+                     / np.maximum(np.sum(np.abs(ref) ** 2 * wt, axis=1), 1e-300))
     return tone_gains(a), a
 
 
