@@ -242,9 +242,12 @@ struct TxArgs {
     /// Grid locator for the ID block, 4 or 6 characters
     #[arg(long)]
     grid: Option<String>,
-    /// Session frames: this station's cap in tones, the width probe's extent (default: the width)
+    /// Session frames: the width probe's extent in tones (default: the width, as ADR 0011 requires)
     #[arg(long)]
     cap: Option<usize>,
+    /// Session frames: the Mask ID of --mask, named in the header (ADR 0011)
+    #[arg(long, default_value_t = 0)]
+    mask_id: u8,
     /// Text to send as the payload (zero-padded); default: random payloads for the seed
     #[arg(long)]
     message: Option<String>,
@@ -271,9 +274,12 @@ struct ListenArgs {
     /// Take the whole configuration from --mcs/--width/--blocks/--mask instead of the header
     #[arg(long)]
     fixed: bool,
-    /// Session link: the peer's cap in tones, the extent of its width probe (default: --width)
+    /// Session link: the extent of the peer's width probe in tones (default: --width, as ADR 0011 requires)
     #[arg(long)]
     peer_cap: Option<usize>,
+    /// Session link: the Mask ID under which --mask was reported; frames naming another ID are not decoded (ADR 0011)
+    #[arg(long, default_value_t = 0)]
+    mask_id: u8,
     /// Play the WAV at real-time pace, as a sound card would deliver it, and report the receive turnaround
     #[arg(long)]
     realtime: bool,
@@ -589,11 +595,18 @@ fn header_spec(a: &TxArgs, spec: &FrameSpec, i: usize) -> Result<HeaderSpec, Str
     h.id = a.id || ft == frame_type::BEACON;
     h.grid = a.grid.clone();
     h.message = a.message.as_ref().map(|m| m.as_bytes().to_vec());
+    if a.mask_id > 3 {
+        return Err("--mask-id is 0-3".into());
+    }
     if h.is_session() {
         h.usable = headers::usable_from_silenced(spec.width, &spec.silenced);
         h.cap = a.cap;
-    } else if !spec.silenced.is_empty() || a.cap.is_some() {
-        return Err("--mask and --cap apply to session frames; a broadcast uses its width, unmasked (ADR 0007)".into());
+        h.mask_id = a.mask_id;
+    } else if !spec.silenced.is_empty() || a.cap.is_some() || a.mask_id != 0 {
+        return Err(
+            "--mask, --mask-id and --cap apply to session frames; a broadcast uses its width, unmasked (ADR 0007)"
+                .into(),
+        );
     }
     // Data blocks: --blocks, else what fits the frame time after the control
     // blocks; none in a BEACON or PROBE unless asked.
@@ -756,11 +769,16 @@ fn listen_cmd(a: ListenArgs) -> Result<(), String> {
         );
         Box::new(FixedConfig::new(spec.width, spec.mcs, n_blocks, &spec.silenced, force_cp)?)
     } else {
+        if a.mask_id > 3 {
+            return Err("--mask-id is 0-3".into());
+        }
         let link = LinkState {
             width: spec.width,
             usable: headers::usable_from_silenced(spec.width, &spec.silenced),
             cp: force_cp,
             cap: a.peer_cap,
+            mask_id: a.mask_id,
+            pending: None,
         };
         // Validate the link state once.
         cairn_phy::FrameConfig::new(link.width, 0, 1)
@@ -770,9 +788,15 @@ fn listen_cmd(a: ListenArgs) -> Result<(), String> {
         println!(
             "config: from each header; session frames at x{}{} probe to {} tones; broadcasts at the width of their probe (ADR 0007); prefix {prefix}",
             link.width,
-            if spec.silenced.is_empty() { String::new() } else { format!(" (tones {:?} masked)", spec.silenced) },
+            if spec.silenced.is_empty() {
+                String::new()
+            } else {
+                format!(" (tones {:?} masked, mask ID {})", spec.silenced, link.mask_id)
+            },
             link.probe_extent(),
         );
+        // The link state for each decoded header (here the same for every
+        // peer; a link layer answers per session).
         Box::new(HeaderFirst::new(link, rx_opts.clone()))
     };
     let detector = DetectorConfig { xcorr_threshold: a.rho, ..Default::default() };

@@ -15,8 +15,11 @@
 //! [`Receiver::receive_header_first`] needs no configuration: it decodes the
 //! preamble and header on the base tones, unpacks the header (SPEC 8.2) and
 //! takes the rung, the control and data block counts and the probe flag
-//! from it; width and mask come from the caller's [`LinkState`], the prefix
-//! from the detector.
+//! from it; width and masks come from the caller's [`LinkSource`] (a
+//! [`LinkState`], or a closure that gives one for the decoded header), the
+//! mask by the header's Mask ID (ADR 0011), the prefix from the detector.
+//! The result names each data block's sequence ([`RxResult::block_sequences`],
+//! from the header and the block map of ADR 0008).
 //!
 //! Arithmetic is `f64` (LDPC in `f32`, as the simulator), so results agree
 //! with the simulator to rounding, not bit for bit.
@@ -26,7 +29,7 @@ use std::f64::consts::PI;
 use num_complex::Complex64;
 
 use crate::dsp;
-use crate::fields::{ControlBlock, FieldError, Header};
+use crate::fields::{self, ControlBlock, FieldError, Header};
 use crate::frame::{ConfigError, FrameConfig, LinkState};
 use crate::ldpc::{self, DecodeResult};
 use crate::mapping::Demapper;
@@ -124,9 +127,30 @@ pub struct RxResult {
     /// For a frame outside a session with a probe: which tones carried it
     /// (ADR 0007), the width it gave, and the width the frame decoded at.
     pub probe_extent: Option<ProbeExtent>,
+    /// The sequence of each data block (ADR 0008, [`fields::block_sequences`]):
+    /// consecutive from the header's Sequence, or as the block map names
+    /// them; None when the header failed, or flag bit 7 is set and the block
+    /// map failed or breaks its rules (then no data block counts as received).
+    pub block_sequences: Option<Vec<u16>>,
+    /// The header named a mask ID the link state does not hold (ADR 0011
+    /// `mask-id`): the frame's control and data blocks were not decoded and
+    /// count as failed.
+    pub unknown_mask: Option<u8>,
 }
 
 impl RxResult {
+    /// (sequence, 126 payload bytes) of every data block received: CRC passed
+    /// and its sequence known (ADR 0008).
+    pub fn delivered(&self) -> Vec<(u16, [u8; crate::pdu::BLOCK_BYTES])> {
+        let Some(seqs) = &self.block_sequences else { return Vec::new() };
+        seqs.iter()
+            .zip(&self.block_ok)
+            .zip(&self.block_bits)
+            .filter(|((_, ok), _)| **ok)
+            .map(|((&s, _), bits)| (s, crate::pdu::bits_to_payload(bits)))
+            .collect()
+    }
+
     /// The SNR the protocol reports (SPEC 7.1, ADR 0006): the channel SNR on
     /// the 7 dB-equivalent scale, from the rebuilt symbols when measured,
     /// else the decoder's per-tone estimate over the active tones (which
@@ -619,12 +643,15 @@ impl Receiver {
         };
         let channel_snr = opts.rebuild_snr.then(|| rebuild_snr(&tones, &corr_kept, cfg, advance, &decoded));
         let (header, header_error) = parse_header(hres.ok, &hres.bits);
-        let controls = control_ok
+        let controls: Vec<Option<ControlBlock>> = control_ok
             .iter()
             .zip(&control_bits)
             .map(|(&ok, b)| if ok { ControlBlock::unpack(b).ok() } else { None })
             .collect();
+        let block_sequences = sequences(header.as_ref(), &controls, cfg.n_blocks);
         RxResult {
+            block_sequences,
+            unknown_mask: None,
             channel_snr,
             header_ok: hres.ok,
             header_bits: hres.bits,
@@ -646,18 +673,54 @@ impl Receiver {
     }
 }
 
+fn sequences(header: Option<&Header>, controls: &[Option<ControlBlock>], n_blocks: usize) -> Option<Vec<u16>> {
+    header.filter(|h| h.n_data == n_blocks).and_then(|h| fields::block_sequences(h, controls))
+}
+
+/// Where the link state for a decoded header comes from: a fixed
+/// [`LinkState`], or a closure `Fn(&Header) -> Option<LinkState>` that the
+/// caller answers once it knows who sent the frame (None: no session state;
+/// the frame then takes its width from its probe, as outside a session).
+pub trait LinkSource {
+    /// The link state for a frame with this header.
+    fn link_for(&self, header: &Header) -> Option<LinkState>;
+    /// A prefix to insist on before any header is decoded (None: the detector's).
+    fn forced_cp(&self) -> Option<usize> {
+        None
+    }
+}
+
+impl LinkSource for LinkState {
+    fn link_for(&self, _header: &Header) -> Option<LinkState> {
+        Some(self.clone())
+    }
+    fn forced_cp(&self) -> Option<usize> {
+        self.cp
+    }
+}
+
+impl<F: Fn(&Header) -> Option<LinkState>> LinkSource for F {
+    fn link_for(&self, header: &Header) -> Option<LinkState> {
+        self(header)
+    }
+}
+
 impl Receiver {
     /// Decode a frame without being told its configuration (SPEC 8.2):
     /// decode the preamble and header on the base tones from `start` with
     /// prefix `cp` (the detector's), unpack the header, take the rung, the
-    /// control and data block counts and the probe flag from it, and decode
-    /// the whole frame at the link's width and mask. A frame whose header
-    /// fails (decode, CRC, fields, or no decodable geometry) comes back with
-    /// `header` None, `header_error` set, `config` None and no blocks.
-    pub fn receive_header_first(
+    /// control and data block counts and the probe flag from it, ask `link`
+    /// for the link state of that header, and decode the whole frame at its
+    /// width with the mask the header's Mask ID names (ADR 0011). A frame
+    /// whose header fails (decode, CRC, fields, or no decodable geometry)
+    /// comes back with `header` None, `header_error` set, `config` None and
+    /// no blocks. A session frame naming a mask ID the link state does not
+    /// hold comes back with its header, `unknown_mask` set and every control
+    /// and data block failed.
+    pub fn receive_header_first<L: LinkSource + ?Sized>(
         &mut self,
         rx: &[f64],
-        link: &LinkState,
+        link: &L,
         start: usize,
         cp: usize,
         opts: &RxOptions,
@@ -666,13 +729,19 @@ impl Receiver {
         let Some(header) = head.header.clone() else {
             return head;
         };
-        let extent = (!header.session && header.probe).then(|| self.probe_extent(rx, start, cp, &header, opts));
-        self.receive_frame(rx, &header, link, extent, start, cp, opts).unwrap_or_else(|e| {
-            let mut head = head;
-            head.header = None;
-            head.header_error = Some(HeaderError::Config(e));
-            head
-        })
+        let state = link.link_for(&header);
+        let extent = ((state.is_none() || !header.session) && header.probe)
+            .then(|| self.probe_extent(rx, start, cp, &header, opts));
+        match self.receive_frame(rx, &header, state.as_ref(), extent, start, cp, opts) {
+            Ok(r) => r,
+            Err(ConfigError::UnknownMask(id)) => unknown_mask(head, &header, id),
+            Err(e) => {
+                let mut head = head;
+                head.header = None;
+                head.header_error = Some(HeaderError::Config(e));
+                head
+            }
+        }
     }
 
     /// Decode the preamble and header alone on the base tones (the first
@@ -695,17 +764,19 @@ impl Receiver {
 
     /// Decode the frame a decoded `header` describes (the second half of
     /// [`Receiver::receive_header_first`]): a session frame at `link`'s
-    /// width, mask and cap; any other frame at the width of its probe
-    /// (`extent`, from [`Receiver::probe_extent`]; 24 tones without a probe).
-    /// If no data block decodes at the probe's width, the widths around it
-    /// are tried ([`width_alternatives`]) and the first at which a block
-    /// decodes is kept. Err if the header describes no decodable frame.
+    /// width and probe extent with the mask its Mask ID names; any other
+    /// frame, or a session frame with no link state, at the width of its
+    /// probe (`extent`, from [`Receiver::probe_extent`]; 24 tones without a
+    /// probe). If no data block decodes at the probe's width, the widths
+    /// around it are tried ([`width_alternatives`]) and the first at which a
+    /// block decodes is kept. Err if the header describes no decodable frame
+    /// ([`ConfigError::UnknownMask`] for a mask ID `link` does not hold).
     #[allow(clippy::too_many_arguments)]
     pub fn receive_frame(
         &mut self,
         rx: &[f64],
         header: &Header,
-        link: &LinkState,
+        link: Option<&LinkState>,
         extent: Option<ProbeExtent>,
         start: usize,
         cp: usize,
@@ -715,7 +786,7 @@ impl Receiver {
         let mut r = self.receive(rx, &cfg, start, opts);
         if let Some(ext) = extent.as_ref().filter(|_| cfg.n_blocks > 0 && !r.block_ok.iter().any(|&b| b)) {
             for w in width_alternatives(ext.width) {
-                let alt = LinkState { width: w, usable: None, cp: link.cp, cap: Some(w) };
+                let alt = LinkState::from_cap(w, None);
                 let Ok(acfg) = FrameConfig::from_header(header, &alt, cp) else { continue };
                 let ra = self.receive(rx, &acfg, start, opts);
                 if ra.block_ok.iter().any(|&b| b) {
@@ -729,6 +800,7 @@ impl Receiver {
             r.header_ok = true;
             r.header_bits = header.bits().expect("a decoded header packs");
         }
+        r.block_sequences = sequences(Some(header), &r.controls, r.block_ok.len());
         r.header = Some(header.clone());
         r.header_error = None;
         r.probe_extent = extent;
@@ -827,11 +899,17 @@ impl Receiver {
 
     /// Find the strongest frame in `rx` with the SPEC 6.1 detector (blind
     /// prefix) and decode it header first; None if nothing is detected.
-    pub fn detect_and_receive(&mut self, rx: &[f64], link: &LinkState, opts: &RxOptions) -> Option<RxResult> {
+    pub fn detect_and_receive<L: LinkSource + ?Sized>(
+        &mut self,
+        rx: &[f64],
+        link: &L,
+        opts: &RxOptions,
+    ) -> Option<RxResult> {
         let dets = crate::detector::detect(rx, &crate::detector::DetectorConfig::default());
+        let forced = link.forced_cp();
         let best = dets
             .iter()
-            .filter(|d| link.cp.is_none_or(|cp| cp == d.cp))
+            .filter(|d| forced.is_none_or(|cp| cp == d.cp))
             .max_by(|a, b| a.quality.total_cmp(&b.quality))?;
         Some(self.receive_header_first(rx, link, best.start, best.cp, opts))
     }
@@ -913,17 +991,36 @@ pub fn width_alternatives(width: usize) -> Vec<usize> {
 }
 
 /// The link state a frame is decoded with: the caller's for a session frame
-/// (header flag bit 3); outside a session, the probe's extent as width and
-/// cap with no mask (ADR 0007), or 24 tones without a probe.
-pub fn frame_link(header: &Header, link: &LinkState, extent: Option<&ProbeExtent>) -> LinkState {
-    if header.session {
-        return link.clone();
+/// (header flag bit 3); outside a session, or with no link state (`link`
+/// None, as for a CONNECT-ACK before its B.3 is known), the probe's extent
+/// as width and cap with no mask (ADR 0007), or 24 tones without a probe.
+pub fn frame_link(header: &Header, link: Option<&LinkState>, extent: Option<&ProbeExtent>) -> LinkState {
+    if let Some(l) = link.filter(|_| header.session) {
+        return l.clone();
     }
     let width = match extent {
         Some(e) if header.probe => e.width,
         _ => BASE_TONES,
     };
-    LinkState { width, usable: None, cp: link.cp, cap: Some(width) }
+    LinkState { cp: link.and_then(|l| l.cp), ..LinkState::from_cap(width, None) }
+}
+
+/// The result for a session frame whose header names a mask ID the link
+/// state does not hold (ADR 0011 `mask-id`): the header pass, with every
+/// control and data block failed and nothing delivered.
+fn unknown_mask(mut head: RxResult, header: &Header, id: u8) -> RxResult {
+    head.header = Some(header.clone());
+    head.header_error = None;
+    head.unknown_mask = Some(id);
+    head.config = None;
+    head.control_ok = vec![false; header.n_control];
+    head.control_bits = vec![vec![0; params::CONTROL_INFO_BITS]; header.n_control];
+    head.controls = vec![None; header.n_control];
+    head.block_ok = vec![false; header.n_data];
+    head.block_bits = vec![vec![0; params::DATA_INFO_BITS]; header.n_data];
+    head.iterations = vec![0; header.n_data];
+    head.block_sequences = None;
+    head
 }
 
 /// Decode `n` data blocks of `e` coded bits from their demapped LLRs (the

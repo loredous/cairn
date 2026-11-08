@@ -1,6 +1,17 @@
-//! Frame header and control block fields (SPEC 8.2, 8.3, Appendix B),
-//! mirroring `sim/cairn_sim/fields.py` and checked against
-//! `vectors/header/`, `vectors/control/` and `vectors/frame/`.
+//! Frame header and control block fields (SPEC 8.2, 8.3, Appendix B,
+//! ADRs 0008-0012), mirroring `sim/cairn_sim/fields.py` and checked against
+//! `vectors/header/`, `vectors/control/`, `vectors/frame/` and
+//! `vectors/link/`.
+//!
+//! Plain structs with `pack`/`unpack`: [`Header`] (ADR 0011
+//! `header-field-layout`: flag bits 6 first fragment and 7 block map, the
+//! Mask ID), [`ControlBlock`] over [`AckBlock`] (cumulative, with the mask
+//! ID), [`ConnectBlock`] (B.3, also the dictionary-only and link-test
+//! forms), [`CalRequestBlock`], [`CalReportBlock`], [`IdBlock`], [`PathBlock`]
+//! and [`BlockMapBlock`] (B.8). The link rules that sit on the fields:
+//! [`serial_diff`] (RFC 1982), [`plan_blocks`] and [`block_sequences`]
+//! (ADR 0008), [`check_controls`] (control-block orders, ADR 0010 and ADR
+//! 0012) and [`session_width`] (ADR 0011).
 //!
 //! Bits are `u8` values 0/1, first bit on air first; every field is
 //! big-endian and every block ends with its CRC-16/CCITT-FALSE over the bits
@@ -10,7 +21,9 @@
 //! flags) put item i at bit i; sequences of multi-bit items put the first
 //! item in the most significant bits; absent optional fields are zeros;
 //! reserved bits are sent as zero and ignored on receipt (a header whose
-//! version is not 1 is rejected).
+//! version is not 1 is rejected). The second, dictionary-only B.3 block
+//! sends width cap and maximum frame time as 0: a B.3 block with both 0 is
+//! read as that block, any other out-of-range value is malformed.
 
 use std::fmt;
 
@@ -25,6 +38,36 @@ pub const CONTROL_MESSAGE_BITS: usize = CONTROL_INFO_BITS - CRC_BITS;
 pub const VERSION: u8 = 1;
 /// All 56 tones usable.
 pub const ALL_TONES: u64 = (1 << MAX_TONES) - 1;
+/// Mask IDs are 2 bits (ADR 0011 `mask-id`).
+pub const MASK_IDS: u8 = 4;
+/// Blocks one block map or ACK bitmap spans; also the send window (ADR 0008).
+pub const BLOCK_SPAN: usize = 128;
+
+/// Appendix B control types (2 and 8-15 reserved, ADR 0008
+/// `reserved-control-types-after-block-map`).
+pub mod control_type {
+    #![allow(missing_docs)]
+    pub const ACK: u8 = 0;
+    pub const CONNECT: u8 = 1;
+    pub const CAL_REQUEST: u8 = 3;
+    pub const CAL_REPORT: u8 = 4;
+    pub const ID: u8 = 5;
+    pub const PATH: u8 = 6;
+    pub const BLOCK_MAP: u8 = 7;
+}
+
+/// `b - a` in serial-number arithmetic (RFC 1982, 16 bits; ADR 0008
+/// `block-sequence-rules`): positive when `b` is after `a`, -32767 ..= 32768.
+pub fn serial_diff(a: u16, b: u16) -> i32 {
+    let d = b.wrapping_sub(a) as i32;
+    if d > 32768 { d - 65536 } else { d }
+}
+
+/// A station's session width W in tones (ADR 0011 `session-width`): its B.3
+/// width cap + 1 when its peer advertised capability bit 0, else 24.
+pub fn session_width(width_cap: u8, peer_capabilities: u16) -> usize {
+    if peer_capabilities & capability::WIDE != 0 { width_cap as usize + 1 } else { 24 }
+}
 
 /// SPEC 8.4 frame types (11-30 reserved).
 pub mod frame_type {
@@ -71,6 +114,8 @@ pub enum FieldError {
     ControlFlag,
     /// A malformed address or text field.
     Malformed(&'static str),
+    /// Fields that break a frame-level rule (block sequences, control-block order).
+    Rule(&'static str),
 }
 
 impl fmt::Display for FieldError {
@@ -82,6 +127,7 @@ impl fmt::Display for FieldError {
             FieldError::Version(v) => write!(f, "header version {v} is not {VERSION}"),
             FieldError::ControlFlag => write!(f, "header flag bit 0 disagrees with the control block count"),
             FieldError::Malformed(what) => write!(f, "malformed {what}"),
+            FieldError::Rule(what) => write!(f, "{what}"),
         }
     }
 }
@@ -311,8 +357,9 @@ impl fmt::Display for Address {
 
 // --- header (SPEC 8.2) ------------------------------------------------------------
 
-/// The 144-bit frame header. Flag bits 0 and 1 follow from the block counts;
-/// the data block count is sent as count - 1.
+/// The 144-bit frame header (SPEC 8.2, ADR 0011 `header-field-layout`).
+/// Flag bits 0 and 1 follow from the block counts; the data block count is
+/// sent as count - 1; the Mask ID and one reserved bit follow it.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Header {
     /// Protocol version (1).
@@ -323,7 +370,9 @@ pub struct Header {
     pub source: Address,
     /// Destination address.
     pub destination: Address,
-    /// First data block's sequence number (sessions) or frame counter (broadcast).
+    /// Session frame: the first (lowest) data block's sequence, or the next
+    /// unsent one without data (ADR 0008); BEACON, UI, PROBE: the frame
+    /// counter (ADR 0010).
     pub sequence: u16,
     /// Data rung, 0-15 (sent as given and ignored without data blocks).
     pub mcs: u8,
@@ -339,6 +388,13 @@ pub struct Header {
     pub probe: bool,
     /// Flag bit 5: identical repeat of a broadcast frame.
     pub repeat: bool,
+    /// Flag bit 6: first fragment, on every BEACON and UI frame that starts
+    /// a message (ADR 0009 `first-fragment-flag`).
+    pub first_fragment: bool,
+    /// Flag bit 7: the second control block is a block map (ADR 0008).
+    pub block_map: bool,
+    /// Session frame: ID of the tone mask applied (ADR 0011 `mask-id`), 0-3; 0 otherwise.
+    pub mask_id: u8,
 }
 
 impl Header {
@@ -357,12 +413,24 @@ impl Header {
             session: false,
             probe: false,
             repeat: false,
+            first_fragment: false,
+            block_map: false,
+            mask_id: 0,
         }
     }
 
     /// The 8-bit flags field.
     pub fn flags(&self) -> u8 {
-        flags(&[self.n_control > 0, self.n_data > 0, self.more_fragments, self.session, self.probe, self.repeat]) as u8
+        flags(&[
+            self.n_control > 0,
+            self.n_data > 0,
+            self.more_fragments,
+            self.session,
+            self.probe,
+            self.repeat,
+            self.first_fragment,
+            self.block_map,
+        ]) as u8
     }
 
     /// The 128 bits before the CRC.
@@ -383,7 +451,8 @@ impl Header {
         w.put(self.mcs as u128, 4, "MCS")?;
         w.put(self.n_control as u128, 2, "control block count")?;
         w.put(self.n_data.saturating_sub(1) as u128, 7, "data block count")?;
-        w.put(0, 3, "reserved")?;
+        w.put(self.mask_id as u128, 2, "mask ID")?;
+        w.put(0, 1, "reserved")?;
         Ok(w.0)
     }
 
@@ -407,6 +476,7 @@ impl Header {
         let mcs = r.get(4) as u8;
         let n_control = r.get(2) as usize;
         let count = r.get(7) as usize;
+        let mask_id = r.get(2) as u8;
         if flag(fl, 0) != (n_control > 0) {
             return Err(FieldError::ControlFlag);
         }
@@ -423,6 +493,9 @@ impl Header {
             session: flag(fl, 3),
             probe: flag(fl, 4),
             repeat: flag(fl, 5),
+            first_fragment: flag(fl, 6),
+            block_map: flag(fl, 7),
+            mask_id,
         })
     }
 }
@@ -434,12 +507,15 @@ pub fn snr_code(snr_db: f64) -> u8 {
     (snr_db * 4.0 + 0.5).floor().clamp(0.0, 255.0) as u8
 }
 
-/// B.2 ACK control block (type 0).
+/// B.2 ACK control block (type 0, ADR 0011 `ack-control-block-layout`),
+/// cumulative (ADR 0008 `cumulative-ack`): the base is the receiver's next
+/// in-order sequence and bit i says it holds block base + i, so bit 0 is
+/// clear. Every session ACK carries the tone mask with its ID.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct AckBlock {
-    /// Sequence number of the peer's last frame.
+    /// The receiver's next in-order sequence (0 in a PROBE reply or refusal).
     pub base_sequence: u16,
-    /// Bit i set: block base + i passed its CRC.
+    /// Bit i set: the receiver holds block base + i.
     pub bitmap: u128,
     /// Rung the sender should use next.
     pub requested_mcs: u8,
@@ -457,12 +533,38 @@ pub struct AckBlock {
     pub distortion: u8,
     /// This receiver's input clipped.
     pub adc_clipped: bool,
+    /// ID of `tone_mask` (ADR 0011 `mask-id`), 0-3; 0 outside a session.
+    pub mask_id: u8,
 }
 
 impl AckBlock {
-    /// Bitmap of `passed[i]` at bit i.
-    pub fn bitmap_from(passed: &[bool]) -> u128 {
-        flags(passed)
+    /// Bitmap of `held[i]` at bit i.
+    pub fn bitmap_from(held: &[bool]) -> u128 {
+        flags(held)
+    }
+
+    /// (base sequence, bitmap) of a receiver whose next in-order sequence is
+    /// `next_in_order` and that holds `held` beyond it (ADR 0008
+    /// `cumulative-ack`); blocks at or before the base, or 128 or more
+    /// beyond it, are left out.
+    pub fn cumulative(next_in_order: u16, held: &[u16]) -> (u16, u128) {
+        let bitmap = held
+            .iter()
+            .map(|&s| serial_diff(next_in_order, s))
+            .filter(|&d| 0 < d && d < BLOCK_SPAN as i32)
+            .fold(0u128, |m, d| m | 1 << d);
+        (next_in_order, bitmap)
+    }
+
+    /// Bit i: the receiver holds block base + i.
+    pub fn holds(&self, i: usize) -> bool {
+        i < BLOCK_SPAN && (self.bitmap >> i) & 1 == 1
+    }
+
+    /// Block `seq` is acknowledged: before the base, or its bit is set.
+    pub fn acknowledged(&self, seq: u16) -> bool {
+        let d = serial_diff(self.base_sequence, seq);
+        d < 0 || (d < BLOCK_SPAN as i32 && self.holds(d as usize))
     }
 
     /// Measured SNR, dB.
@@ -492,6 +594,54 @@ pub struct ConnectBlock {
     pub more_dictionaries: bool,
     /// Flag bit 1: resume the session.
     pub resume: bool,
+}
+
+impl ConnectBlock {
+    /// The second B.3 block of CONNECT or CONNECT-ACK: dictionary IDs only,
+    /// every other field zero (ADR 0010 `session-establishment-steps`).
+    pub fn dictionaries(ids: [u32; 4]) -> Self {
+        ConnectBlock { width_cap: 0, max_frame_time: 0, tone_mask: 0, dictionary_ids: ids, ..Default::default() }
+    }
+
+    /// A link-test PROBE's block (ADR 0012 `probe-frame-contents`): flags and
+    /// session ID 0, requested MCS 0, all-ones mask, no dictionaries.
+    pub fn link_test(capabilities: u16, width_cap: u8, max_frame_time: u8) -> Self {
+        ConnectBlock { capabilities, width_cap, max_frame_time, ..Default::default() }
+    }
+
+    /// A dictionary-ID block: width cap and max frame time both 0.
+    pub fn is_dictionary_only(&self) -> bool {
+        self.width_cap == 0 && self.max_frame_time == 0
+    }
+
+    /// The fields ADR 0012 fixes for a link-test PROBE's block.
+    pub fn is_link_test(&self) -> bool {
+        !self.more_dictionaries
+            && !self.resume
+            && self.session_id == 0
+            && self.requested_mcs == 0
+            && self.tone_mask == ALL_TONES
+            && self.dictionary_ids == [0; 4]
+            && !self.is_dictionary_only()
+    }
+
+    /// Tones this station transmits at most: width cap + 1 (ADR 0011).
+    pub fn width(&self) -> usize {
+        self.width_cap as usize + 1
+    }
+
+    fn check(cap: u128, mft: u128) -> Result<(), FieldError> {
+        if cap == 0 && mft == 0 {
+            return Ok(()); // a dictionary-only block
+        }
+        if !(23..=55).contains(&cap) {
+            return Err(FieldError::Range("width cap", cap));
+        }
+        if !(5..=40).contains(&mft) {
+            return Err(FieldError::Range("max frame time", mft));
+        }
+        Ok(())
+    }
 }
 
 impl Default for ConnectBlock {
@@ -577,6 +727,105 @@ pub struct PathBlock {
     pub via: bool,
 }
 
+/// B.8 block map control block (type 7, ADR 0008 `block-map-control-block`):
+/// bit i set, block `base_sequence` + i is in the frame; the frame's k-th
+/// data block is the k-th set bit from bit 0. Unpacking only parses; the
+/// receive rules are [`block_sequences`].
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct BlockMapBlock {
+    /// Equal to the header's Sequence field.
+    pub base_sequence: u16,
+    /// Bit i set: block base + i is carried.
+    pub bitmap: u128,
+}
+
+impl BlockMapBlock {
+    /// The map of `sequences` (ascending in serial order, within 128 of the first).
+    pub fn for_sequences(sequences: &[u16]) -> Result<Self, FieldError> {
+        check_ascending(sequences)?;
+        let base = sequences[0];
+        Ok(BlockMapBlock {
+            base_sequence: base,
+            bitmap: sequences.iter().fold(0, |m, &s| m | 1 << serial_diff(base, s)),
+        })
+    }
+
+    /// The sequences of the frame's data blocks, in order.
+    pub fn sequences(&self) -> Vec<u16> {
+        (0..BLOCK_SPAN)
+            .filter(|&i| (self.bitmap >> i) & 1 == 1)
+            .map(|i| self.base_sequence.wrapping_add(i as u16))
+            .collect()
+    }
+}
+
+/// `sequences` are 1-128 blocks in ascending serial order, all within 128 of
+/// the first (one frame's blocks, ADR 0008 `block-sequence-rules`).
+pub fn check_ascending(sequences: &[u16]) -> Result<(), FieldError> {
+    if sequences.is_empty() || sequences.len() > MAX_DATA_BLOCKS {
+        return Err(FieldError::Rule("a frame carries 1-128 data blocks"));
+    }
+    if sequences.windows(2).any(|w| serial_diff(w[0], w[1]) <= 0) {
+        return Err(FieldError::Rule("block sequences not ascending"));
+    }
+    if serial_diff(sequences[0], sequences[sequences.len() - 1]) >= BLOCK_SPAN as i32 {
+        return Err(FieldError::Rule("block sequences span 128 or more"));
+    }
+    Ok(())
+}
+
+/// A session frame carrying the blocks `sequences` (ascending): the header's
+/// Sequence (the lowest) and the block map to send, None when the blocks are
+/// consecutive (ADR 0008 `block-map-control-block`). Payloads go in the
+/// order of `sequences`.
+pub fn plan_blocks(sequences: &[u16]) -> Result<(u16, Option<BlockMapBlock>), FieldError> {
+    check_ascending(sequences)?;
+    if serial_diff(sequences[0], sequences[sequences.len() - 1]) == sequences.len() as i32 - 1 {
+        return Ok((sequences[0], None));
+    }
+    Ok((sequences[0], Some(BlockMapBlock::for_sequences(sequences)?)))
+}
+
+/// The sequence of each data block of a decoded frame (ADR 0008):
+/// consecutive from the header's Sequence when flag bit 7 is clear; with it
+/// set, as the block map in the second control block names them, which
+/// must have bit 0 set, base equal to the Sequence and one set bit per data
+/// block. None when flag bit 7 is set and the map is missing, failed
+/// (`None` in `controls`) or breaks a rule: no data block then counts as
+/// received.
+pub fn block_sequences(header: &Header, controls: &[Option<ControlBlock>]) -> Option<Vec<u16>> {
+    if !header.block_map {
+        return Some((0..header.n_data).map(|k| header.sequence.wrapping_add(k as u16)).collect());
+    }
+    match controls.get(1) {
+        Some(Some(ControlBlock::BlockMap(m)))
+            if m.base_sequence == header.sequence
+                && m.bitmap & 1 == 1
+                && m.bitmap.count_ones() as usize == header.n_data =>
+        {
+            Some(m.sequences())
+        }
+        _ => None,
+    }
+}
+
+/// A frame's block map agrees with its header (ADR 0008): flag bit 7 set
+/// exactly when the second control block is a block map whose base is the
+/// header's Sequence, bit 0 set and one bit per data block.
+pub fn check_block_map(header: &Header, controls: &[ControlBlock]) -> Result<(), FieldError> {
+    if header.block_map {
+        let parsed: Vec<Option<ControlBlock>> = controls.iter().cloned().map(Some).collect();
+        if block_sequences(header, &parsed).is_none() {
+            return Err(FieldError::Rule(
+                "flag bit 7 needs a block map as the second control block, base = Sequence, bit 0 set, one bit per data block",
+            ));
+        }
+    } else if controls.iter().any(|c| matches!(c, ControlBlock::BlockMap(_))) {
+        return Err(FieldError::Rule("a block map needs header flag bit 7"));
+    }
+    Ok(())
+}
+
 /// A control block of any Appendix B type.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ControlBlock {
@@ -592,7 +841,9 @@ pub enum ControlBlock {
     Id(IdBlock),
     /// Type 6.
     Path(PathBlock),
-    /// A reserved type (2, 7-15): receivers skip it.
+    /// Type 7.
+    BlockMap(BlockMapBlock),
+    /// A reserved type (2, 8-15): receivers skip it.
     Unknown {
         /// The type field.
         control_type: u8,
@@ -629,6 +880,7 @@ impl ControlBlock {
             ControlBlock::CalReport(_) => 4,
             ControlBlock::Id(_) => 5,
             ControlBlock::Path(_) => 6,
+            ControlBlock::BlockMap(_) => 7,
             ControlBlock::Unknown { control_type, .. } => *control_type,
         }
     }
@@ -655,15 +907,11 @@ impl ControlBlock {
                 w.put(a.tone_mask.unwrap_or(0) as u128, 56, "tone mask")?;
                 w.put(a.distortion as u128, 3, "distortion index")?;
                 w.put(a.adc_clipped as u128, 1, "own ADC clipped")?;
-                w.put(0, 8, "reserved")?;
+                w.put(a.mask_id as u128, 2, "mask ID")?;
+                w.put(0, 6, "reserved")?;
             }
             ControlBlock::Connect(c) => {
-                if !(23..=55).contains(&c.width_cap) {
-                    return Err(FieldError::Range("width cap", c.width_cap as u128));
-                }
-                if !(5..=40).contains(&c.max_frame_time) {
-                    return Err(FieldError::Range("max frame time", c.max_frame_time as u128));
-                }
+                ConnectBlock::check(c.width_cap as u128, c.max_frame_time as u128)?;
                 w.put(flags(&[c.more_dictionaries, c.resume]), 4, "flags")?;
                 w.put(c.session_id as u128, 16, "session ID")?;
                 w.put(c.capabilities as u128, 16, "capabilities")?;
@@ -724,6 +972,12 @@ impl ControlBlock {
                 }
                 w.put(0, 148, "reserved")?;
             }
+            ControlBlock::BlockMap(m) => {
+                w.put(0, 4, "flags")?;
+                w.put(m.base_sequence as u128, 16, "base sequence")?;
+                w.put(m.bitmap, 128, "block bitmap")?;
+                w.put(0, 88, "reserved")?;
+            }
             ControlBlock::Unknown { .. } => unreachable!(),
         }
         Ok(w.0)
@@ -744,7 +998,7 @@ impl ControlBlock {
                 let fl = r.get(4);
                 let (base, bitmap, mcs, snr, errors, mask) =
                     (r.get(16), r.get(128), r.get(4), r.get(8), r.get(8), r.get(56));
-                let (distortion, clipped) = (r.get(3), r.get(1));
+                let (distortion, clipped, mask_id) = (r.get(3), r.get(1), r.get(2));
                 ControlBlock::Ack(AckBlock {
                     base_sequence: base as u16,
                     bitmap,
@@ -756,6 +1010,7 @@ impl ControlBlock {
                     long_prefix: flag(fl, 3),
                     distortion: distortion as u8,
                     adc_clipped: clipped == 1,
+                    mask_id: mask_id as u8,
                 })
             }
             1 => {
@@ -765,12 +1020,7 @@ impl ControlBlock {
                 for d in dictionary_ids.iter_mut() {
                     *d = r.get(32) as u32;
                 }
-                if !(23..=55).contains(&cap) {
-                    return Err(FieldError::Range("width cap", cap));
-                }
-                if !(5..=40).contains(&mft) {
-                    return Err(FieldError::Range("max frame time", mft));
-                }
+                ConnectBlock::check(cap, mft)?;
                 ControlBlock::Connect(ConnectBlock {
                     session_id: sid as u16,
                     capabilities: caps as u16,
@@ -841,7 +1091,123 @@ impl ControlBlock {
                     via: flag(fl, 2),
                 })
             }
+            7 => {
+                r.get(4);
+                ControlBlock::BlockMap(BlockMapBlock { base_sequence: r.get(16) as u16, bitmap: r.get(128) })
+            }
             _ => ControlBlock::Unknown { control_type: t, message: msg.to_vec() },
         })
     }
+}
+
+// --- control-block order (ADR 0010, ADR 0012) -------------------------------------------
+
+/// Check a frame's control blocks against the order and contents fixed for
+/// its type (a sender's check; receivers identify blocks by type):
+///
+/// - CONNECT: B.3 (requested MCS 0), ID, then a dictionary-only B.3 exactly
+///   when the first sets flag bit 0 (ADR 0010 `session-establishment-steps`).
+/// - CONNECT-ACK: B.3, ID, then on resume (flag bit 1) an ACK block,
+///   otherwise a dictionary-only B.3 exactly when flag bit 0 is set.
+/// - PROBE: nothing (a BEACON request, no width probe) or one link-test
+///   B.3 (ADR 0012 `probe-frame-contents`); no data blocks.
+/// - SOUND outside a session (a PROBE reply): one ACK block with base,
+///   bitmap and block errors 0, the mask present and mask ID 0.
+/// - DISCONNECT outside a session (a refusal): an all-zero ACK block, then ID.
+/// - Session frames: the ACK block, the block map exactly when flag bit 7
+///   is set, an ID block when due, then others; DISCONNECT carries the ID
+///   block (ADR 0010 `control-block-order`).
+///
+/// Also: the header's count, flag bit 6 only on BEACON and UI, a block map
+/// only as the second block of a session frame with data, Mask ID 0 on
+/// unmasked frames (outside a session, CONNECT, CONNECT-ACK).
+pub fn check_controls(header: &Header, controls: &[ControlBlock]) -> Result<(), FieldError> {
+    use control_type as ct;
+    let types: Vec<u8> = controls.iter().map(ControlBlock::control_type).collect();
+    let t = header.frame_type;
+    if controls.len() != header.n_control {
+        return Err(FieldError::Rule("control blocks disagree with the header's count"));
+    }
+    if header.first_fragment && t != frame_type::BEACON && t != frame_type::UI {
+        return Err(FieldError::Rule("flag bit 6 (first fragment) on a frame other than BEACON or UI"));
+    }
+    let unmasked = !header.session || t == frame_type::CONNECT || t == frame_type::CONNECT_ACK;
+    if unmasked && header.mask_id != 0 {
+        return Err(FieldError::Rule("mask ID other than 0 on an unmasked frame (ADR 0011)"));
+    }
+    let maps: Vec<usize> = (0..types.len()).filter(|&i| types[i] == ct::BLOCK_MAP).collect();
+    if header.block_map != !maps.is_empty() || !(maps.is_empty() || maps == [1]) {
+        return Err(FieldError::Rule("a block map is the second control block exactly when flag bit 7 is set"));
+    }
+    if header.block_map && (!header.session || header.n_data == 0) {
+        return Err(FieldError::Rule("a block map belongs to a session frame with data blocks"));
+    }
+    let want = |expected: &[u8]| {
+        if types == expected { Ok(()) } else { Err(FieldError::Rule("control blocks out of order for the frame type")) }
+    };
+    let dict_only = |i: usize| matches!(controls.get(i), Some(ControlBlock::Connect(c)) if c.is_dictionary_only());
+    match t {
+        frame_type::CONNECT | frame_type::CONNECT_ACK => {
+            let Some(ControlBlock::Connect(first)) = controls.first() else {
+                return Err(FieldError::Rule("CONNECT and CONNECT-ACK start with their B.3 block"));
+            };
+            if first.is_dictionary_only() {
+                return Err(FieldError::Rule("CONNECT and CONNECT-ACK start with their B.3 block"));
+            }
+            if t == frame_type::CONNECT && first.requested_mcs != 0 {
+                return Err(FieldError::Rule("CONNECT sends requested MCS 0 (ADR 0010)"));
+            }
+            if t == frame_type::CONNECT_ACK && first.resume {
+                want(&[ct::CONNECT, ct::ID, ct::ACK])?;
+            } else if first.more_dictionaries {
+                want(&[ct::CONNECT, ct::ID, ct::CONNECT])?;
+                if !dict_only(2) {
+                    return Err(FieldError::Rule("the second B.3 block carries only dictionary IDs"));
+                }
+            } else {
+                want(&[ct::CONNECT, ct::ID])?;
+            }
+        }
+        frame_type::PROBE => {
+            if header.n_data > 0 {
+                return Err(FieldError::Rule("a PROBE carries no data blocks"));
+            }
+            match controls {
+                [] if header.probe => return Err(FieldError::Rule("a BEACON-request PROBE carries no width probe")),
+                [] => {}
+                [ControlBlock::Connect(c)] if c.is_link_test() => {}
+                _ => return Err(FieldError::Rule("a link-test PROBE carries one link-test B.3 block (ADR 0012)")),
+            }
+        }
+        _ if header.session => {
+            if types.first() != Some(&ct::ACK) {
+                return Err(FieldError::Rule("a session frame leads with its ACK block (SPEC 8.4)"));
+            }
+            let mut i = if header.block_map { 2 } else { 1 };
+            if types.get(i) == Some(&ct::ID) {
+                i += 1;
+            }
+            if types[i.min(types.len())..].iter().any(|ty| [ct::ACK, ct::BLOCK_MAP, ct::ID, ct::CONNECT].contains(ty)) {
+                return Err(FieldError::Rule("session control blocks out of order"));
+            }
+            if t == frame_type::DISCONNECT && !types.contains(&ct::ID) {
+                return Err(FieldError::Rule("DISCONNECT carries the sender's ID block"));
+            }
+        }
+        frame_type::SOUND => match controls {
+            [ControlBlock::Ack(a)]
+                if a.base_sequence == 0
+                    && a.bitmap == 0
+                    && a.block_errors == 0
+                    && a.tone_mask.is_some()
+                    && a.mask_id == 0 => {}
+            _ => return Err(FieldError::Rule("a PROBE reply carries one measurement ACK block (ADR 0012)")),
+        },
+        frame_type::DISCONNECT => match controls {
+            [ControlBlock::Ack(a), ControlBlock::Id(_)] if *a == AckBlock::default() => {}
+            _ => return Err(FieldError::Rule("a refusal DISCONNECT carries an all-zero ACK block, then ID")),
+        },
+        _ => {}
+    }
+    Ok(())
 }

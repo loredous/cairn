@@ -281,7 +281,8 @@ header fails prints `not decoded: header did not decode`.
   ports), prefix (`--prefix long`, which B detects by itself). B needs no
   change for any of these. `--type data --to CALL --width W --mask ...`
   sends session-style frames, which B decodes only with the same `--width`,
-  `--mask` and `--peer-cap` (link state the header does not carry).
+  `--mask` and `--mask-id` (ADR 0011; `--peer-cap` only when A set `--cap`),
+  link state the header does not carry.
 - **Reading it.** Compare B's SNR with the rung thresholds of SPEC 6.2 plus
   a few dB of margin. Frames that detect but whose header fails, or a
   clock offset above about 100 ppm, point at levels or the sound cards. The
