@@ -1,0 +1,25 @@
+NOUS45 KABQ 041749 PNSABQ NMZ201>241-050600-
+
+Public Information Statement National Weather Service Albuquerque, NM 1049 AM MST Wed Nov 4 2026
+
+...NWS Damage Survey for 10/24/2026 Tornado Event...
+
+.Update...Damage rating process completed...tornado track updated for new damage south of Interstate 25.
+
+.Santa Fe County, Santa Fe, NM Tornado...
+
+Rating: EF1 Estimated Peak Wind: 110 mph Path Length /statute/: 2.25 miles Path Width /maximum/: 100 yards Fatalities: 0 Injuries: 0
+
+Start Date: 10/24/2026 Start Time: 07:00 PM MDT Start Location: 3 SE Agua Fria / Santa Fe County / NM Start Lat/Lon: 35.6228 / -105.9791
+
+End Date: 10/24/2026 End Time: 07:08 PM MDT End Location: 2 SW Santa Fe / Santa Fe County / NM End Lat/Lon: 35.6552 / -105.9758
+
+Survey Summary: A tornado developed south of I-25 with more impactful damage starting in the Via Caballero neighborhood in the south central portion of Santa Fe just north of I-25. The tornado traveled northward for approximately 2.25 miles, terminating near the College of Santa Fe. Much of the damage was along Rancho Siringo and Camino Chueco Roads. Damage included broken power poles, uprooted or damaged trees, damage to roofs. Ten homes sustained damaged with one home having the majority of the roof removed and a collapsed wall. This tornado has been given a rating of EF- 1 with peak winds of 110 mph.
+
+&&
+
+EF Scale: The Enhanced Fujita Scale classifies tornadoes into the following categories:
+
+EF0.....65 to 85 mph EF1.....86 to 110 mph EF2.....111 to 135 mph EF3.....136 to 165 mph EF4.....166 to 200 mph EF5.....>200 mph
+
+NOTE: The information in this statement is preliminary and subject to change pending final review of the event and publication in NWS Storm Data.

@@ -1,0 +1,43 @@
+FXUS61 KAKQ 080537 AFDAKQ
+
+AREA FORECAST DISCUSSION National Weather Service Wakefield VA 1237 AM EST Sun Nov 8 2026
+
+.WHAT HAS CHANGED... No major changes have been made to the forecast.
+
+&&
+
+.KEY MESSAGES... 1) Dry and seasonably cool this weekend through the middle of next week.
+
+2) The weather pattern potentially becomes more amplified later next week with low-end rain chances returning follow by a brief surge of colder air.
+
+&&
+
+.DISCUSSION... As of 220 PM EST Saturday...
+
+KEY MESSAGE 1...Dry and seasonably cool this weekend through the middle of next week.
+
+An upper low remains centered over the eastern Great Lakes this afternoon. Surface high pressure over central US is slowly pushing towards the area over the next few days. Cold air advection behind yesterday's cold front has pushed temperatures back to near normal with temperatures currently in the lower 60s. High temperatures Sunday will be similar in the lower to mid 60s. There will be a slight warm up Mon thru Wed as high pressure centers over the area with highs in the upper 60s to near 70F. Dry weather continues with mostly sunny skies through at least mid week.
+
+Low temperatures late tonight/early Sunday morning will be in the mid to upper 30s inland and lower/mid 40s along the coast. Patchy frost is possible, particularly in the Piedmont and counties that have already ended their growing season, but there could be some frost into interior portions of S-central VA and NE NC as well. Given dewpoints expected in the mid 30s, light NW winds, and some cloud cover over the southern half of the area overnight, have raised low temperatures up to 5 degrees across the area. Based on model ensembles and hi-res guidance, the NBM low temperatures are an outlier. With this, no frost advisories have been issued for counties where the growing season continues.
+
+KEY MESSAGE 2...The weather pattern potentially becomes more amplified later next week with low-end rain chances returning followed by a brief surge of colder air.
+
+The 12z/07 EPS, GEFS, and GEPS all continue to depict an anomalous 500mb trough developing across the southeast and Mid- Atlantic by Thurs-Fri of next week. Low-end rain chances return later Thursday/Thursday night with the potential for developing low pressure ahead of the deepening trough. Confidence in details at this forecast range is low, but the GEFS and EPS show a 40-80% chance of at least 0.01" of rain with the highest chances in the N and a 10-20% chance of at least 0.5" of rain. A surge of colder air follows with below average temperatures favored by Friday-Saturday of next week. With this trend, there is a chance this could end the growing season for the remaining areas.
+
+&&
+
+.AVIATION /06Z SUNDAY THROUGH THURSDAY/... As of 1235 AM EST Sunday...
+
+High pressure was centered SW of the region as of 06z. VFR with some CI approaching from the WSW and a very light W to NW wind. VFR conditions prevail today and tonight as high pressure remains over the region. A light NW wind through the morning will become SW 5-10kt by this aftn and evening, before becoming light out of the W late tonight ahead of a dry cold front.
+
+Outlook: VFR conditions are expected to continue into the middle of next week. A breezy NW wind develops behind the aforementioned dry cold front Monday, especially at SBY. A stronger cold front approaches from the W Thursday.
+
+&&
+
+.MARINE... As of 235 PM EST Saturday...
+
+Key Messages:
+
+- Another period of elevated NW flow is expected tonight into Sunday morning. Small Craft Advisories in effect for the Ches. Bay and nearshore coastal waters.
+
+- Additional advisories likely needed Monday across northern waters.

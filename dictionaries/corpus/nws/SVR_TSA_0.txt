@@ -1,0 +1,33 @@
+WUUS54 KTSA 030720 SVRTSA ARC131-OKC079-135-030800- /O.NEW.KTSA.SV.W.0393.261103T0720Z-261103T0800Z/
+
+BULLETIN - IMMEDIATE BROADCAST REQUESTED Severe Thunderstorm Warning National Weather Service Tulsa OK 120 AM CST Tue Nov 3 2026
+
+The National Weather Service in Tulsa has issued a
+
+* Severe Thunderstorm Warning for... Northwestern Sebastian County in west central Arkansas... Southeastern Sequoyah County in east central Oklahoma... Northeastern Le Flore County in southeastern Oklahoma...
+
+* Until 200 AM CST.
+
+* At 119 AM CST, a severe thunderstorm was located 5 miles south of Bokoshe, moving northeast at 45 mph.
+
+HAZARD...60 mph wind gusts.
+
+SOURCE...Radar indicated.
+
+IMPACT...Expect damage to roofs, siding, and trees.
+
+* Locations in or near the path include... Fort Smith... Poteau... Pocola... Roland... Spiro... Arkoma... Panama... Bonanza... Bokoshe... Cameron... Moffett... Shady Point... Rock Island... Cowlington... Scullyville... Braden... Mill Creek... Jenson... Cottonwood... Dora...
+
+This includes the following highways, Interstate 40 in Oklahoma between mile markers 321 and 328. Interstate 540 near mile marker 14.
+
+PRECAUTIONARY/PREPAREDNESS ACTIONS...
+
+For your protection move to an interior room on the lowest floor of a building.
+
+A Tornado Watch remains in effect until 300 AM CST for northwestern and west central Arkansas...and southeastern and east central Oklahoma.
+
+&&
+
+LAT...LON 3516 9444 3494 9484 3520 9491 3520 9482 3528 9481 3546 9444 3540 9443 3545 9441 3545 9439 TIME...MOT...LOC 0719Z 226DEG 38KT 3511 9480
+
+HAIL THREAT...RADAR INDICATED MAX HAIL SIZE...<.75 IN WIND THREAT...RADAR INDICATED MAX WIND GUST...60 MPH

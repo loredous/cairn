@@ -1,0 +1,31 @@
+WWUS85 KABQ 020527 SPSABQ
+
+Special Weather Statement National Weather Service Albuquerque NM 1027 PM MST Sun Nov 1 2026
+
+NMZ234>237-020600- De Baca County NM-Roosevelt County NM-Quay County NM-Curry County NM- 1027 PM MST Sun Nov 1 2026
+
+...A STRONG THUNDERSTORM WILL IMPACT WEST CENTRAL CURRY...EAST CENTRAL DE BACA...SOUTH CENTRAL QUAY AND NORTHWESTERN ROOSEVELT COUNTIES UNTIL 11 PM MST...
+
+At 1027 PM MST, Doppler radar was tracking a strong thunderstorm 8 miles southeast of Fort Sumner, moving northeast at 60 mph.
+
+HAZARD...Wind gusts up to 50 mph.
+
+SOURCE...Radar indicated.
+
+IMPACT...Gusty winds could knock down tree limbs and blow around unsecured objects.
+
+Locations impacted include... Fort Sumner, House, Tolar, Taiban and Mcalister.
+
+This includes Highway 60 between Mile Markers 328 and 357.
+
+PRECAUTIONARY/PREPAREDNESS ACTIONS...
+
+Monitor the weather situation closely and be alert for threatening weather conditions.
+
+This storm may intensify, so be certain to monitor local radio stations and available television stations for additional information and possible warnings from the National Weather Service.
+
+&&
+
+LAT...LON 3426 10417 3444 10428 3479 10379 3449 10355 TIME...MOT...LOC 0527Z 235DEG 51KT 3439 10414
+
+MAX HAIL SIZE...0.00 IN MAX WIND GUST...50 MPH

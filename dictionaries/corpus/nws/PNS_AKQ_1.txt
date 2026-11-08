@@ -1,0 +1,39 @@
+NOUS41 KAKQ 070118 PNSAKQ MDZ021>025-NCZ012>017-030>032-102-VAZ048-060>062-064>069-075>090-092- 097>100-509>525-528>531-071318-
+
+Public Information Statement National Weather Service Wakefield VA 818 PM EST Fri Nov 6 2026
+
+...PRECIPITATION REPORTS LAST 24 HOURS...
+
+Location Amount Time/Date Provider
+
+...Maryland...
+
+...Dorchester County... 2 N Wingate 1.37 Inch 0800 PM 11/06 APRSWXNET/CWOP 2 N Wingate 1.15 Inch 0315 PM 11/06 APRSWXNET/CWOP 1 E East New Market 1.06 Inch 0804 PM 11/06 APRSWXNET/CWOP 1 E East New Market 0.72 Inch 0319 PM 11/06 APRSWXNET/CWOP Linkwood 0.69 Inch 0755 PM 11/06 MD-MESO 3 S Hudson 0.61 Inch 0805 PM 11/06 APRSWXNET/CWOP 2 E Lloyds 0.60 Inch 0805 PM 11/06 MD-MESO 3 W Bucktown 0.55 Inch 0755 PM 11/06 RAWS 3 S Hudson 0.52 Inch 0320 PM 11/06 APRSWXNET/CWOP 3 S Hudson 0.52 Inch 0325 PM 11/06 APRSWXNET/CWOP 2 E Lloyds 0.51 Inch 0315 PM 11/06 MD-MESO 2 E Lloyds 0.51 Inch 0325 PM 11/06 MD-MESO
+
+...Somerset County... 2 S Princess Anne 1.47 Inch 0805 PM 11/06 MD-MESO 2 S Princess Anne 1.10 Inch 0315 PM 11/06 MD-MESO 2 S Princess Anne 1.10 Inch 0325 PM 11/06 MD-MESO
+
+...Wicomico County... 3 S Pittsville 1.50 Inch 0748 PM 11/06 RAWS 1 NW Chesapeake Heights 1.28 Inch 0800 PM 11/06 EARTH-NETWORKS 3 S Pittsville 1.07 Inch 0248 PM 11/06 RAWS Salisbury-Wicomico 1.00 Inch 0754 PM 11/06 ASOS/AWOS Fruitland 0.98 Inch 0805 PM 11/06 APRSWXNET/CWOP 1 NW Lakewood 0.95 Inch 0805 PM 11/06 MD-MESO 1 NW Chesapeake Heights 0.91 Inch 0310 PM 11/06 EARTH-NETWORKS 1 NW Chesapeake Heights 0.91 Inch 0315 PM 11/06 EARTH-NETWORKS 1 NE Royal Oak 0.85 Inch 0805 PM 11/06 MD-MESO 1 NE Royal Oak 0.78 Inch 0315 PM 11/06 MD-MESO 1 NE Royal Oak 0.78 Inch 0325 PM 11/06 MD-MESO Fruitland 0.69 Inch 0320 PM 11/06 APRSWXNET/CWOP 1 NW Lakewood 0.67 Inch 0315 PM 11/06 MD-MESO 1 NW Lakewood 0.67 Inch 0325 PM 11/06 MD-MESO Salisbury-Wicomico 0.66 Inch 0254 PM 11/06 ASOS/AWOS Delmar 0.64 Inch 0431 PM 11/06 COCORAHS
+
+...Worcester County... 1 SE Ocean Pines 2.14 Inch 0801 PM 11/06 APRSWXNET/CWOP 2 NE Berlin 1.86 Inch 0805 PM 11/06 MD-MESO 1 S West Ocean City 1.75 Inch 0800 PM 11/06 WeatherXM Ocean City Municipality 1.65 Inch 0753 PM 11/06 ASOS/AWOS 7 SE Public Landing 1.26 Inch 0731 PM 11/06 RAWS 1 SE Ocean Pines 0.90 Inch 0316 PM 11/06 APRSWXNET/CWOP 1 S West Ocean City 0.88 Inch 0320 PM 11/06 WeatherXM 2 NE Berlin 0.83 Inch 0325 PM 11/06 MD-MESO 2 NE Berlin 0.82 Inch 0315 PM 11/06 MD-MESO 1 S West Ocean City 0.80 Inch 0310 PM 11/06 WeatherXM Ocean City Municipality 0.78 Inch 0321 PM 11/06 ASOS/AWOS Ocean City Municipality 0.64 Inch 0305 PM 11/06 ASOS/AWOS
+
+...North Carolina...
+
+...Bertie County... 3 E Windsor 1.96 Inch 0717 PM 11/06 RAWS Windsor 1.66 Inch 0720 PM 11/06 HADS 3 E Windsor 1.53 Inch 0317 PM 11/06 RAWS 1 N Lewiston Woodville 1.52 Inch 0755 PM 11/06 NC-ECONET Windsor 1.32 Inch 0320 PM 11/06 HADS 1 N Lewiston Woodville 1.05 Inch 0315 PM 11/06 NC-ECONET 1 N Lewiston Woodville 1.02 Inch 0305 PM 11/06 NC-ECONET Windsor 0.89 Inch 0220 PM 11/06 HADS
+
+...Camden County... Pierceville 0.83 Inch 0730 PM 11/06 HADS
+
+...Chowan County... 1 N Rockyhock 1.84 Inch 0755 PM 11/06 EARTH-NETWORKS 1 N Rockyhock 1.41 Inch 0320 PM 11/06 EARTH-NETWORKS 1 N Rockyhock 1.39 Inch 0310 PM 11/06 EARTH-NETWORKS
+
+...Currituck County... 3 S Northwest 1.64 Inch 0755 PM 11/06 EARTH-NETWORKS 2 NW Moyock 1.30 Inch 0800 PM 11/06 WEATHERSTEM 3 E Knotts Island 0.54 Inch 0800 PM 11/06 WEATHERSTEM 1 SW Maple 0.52 Inch 0755 PM 11/06 ASOS/AWOS
+
+...Gates County... Buckland 2.69 Inch 0755 PM 11/06 NC-ECONET Buckland 2.38 Inch 0315 PM 11/06 NC-ECONET Buckland 2.37 Inch 0305 PM 11/06 NC-ECONET 3 SW Carter 1.51 Inch 0800 PM 11/06 APRSWXNET/CWOP 3 SW Carter 1.51 Inch 0755 PM 11/06 EARTH-NETWORKS 3 SW Carter 0.88 Inch 0315 PM 11/06 APRSWXNET/CWOP 3 SW Carter 0.75 Inch 0310 PM 11/06 EARTH-NETWORKS
+
+...Hertford County... 3 SE Rays Beach 1.80 Inch 0755 PM 11/06 EARTH-NETWORKS 3 SE Rays Beach 1.13 Inch 0315 PM 11/06 EARTH-NETWORKS 3 SE Rays Beach 1.11 Inch 0310 PM 11/06 EARTH-NETWORKS 2 S Harrellsville 0.64 Inch 0320 PM 11/06 EARTH-NETWORKS 2 S Harrellsville 0.64 Inch 0325 PM 11/06 EARTH-NETWORKS 2 S Harrellsville 0.64 Inch 0800 PM 11/06 EARTH-NETWORKS
+
+...Northampton County... 2 SW Falsons Old Tavern 1.18 Inch 0718 PM 11/06 RAWS 2 SW Falsons Old Tavern 0.93 Inch 0318 PM 11/06 RAWS
+
+...Pasquotank County... 3 S Burnt Mills 0.99 Inch 0713 PM 11/06 RAWS 3 W Elizabeth City 0.81 Inch 0754 PM 11/06 APRSWXNET/CWOP Elizabeth City 0.63 Inch 0725 PM 11/06 HADS
+
+...Perquimans County... 1 S Okisko 0.88 Inch 0800 PM 11/06 APRSWXNET/CWOP 2 E Light Nixon Fork 0.55 Inch 0803 PM 11/06 APRSWXNET/CWOP
+
+...Virginia...

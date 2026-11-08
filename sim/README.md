@@ -31,6 +31,7 @@ uv run --package cairn-sim pytest sim/tests          # add -m slow for the long 
 | `channel` | AWGN and the SPEC 14.2 FM audio chain (`mic`, `flat12`, `flat25`, `repeater`) |
 | `link_sim` | Block error rate against SNR, rung thresholds, and the SPEC 7.4 time budget |
 | `interleaver_eval` | SPEC 6.4 interleaver checks: bit layout under tone masks, dead-tone and burst BLER |
+| `dict_eval` | zstd dictionary evaluation (SPEC 12.2, 20.9): corpus loader over `dictionaries/corpus`, synthetic ICS messages, dictionary training at 32/64/112 kB, held-out ratios, blocks and air time; writes `results/dict_eval.{md,json}` |
 | `experiments` | Runs the threshold sweeps in parallel, writes `results/*.json` |
 | `report` | Builds `report.md` from the results |
 | `bench` | The `cairn-bench` CLI: test WAV out (`tx`), offline decode of a radio recording (`rx`), optional `play`/`record`/`levels`/`ptt-test` |
@@ -38,6 +39,7 @@ uv run --package cairn-sim pytest sim/tests          # add -m slow for the long 
 ```sh
 uv run --package cairn-sim python -m cairn_sim.experiments awgn      # also: channels, clip, interleaver, header
 uv run --package cairn-sim python -m cairn_sim.report
+uv run --package cairn-sim python -m cairn_sim.dict_eval --write-dicts   # dictionary ratios; evaluation dictionaries to dictionaries/eval/
 uv run --package cairn-sim python -m cairn_sim.vectors               # regenerate codes/ and vectors/
 uv run --package cairn-sim python -m cairn_sim.bitmap_vectors        # regenerate vectors/bitmap/
 uv run --package cairn-sim python -m cairn_sim.frame_vectors         # regenerate vectors/header/, control/, frame/

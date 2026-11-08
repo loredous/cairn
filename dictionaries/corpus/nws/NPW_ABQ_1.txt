@@ -1,0 +1,21 @@
+WWUS75 KABQ 031118 NPWABQ
+
+URGENT - WEATHER MESSAGE National Weather Service Albuquerque NM 418 AM MST Tue Nov 3 2026
+
+NMZ230-031500- /O.EXT.KABQ.WI.Y.0034.000000T0000Z-261103T1500Z/ Union County- 418 AM MST Tue Nov 3 2026
+
+...WIND ADVISORY NOW IN EFFECT UNTIL 8 AM MST THIS MORNING...
+
+* WHAT...North winds 25 to 35 mph with gusts up to 50 mph expected.
+
+* WHERE...Union County.
+
+* WHEN...Until 8 AM MST this morning.
+
+* IMPACTS...Gusty winds will blow around unsecured objects. Tree limbs may be blown down. Expect strong crosswinds on area roadways.
+
+PRECAUTIONARY/PREPAREDNESS ACTIONS...
+
+Winds this strong can make driving difficult, especially for high profile vehicles. Use extra caution.
+
+&&

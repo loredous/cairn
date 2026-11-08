@@ -1,0 +1,29 @@
+WWUS84 KEPZ 020044 SPSEPZ
+
+Special Weather Statement National Weather Service El Paso TX 544 PM MST Sun Nov 1 2026
+
+NMZ403-407>409-425-426-020130- Eastern Black Range Foothills NM- Southern Gila Foothills/Mimbres Valley NM- Southwest Desert/Mimbres Basin NM- Southern Gila Region Highlands/Black Range NM-Sierra County Lakes NM- Central Grant County/Silver City Area NM- 544 PM MST Sun Nov 1 2026
+
+...GUSTY SHOWERS WILL IMPACT EAST CENTRAL GRANT AND SOUTHWESTERN SIERRA COUNTIES THROUGH 630 PM MST...
+
+At 543 PM MST, Doppler radar was tracking gusty showers near Faywood, moving northeast at 50 mph.
+
+HAZARD...Wind gusts of 50 to 55 mph.
+
+SOURCE...Radar indicated.
+
+IMPACT...Gusty winds could knock down tree limbs and blow around unsecured objects.
+
+Locations impacted include... Faywood, San Lorenzo, Hillsboro, Sherman, Lake Valley, San Juan, Kingston, Gallinas Canyon, and City Of Rocks State Park.
+
+PRECAUTIONARY/PREPAREDNESS ACTIONS...
+
+If outdoors, consider seeking shelter inside a building.
+
+&&
+
+LAT...LON 3252 10805 3271 10802 3307 10755 3261 10739 3261 10793 3252 10793 TIME...MOT...LOC 0043Z 239DEG 49KT 3266 10790
+
+MAX HAIL SIZE...0.00 IN MAX WIND GUST...55 MPH
+
+$$

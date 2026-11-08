@@ -1,0 +1,23 @@
+WWUS71 KOKX 010638 NPWOKX
+
+URGENT - WEATHER MESSAGE National Weather Service New York NY 138 AM EST Sun Nov 1 2026
+
+CTZ009>012-NYZ071-078>081-011300- /O.CON.KOKX.FR.Y.0011.000000T0000Z-261101T1300Z/ Southern Fairfield-Southern New Haven-Southern Middlesex-Southern New London-Southern Westchester-Northwest Suffolk-Northeast Suffolk-Southwest Suffolk-Southeast Suffolk- 138 AM EST Sun Nov 1 2026
+
+...FROST ADVISORY REMAINS IN EFFECT UNTIL 8 AM EST THIS MORNING...
+
+* WHAT...Temperatures as low as 29 will result in frost formation.
+
+* WHERE...In Connecticut, Southern Fairfield, Southern Middlesex, Southern New Haven, and Southern New London Counties. In New York, Northeast Suffolk, Northwest Suffolk, Southeast Suffolk, Southern Westchester, and Southwest Suffolk Counties.
+
+* WHEN...Until 8 AM EST this morning.
+
+* IMPACTS...Frost could harm sensitive outdoor vegetation. Sensitive outdoor plants may be killed if left uncovered.
+
+PRECAUTIONARY/PREPAREDNESS ACTIONS...
+
+Take steps now to protect tender plants from the cold.
+
+&&
+
+$$

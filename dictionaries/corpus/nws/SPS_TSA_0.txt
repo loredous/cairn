@@ -1,0 +1,31 @@
+WWUS84 KTSA 030848 SPSTSA
+
+Special Weather Statement National Weather Service Tulsa OK 248 AM CST Tue Nov 3 2026
+
+ARZ001-010-030915- Benton AR-Washington AR- 248 AM CST Tue Nov 3 2026
+
+...STRONG THUNDERSTORMS WILL IMPACT CENTRAL BENTON AND CENTRAL WASHINGTON COUNTIES THROUGH 315 AM CST...
+
+At 248 AM CST, Doppler radar indicated strong thunderstorms along a line extending from 3 miles west of Tontitown to 3 miles south of Prairie Grove. Movement was northeast at 45 mph.
+
+HAZARD...Wind gusts up to 40 mph.
+
+SOURCE...Radar indicated.
+
+IMPACT...Gusty winds could knock down small tree limbs and blow around unsecured objects.
+
+Locations in or near the path include... Fayetteville... Springdale... Rogers... Bentonville... Lowell... Farmington... Pea Ridge... Prairie Grove... Tontitown... West Fork... Lincoln... Cave Springs... Greenland... Highfill... Northwest Arkansas Regional Air...Drake Field Airport... Centerton... Johnson... Elm Springs... Walnut Grove...
+
+This includes Interstate 49 between mile markers 53 and 90.
+
+PRECAUTIONARY/PREPAREDNESS ACTIONS...
+
+If outdoors, consider seeking shelter inside a building.
+
+A Tornado Watch remains in effect until 300 AM CST for northwestern Arkansas.
+
+&&
+
+LAT...LON 3595 9412 3583 9443 3621 9445 3650 9410 3650 9408 TIME...MOT...LOC 0848Z 214DEG 40KT 3618 9430 3593 9434
+
+MAX HAIL SIZE...0.00 IN MAX WIND GUST...40 MPH

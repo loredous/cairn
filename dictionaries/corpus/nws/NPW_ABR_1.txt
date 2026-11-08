@@ -1,0 +1,31 @@
+WWUS73 KABR 071324 NPWABR
+
+URGENT - WEATHER MESSAGE National Weather Service Aberdeen SD 724 AM CST Sat Nov 7 2026
+
+SDZ009-010-016>018-034-036-037-071430- /O.CAN.KABR.FG.Y.0026.000000T0000Z-261107T1500Z/ Walworth-Edmunds-Potter-Faulk-Spink-Sully-Hyde-Hand- Including the cities of Gettysburg, Onida, Mobridge, Miller, Redfield, Faulkton, Ipswich, and Highmore 724 AM CST Sat Nov 7 2026
+
+...DENSE FOG ADVISORY IS CANCELLED...
+
+Much of the fog has eroded over portions of central South Dakota, except for localized spots along the Missouri River, where visibility may be around one-half mile or less through the early morning hours.
+
+$$
+
+SDZ006-051-071500- /O.CON.KABR.FG.Y.0026.000000T0000Z-261107T1500Z/ Brown-Buffalo- Including the cities of Aberdeen and Fort Thompson 724 AM CST Sat Nov 7 2026
+
+...DENSE FOG ADVISORY REMAINS IN EFFECT UNTIL 9 AM CST THIS MORNING...
+
+* WHAT...Visibility one quarter mile or less in dense fog.
+
+* WHERE...Buffalo and Brown Counties.
+
+* WHEN...Until 9 AM CST this morning.
+
+* IMPACTS...Low visibility could make driving conditions hazardous.
+
+PRECAUTIONARY/PREPAREDNESS ACTIONS...
+
+If driving, slow down, use your headlights, and leave plenty of distance ahead of you.
+
+&&
+
+$$

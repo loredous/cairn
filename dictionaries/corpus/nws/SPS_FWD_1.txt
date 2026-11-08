@@ -1,0 +1,35 @@
+WWUS84 KFWD 030459 SPSFWD
+
+Special Weather Statement National Weather Service Fort Worth TX 1059 PM CST Mon Nov 2 2026
+
+TXZ092-093-103-104-030530- Collin TX-Denton TX-Grayson TX-Cooke TX- 1059 PM CST Mon Nov 2 2026
+
+...Strong thunderstorms will impact portions of northeastern Denton, northwestern Collin, southeastern Cooke and southwestern Grayson Counties through 1130 PM CST...
+
+At 1059 PM CST, Doppler radar was tracking strong thunderstorms along a line extending from near Ray Roberts Park Johnson Branch to near Aubrey to Denton. Movement was northeast at 45 mph.
+
+HAZARD...Wind gusts up to 50 mph.
+
+SOURCE...Radar indicated.
+
+IMPACT...Gusty winds could knock down tree limbs and blow around unsecured objects.
+
+Strong thunderstorms will be near... Denton, Pilot Point, Aubrey, Krugerville, Cross Roads, Ray Roberts Park Isle Du Bois, and Ray Roberts Park Johnson Branch around 1105 PM CST. Celina around 1110 PM CST. Prosper around 1115 PM CST. Gunter around 1120 PM CST.
+
+Other locations impacted by these storms include Lake Ray Roberts, Ethel, Tioga, Lincoln Park, Providence Village, Oak Point, Valley View, and Lewisville Lake.
+
+This includes the following highways... Interstate 35 near mile marker 482. Interstate 35W between mile markers 82 and 85. Interstate 35E between mile markers 462 and 466.
+
+PRECAUTIONARY/PREPAREDNESS ACTIONS...
+
+If outdoors, consider seeking shelter inside a building.
+
+A Tornado Watch remains in effect until 1100 PM CST for north central Texas.
+
+&&
+
+LAT...LON 3360 9678 3345 9673 3325 9682 3315 9719 3329 9715 3343 9718 TIME...MOT...LOC 0459Z 244DEG 38KT 3341 9709 3332 9706 3320 9712
+
+MAX HAIL SIZE...0.00 IN MAX WIND GUST...50 MPH
+
+$$

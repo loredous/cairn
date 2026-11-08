@@ -1,0 +1,9 @@
+FGUS83 KEAX 060236 RVSEAX MOC033-041-061045-
+
+Hydrologic Statement National Weather Service Kansas City/Pleasant Hill MO 836 PM CST Thu Nov 5 2026
+
+For the Grand River near Brunswick...Flood stage is 19.0 feet. The maximum stage forecast is 17.0 feet at 12 PM Friday.
+
+Fld Obs Forecasts Location Stg Stg Day/Time Fri Fri Sat 12am 12pm 12am Grand River Brunswick 19.0 MSG MSG 16.2 17.0 16.9
+
+Later statements, possibly warnings, may be issued as additional information becomes available. This product along with additional weather and stream information is available at www.weather.gov/kc/.

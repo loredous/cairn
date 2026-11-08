@@ -1,0 +1,29 @@
+FPUS54 KBMX 080509 ZFPBMX Zone Forecast Product for Alabama National Weather Service Birmingham AL 1107 PM CST Sat Nov 7 2026
+
+ALZ011-081300- Marion- Including the city of Hamilton 1107 PM CST Sat Nov 7 2026
+
+...FROST ADVISORY IN EFFECT UNTIL 7 AM CST SUNDAY...
+
+.TONIGHT...Partly cloudy. Patchy frost after midnight. Near steady temperature in the upper 30s. North winds around 5 mph. .SUNDAY...Patchy frost in the morning. Sunny. Highs in the mid 60s. North winds around 5 mph. .SUNDAY NIGHT...Mostly clear. Patchy frost after midnight. Lows in the upper 30s. Light and variable winds. .MONDAY...Patchy frost in the morning. Sunny. Highs around 70. Light and variable winds, becoming northwest around 5 mph in the afternoon. .MONDAY NIGHT...Mostly clear in the evening, then becoming partly cloudy. Lows in the upper 30s. Light and variable winds. .TUESDAY...Mostly sunny. Highs around 70. .TUESDAY NIGHT...Partly cloudy. Lows in the lower 40s. .VETERANS DAY...Mostly sunny. Highs in the lower 70s. .WEDNESDAY NIGHT...Partly cloudy in the evening, then becoming mostly cloudy. A 20 percent chance of showers. Lows in the mid 40s. .THURSDAY...Mostly sunny. Highs in the lower 60s. .THURSDAY NIGHT...Partly cloudy. Patchy frost after midnight. Cooler with lows in the mid 30s. .FRIDAY...Patchy frost in the morning. Mostly sunny. Highs in the mid 50s. .FRIDAY NIGHT...Mostly clear. Areas of frost in the evening, then widespread frost after midnight. Lows around 30. .SATURDAY...Widespread frost in the morning. Sunny. Highs in the upper 50s.
+
+$$
+
+ALZ014-081300- Winston- Including the city of Double Springs 1107 PM CST Sat Nov 7 2026
+
+...FROST ADVISORY IN EFFECT UNTIL 7 AM CST SUNDAY...
+
+.TONIGHT...Partly cloudy. Patchy frost after midnight. Lows in the mid 30s. North winds around 5 mph. .SUNDAY...Patchy frost in the morning. Sunny. Highs in the mid 60s. North winds around 5 mph. .SUNDAY NIGHT...Clear. Patchy frost after midnight. Lows in the mid 30s. Light and variable winds. .MONDAY...Patchy frost in the morning. Sunny. Highs in the upper 60s. Light and variable winds. .MONDAY NIGHT...Mostly clear in the evening, then becoming partly cloudy. Lows in the upper 30s. Light and variable winds. .TUESDAY...Mostly sunny. Highs around 70. .TUESDAY NIGHT...Partly cloudy. Lows in the lower 40s. .VETERANS DAY...Mostly sunny. Highs in the lower 70s. .WEDNESDAY NIGHT...Partly cloudy in the evening, then mostly cloudy with a slight chance of showers after midnight. Lows in the mid 40s. Chance of rain 20 percent. .THURSDAY...Partly sunny. A slight chance of showers in the afternoon. Highs in the lower 60s. Chance of rain 20 percent. .THURSDAY NIGHT...Partly cloudy. Patchy frost after midnight. Cooler with lows in the mid 30s. .FRIDAY...Patchy frost in the morning. Mostly sunny. Highs in the mid 50s. .FRIDAY NIGHT...Mostly clear. Areas of frost in the evening, then widespread frost after midnight. Lows in the upper 20s. .SATURDAY...Widespread frost in the morning. Sunny. Highs in the upper 50s.
+
+$$
+
+ALZ017-081300- Blount- Including the city of Oneonta 1107 PM CST Sat Nov 7 2026
+
+...FROST ADVISORY IN EFFECT UNTIL 7 AM CST SUNDAY...
+
+.TONIGHT...Partly cloudy. Lows in the upper 30s. North winds around 5 mph. .SUNDAY...Sunny. Highs in the mid 60s. North winds around 5 mph. .SUNDAY NIGHT...Clear. Lows in the upper 30s. North winds around 5 mph. .MONDAY...Sunny. Highs in the upper 60s. North winds around 5 mph. .MONDAY NIGHT...Mostly clear in the evening, then becoming partly cloudy. Lows in the upper 30s. North winds around 5 mph in the evening, becoming light and variable. .TUESDAY...Mostly sunny. Highs around 70. .TUESDAY NIGHT...Partly cloudy. Lows in the lower 40s. .VETERANS DAY...Mostly sunny. Highs in the lower 70s. .WEDNESDAY NIGHT...Partly cloudy in the evening, then mostly cloudy with a slight chance of showers after midnight. Lows in the mid 40s. Chance of rain 20 percent. .THURSDAY...Partly sunny with a 20 percent chance of showers. Highs in the mid 60s. .THURSDAY NIGHT...Partly cloudy. Lows in the upper 30s. .FRIDAY...Mostly sunny. Cooler with highs in the mid 50s. .FRIDAY NIGHT...Mostly clear. Areas of frost in the evening, then widespread frost after midnight. Lows in the lower 30s. .SATURDAY...Widespread frost in the morning. Sunny. Highs in the mid 50s.
+
+$$
+
+ALZ018-081300- Etowah- Including the city of Gadsden 1107 PM CST Sat Nov 7 2026
+
+...FROST ADVISORY IN EFFECT UNTIL 7 AM CST SUNDAY...

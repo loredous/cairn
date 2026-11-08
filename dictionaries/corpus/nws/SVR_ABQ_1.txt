@@ -1,0 +1,33 @@
+WUUS55 KABQ 012310 SVRABQ NMC001-028-043-049-057-061-020000- /O.NEW.KABQ.SV.W.0428.261101T2310Z-261102T0000Z/
+
+BULLETIN - IMMEDIATE BROADCAST REQUESTED Severe Thunderstorm Warning National Weather Service Albuquerque NM 410 PM MST Sun Nov 1 2026
+
+The National Weather Service in Albuquerque has issued a
+
+* Severe Thunderstorm Warning for... Bernalillo County in central New Mexico... Northwestern Torrance County in central New Mexico... Northeastern Valencia County in central New Mexico... Southeastern Los Alamos County in north central New Mexico... Southeastern Sandoval County in north central New Mexico... Santa Fe County in north central New Mexico...
+
+* Until 500 PM MST.
+
+* At 410 PM MST, severe thunderstorms were located along a line from near Cochiti Pueblo to over Meadow Lake, moving northeast at 55 mph.
+
+HAZARD...60 mph wind gusts.
+
+SOURCE...Radar indicated.
+
+IMPACT...Expect damage to roofs, siding, and trees.
+
+* Locations impacted include... Albuquerque, eastern Rio Rancho, Santa Fe, Los Lunas, Bernalillo, Belen, Moriarty, Valencia, Corrales and Los Ranchos De Albuquerque.
+
+This includes the following highways... Interstate 40 between Mile Markers 157 and 213. Highway 285 between Mile Markers 259 and 290. Highway 550 between Mile Markers 1 and 5. Interstate 25 between Mile Markers 213 and 302.
+
+PRECAUTIONARY/PREPAREDNESS ACTIONS...
+
+Seek shelter inside a well-built structure and stay away from windows. These storms are capable of producing damaging winds.
+
+Intense thunderstorm lines can produce brief tornadoes and widespread significant wind damage. Although a tornado is not immediately likely, it is best to move to an interior room on the lowest floor of a building. These storms may cause serious injury and significant property damage.
+
+&&
+
+LAT...LON 3465 10678 3570 10653 3600 10575 3600 10572 3531 10572 3491 10576 TIME...MOT...LOC 2309Z 245DEG 45KT 3564 10642 3510 10654 3479 10662
+
+HAIL THREAT...RADAR INDICATED MAX HAIL SIZE...0.00 IN WIND THREAT...RADAR INDICATED MAX WIND GUST...60 MPH

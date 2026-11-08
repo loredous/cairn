@@ -1,0 +1,7 @@
+FGUS83 KLSX 080300 RVSLSX ILC009-013-061-083-137-149-171-090300-
+
+Hydrologic Statement National Weather Service St Louis MO 900 PM CST Sat Nov 7 2026
+
+Station FS Today 11/08 11/09 11/10 11/11 11/12
+
+Illinois River La Grange LD 23.0 8.9 9.1 8.6 8.4 8.1 8.0 Meredosia 17.0 3.9 3.9 3.6 3.4 3.2 3.1 Valley City 14.0 3.3 3.2 3.0 2.9 2.8 2.7 Hardin 25.0 20.0 20.0 19.9 19.8 19.7 19.7

@@ -1,0 +1,107 @@
+INCIDENT OBJECTIVES (ICS 202) 1. Incident Name:
+
+2. Operational Period: Date From:
+
+Date To:
+
+Time From:
+
+Time To:
+
+3. Objective(s):
+
+4. Operational Period Command Emphasis:
+
+General Situational Awareness
+
+5. Site Safety Plan Required? Yes No Approved Site Safety Plan(s) Located at: 6. Incident Action Plan (the items checked below are included in this Incident Action Plan):
+
+ICS 203
+
+ICS 207
+
+Other Attachments:
+
+ICS 204
+
+ICS 208
+
+ICS 205
+
+Map/Chart
+
+ICS 205A
+
+Weather Forecast/Tides/Currents
+
+ICS 206
+
+7. Prepared by: Name:
+
+Position/Title:
+
+8. Approved by Incident Commander: Name: ICS 202
+
+IAP Page ____
+
+Signature: Signature:
+
+Date/Time:
+
+ICS 202 Incident Objectives Purpose. The Incident Objectives (ICS 202) describes the basic incident strategy, incident objectives, command emphasis/priorities, and safety considerations for use during the next operational period. Preparation. The ICS 202 is completed by the Planning Section following each Command and General Staff meeting conducted to prepare the Incident Action Plan (IAP). In case of a Unified Command, one Incident Commander (IC) may approve the ICS 202. If additional IC signatures are used, attach a blank page. Distribution. The ICS 202 may be reproduced with the IAP and may be part of the IAP and given to all supervisory personnel at the Section, Branch, Division/Group, and Unit levels. All completed original forms must be given to the Documentation Unit. Notes: * The ICS 202 is part of the IAP and can be used as the opening or cover page. * If additional pages are needed, use a blank ICS 202 and repaginate as needed. Block Number
+
+Block Title
+
+Instructions
+
+Incident Name
+
+Enter the name assigned to the incident. If needed, an incident number can be added.
+
+Operational Period * Date and Time From * Date and Time To
+
+Enter the start date (month/day/year) and time (using the 24-hour clock) and end date and time for the operational period to which the form applies.
+
+Objective(s)
+
+Enter clear, concise statements of the objectives for managing the response. Ideally, these objectives will be listed in priority order. These objectives are for the incident response for this operational period as well as for the duration of the incident. Include alternative and/or specific tactical objectives as applicable. Objectives should follow the SMART model or a similar approach: Specific - Is the wording precise and unambiguous? Measurable - How will achievements be measured? Action-oriented - Is an action verb used to describe expected accomplishments? Realistic - Is the outcome achievable with given available resources? Time-sensitive - What is the timeframe?
+
+Operational Period Command Emphasis
+
+Enter command emphasis for the operational period, which may include tactical priorities or a general weather forecast for the operational period. It may be a sequence of events or order of events to address. This is not a narrative on the objectives, but a discussion about where to place emphasis if there are needs to prioritize based on the Incident Commander's or Unified Command's direction. Examples: Be aware of falling debris, secondary explosions, etc.
+
+General Situational Awareness
+
+General situational awareness may include a weather forecast, incident conditions, and/or a general safety message. If a safety message is included here, it should be reviewed by the Safety Officer to ensure it is in alignment with the Safety Message/Plan (ICS 208).
+
+Site Safety Plan Required?
+
+Safety Officer should check whether or not a site safety plan is required for this incident.
+
+Yes No Approved Site Safety Plan(s) Located At
+
+Enter the location of the approved Site Safety Plan(s).
+
+Block Number
+
+Block Title
+
+Instructions
+
+Incident Action Plan (the items checked below are included in this Incident Action Plan):
+
+Check appropriate forms and list other relevant documents that are included in the IAP.
+
+ICS 203 ICS 204 ICS 205 ICS 205A ICS 206 ICS 207 ICS 208
+
+ICS 203 - Organization Assignment List ICS 204 - Assignment List ICS 205 - Incident Radio Communications Plan ICS 205A - Communications List ICS 206 - Medical Plan ICS 207 - Incident Organization Chart ICS 208 - Safety Message/Plan
+
+Map/Chart Weather Forecast/ Tides/Currents Other Attachments:
+
+Prepared by * Name * Position/Title * Signature
+
+Enter the name, ICS position, and signature of the person preparing the form. Enter date (month/day/year) and time prepared (24-hour clock).
+
+Approved by Incident Commander * Name * Signature * Date/Time
+
+In the case of a Unified Command, one IC may approve the ICS 202. If additional IC signatures are used, attach a blank page.

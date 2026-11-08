@@ -1,0 +1,29 @@
+FPUS53 KMPX 080223 ZFPMPX
+
+Zone Forecast Product National Weather Service Twin Cities/Chanhassen MN 823 PM CST Sat Nov 7 2026
+
+MNZ060-081000- Hennepin- Including the city of Minneapolis 823 PM CST Sat Nov 7 2026
+
+.REST OF TONIGHT...Not as cool. Partly cloudy early in the evening then clearing. Lows in the lower 40s. West winds 5 to 15 mph. .SUNDAY...Sunny. Highs in the lower 50s. Northwest winds 5 to 15 mph. .SUNDAY NIGHT...Increasing clouds. Lows in the mid 30s. West winds up to 5 mph shifting to the south after midnight. .MONDAY...Partly sunny. Highs in the upper 50s. South winds 5 to 10 mph shifting to the west in the afternoon. .MONDAY NIGHT...Mostly clear. Lows in the upper 30s. West winds up to 10 mph. .TUESDAY...Mostly sunny. Highs in the mid 50s. .TUESDAY NIGHT...Increasing clouds. Lows in the upper 30s. .VETERANS DAY...Mostly sunny. Highs in the upper 40s. .WEDNESDAY NIGHT...Decreasing clouds. Lows in the mid 30s. .THURSDAY...Mostly sunny. Highs in the mid 40s. .THURSDAY NIGHT...Partly cloudy. Lows in the lower 30s. .FRIDAY...Mostly sunny. Highs in the mid 40s. .FRIDAY NIGHT...Partly cloudy. Lows in the mid 30s. .SATURDAY...Mostly sunny. Highs in the lower 50s.
+
+$$
+
+MNZ062-081000- Ramsey- Including the city of St Paul 823 PM CST Sat Nov 7 2026
+
+.REST OF TONIGHT...Not as cool. Partly cloudy early in the evening then clearing. Lows in the lower 40s. West winds 5 to 10 mph. .SUNDAY...Sunny. Highs in the lower 50s. Northwest winds 5 to 15 mph. .SUNDAY NIGHT...Increasing clouds. Lows in the mid 30s. West winds up to 5 mph shifting to the south after midnight. .MONDAY...Partly sunny. Highs in the upper 50s. South winds 5 to 10 mph shifting to the west in the afternoon. .MONDAY NIGHT...Mostly clear. Lows in the upper 30s. West winds up to 10 mph. .TUESDAY...Sunny. Highs in the mid 50s. .TUESDAY NIGHT...Increasing clouds. Lows in the upper 30s. .VETERANS DAY...Mostly sunny. Highs in the upper 40s. .WEDNESDAY NIGHT...Mostly cloudy. Lows in the mid 30s. .THURSDAY...Partly sunny. Highs in the lower 40s. .THURSDAY NIGHT...Partly cloudy. Lows in the lower 30s. .FRIDAY...Sunny. Highs in the mid 40s. .FRIDAY NIGHT...Partly cloudy. Lows in the mid 30s. .SATURDAY...Mostly sunny. Highs in the lower 50s.
+
+$$
+
+MNZ061-081000- Anoka- Including the city of Blaine 823 PM CST Sat Nov 7 2026
+
+.REST OF TONIGHT...Not as cool. Partly cloudy early in the evening then clearing. Lows in the lower 40s. West winds 5 to 10 mph. .SUNDAY...Sunny. Highs in the lower 50s. Northwest winds 5 to 15 mph. .SUNDAY NIGHT...Increasing clouds. Lows in the mid 30s. West winds up to 5 mph shifting to the south after midnight. .MONDAY...Decreasing clouds. Highs in the upper 50s. South winds 5 to 10 mph shifting to the west in the afternoon. .MONDAY NIGHT...Mostly clear. Lows in the upper 30s. West winds up to 10 mph. .TUESDAY...Mostly sunny. Highs in the mid 50s. .TUESDAY NIGHT...Increasing clouds. Lows in the upper 30s. .VETERANS DAY...Mostly sunny. Highs in the upper 40s. .WEDNESDAY NIGHT...Mostly cloudy. Lows in the lower 30s. .THURSDAY...Mostly sunny. Highs in the lower 40s. .THURSDAY NIGHT...Partly cloudy. Lows in the upper 20s. .FRIDAY...Mostly sunny. Highs in the mid 40s. .FRIDAY NIGHT...Partly cloudy. Lows in the mid 30s. .SATURDAY...Mostly sunny. Highs in the lower 50s.
+
+$$
+
+WIZ015-081000- Barron- Including the city of Rice Lake 823 PM CST Sat Nov 7 2026
+
+.REST OF TONIGHT...Not as cool. Mostly cloudy early in the evening then clearing. Lows in the upper 30s. West winds 5 to 10 mph. .SUNDAY...Sunny. Highs in the lower 50s. Northwest winds 10 to 15 mph. .SUNDAY NIGHT...Increasing clouds. Lows in the lower 30s. Northwest winds up to 5 mph shifting to the southwest after midnight. .MONDAY...Partly sunny. Highs in the mid 50s. Southwest winds 5 to 10 mph. .MONDAY NIGHT...Partly cloudy. Lows in the mid 30s. West winds up to 5 mph. .TUESDAY...Sunny. Highs in the mid 50s. .TUESDAY NIGHT...Partly cloudy. Lows in the mid 30s. .VETERANS DAY...Mostly sunny. Highs in the upper 40s. .WEDNESDAY NIGHT...Mostly cloudy. Lows around 30. .THURSDAY...Partly sunny. Highs in the lower 40s. .THURSDAY NIGHT...Partly cloudy. Lows in the upper 20s. .FRIDAY...Mostly sunny. Highs in the mid 40s. .FRIDAY NIGHT...Partly cloudy. Lows around 30. .SATURDAY...Mostly sunny. Highs around 50.
+
+$$
+
+MNZ050-081000- Benton- Including the city of Sauk Rapids 823 PM CST Sat Nov 7 2026

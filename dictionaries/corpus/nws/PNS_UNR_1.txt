@@ -1,0 +1,37 @@
+NOUS43 KUNR 030432 PNSUNR SDZ001-002-012>014-024>032-041>044-046-047-049-072>078-WYZ054>060-031632-
+
+Public Information Statement National Weather Service Rapid City SD 932 PM MST Mon Nov 02 2026
+
+The following are unofficial observations taken during the past 16 hours
+
+***********************PEAK WIND GUST***********************
+
+LOCATION MAX WIND TIME/DATE COMMENTS GUST MEASURED (mph)
+
+SOUTH DAKOTA
+
+...Butte County... 13 NE Newell 50 245 PM 11/02 Dept of Highways
+
+...Custer County... 8 SSW Folsom 53 409 PM 11/02 Dept of Highways
+
+...Fall River County... 10 W Edgemont 55 1147 AM 11/02 Dept of Highways 7 W Ardmore 55 110 PM 11/02 Mesonet
+
+...Meade County... 11 SSE Hereford 55 1130 AM 11/02 Mesonet Ellsworth AFB 51 157 PM 11/02 Other Federal 7 E Sturgis 51 1235 PM 11/02 AWOS
+
+...Oglala Lakota County... 5 NE Porcupine 56 541 PM 11/02 Mesonet
+
+...Pennington County... Rapid City Arpt 59 224 PM 11/02 ASOS 5 WNW New Underwood 57 120 PM 11/02 Dept of Highways 3 NNW Scenic 57 323 PM 11/02 Dept of Highways 3 NW Wasta 57 1149 AM 11/02 Dept of Highways Wasta 54 1200 PM 11/02 Mesonet 1 SE Dwtn Rapid City 53 305 PM 11/02 Official NWS Obs 1 W Box Elder 53 212 PM 11/02 Dept of Highways 1 WNW Caputa 51 230 PM 11/02 Mesonet 6 ESE Scenic 51 325 PM 11/02 Mesonet
+
+WYOMING
+
+...Campbell County... 5 NNW Dwtn Gillette 53 1159 AM 11/02 ASOS 25 ESE Wright 51 205 PM 11/02 Mesonet 1 NE Echeta 51 1051 AM 11/02 Mesonet 10 SW Dwtn Gillette 51 1015 AM 11/02 Mesonet 8 ENE Pine Tree Junc 51 1202 PM 11/02 Mesonet
+
+...Crook County... 17 NNW New Haven 51 1156 AM 11/02 Mesonet
+
+...MAXIMUM OBSERVED WINDS SORTED BY MAGNITUDE...
+
+LOCATION MAX WIND COMMENTS MPH
+
+Rapid City Arpt SD 59 224 PM 11/02/2026 5 WNW New Underwood SD 57 120 PM 11/02/2026 3 NNW Scenic SD 57 323 PM 11/02/2026 3 NW Wasta SD 57 1149 AM 11/02/2026 5 NE Porcupine SD 56 541 PM 11/02/2026 10 W Edgemont SD 55 1147 AM 11/02/2026 11 SSE Hereford SD 55 1130 AM 11/02/2026 7 W Ardmore SD 55 110 PM 11/02/2026 Wasta SD 54 1200 PM 11/02/2026 8 SSW Folsom SD 53 409 PM 11/02/2026 1 SE Dwtn Rapid City SD 53 305 PM 11/02/2026 1 W Box Elder SD 53 212 PM 11/02/2026 5 NNW Dwtn Gillette WY 53 1159 AM 11/02/2026 Ellsworth AFB SD 51 157 PM 11/02/2026 25 ESE Wright WY 51 205 PM 11/02/2026 17 NNW New Haven WY 51 1156 AM 11/02/2026 1 NE Echeta WY 51 1051 AM 11/02/2026 7 E Sturgis SD 51 1235 PM 11/02/2026 1 WNW Caputa SD 51 230 PM 11/02/2026 10 SW Dwtn Gillette WY 51 1015 AM 11/02/2026 8 ENE Pine Tree Junction WY 51 1202 PM 11/02/2026 6 ESE Scenic SD 51 325 PM 11/02/2026 13 NE Newell SD 50 245 PM 11/02/2026
+
+$$

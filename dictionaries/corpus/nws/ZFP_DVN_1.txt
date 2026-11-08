@@ -1,0 +1,29 @@
+FPUS53 KDVN 071847 ZFPDVN
+
+Zone Forecast Product National Weather Service Quad Cities IA IL 1246 PM CST Sat Nov 7 2026
+
+IAZ040-080200- Buchanan- Including the city of Independence 1246 PM CST Sat Nov 7 2026
+
+.THIS AFTERNOON...Sunny. Highs in the lower 50s. Southwest winds 5 to 10 mph. .TONIGHT...Partly cloudy in the evening, then becoming mostly cloudy. Not as cool. Near steady temperature around 40. Southwest winds 5 to 10 mph. .SUNDAY...Sunny. Highs in the mid 50s. Northwest winds 10 to 15 mph. .SUNDAY NIGHT...Mostly clear in the evening, then becoming partly cloudy. Lows in the lower 30s. Northwest winds around 5 mph, becoming southwest after midnight. .MONDAY...Mostly sunny. Highs in the lower 60s. South winds 10 to 15 mph. .MONDAY NIGHT AND TUESDAY...Mostly clear. Lows around 40. Highs around 60. .TUESDAY NIGHT...Partly cloudy in the evening, then becoming mostly cloudy. Lows in the upper 30s. .VETERANS DAY...Partly sunny. Highs in the lower 50s. .WEDNESDAY NIGHT AND THURSDAY...Partly cloudy. Lows in the mid 30s. Highs in the mid 40s. .THURSDAY NIGHT...Partly cloudy in the evening, then clearing. Lows in the upper 20s. .FRIDAY...Sunny. Highs in the mid 40s.
+
+$$
+
+IAZ041-080200- Delaware- Including the city of Manchester 1246 PM CST Sat Nov 7 2026
+
+.THIS AFTERNOON...Sunny. Highs in the lower 50s. Southwest winds 5 to 10 mph. .TONIGHT...Partly cloudy in the evening, then becoming mostly cloudy. Not as cool. Near steady temperature around 40. Southwest winds 5 to 10 mph. .SUNDAY...Sunny. Highs in the upper 50s. Northwest winds 10 to 15 mph. .SUNDAY NIGHT...Mostly clear in the evening, then becoming partly cloudy. Lows in the lower 30s. West winds around 5 mph. .MONDAY...Mostly sunny. Highs in the lower 60s. Southwest winds 10 to 15 mph. .MONDAY NIGHT AND TUESDAY...Mostly clear. Lows around 40. Highs around 60. .TUESDAY NIGHT...Partly cloudy in the evening, then becoming mostly cloudy. Lows in the upper 30s. .VETERANS DAY...Partly sunny. Highs in the lower 50s. .WEDNESDAY NIGHT AND THURSDAY...Partly cloudy. Lows in the mid 30s. Highs in the mid 40s. .THURSDAY NIGHT...Partly cloudy in the evening, then clearing. Lows in the upper 20s. .FRIDAY...Sunny. Highs in the mid 40s.
+
+$$
+
+IAZ042-080200- Dubuque- Including the city of Dubuque 1246 PM CST Sat Nov 7 2026
+
+.THIS AFTERNOON...Sunny. Highs in the lower 50s. Southwest winds 5 to 10 mph. .TONIGHT...Partly cloudy in the evening, then becoming mostly cloudy. Not as cool. Near steady temperature around 40. Southwest winds 5 to 10 mph. .SUNDAY...Sunny. Highs in the upper 50s. West winds 10 to 15 mph. .SUNDAY NIGHT...Mostly clear in the evening, then becoming partly cloudy. Lows in the mid 30s. West winds 5 to 10 mph. .MONDAY...Mostly sunny. Highs around 60. Southwest winds 10 to 15 mph. .MONDAY NIGHT AND TUESDAY...Mostly clear. Lows in the lower 40s. Highs around 60. .TUESDAY NIGHT...Partly cloudy in the evening, then becoming mostly cloudy. Lows in the upper 30s. .VETERANS DAY...Partly sunny. Highs in the lower 50s. .WEDNESDAY NIGHT AND THURSDAY...Partly cloudy. Lows in the upper 30s. Highs in the upper 40s. .THURSDAY NIGHT...Partly cloudy in the evening, then clearing. Lows around 30. .FRIDAY...Sunny. Highs in the mid 40s.
+
+$$
+
+ILZ001-080200- Jo Daviess- Including the city of Galena 1246 PM CST Sat Nov 7 2026
+
+.THIS AFTERNOON...Sunny. Highs in the lower 50s. Southwest winds 5 to 10 mph. .TONIGHT...Partly cloudy in the evening, then becoming mostly cloudy. Near steady temperature in the upper 30s. Southwest winds 5 to 10 mph. .SUNDAY...Sunny. Highs in the upper 50s. West winds 10 to 15 mph. .SUNDAY NIGHT...Mostly clear in the evening, then becoming partly cloudy. Lows in the lower 30s. Northwest winds around 5 mph. .MONDAY...Mostly sunny. Highs in the upper 50s. Southwest winds 5 to 10 mph. .MONDAY NIGHT AND TUESDAY...Mostly clear. Lows around 40. Highs in the lower 60s. .TUESDAY NIGHT...Partly cloudy. Lows in the upper 30s. .VETERANS DAY...Partly sunny. Highs in the mid 50s. .WEDNESDAY NIGHT...Partly cloudy. Lows in the mid 30s. .THURSDAY...Partly sunny. Highs in the upper 40s. .THURSDAY NIGHT...Partly cloudy in the evening, then clearing. Lows in the upper 20s. .FRIDAY...Sunny. Highs in the mid 40s.
+
+$$
+
+ILZ002-080200- Stephenson- Including the city of Freeport 1246 PM CST Sat Nov 7 2026

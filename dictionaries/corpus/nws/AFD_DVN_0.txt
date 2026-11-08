@@ -1,0 +1,39 @@
+FXUS63 KDVN 080600 AFDDVN
+
+Area Forecast Discussion National Weather Service Quad Cities IA IL 1200 AM CST Sun Nov 8 2026
+
+.KEY MESSAGES...
+
+- Temperatures trend warmer through Tuesday with high in the upper 50s and 60s before another shot of cool, seasonable air arrives late week.
+
+- Dry conditions prevail for the beginning of the work week before spotty rain showers (15-30% coverage) return midweek.
+
+&&
+
+.SHORT TERM /THROUGH TUESDAY/... Issued at 1200 AM CST Sun Nov 8 2026
+
+A shortwave trough digging into the Great Lakes region pushes a weak surface trough through the CWA this morning as highs climb into the upper 50s and low 60s. This frontal passage will be dry due to the lack of moisture return. By tonight, a high pressure over the Central Plains slides southeastward into Missouri with calm winds allowing lows to fall back into the mid-30s.
+
+Another shortwave trough passes to our north on Monday with a second frontal passage Monday night into Tuesday morning. Warm air advection ahead of this front will help bolster highs Monday back into the upper 50s and mid-60s with lows only falling into the upper 30s and low 40s. Again, the lack of moisture keeps this second front dry, and another weak high pressure sets up over the area on Tuesday behind the boundary.
+
+&&
+
+.LONG TERM /TUESDAY NIGHT THROUGH SATURDAY/... Issued at 1200 AM CST Sun Nov 8 2026
+
+Tuesday Night-Thursday...The next shortwave trough dives into the Northern Plains Tuesday night, spawning a weak surface low pressure. Unlike the previous trough passages, this one will have a pocket of mid-level Pacific moisture associated with it. The low levels are forecasted to still be dry, so top-down moistening could produce some isolated rain showers (15-30% coverage) on Wednesday. By Wednesday night, the trough continues to dig into the eastern CONUS, aided by an injection of shear vorticity on the backside of the longwave trough. The low pressure quickly propagates southeastward across the Ohio River Valley into the Mid-Atlantic as northerly flow pulls potentially the coldest air of the season into the CWA. There is some disagreement among the global models on some lingering low-level moisture on Thursday. Latest LREF guidance shows a 40-60% difference in 850 mb RH values between the 25th and 75th percentiles. If the low levels remain saturated, spotty rain showers and drizzle could linger into Thursday night (10% chance).
+
+Friday-Saturday...High pressure settles into the Upper Mississippi River Valley heading into the weekend. Mostly clear skies and dry, seasonable conditions return with highs in the 40s and 50s and overnight low in the 30s.
+
+&&
+
+.AVIATION /06Z TAFS THROUGH 06Z MONDAY/... Issued at 1200 AM CST Sun Nov 8 2026
+
+VFR conditions will persist over the TAF period as a weak surface trough moves through the area this morning, shifting the winds from southwesterly to northwesterly. Once daytime mixing kicks in, wind speeds pick up to 8-12 knots areawide with wind gusts of 17-20 knots probable at CID and DBQ. BRL and MLI could see a few gusts in those ranges, but their short durations did not warrant a FM group. Otherwise, mostly clear skies are expected outside some passing cirrus.
+
+&&
+
+.DVN WATCHES/WARNINGS/ADVISORIES... IA...None. IL...None. MO...None.
+
+&&
+
+$$

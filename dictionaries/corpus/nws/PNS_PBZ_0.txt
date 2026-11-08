@@ -1,0 +1,35 @@
+NOUS41 KPBZ 011444 PNSPBZ OHZ039>041-048>050-057>059-068-069-PAZ007>009-013>016- 020>023-029-031-073>076-WVZ001>004-012-021>023-041-020200-
+
+Public Information Statement National Weather Service Pittsburgh PA 938 AM EST Sun Nov 1 2026
+
+...MONTHLY CLIMATE DATA FOR OCTOBER 2026...
+
+********* PITTSBURGH MONTHLY SUMMARY **********
+
+The Pittsburgh PA climate summary for the month of October, 2026. The maximum temperature for the period was 83. The record maximum temperature is 91 degrees which was last set in 1884. The minimum temperature for the period was 32. The record minimum temperature is 16 degrees which was set in 1965. The average temperature was 56.3 degrees which is 2.9 degrees above the normal average temperature of 53.4 degrees. The maximum temperature did not exceed 90 degrees. The minimum temperature dropped below 32 degrees on 1 day this period. A total of 3.36 inches of precipitation fell during the period which is 0.53 inches above the normal amount of 2.83. No snow fell during the period which is 0.4 inches below the normal amount of 0.4. There were 276 heating degree days this period which is 94 below the normal amount of 370 days. There were 15 cooling degree days this period which is 4 above the normal amount of 11 days. The maximum wind was 29 miles per hour from the east and occurred on October 11. The maximum wind gust was 38 miles per hour from the east and occurred on October 11.
+
+RECENT OCTOBER CLIMATOLOGY FOR PITTSBURGH
+
+YEAR AVG HI AVG LOW AVG TEMP PRECIPITATION SNOWFALL
+
+2020 63.0 44.9 54.0 3.29 0.0 2021 67.7 51.2 59.5 3.84 0.0 2022 61.5 39.9 50.7 1.76 T 2023 65.4 48.7 57.0 2.60 T 2024 69.2 44.9 57.0 1.27 T 2025 64.4 44.0 54.2 2.21 T 2026 68.2 44.5 56.3 3.36 0.0
+
+********* ZANESVILLE MONTHLY SUMMARY **********
+
+The Zanesville OH climate summary for the month of October, 2026. The maximum temperature for the period was 84. The record maximum temperature is 93 degrees which was set in 2019. The minimum temperature for the period was 32. The record minimum temperature is 15 degrees which was set in 1952. The average temperature was 56.9 degrees which is 2.6 degrees above the normal average temperature of 54.3 degrees. The maximum temperature did not exceed 90 degrees. The minimum temperature dropped below 32 degrees on 1 day this period. A total of 0.77 inches of precipitation fell during the period which is 2.04 inches below the normal amount of 2.81. There were 261 heating degree days this period which is 83 below the normal amount of 344 days. There were 20 cooling degree days this period which is 6 above the normal amount of 14 days. The maximum wind was 20 miles per hour from the east and occurred on October 11. The maximum wind gust was 28 miles per hour from the southeast and occurred on October 11.
+
+RECENT OCTOBER CLIMATOLOGY FOR ZANESVILLE
+
+YEAR AVG HI AVG LOW AVG TEMP PRECIPITATION
+
+2022 64.3 40.0 52.1 1.30 2023 66.9 46.3 56.6 2.54 2024 71.0 41.8 56.4 0.19 2025 66.0 42.6 54.3 2.18 2026 69.6 44.2 56.9 0.77
+
+********* MORGANTOWN MONTHLY SUMMARY **********
+
+The Morgantown WV climate summary for the month of October, 2026. The maximum temperature for the period was 84. The record maximum temperature is 94 degrees which was set in 1897. The minimum temperature for the period was 32. The record minimum temperature is 15 degrees which was set in 1895. The average temperature was 57.7 degrees which is 2.4 degrees above the normal average temperature of 55.3 degrees. The maximum temperature did not exceed 90 degrees. The minimum temperature dropped below 32 degrees on 1 day this period. A total of 2.73 inches of precipitation fell during the period which is 0.36 inches below the normal amount of 3.09. There were 240 heating degree days this period which is 78 below the normal amount of 318 days. There were 20 cooling degree days this period which is 2 above the normal amount of 18 days. The maximum wind was 20 miles per hour from the west and occurred on October 16. The maximum wind gust was 31 miles per hour from the west and occurred on October 16.
+
+RECENT OCTOBER CLIMATOLOGY FOR MORGANTOWN
+
+YEAR AVG HI AVG LOW AVG TEMP PRECIPITATION
+
+2022 64.0 40.5 52.3 2.51 2023 66.6 46.6 56.6 3.35 2024 71.1 44.4 57.7 1.41 2025 65.2 44.3 54.8 3.31 2026 69.8 45.6 57.7 2.73

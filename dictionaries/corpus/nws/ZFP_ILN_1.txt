@@ -1,0 +1,23 @@
+FPUS51 KILN 072327 ZFPILN
+
+Zone Forecast Product National Weather Service Wilmington OH 627 PM EST Sat Nov 7 2026
+
+OHZ026-081000- Hardin- Including the cities of Kenton and Ada 627 PM EST Sat Nov 7 2026
+
+.TONIGHT...Mostly clear. Areas of frost after midnight. Lows in the lower 30s. Southwest winds 5 to 10 mph. .SUNDAY...Widespread frost in the morning. Mostly sunny. Highs in the upper 50s. Southwest winds 15 to 20 mph with gusts up to 30 mph. .SUNDAY NIGHT...Partly cloudy. Patchy frost after midnight. Lows in the upper 30s. West winds 10 to 15 mph with gusts up to 25 mph. .MONDAY...Patchy frost in the morning. Mostly sunny. Highs in the mid 50s. West winds 5 to 10 mph. .MONDAY NIGHT...Partly cloudy in the evening, then clearing. Lows around 40. Southwest winds 5 to 10 mph. .TUESDAY...Mostly sunny. Highs in the lower 60s. .TUESDAY NIGHT...Mostly clear. Lows in the upper 30s. .VETERANS DAY...Partly cloudy. Highs in the upper 50s. .WEDNESDAY NIGHT...Mostly cloudy in the evening, then becoming partly cloudy. A 40 percent chance of rain. Lows around 40. .THURSDAY...Mostly cloudy in the morning, then becoming partly cloudy. A 50 percent chance of rain. Highs around 50. .THURSDAY NIGHT...Partly cloudy. A chance of rain in the evening. Lows in the lower 30s. Chance of rain 50 percent. .FRIDAY...Partly cloudy. Highs in the mid 40s. .FRIDAY NIGHT...Partly cloudy. Lows in the upper 20s. .SATURDAY...Partly cloudy. Highs in the upper 40s.
+
+$$
+
+OHZ034-081000- Mercer- Including the cities of Celina and Coldwater 627 PM EST Sat Nov 7 2026
+
+.TONIGHT...Clear. Widespread frost after midnight. Lows in the lower 30s. West winds around 5 mph. .SUNDAY...Widespread frost in the morning. Mostly sunny. Highs in the upper 50s. Southwest winds 15 to 20 mph with gusts up to 30 mph. .SUNDAY NIGHT...Mostly clear. Patchy frost after midnight. Lows in the mid 30s. West winds 5 to 10 mph. Gusts up to 25 mph in the evening. .MONDAY...Patchy frost in the morning. Mostly sunny. Highs in the upper 50s. West winds around 5 mph. .MONDAY NIGHT...Partly cloudy in the evening, then clearing. Lows in the upper 30s. Southwest winds 5 to 10 mph. .TUESDAY...Mostly sunny. Highs in the mid 60s. .TUESDAY NIGHT...Mostly clear in the evening, then becoming partly cloudy. Lows in the upper 30s. .VETERANS DAY...Partly cloudy. Highs around 60. .WEDNESDAY NIGHT...Mostly cloudy in the evening, then becoming partly cloudy. A 40 percent chance of rain. Lows in the upper 30s. .THURSDAY...Mostly cloudy in the morning, then becoming partly cloudy. A 40 percent chance of rain. Highs in the lower 50s. .THURSDAY NIGHT...Partly cloudy. Lows around 30. .FRIDAY...Partly cloudy. Highs in the mid 40s. .FRIDAY NIGHT...Partly cloudy. Lows in the upper 20s. .SATURDAY...Partly cloudy in the morning, then clearing. Highs in the lower 50s.
+
+$$
+
+OHZ035-081000- Auglaize- Including the cities of Wapakoneta, St. Marys, New Bremen, and Minster 627 PM EST Sat Nov 7 2026
+
+.TONIGHT...Mostly clear. Areas of frost after midnight. Lows in the lower 30s. Southwest winds around 5 mph. .SUNDAY...Widespread frost in the morning. Mostly sunny. Highs in the upper 50s. Southwest winds 15 to 20 mph with gusts up to 30 mph. .SUNDAY NIGHT...Mostly clear in the evening, then becoming partly cloudy. Patchy frost after midnight. Lows in the mid 30s. West winds 5 to 10 mph. Gusts up to 25 mph in the evening. .MONDAY...Patchy frost in the morning. Mostly sunny. Highs in the upper 50s. West winds around 5 mph. .MONDAY NIGHT...Partly cloudy in the evening, then clearing. Lows in the upper 30s. Southwest winds 5 to 10 mph. .TUESDAY...Mostly sunny. Highs in the lower 60s. .TUESDAY NIGHT...Mostly clear in the evening, then becoming partly cloudy. Lows in the upper 30s. .VETERANS DAY...Partly cloudy. Highs in the upper 50s. .WEDNESDAY NIGHT...Mostly cloudy in the evening, then becoming partly cloudy. A 40 percent chance of rain. Lows in the upper 30s. .THURSDAY...Mostly cloudy in the morning, then becoming partly cloudy. A 50 percent chance of rain. Highs in the lower 50s. .THURSDAY NIGHT...Partly cloudy. Lows around 30. .FRIDAY...Partly cloudy. Highs in the mid 40s. .FRIDAY NIGHT...Partly cloudy. Lows in the upper 20s. .SATURDAY...Partly cloudy in the morning, then clearing. Highs around 50.
+
+$$
+
+OHZ042-081000- Darke- Including the city of Greenville 627 PM EST Sat Nov 7 2026

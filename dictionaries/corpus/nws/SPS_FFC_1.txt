@@ -1,0 +1,27 @@
+WWUS82 KFFC 050127 SPSFFC
+
+Special Weather Statement National Weather Service Peachtree City GA 827 PM EST Wed Nov 4 2026
+
+GAZ005>008-050200- Gilmer GA-Fannin GA-Murray GA-Union GA- 827 PM EST Wed Nov 4 2026
+
+...A STRONG THUNDERSTORM WILL IMPACT WESTERN UNION...NORTHWESTERN FANNIN...NORTHWESTERN GILMER AND EAST CENTRAL MURRAY COUNTIES UNTIL 9 PM EST...
+
+At 827 PM EST, Doppler radar was tracking a strong thunderstorm 7 miles west of Blue Ridge, moving northeast at 25 mph.
+
+HAZARD...Up to 40 mph wind, frequent cloud to ground lightning and heavy rain.
+
+SOURCE...Radar indicated.
+
+IMPACT...Expect minor damage to tree limbs and blowing around of light, unsecured objects. Heavy rain may cause temporary street flooding especially in poor drainage areas.
+
+Locations impacted include... Blue Ridge, Higdon, Colwell, Epworth, Jones Mill, Mineral Bluff, Loving and Conasauga Lake.
+
+PRECAUTIONARY/PREPAREDNESS ACTIONS...
+
+People outdoors should seek shelter immediately. If you can hear thunder, you are close enough to be struck by lightning. Motorists should slow down and be prepared for possible loss of control due to hydroplaning.
+
+&&
+
+LAT...LON 3472 8450 3486 8467 3499 8450 3499 8414 3497 8412 TIME...MOT...LOC 0127Z 225DEG 20KT 3487 8444
+
+MAX HAIL SIZE...0.00 IN MAX WIND GUST...40 MPH

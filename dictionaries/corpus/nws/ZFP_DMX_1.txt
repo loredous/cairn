@@ -1,0 +1,29 @@
+FPUS53 KDMX 080200 ZFPDMX
+
+Zone Forecast Product for Iowa National Weather Service Des Moines IA 758 PM CST Sat Nov 7 2026
+
+IAZ004-080900- Emmet- Including the city of Estherville 758 PM CST Sat Nov 7 2026
+
+.TONIGHT...Mostly cloudy this evening, then clearing. Lows in the lower 40s. Southwest winds 5 to 10 mph, becoming west after midnight. .SUNDAY...Sunny. Highs in the mid 50s. Northwest winds 5 to 10 mph. .SUNDAY NIGHT...Mostly clear in the evening, then becoming partly cloudy. Lows in the upper 30s. Southwest winds 5 to 10 mph. .MONDAY...Mostly sunny. Highs in the lower 60s. Southwest winds around 10 mph, becoming west in the afternoon. .MONDAY NIGHT...Mostly clear. Lows in the upper 30s. Northwest winds around 5 mph. .TUESDAY...Mostly sunny. Highs in the upper 50s. .TUESDAY NIGHT...Partly cloudy in the evening, then becoming mostly cloudy. Lows in the upper 30s. .VETERANS DAY...Mostly sunny. Highs in the lower 50s. .WEDNESDAY NIGHT...Partly cloudy. Lows in the lower 30s. .THURSDAY...Mostly sunny. Highs in the mid 40s. .THURSDAY NIGHT...Mostly clear. Lows in the upper 20s. .FRIDAY...Sunny. Highs in the upper 40s. .FRIDAY NIGHT...Mostly clear. Lows in the mid 30s. .SATURDAY...Mostly sunny. Highs in the mid 50s.
+
+$$
+
+IAZ005-080900- Kossuth- Including the city of Algona 758 PM CST Sat Nov 7 2026
+
+.TONIGHT...Mostly cloudy this evening, then clearing. Lows in the lower 40s. Southwest winds 5 to 10 mph, becoming west after midnight. .SUNDAY...Sunny. Highs in the mid 50s. Northwest winds 5 to 10 mph with gusts up to 20 mph. .SUNDAY NIGHT...Mostly clear in the evening, then becoming mostly cloudy. Lows in the mid 30s. Southwest winds 5 to 10 mph. .MONDAY...Mostly sunny. Highs in the lower 60s. Southwest winds around 10 mph, becoming west in the afternoon. .MONDAY NIGHT...Mostly clear. Lows in the upper 30s. Northwest winds around 5 mph. .TUESDAY...Mostly sunny. Highs in the upper 50s. .TUESDAY NIGHT...Partly cloudy in the evening, then becoming mostly cloudy. Lows in the upper 30s. .VETERANS DAY...Mostly sunny. Highs in the lower 50s. .WEDNESDAY NIGHT...Partly cloudy. Lows in the mid 30s. .THURSDAY...Mostly sunny. Highs in the mid 40s. .THURSDAY NIGHT...Partly cloudy in the evening, then becoming mostly clear. Lows in the upper 20s. .FRIDAY...Sunny. Highs in the upper 40s. .FRIDAY NIGHT...Mostly clear. Lows in the mid 30s. .SATURDAY...Sunny. Highs in the mid 50s.
+
+$$
+
+IAZ006-080900- Winnebago- Including the cities of Forest City and Lake Mills 758 PM CST Sat Nov 7 2026
+
+.TONIGHT...Mostly cloudy this evening, then clearing. Lows around 40. Southwest winds around 5 mph, becoming west around 5 mph after midnight. .SUNDAY...Sunny. Highs in the lower 50s. Northwest winds 5 to 10 mph with gusts up to 20 mph. .SUNDAY NIGHT...Mostly clear in the evening, then becoming mostly cloudy. Lows in the mid 30s. West winds around 5 mph, becoming south after midnight. .MONDAY...Mostly sunny. Highs in the lower 60s. South winds 5 to 10 mph, becoming west in the afternoon. .MONDAY NIGHT...Mostly clear. Lows in the upper 30s. Northwest winds around 5 mph. .TUESDAY...Mostly sunny. Highs in the upper 50s. .TUESDAY NIGHT...Mostly cloudy. Lows in the mid 30s. .VETERANS DAY...Mostly sunny. A slight chance of showers in the morning. Highs in the lower 50s. Chance of rain 20 percent. .WEDNESDAY NIGHT...Partly cloudy. Lows in the lower 30s. .THURSDAY...Partly sunny. Highs in the lower 40s. .THURSDAY NIGHT...Partly cloudy in the evening, then becoming mostly clear. Lows in the upper 20s. .FRIDAY...Sunny. Highs in the mid 40s. .FRIDAY NIGHT...Mostly clear. Lows in the lower 30s. .SATURDAY...Sunny. Highs in the lower 50s.
+
+$$
+
+IAZ007-080900- Worth- Including the cities of Northwood and Manly 758 PM CST Sat Nov 7 2026
+
+.TONIGHT...Mostly cloudy this evening, then clearing. Lows around 40. Southwest winds 5 to 10 mph, becoming west after midnight. .SUNDAY...Sunny. Highs in the lower 50s. Northwest winds 5 to 10 mph with gusts up to 20 mph. .SUNDAY NIGHT...Mostly clear in the evening, then becoming mostly cloudy. Lows in the lower 30s. West winds around 5 mph, becoming south after midnight. .MONDAY...Mostly sunny. Highs in the lower 60s. South winds 5 to 10 mph, becoming west in the afternoon. .MONDAY NIGHT...Mostly clear. Lows in the upper 30s. Northwest winds around 5 mph. .TUESDAY...Mostly sunny. Highs in the upper 50s. .TUESDAY NIGHT...Partly cloudy in the evening, then becoming mostly cloudy. Lows in the mid 30s. .VETERANS DAY...Mostly sunny with a 20 percent chance of showers. Highs in the lower 50s. .WEDNESDAY NIGHT...Partly cloudy. Lows in the lower 30s. .THURSDAY...Mostly sunny. Highs in the mid 40s. .THURSDAY NIGHT...Partly cloudy in the evening, then clearing. Lows in the upper 20s. .FRIDAY...Sunny. Highs in the mid 40s. .FRIDAY NIGHT...Mostly clear. Lows in the lower 30s. .SATURDAY...Mostly sunny. Highs in the lower 50s.
+
+$$
+
+IAZ015-080900- Palo Alto- Including the city of Emmetsburg 758 PM CST Sat Nov 7 2026

@@ -1,0 +1,35 @@
+FPUS54 KTSA 080433 ZFPTSA
+
+Zone Forecasts for Eastern Oklahoma and Northwest Arkansas National Weather Service Tulsa OK 1032 PM CST Sat Nov 7 2026
+
+OKZ060-081600- Tulsa- Including the city of Tulsa 1032 PM CST Sat Nov 7 2026
+
+...FROST ADVISORY IN EFFECT UNTIL 9 AM CST SUNDAY...
+
+.TONIGHT...Mostly clear. Patchy fog this evening, then areas of fog with patchy frost after midnight. Lows in the mid 30s. Light and variable winds. .SUNDAY...Areas of fog with patchy frost in the morning. Sunny. Not as cool with highs in the upper 60s. Southwest winds around 5 mph. .SUNDAY NIGHT...Mostly clear. Patchy fog after midnight. Lows in the lower 40s. Light and variable winds. .MONDAY...Patchy fog in the morning. Sunny. Highs in the lower 70s. South winds around 5 mph. .MONDAY NIGHT...Mostly clear. Lows in the upper 40s. South winds around 5 mph. .TUESDAY...Sunny. Highs in the mid 70s. .TUESDAY NIGHT...Mostly clear. Lows in the mid 50s. .VETERANS DAY...Mostly sunny. Highs in the lower 70s. .WEDNESDAY NIGHT...Mostly clear. Lows in the mid 40s. .THURSDAY...Sunny. Highs in the mid 60s. .THURSDAY NIGHT...Mostly clear. Lows in the upper 30s. .FRIDAY...Sunny. Highs in the lower 60s. .FRIDAY NIGHT...Mostly clear. Lows in the lower 40s. .SATURDAY...Sunny. Highs in the upper 60s.
+
+$$
+
+OKZ354-081600- Southeast Osage- Including the city of Hominy 1032 PM CST Sat Nov 7 2026
+
+...FROST ADVISORY IN EFFECT UNTIL 9 AM CST SUNDAY...
+
+.TONIGHT...Mostly clear. Patchy fog this evening, then areas of fog with patchy frost after midnight. Lows in the upper 30s. East winds around 5 mph, becoming southwest after midnight. .SUNDAY...Areas of fog with patchy frost in the morning. Sunny. Not as cool with highs in the upper 60s. Southwest winds around 5 mph. .SUNDAY NIGHT...Mostly clear. Patchy fog after midnight. Lows in the lower 40s. Light and variable winds. .MONDAY...Patchy fog in the morning. Sunny. Highs in the lower 70s. Southwest winds 5 to 10 mph. .MONDAY NIGHT...Mostly clear. Lows around 50. South winds around 5 mph. .TUESDAY...Sunny. Highs in the mid 70s. .TUESDAY NIGHT...Mostly clear. Lows in the mid 50s. .VETERANS DAY...Mostly sunny. Highs in the lower 70s. .WEDNESDAY NIGHT...Mostly clear. Lows in the mid 40s. .THURSDAY...Sunny. Highs in the mid 60s. .THURSDAY NIGHT...Mostly clear. Lows in the upper 30s. .FRIDAY...Sunny. Highs in the lower 60s. .FRIDAY NIGHT...Mostly clear. Lows in the lower 40s. .SATURDAY...Sunny. Highs in the upper 60s.
+
+$$
+
+OKZ061-081600- Rogers- Including the city of Claremore 1032 PM CST Sat Nov 7 2026
+
+...FROST ADVISORY IN EFFECT UNTIL 9 AM CST SUNDAY...
+
+.TONIGHT...Mostly clear. Patchy fog this evening, then areas of fog with patchy frost after midnight. Lows in the mid 30s. East winds around 5 mph this evening, becoming light and variable. .SUNDAY...Areas of fog with patchy frost in the morning. Sunny. Not as cool with highs in the upper 60s. Southwest winds around 5 mph. .SUNDAY NIGHT...Mostly clear. Patchy fog after midnight. Lows around 40. South winds around 5 mph in the evening, becoming light and variable. .MONDAY...Patchy fog in the morning. Sunny. Highs in the lower 70s. South winds 5 to 10 mph. .MONDAY NIGHT...Mostly clear. Lows in the upper 40s. South winds around 5 mph. .TUESDAY...Sunny. Highs in the mid 70s. .TUESDAY NIGHT...Mostly clear. Lows in the lower 50s. .VETERANS DAY...Mostly sunny. Highs in the lower 70s. .WEDNESDAY NIGHT...Mostly clear. Lows in the mid 40s. .THURSDAY...Sunny. Highs in the mid 60s. .THURSDAY NIGHT...Mostly clear. Lows in the upper 30s. .FRIDAY...Sunny. Highs in the lower 60s. .FRIDAY NIGHT...Mostly clear. Lows around 40. .SATURDAY...Sunny. Highs in the upper 60s.
+
+$$
+
+OKZ067-081600- Wagoner- Including the city of Wagoner 1032 PM CST Sat Nov 7 2026
+
+...FROST ADVISORY IN EFFECT UNTIL 9 AM CST SUNDAY...
+
+.TONIGHT...Mostly clear this evening, then becoming partly cloudy. Patchy fog this evening, then areas of fog with patchy frost after midnight. Lows in the mid 30s. North winds around 5 mph this evening, becoming light and variable. .SUNDAY...Areas of fog with patchy frost in the morning. Sunny. Not as cool with highs in the upper 60s. Light and variable winds, becoming west around 5 mph in the afternoon. .SUNDAY NIGHT...Mostly clear. Patchy fog after midnight. Lows around 40. Light and variable winds. .MONDAY...Patchy fog in the morning. Sunny. Highs in the lower 70s. South winds around 5 mph. .MONDAY NIGHT...Mostly clear. Lows in the upper 40s. South winds around 5 mph. .TUESDAY...Mostly sunny. Highs in the mid 70s. .TUESDAY NIGHT...Mostly clear. Lows in the mid 50s. .VETERANS DAY...Mostly sunny. Highs in the lower 70s. .WEDNESDAY NIGHT...Mostly clear. Lows in the mid 40s. .THURSDAY...Sunny. Highs in the mid 60s. .THURSDAY NIGHT...Mostly clear. Lows in the upper 30s. .FRIDAY...Sunny. Highs in the lower 60s. .FRIDAY NIGHT...Mostly clear. Lows around 40. .SATURDAY...Sunny. Highs in the upper 60s.
+
+$$

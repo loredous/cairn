@@ -1,0 +1,29 @@
+WWUS84 KOUN 052203 SPSOUN
+
+Special Weather Statement National Weather Service Norman OK 403 PM CST Thu Nov 5 2026
+
+OKZ019-025-052230- Oklahoma OK-Logan OK- 403 PM CST Thu Nov 5 2026
+
+...A strong thunderstorm will impact portions of north central Oklahoma and south central Logan Counties through 430 PM CST...
+
+At 402 PM CST, Doppler radar was tracking a strong thunderstorm over western Edmond, moving northeast at 20 mph. Small hail may accumulate and cause slick roads.
+
+HAZARD...Half inch hail.
+
+SOURCE...Radar indicated.
+
+IMPACT...Minor damage to outdoor objects is possible. Accumulation of hail may cause slick roads.
+
+Locations impacted include... Northern Oklahoma City, Edmond, Arcadia, and Downtown Edmond.
+
+PRECAUTIONARY/PREPAREDNESS ACTIONS...
+
+If outdoors, consider seeking shelter inside a building.
+
+&&
+
+LAT...LON 3560 9752 3568 9756 3582 9736 3566 9726 TIME...MOT...LOC 2202Z 241DEG 17KT 3566 9747
+
+MAX HAIL SIZE...0.50 IN MAX WIND GUST...<30 MPH
+
+$$

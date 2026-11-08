@@ -1,0 +1,33 @@
+WWUS82 KMHX 062001 SPSMHX
+
+Special Weather Statement National Weather Service Newport/Morehead City NC 301 PM EST Fri Nov 6 2026
+
+NCZ090-198-062045- Inland Onslow NC-Duplin NC- 301 PM EST Fri Nov 6 2026
+
+...A STRONG THUNDERSTORM WILL IMPACT SOUTHWESTERN JONES... NORTHWESTERN ONSLOW AND SOUTHEASTERN DUPLIN COUNTIES THROUGH 345 PM EST...
+
+At 301 PM EST, Doppler radar was tracking a strong thunderstorm capable of producing a landspout near Cypress Creek, or 11 miles west of Half Moon, moving east at 20 mph.
+
+HAZARD...Landspouts and wind gusts up to 40 mph.
+
+SOURCE...Radar indicated.
+
+IMPACT...Minor damage to outdoor objects is possible. Gusty winds could knock down tree limbs and blow around unsecured objects.
+
+Locations impacted include... Jacksonville, New River Station, Half Moon, Pumpkin Center, Richlands, Cypress Creek, Midway Park, Catherine Lake, Albert J Ellis Airport, Richlands South, Lyman, and Haws Run.
+
+PRECAUTIONARY/PREPAREDNESS ACTIONS...
+
+If outdoors, consider seeking shelter inside a building.
+
+Torrential rainfall is also occurring with this storm and may lead to localized flooding. Do not drive your vehicle through flooded roadways.
+
+This storm may intensify, so be certain to monitor local radio stations and available television stations for additional information and possible warnings from the National Weather Service.
+
+&&
+
+LAT...LON 3472 7768 3472 7774 3485 7779 3495 7745 3471 7732 3467 7766 TIME...MOT...LOC 2001Z 251DEG 18KT 3477 7765
+
+LANDSPOUT...POSSIBLE MAX HAIL SIZE...0.00 IN MAX WIND GUST...40 MPH
+
+$$

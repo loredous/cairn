@@ -1,0 +1,31 @@
+WWUS84 KAMA 020445 SPSAMA
+
+Special Weather Statement National Weather Service Amarillo TX 1045 PM CST Sun Nov 1 2026
+
+TXZ006-011-020515- Oldham TX-Hartley TX- 1045 PM CST Sun Nov 1 2026
+
+...A STRONG THUNDERSTORM WILL IMPACT NORTHWESTERN OLDHAM AND SOUTHWESTERN HARTLEY COUNTIES UNTIL 1115 PM CST...
+
+At 1045 PM CST, Doppler radar was tracking a strong thunderstorm 11 miles north of Glenrio, or 37 miles west of Vega, moving northeast at 50 mph.
+
+HAZARD...Wind gusts of 50 to 55 mph.
+
+SOURCE...Radar indicated.
+
+IMPACT...Gusty winds could knock down tree limbs and blow around unsecured objects.
+
+Locations impacted include... Mainly rural areas of Northwestern Oldham and Southwestern Hartley Counties.
+
+PRECAUTIONARY/PREPAREDNESS ACTIONS...
+
+Monitor the weather situation closely and be alert for threatening weather conditions.
+
+Torrential rainfall is also occurring with this storm and may lead to flash flooding. Do not drive your vehicle through flooded roadways.
+
+&&
+
+LAT...LON 3553 10304 3580 10276 3543 10256 3521 10304 TIME...MOT...LOC 0445Z 242DEG 41KT 3534 10307
+
+MAX HAIL SIZE...0.00 IN MAX WIND GUST...50 TO 55 MPH
+
+$$

@@ -1,0 +1,29 @@
+FPUS54 KFWD 080220 ZFPFWD
+
+Zone Forecast Product for Texas National Weather Service Fort Worth TX 819 PM CST Sat Nov 7 2026
+
+TXZ119-081200- Dallas- Including the city of Dallas 819 PM CST Sat Nov 7 2026
+
+.TONIGHT...Mostly cloudy. Lows in the lower 50s. North winds around 5 mph. .SUNDAY...Mostly cloudy. Highs in the lower 70s. North winds around 5 mph. .SUNDAY NIGHT...Mostly cloudy in the evening, then clearing. Lows in the lower 50s. Light and variable winds. .MONDAY...Partly sunny. Highs in the lower 70s. Light and variable winds, becoming south around 5 mph in the afternoon. .MONDAY NIGHT...Mostly cloudy in the evening, then becoming partly cloudy. Lows in the mid 50s. South winds around 5 mph. .TUESDAY...Mostly sunny. Highs in the mid 70s. .TUESDAY NIGHT...Partly cloudy in the evening, then becoming mostly clear. Lows in the upper 50s. .VETERANS DAY...Mostly sunny. Highs in the upper 70s. .WEDNESDAY NIGHT...Mostly clear. Lows in the lower 50s. .THURSDAY...Sunny. Highs in the mid 70s. .THURSDAY NIGHT...Clear. Lows in the upper 40s. .FRIDAY...Sunny. Highs in the lower 70s. .FRIDAY NIGHT...Clear. Lows in the upper 40s. .SATURDAY...Sunny. Highs in the lower 70s.
+
+$$
+
+TXZ118-081200- Tarrant- Including the cities of Fort Worth and Arlington 819 PM CST Sat Nov 7 2026
+
+.TONIGHT...Mostly cloudy. Lows in the lower 50s. North winds around 5 mph. .SUNDAY...Mostly cloudy. Highs in the lower 70s. North winds around 5 mph. .SUNDAY NIGHT...Mostly cloudy in the evening, then becoming partly cloudy. Lows in the lower 50s. Light and variable winds. .MONDAY...Partly sunny. Highs in the lower 70s. Light and variable winds, becoming south around 5 mph in the afternoon. .MONDAY NIGHT...Mostly cloudy in the evening, then becoming partly cloudy. Lows in the mid 50s. South winds around 5 mph. .TUESDAY...Mostly sunny. Highs in the mid 70s. .TUESDAY NIGHT...Partly cloudy in the evening, then becoming mostly clear. Lows in the upper 50s. .VETERANS DAY...Sunny. Highs around 80. .WEDNESDAY NIGHT...Mostly clear. Lows in the lower 50s. .THURSDAY...Sunny. Highs in the mid 70s. .THURSDAY NIGHT...Clear. Lows in the mid 40s. .FRIDAY...Sunny. Highs in the lower 70s. .FRIDAY NIGHT...Clear. Lows in the upper 40s. .SATURDAY...Sunny. Highs in the mid 70s.
+
+$$
+
+TXZ159-081200- McLennan- Including the city of Waco 819 PM CST Sat Nov 7 2026
+
+.TONIGHT...A slight chance of thunderstorms this evening. Mostly cloudy with a chance of showers. Lows in the mid 50s. North winds around 5 mph. Chance of rain 50 percent. .SUNDAY...Mostly cloudy with a 40 percent chance of showers. Highs in the upper 60s. Northeast winds around 5 mph. .SUNDAY NIGHT...Partly cloudy. Lows in the lower 50s. Light and variable winds. .MONDAY...Partly sunny. Highs around 70. East winds around 5 mph, becoming south in the afternoon. .MONDAY NIGHT...Partly cloudy. Lows in the mid 50s. Light and variable winds. .TUESDAY...Mostly sunny. Highs in the lower 70s. .TUESDAY NIGHT...Partly cloudy. Lows in the mid 50s. .VETERANS DAY...Mostly sunny. Highs in the upper 70s. .WEDNESDAY NIGHT...Mostly clear. Lows in the lower 50s. .THURSDAY...Sunny. Highs in the mid 70s. .THURSDAY NIGHT...Clear. Lows in the mid 40s. .FRIDAY...Sunny. Highs in the lower 70s. .FRIDAY NIGHT...Clear. Lows in the mid 40s. .SATURDAY...Sunny. Highs in the lower 70s.
+
+$$
+
+TXZ158-081200- Bell- Including the cities of Killeen, Temple, and Fort Hood 819 PM CST Sat Nov 7 2026
+
+.TONIGHT...Mostly cloudy. A chance of showers with a slight chance of thunderstorms this evening, then showers likely after midnight. Lows in the mid 50s. North winds 5 to 10 mph. Chance of rain 70 percent. .SUNDAY...Mostly cloudy. Showers likely in the morning, then a chance of showers in the afternoon. Highs in the upper 60s. Northeast winds around 5 mph. Chance of rain 70 percent. .SUNDAY NIGHT...Mostly cloudy with showers likely in the evening, then partly cloudy after midnight. Lows in the mid 50s. Light and variable winds, becoming north around 5 mph after midnight. Chance of rain 70 percent. .MONDAY...Partly sunny with a 20 percent chance of showers. Highs in the upper 60s. Northeast winds around 5 mph, becoming southeast in the afternoon. .MONDAY NIGHT...Mostly cloudy. A 20 percent chance of showers in the evening. Lows in the mid 50s. Light and variable winds. .TUESDAY...Partly sunny. Highs in the lower 70s. .TUESDAY NIGHT...Partly cloudy. Lows in the mid 50s. .VETERANS DAY...Partly sunny. Highs in the upper 70s. .WEDNESDAY NIGHT...Partly cloudy in the evening, then becoming mostly clear. Lows in the lower 50s. .THURSDAY...Sunny. Highs in the mid 70s. .THURSDAY NIGHT...Clear. Lows in the mid 40s. .FRIDAY...Sunny. Highs in the lower 70s. .FRIDAY NIGHT...Clear. Lows in the mid 40s. .SATURDAY...Sunny. Highs in the lower 70s.
+
+$$
+
+TXZ104-081200- Collin- Including the cities of Plano, McKinney, Allen, and Frisco 819 PM CST Sat Nov 7 2026

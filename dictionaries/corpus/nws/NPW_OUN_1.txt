@@ -1,0 +1,29 @@
+WWUS74 KOUN 071552 NPWOUN
+
+URGENT - WEATHER MESSAGE National Weather Service Norman OK 952 AM CST Sat Nov 7 2026
+
+OKZ012-025-071700- /O.EXP.KOUN.FG.Y.0007.000000T0000Z-261107T1600Z/ Garfield-Oklahoma- Including the cities of Oklahoma City and Enid 952 AM CST Sat Nov 7 2026
+
+...DENSE FOG ADVISORY WILL EXPIRE AT 10 AM CST THIS MORNING...
+
+$$
+
+OKZ004>006-009>011-014>018-021>024-027-033>038-TXZ083-085-071700- /O.EXT.KOUN.FG.Y.0007.000000T0000Z-261107T1700Z/ Harper-Woods-Alfalfa-Ellis-Woodward-Major-Roger Mills-Dewey- Custer-Blaine-Kingfisher-Beckham-Washita-Caddo-Canadian-Grady-Harmon- Greer-Kiowa-Jackson-Tillman-Comanche-Hardeman-Wilbarger- Including the cities of El Reno, Cordell, Cherokee, Hammon, Weatherford, Vici, Fargo, Concho, Sayre, Shattuck, Laverne, Hinton, Fairview, Hobart, Frederick, Chickasha, Geary, Elk City, Altus, Watonga, Taloga, Yukon, Gage, Okeene, Snyder, Leedey, Mangum, Alva, Woodward, Hennessey, Anadarko, Granite, Quanah, Tuttle, Sentinel, Lawton, Clinton, Vernon, Seiling, Burns Flat, Helena, Mustang, Arnett, Carmen, Hollis, Buffalo, Okarche, Cheyenne, and Kingfisher 952 AM CST Sat Nov 7 2026
+
+...DENSE FOG ADVISORY NOW IN EFFECT UNTIL 11 AM CST THIS MORNING...
+
+* WHAT...Visibility less than one mile in dense fog.
+
+* WHERE...Portions of central, northwest, southwest, and western Oklahoma and northern Texas.
+
+* WHEN...Until 11 AM CST this morning.
+
+* IMPACTS...Low visibility could make driving conditions hazardous.
+
+PRECAUTIONARY/PREPAREDNESS ACTIONS...
+
+If driving, slow down, use your headlights, and leave plenty of distance ahead of you.
+
+&&
+
+$$

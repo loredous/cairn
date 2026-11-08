@@ -1,0 +1,63 @@
+WWUS75 KTFX 080521 NPWTFX
+
+URGENT - WEATHER MESSAGE National Weather Service Great Falls MT 1021 PM MST Sat Nov 7 2026
+
+MTZ304-305-312-313-082030- /O.UPG.KTFX.HW.A.0033.261108T1500Z-261109T0300Z/ /O.EXB.KTFX.HW.W.0037.261108T1500Z-261109T0300Z/ Eastern Toole and Liberty-Hill County-Cascade County below 5000ft- Judith Basin County and Judith Gap- Including the cities of Whitlash, Havre, Hobson, Raynesford, Stanford, Great Falls, Shelby, Devon, Benchland, Chester, Moccasin, Galata, Lothair, Geyser, Windham, and Joplin 1021 PM MST Sat Nov 7 2026
+
+...HIGH WIND WARNING IN EFFECT FROM 8 AM TO 8 PM MST SUNDAY...
+
+* WHAT...West winds 30 to 40 mph with gusts up to 65 mph expected.
+
+* WHERE...Cascade County below 5000ft, Eastern Toole and Liberty, Hill County, and Judith Basin County and Judith Gap.
+
+* WHEN...From 8 AM to 8 PM MST Sunday.
+
+* IMPACTS...Damaging winds will blow down trees and power lines. Widespread power outages are expected. Travel will be difficult, especially for high profile vehicles.
+
+PRECAUTIONARY/PREPAREDNESS ACTIONS...
+
+People are urged to secure loose objects that could be blown around or damaged by the wind.
+
+&&
+
+$$
+
+MTZ306-309>311-082030- /O.EXB.KTFX.HW.W.0037.261108T1500Z-261109T0300Z/ Northern Blaine County-Eastern Pondera and Eastern Teton-Western and Central Chouteau County-Bears Paw Mountains and Southern Blaine- Including the cities of Fort Belknap, Chinook, Brady, Hogeland, Zurich, Ledger, Floweree, Fort Benton, Carter, Conrad, Harlem, and Rocky Boy 1021 PM MST Sat Nov 7 2026
+
+...HIGH WIND WARNING IN EFFECT FROM 8 AM TO 8 PM MST SUNDAY...
+
+* WHAT...West winds 30 to 40 mph with gusts up to 65 mph expected.
+
+* WHERE...Bears Paw Mountains and Southern Blaine, Eastern Pondera and Eastern Teton, Northern Blaine County, and Western and Central Chouteau County.
+
+* WHEN...From 8 AM to 8 PM MST Sunday.
+
+* IMPACTS...Damaging winds will blow down trees and power lines. Widespread power outages are expected. Travel will be difficult, especially for high profile vehicles.
+
+PRECAUTIONARY/PREPAREDNESS ACTIONS...
+
+People are urged to secure loose objects that could be blown around or damaged by the wind.
+
+&&
+
+$$
+
+MTZ301>303-308-082030- /O.CON.KTFX.HW.W.0037.261108T1200Z-261109T0300Z/ East Glacier Park Region-Northern High Plains-Eastern Glacier, Western Toole, and Central Pondera-Southern High Plains- Including the cities of Santa Rita, Marias Pass, Dupuyer, Kiowa, Cut Bank, Ethridge, Saint Mary, East Glacier Park, Logan Pass, Browning, Heart Butte, Bynum, Choteau, Babb, and Pendroy 1021 PM MST Sat Nov 7 2026
+
+...HIGH WIND WARNING REMAINS IN EFFECT FROM 5 AM TO 8 PM MST SUNDAY...
+
+* WHAT...West winds 35 to 55 mph with gusts up to 95 mph expected. Isolated gusts around 100 mph.
+
+* WHERE...East Glacier Park Region Zone, and Eastern Glacier, Western Toole, and Central Pondera, Northern High Plains, and Southern High Plains.
+
+* WHEN...From 5 AM to 8 PM MST Sunday.
+
+* IMPACTS...Damaging winds will blow down trees and power lines. Widespread power outages are expected. Travel will be difficult, especially for high profile vehicles.
+
+PRECAUTIONARY/PREPAREDNESS ACTIONS...
+
+People are urged to secure loose objects that could be blown around or damaged by the wind.
+
+&&
+
+$$

@@ -1,0 +1,29 @@
+FPUS54 KJAN 080248 ZFPJAN
+
+Zone Forecast Product for Central Mississippi, Northeast Louisiana, and Southeast Arkansas National Weather Service Jackson MS 846 PM CST Sat Nov 7 2026
+
+MSZ048-081000- Hinds- Including the city of Jackson 846 PM CST Sat Nov 7 2026
+
+.REST OF TONIGHT...Mostly clear. Patchy fog. Lows in the upper 30s. North winds around 5 mph. .SUNDAY...Mostly sunny. Highs in the upper 60s. North winds 5 to 10 mph. .SUNDAY NIGHT...Partly cloudy. Patchy fog after midnight. Lows in the upper 30s. North winds around 5 mph in the evening, becoming light and variable. .MONDAY...Patchy fog in the morning. Mostly sunny. Highs in the lower 70s. Northeast winds around 5 mph. .MONDAY NIGHT...Partly cloudy. Lows in the lower 40s. Light and variable winds. .TUESDAY THROUGH VETERANS DAY...Partly cloudy. Highs in the mid 70s. Lows in the mid 40s. .WEDNESDAY NIGHT...Partly cloudy in the evening, then becoming mostly cloudy. Lows in the upper 40s. .THURSDAY...Partly sunny in the morning, then clearing. Highs around 70. .THURSDAY NIGHT AND FRIDAY...Mostly clear. Lows in the upper 30s. Highs in the lower 60s. .FRIDAY NIGHT AND SATURDAY...Mostly clear. Lows in the mid 30s. Highs in the mid 60s.
+
+$$
+
+MSZ049-081000- Rankin- Including the cities of Pearl, Brandon, and Richland 846 PM CST Sat Nov 7 2026
+
+.REST OF TONIGHT...Mostly clear. Lows in the upper 30s. North winds around 5 mph. .SUNDAY...Mostly sunny. Highs in the upper 60s. North winds 5 to 10 mph. .SUNDAY NIGHT...Partly cloudy. Patchy fog after midnight. Lows in the upper 30s. North winds around 5 mph. .MONDAY...Mostly sunny. Highs in the mid 70s. North winds around 5 mph. .MONDAY NIGHT...Partly cloudy. Lows in the lower 40s. North winds around 5 mph in the evening, becoming light and variable. .TUESDAY THROUGH VETERANS DAY...Partly cloudy. Highs in the upper 70s. Lows in the upper 40s. .WEDNESDAY NIGHT...Partly cloudy in the evening, then becoming mostly cloudy. Lows around 50. .THURSDAY...Partly sunny in the morning, then clearing. Highs in the lower 70s. .THURSDAY NIGHT AND FRIDAY...Mostly clear. Lows around 40. Highs in the lower 60s. .FRIDAY NIGHT AND SATURDAY...Mostly clear. Lows in the mid 30s. Highs in the mid 60s.
+
+$$
+
+MSZ052-081000- Lauderdale- Including the city of Meridian 846 PM CST Sat Nov 7 2026
+
+.REST OF TONIGHT...Mostly clear. Lows in the upper 30s. North winds around 5 mph. .SUNDAY...Mostly sunny. Highs in the upper 60s. North winds 5 to 10 mph. .SUNDAY NIGHT...Partly cloudy in the evening, then clearing. Patchy frost after midnight. Lows in the mid 30s. North winds around 5 mph. .MONDAY...Mostly sunny. Highs in the lower 70s. North winds around 5 mph. .MONDAY NIGHT...Partly cloudy. Lows around 40. Light and variable winds. .TUESDAY THROUGH VETERANS DAY...Partly cloudy. Highs in the mid 70s. Lows in the lower 40s. .WEDNESDAY NIGHT...Partly cloudy. Lows in the upper 40s. .THURSDAY...Partly sunny. Highs around 70. .THURSDAY NIGHT AND FRIDAY...Mostly clear. Lows in the upper 30s. Highs in the lower 60s. .FRIDAY NIGHT AND SATURDAY...Mostly clear. Lows in the lower 30s. Highs in the lower 60s.
+
+$$
+
+MSZ043-081000- Madison MS- Including the cities of Ridgeland, Madison, and Canton 846 PM CST Sat Nov 7 2026
+
+.REST OF TONIGHT...Partly cloudy early this evening, then clearing. Lows in the upper 30s. North winds around 5 mph. .SUNDAY...Mostly sunny. Highs in the upper 60s. North winds around 5 mph. .SUNDAY NIGHT...Partly cloudy. Patchy fog and frost after midnight. Lows in the upper 30s. North winds around 5 mph in the evening, becoming light and variable. .MONDAY...Patchy fog in the morning. Mostly sunny. Highs in the lower 70s. Northeast winds around 5 mph in the morning, becoming light and variable. .MONDAY NIGHT...Partly cloudy. Lows in the lower 40s. Light and variable winds. .TUESDAY THROUGH VETERANS DAY...Partly cloudy. Highs in the mid 70s. Lows in the mid 40s. .WEDNESDAY NIGHT...Partly cloudy in the evening, then becoming mostly cloudy. Lows in the upper 40s. .THURSDAY...Partly sunny in the morning, then clearing. Highs around 70. .THURSDAY NIGHT AND FRIDAY...Mostly clear. Lows in the upper 30s. Highs in the lower 60s. .FRIDAY NIGHT AND SATURDAY...Mostly clear. Lows in the lower 30s. Highs in the mid 60s.
+
+$$
+
+MSZ074-081000- Forrest- Including the city of Hattiesburg 846 PM CST Sat Nov 7 2026

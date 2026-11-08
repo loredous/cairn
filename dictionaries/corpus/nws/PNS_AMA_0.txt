@@ -1,0 +1,25 @@
+NOUS44 KAMA 022357 PNSAMA OKZ001>003-TXZ001>020-317-031200-
+
+Public Information Statement National Weather Service Amarillo TX 557 PM CST Mon Nov 2 2026
+
+...NWS Damage Survey for 11/01/2026 Tornado Event...
+
+.Keyes Tornado...
+
+Rating: EF1 Estimated Peak Wind: 100 mph Path Length /statute/: 0.61 miles Path Width /maximum/: 25 yards Fatalities: 0 Injuries: 0
+
+Start Date: 11/01/2026 Start Time: 10:59 PM CST Start Location: Keyes / Cimarron County / OK Start Lat/Lon: 36.8059 / -102.2592
+
+End Date: 11/01/2026 End Time: 11:03 PM CST End Location: Keyes / Cimarron County / OK End Lat/Lon: 36.8111 / -102.2503
+
+Survey Summary: This tornado began near the intersection of Phillips Avenue and Ramsey Blvd. on the southwest end of Keyes. Here it snapped a few branches off of some elm trees and did damage to an older mobile home by pushing it a couple of feet, despite being anchored down. The tornado then continued northeast where it lifted an empty grain silo and either rolled or tossed or a combination of both across a field and landed about 100 yards or so to the northeast. The tornado also snapped the top of a power pole. The tornado continued northeast and caused some minor roof damage to the community center, including the collapse of one of the walls and destroyed the sidewalk awning connecting the two buildings. Another power pole was also broken in a couple of spots. This location likely had an enhancement of wind due to the enclosed nature of the area. The tornado crossed Jefferson Avenue and caused some damage to a carport awning and snapped tree branches and a softwood tree. The most damage was around Polk Street where it resulted in the collapse of an old pool hall, lifted the roof off a building across the street, which resulted in the collapse of an exterior wall. It then produced additional damage to a large barn like structure along Monroe Avenue. It was after this point that the tornado likely lifted as little in the way of damage was noted. Much of the damage along the path was done to older, less well built structures and this contributed to a lower rating. It also created a very narrow path through town from southwest to northeast.
+
+&&
+
+EF Scale: The Enhanced Fujita Scale classifies tornadoes into the following categories:
+
+EF0.....65 to 85 mph EF1.....86 to 110 mph EF2.....111 to 135 mph EF3.....136 to 165 mph EF4.....166 to 200 mph EF5.....>200 mph
+
+NOTE: The information in this statement is preliminary and subject to change pending final review of the event and publication in NWS Storm Data.
+
+$$

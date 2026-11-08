@@ -1,0 +1,65 @@
+FXUS64 KOUN 080446 AFDOUN
+
+Area Forecast Discussion National Weather Service Norman OK 1046 PM CST Sat Nov 7 2026
+
+...New AVIATION...
+
+.KEY MESSAGES... Updated at 130 PM CST Sat Nov 7 2026
+
+- Areas of fog with locally dense fog will redevelop tonight across north central and central Oklahoma.
+
+- The first frost of the year is likely in parts of central Oklahoma tonight.
+
+- Warm, above-normal temperatures return early to mid next week.
+
+&&
+
+.NEAR TERM... (Rest of today and tonight) Issued at 130 PM CST Sat Nov 7 2026
+
+Surface high pressure sits across the area today. Despite that, a trough moving eastward through northern Mexico has led to a widespread area of rain and cloud cover in southern and central Texas. Those clouds continue to stream over our area and will preclude us from getting too warm this afternoon. Highs will remain in the 60s in southern Oklahoma and western north Texas, and a little cooler in areas that received widespread fog this morning. Most or all of the rain will remain south of our area and fizzle out as it approaches western north Texas. Still, there is about a 20-40% chance of light rain getting into Knox, Baylor, and Archer Counties before dissipating this evening.
+
+Model guidance is insistent that the high cloud cover will recede to far southern Oklahoma and western north Texas. Clearing skies and calming winds will let temperatures plummet across north central and west central Oklahoma to perhaps the coldest levels of the fall so far. A Frost Advisory is in effect for a belt from Hughes to Kay Counties and westward to Kingfisher/Garfield Grant Counties. That frost will coincide with another night that looks quite conducive to fog development across north central and central Oklahoma. Further to the south and west, cool temperatures and fog are also possible, but light southerly winds reduce confidence in denser fog/frost.
+
+Meister
+
+&&
+
+.SHORT TERM... (Sunday through Monday night) Issued at 130 PM CST Sat Nov 7 2026
+
+The trough across the Rio Grande Valley will slowly move eastward tomorrow, though it will be weakening with time. Any rain chances will remain well south of our area through the short-term period, but the trough will be just enough to turn surface winds southerly across the Plains. Because of that, temperatures will warm back into the 60s on Sunday and even back up into the 70s on Sunday.
+
+Nighttimes continue to look rather clear and calm, so fog is expected to redevelop on at least Sunday night and potentially Monday night as well. Dense fog is possible, though exact locations where visibility reductions are likeliest remain uncertain. Low temperatures will be a little warmer the next few nights, so no more frost is in the forecast.
+
+Meister
+
+&&
+
+.LONG TERM... (Tuesday through Friday) Issued at 200 AM CST Sat Nov 7 2026
+
+Warm, above-normal temperatures will continue on Tuesday and Wednesday with highs generally in the 70s and lows generally in the upper 40s and 50s deg F. Bias-corrected probabilistic guidance indicates little spread during these two days, which indicates high confidence that the relatively warm weather will continue.
+
+By Thursday into Friday, ensemble spread increases markedly as a cold front will likely move across the Southern Plains as a longwave trough develops across the eastern half of the United States. This pattern will allow a cold front to drive southward as the trough amplifies to the east.
+
+With the Southern Plains southwest of the strongest cold air advection, there is uncertainty regarding how much cold air will advance into Oklahoma and north Texas. It will be highly dependent on the track of the attendant surface high behind the cold front. Bias-corrected probabilistic guidance indicates a ~20 to 30 deg F spread between the 10th and 90th percentiles with a 20 to 40% chance of high temperatures below 60 deg F by next Friday.
+
+Mahale
+
+&&
+
+.AVIATION... (06Z TAFS) Issued at 1045 PM CST Sat Nov 7 2026
+
+The RAP and HRRR models forecast patchy fog in northern Oklahoma (mainly west of KPNC), but overall the models signals are not too strong for fog. But skies are clear across northern Oklahoma, winds are light to calm and humidity is above 95 percent across portions of the area, so there does appear to be at least some potential for fog. Have maintained some reduced visibilities across north central, central and west central Oklahoma in the TAFs but the highest potential for IFR visibilities will be in north central Oklahoma.
+
+Otherwise, mid and high level cloudiness will persist Sunday morning across southern Oklahoma and north Texas.
+
+&&
+
+.PRELIMINARY POINT TEMPS/POPS... Oklahoma City OK 39 68 46 70 / 0 0 0 0 Hobart OK 42 69 45 71 / 0 0 0 0 Wichita Falls TX 44 69 47 73 / 0 0 0 0 Gage OK 42 70 45 73 / 0 0 0 0 Ponca City OK 37 69 43 71 / 0 0 0 0 Durant OK 45 71 45 73 / 0 0 0 0
+
+&&
+
+.OUN WATCHES/WARNINGS/ADVISORIES... OK...Frost Advisory from 3 AM to 9 AM CST Sunday for OKZ007-008-012- 013-018>020-026-030>032.
+
+TX...None. &&
+
+$$

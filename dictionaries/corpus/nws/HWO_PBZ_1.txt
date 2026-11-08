@@ -1,0 +1,39 @@
+FLUS41 KPBZ 070613 HWOPBZ
+
+Hazardous Weather Outlook National Weather Service Pittsburgh PA 113 AM EST Sat Nov 7 2026
+
+OHZ039>041-048>050-057>059-068-069-PAZ007>009-013>016-020>022-029- 031-073>078-WVZ001>004-012-021-509>513-080615- Tuscarawas-Carroll-Columbiana-Coshocton-Harrison-Jefferson OH- Muskingum-Guernsey-Belmont-Noble-Monroe-Mercer-Venango-Forest- Lawrence-Butler-Clarion-Jefferson PA-Beaver-Allegheny-Armstrong- Washington-Greene-Westmoreland-Higher Elevations of Westmoreland- Fayette-Higher Elevations of Fayette-Indiana- Higher Elevations of Indiana-Hancock-Brooke-Ohio-Marshall-Wetzel- Marion-Monongalia- Ridges of Eastern Monongalia and Northwestern Preston-Preston- Eastern Preston-Western Tucker- 113 AM EST Sat Nov 7 2026
+
+This Hazardous Weather Outlook is for east central Ohio, western Pennsylvania, and northern West Virginia.
+
+.DAY ONE...Today and tonight.
+
+No hazardous weather is expected at this time.
+
+.DAYS TWO THROUGH SEVEN...Sunday through Friday.
+
+No hazardous weather is expected at this time.
+
+.SPOTTER INFORMATION STATEMENT...
+
+Spotter activation is not expected at this time.
+
+$$
+
+WVZ514-080615- Eastern Tucker- 113 AM EST Sat Nov 7 2026
+
+This Hazardous Weather Outlook is for northern West Virginia.
+
+.DAY ONE...Today and tonight.
+
+Hazardous weather is not expected at this time.
+
+.DAYS TWO THROUGH SEVEN...Sunday through Friday.
+
+Wind gusts will increase on Sunday and may reach up to 45-50 mph in the far eastern part of Tucker County.
+
+.SPOTTER INFORMATION STATEMENT...
+
+Spotter activation is not expected at this time.
+
+$$

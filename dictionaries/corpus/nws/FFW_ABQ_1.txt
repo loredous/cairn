@@ -1,0 +1,37 @@
+WGUS55 KABQ 011934 FFWABQ NMC045-020330- /O.NEW.KABQ.FF.W.0242.261101T1934Z-261102T0330Z/ /00000.U.ER.000000T0000Z.000000T0000Z.000000T0000Z.OO/
+
+BULLETIN - EAS ACTIVATION REQUESTED Flash Flood Warning National Weather Service Albuquerque NM 1234 PM MST Sun Nov 1 2026
+
+The National Weather Service in Albuquerque has issued a
+
+* Flash Flood Warning for... North Central San Juan County in northwestern New Mexico...
+
+* Until 830 PM MST Sunday.
+
+* At 1234 PM MST, Emergency Managers reported Highway 170 washed out between mile markers 3 and 18. Moderate to occasional heavy rain will persist. Between 0.25 and 0.5 inches of rain have fallen. Additional rainfall amounts of 0.5 to 1 inch are possible in the warned area. Flash flooding is already occurring.
+
+HAZARD...Life threatening flash flooding. Heavy rain producing flash flooding.
+
+SOURCE...Radar indicated.
+
+IMPACT...Life threatening flash flooding of creeks and streams, urban areas, highways, streets and underpasses.
+
+* Some locations that will experience flash flooding include... Northern Farmington, Aztec, Flora Vista, Cedar Hill and La Plata.
+
+This includes Highway 550 between Mile Markers 160 and 162...and near Mile Marker 166...and between Mile Markers 168 and 174.
+
+This includes the following low water crossings... Hill-N-Dale Drive at Hood Arroyo, East Crestwood Drive at Hood Arroyo and Jack Rabbit Junction.
+
+This includes the following recreation areas... Glade Run Recreation Area, Jackson Lake Wildlife Area and Aztec Ruins National Monument.
+
+PRECAUTIONARY/PREPAREDNESS ACTIONS...
+
+Turn around, don't drown when encountering flooded roads. Most flood deaths occur in vehicles.
+
+Do not enter or cross flowing water or water of unknown depth.
+
+&&
+
+LAT...LON 3700 10822 3700 10785 3694 10786 3692 10789 3682 10799 3677 10811 3677 10824 3685 10823 3689 10820
+
+FLASH FLOOD...RADAR INDICATED FLASH FLOOD DAMAGE THREAT...CONSIDERABLE

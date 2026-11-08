@@ -1,0 +1,29 @@
+FPUS51 KRLX 080504 ZFPRLX
+
+Zone Forecast Product for Central Appalachians and Middle Ohio Valley National Weather Service Charleston WV 1203 AM EST Sun Nov 8 2026
+
+This product provides average values for each zone and may not be representative of exact locations. For a more site-specific forecast visit: https://weather.gov/rlx.
+
+WVZ015-082000- Kanawha- Including the cities of Charleston, South Charleston, and Saint Albans 1203 AM EST Sun Nov 8 2026
+
+...FREEZE WARNING IN EFFECT UNTIL 10 AM EST THIS MORNING...
+
+.OVERNIGHT...Mostly clear. Areas of fog with patchy frost. Lows in the mid 30s. Light and variable winds. .SUNDAY...Patchy frost in the morning. Sunny. Not as cool with highs in the lower 60s. Southwest winds 5 to 10 mph. .SUNDAY NIGHT...Mostly clear. Lows in the mid 30s. Southwest winds 5 to 10 mph. .MONDAY...Patchy frost in the morning. Sunny. Highs in the lower 60s. West winds around 5 mph. .MONDAY NIGHT...Mostly clear. Lows in the mid 30s. Southwest winds around 5 mph. .TUESDAY...Sunny. Highs in the upper 60s. .TUESDAY NIGHT...Mostly clear. Lows around 40. .VETERANS DAY...Mostly sunny. Highs in the upper 60s. .WEDNESDAY NIGHT...Partly cloudy in the evening, then mostly cloudy with a chance of rain after midnight. Lows in the lower 40s. Chance of rain 40 percent. .THURSDAY...Rain likely. Highs in the upper 50s. Chance of rain 70 percent. .THURSDAY NIGHT AND FRIDAY...Mostly cloudy with a 50 percent chance of rain. Lows in the mid 30s. Highs in the upper 40s. .FRIDAY NIGHT...A chance of rain in the evening. Mostly cloudy with a chance of snow. Cold with lows in the upper 20s. Chance of precipitation 50 percent. .SATURDAY...Partly sunny. Highs in the upper 40s.
+
+$$
+
+WVZ006-082000- Cabell- Including the city of Huntington 1203 AM EST Sun Nov 8 2026
+
+...FREEZE WARNING IN EFFECT UNTIL 10 AM EST THIS MORNING...
+
+.OVERNIGHT...Mostly clear. Areas of fog with patchy frost. Lows in the lower 30s. Southwest winds around 5 mph. .SUNDAY...Areas of frost in the morning. Sunny. Not as cool with highs in the lower 60s. Southwest winds 5 to 10 mph. .SUNDAY NIGHT...Clear. Patchy frost after midnight. Lows in the mid 30s. Southwest winds 5 to 10 mph. .MONDAY...Patchy frost in the morning. Sunny. Highs in the lower 60s. West winds around 5 mph. .MONDAY NIGHT...Mostly clear. Lows in the mid 30s. Southwest winds around 5 mph. .TUESDAY...Sunny. Highs in the upper 60s. .TUESDAY NIGHT...Mostly clear. Lows around 40. .VETERANS DAY...Mostly sunny. Highs in the upper 60s. .WEDNESDAY NIGHT...Partly cloudy in the evening, then mostly cloudy with a chance of rain after midnight. Lows in the lower 40s. Chance of rain 40 percent. .THURSDAY...Mostly cloudy. A chance of rain in the morning, then rain likely in the afternoon. Highs in the upper 50s. Chance of rain 70 percent. .THURSDAY NIGHT...Mostly cloudy with a 50 percent chance of rain. Lows in the mid 30s. .FRIDAY...Mostly cloudy in the morning, then becoming partly sunny. A 40 percent chance of rain. Cooler with highs in the upper 40s. .FRIDAY NIGHT...Mostly cloudy in the evening, then becoming partly cloudy. Cold with lows around 30. .SATURDAY...Mostly sunny. Highs in the lower 50s.
+
+$$
+
+WVZ516-082000- Southeast Raleigh- Including the city of Beckley 1203 AM EST Sun Nov 8 2026
+
+.OVERNIGHT...Mostly cloudy. Near steady temperature in the mid 30s. West winds around 5 mph. .SUNDAY...Sunny. Not as cool with highs in the upper 50s. West winds 5 to 10 mph. .SUNDAY NIGHT...Mostly clear. Lows in the mid 30s. West winds 10 to 15 mph with gusts up to 30 mph. .MONDAY...Sunny. Highs in the mid 50s. West winds 10 to 15 mph with gusts up to 30 mph. .MONDAY NIGHT...Clear. Lows in the mid 30s. West winds around 5 mph. .TUESDAY...Sunny. Highs in the lower 60s. .TUESDAY NIGHT...Mostly clear. Lows in the upper 30s. .VETERANS DAY...Mostly sunny. Highs in the lower 60s. .WEDNESDAY NIGHT...Partly cloudy in the evening, then mostly cloudy with a chance of rain after midnight. Lows in the lower 40s. Chance of rain 30 percent. .THURSDAY...Rain likely. Highs in the lower 50s. Chance of rain 70 percent. .THURSDAY NIGHT...Rain likely. Snow likely after midnight. Lows in the lower 30s. Chance of precipitation 70 percent. .FRIDAY AND FRIDAY NIGHT...Mostly cloudy with a chance of rain and snow. Highs in the lower 40s. Lows in the upper 20s. Chance of precipitation 50 percent. .SATURDAY...Partly sunny. Highs in the lower 40s.
+
+$$
+
+WVZ515-082000- Northwest Raleigh- Including the cities of Bradley, Prosperity, and Sophia 1203 AM EST Sun Nov 8 2026

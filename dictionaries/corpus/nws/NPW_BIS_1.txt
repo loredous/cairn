@@ -1,0 +1,47 @@
+WWUS73 KBIS 070855 NPWBIS
+
+URGENT - WEATHER MESSAGE National Weather Service Bismarck ND 255 AM CST Sat Nov 7 2026
+
+NDZ048-051-071500- /O.EXA.KBIS.FG.Y.0028.000000T0000Z-261107T1500Z/ La Moure-Dickey- Including the cities of Edgeley, Lamoure, Oakes, Ellendale, and Kulm 255 AM CST Sat Nov 7 2026
+
+...DENSE FOG ADVISORY IN EFFECT UNTIL 9 AM CST THIS MORNING...
+
+* WHAT...Visibility one quarter mile or less in dense fog.
+
+* WHERE...Dickey and La Moure Counties.
+
+* WHEN...Until 9 AM CST this morning.
+
+* IMPACTS...Low visibility could make driving conditions hazardous.
+
+* ADDITIONAL DETAILS...Sub freezing temperatures could bring light icing from freezing fog.
+
+PRECAUTIONARY/PREPAREDNESS ACTIONS...
+
+If driving, slow down, use your headlights, and leave plenty of distance ahead of you.
+
+&&
+
+$$
+
+NDZ046-047-050-071500- /O.CON.KBIS.FG.Y.0028.000000T0000Z-261107T1500Z/ Emmons-Logan-McIntosh- Including the cities of Napoleon, Gackle, Ashley, Wishek, Linton, and Strasburg 255 AM CST Sat Nov 7 2026
+
+...DENSE FOG ADVISORY REMAINS IN EFFECT UNTIL 9 AM CST THIS MORNING...
+
+* WHAT...Visibility one quarter mile or less in dense fog.
+
+* WHERE...Emmons, Logan, and McIntosh Counties.
+
+* WHEN...Until 9 AM CST this morning.
+
+* IMPACTS...Low visibility could make driving conditions hazardous.
+
+* ADDITIONAL DETAILS...Sub freezing temperatures could bring light icing from freezing fog.
+
+PRECAUTIONARY/PREPAREDNESS ACTIONS...
+
+If driving, slow down, use your headlights, and leave plenty of distance ahead of you.
+
+&&
+
+$$

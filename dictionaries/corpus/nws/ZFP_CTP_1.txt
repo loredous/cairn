@@ -1,0 +1,25 @@
+FPUS51 KCTP 080331 ZFPCTP
+
+Zone Forecast Product for Central Pennsylvania National Weather Service State College PA 1030 PM EST Sat Nov 7 2026
+
+This product provides average values for each zone and may not be representative of exact locations. For a more site-specific forecast visit: weather.gov/ctp
+
+PAZ064-081100- Adams- Including the city of Gettysburg 1030 PM EST Sat Nov 7 2026
+
+.OVERNIGHT...Mostly cloudy late this evening, then becoming partly cloudy. Lows in the lower 40s. West winds around 10 mph with gusts up to 25 mph. .SUNDAY...Sunny. Highs in the lower 60s. West winds 5 to 10 mph with gusts up to 20 mph. .SUNDAY NIGHT...Mostly clear. Lows in the mid 40s. West winds 5 to 10 mph with gusts up to 25 mph. .MONDAY...Mostly sunny. Highs around 60. Northwest winds 10 to 15 mph with gusts up to 30 mph. .MONDAY NIGHT...Mostly clear in the evening, then becoming partly cloudy. Cooler with lows in the mid 30s. West winds 5 to 10 mph. .TUESDAY...Sunny, warm with highs in the upper 60s. .TUESDAY NIGHT...Mostly clear. Lows in the upper 30s. .VETERANS DAY...Mostly sunny. Highs in the mid 60s. .WEDNESDAY NIGHT...Partly cloudy in the evening, then becoming mostly cloudy. Lows in the upper 30s. .THURSDAY...Partly sunny in the morning, then becoming mostly cloudy. A 50 percent chance of rain. Highs in the upper 50s. .THURSDAY NIGHT...Rain likely, mainly in the evening. Lows in the lower 30s. Chance of rain 60 percent. .FRIDAY...Partly sunny with a 50 percent chance of rain. Highs in the upper 40s. .FRIDAY NIGHT...Mostly cloudy with a chance of rain and snow in the evening, then partly cloudy after midnight. Lows in the upper 20s. Chance of precipitation 40 percent. .SATURDAY...Mostly sunny. Highs around 50.
+
+$$
+
+PAZ034-081100- Bedford- Including the city of Bedford 1030 PM EST Sat Nov 7 2026
+
+.OVERNIGHT...Mostly cloudy. Lows in the upper 30s. West winds 10 to 15 mph with gusts up to 30 mph. .SUNDAY...Mostly sunny. Highs in the upper 50s. West winds 10 to 15 mph with gusts up to 35 mph. .SUNDAY NIGHT...Mostly clear in the evening, then becoming partly cloudy. Lows in the lower 40s. West winds 10 to 15 mph with gusts up to 35 mph. .MONDAY...Mostly sunny. Highs in the mid 50s. Northwest winds 15 to 20 mph with gusts up to 40 mph. .MONDAY NIGHT...Mostly clear in the evening, then becoming partly cloudy. Lows in the mid 30s. West winds 5 to 10 mph with gusts up to 25 mph. .TUESDAY...Sunny. Highs in the lower 60s. .TUESDAY NIGHT...Mostly clear in the evening, then becoming partly cloudy. Lows in the upper 30s. .VETERANS DAY...Mostly sunny. Highs in the lower 60s. .WEDNESDAY NIGHT...Mostly cloudy. Lows in the upper 30s. .THURSDAY...Mostly cloudy. A chance of rain in the morning, then rain likely in the afternoon. Highs in the lower 50s. Chance of rain 60 percent. .THURSDAY NIGHT...Mostly cloudy with a chance of rain. A chance of snow after midnight. Lows in the lower 30s. Chance of precipitation 50 percent. .FRIDAY...A chance of snow in the morning. Partly sunny with a chance of rain. Highs in the mid 40s. Chance of precipitation 50 percent. .FRIDAY NIGHT...Mostly cloudy. A chance of rain and snow in the evening. Lows in the upper 20s. Chance of precipitation 40 percent. .SATURDAY...Partly sunny. Highs in the upper 40s.
+
+$$
+
+PAZ025-081100- Blair- Including the city of Altoona 1030 PM EST Sat Nov 7 2026
+
+.OVERNIGHT...Mostly cloudy. Lows around 40. West winds 15 to 20 mph with gusts up to 35 mph. .SUNDAY...Partly sunny in the morning, then clearing. Highs in the upper 50s. West winds 15 to 20 mph with gusts up to 35 mph. .SUNDAY NIGHT...Mostly clear in the evening, then becoming partly cloudy. Lows in the lower 40s. West winds 15 to 20 mph with gusts up to 40 mph. .MONDAY...Partly sunny. Highs in the mid 50s. Northwest winds 15 to 20 mph with gusts up to 40 mph. .MONDAY NIGHT...Mostly clear in the evening, then becoming partly cloudy. Lows in the mid 30s. West winds 5 to 10 mph with gusts up to 30 mph. .TUESDAY...Sunny. Highs in the lower 60s. .TUESDAY NIGHT...Mostly clear in the evening, then becoming partly cloudy. Lows in the upper 30s. .VETERANS DAY...Partly sunny. Highs around 60. .WEDNESDAY NIGHT...Mostly cloudy. Lows in the mid 30s. .THURSDAY...Mostly cloudy. A chance of rain in the morning, then rain likely in the afternoon. Highs in the lower 50s. Chance of rain 60 percent. .THURSDAY NIGHT...Rain likely in the evening, then a chance of rain and snow after midnight. Lows in the lower 30s. Chance of precipitation 60 percent. .FRIDAY...Partly sunny with a chance of rain and snow. Highs in the mid 40s. Chance of precipitation 50 percent. .FRIDAY NIGHT...Mostly cloudy. A chance of rain and snow in the evening. Lows in the upper 20s. Chance of precipitation 40 percent. .SATURDAY...Partly sunny. Highs in the upper 40s.
+
+$$
+
+PAZ024-081100- Cambria- Including the city of Johnstown 1030 PM EST Sat Nov 7 2026

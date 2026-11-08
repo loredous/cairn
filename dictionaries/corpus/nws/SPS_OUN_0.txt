@@ -1,0 +1,29 @@
+WWUS84 KOUN 052328 SPSOUN
+
+Special Weather Statement National Weather Service Norman OK 528 PM CST Thu Nov 5 2026
+
+OKZ025-060000- Oklahoma OK- 528 PM CST Thu Nov 5 2026
+
+...A strong thunderstorm will impact portions of southwestern Oklahoma County through 600 PM CST...
+
+At 526 PM CST, Doppler radar was tracking a strong thunderstorm over southwestern Oklahoma City, near Will Rogers International Airport, moving east-northeast at 15 mph.
+
+HAZARD...Half inch hail and accumulating hail.
+
+SOURCE...Radar indicated.
+
+IMPACT...Minor damage to outdoor objects is possible. Accumulating hail may make roads slick.
+
+Locations impacted include... Oklahoma City, Del City, and Valley Brook.
+
+PRECAUTIONARY/PREPAREDNESS ACTIONS...
+
+If outdoors, consider seeking shelter inside a building.
+
+&&
+
+LAT...LON 3538 9765 3547 9766 3554 9746 3540 9743 TIME...MOT...LOC 2326Z 256DEG 14KT 3543 9759
+
+MAX HAIL SIZE...0.50 IN MAX WIND GUST...<30 MPH
+
+$$

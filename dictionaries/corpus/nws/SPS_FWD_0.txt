@@ -1,0 +1,31 @@
+WWUS84 KFWD 030750 SPSFWD
+
+Special Weather Statement National Weather Service Fort Worth TX 150 AM CST Tue Nov 3 2026
+
+TXZ095-030815- Lamar TX- 150 AM CST Tue Nov 3 2026
+
+...Strong thunderstorms will impact portions of Lamar County through 215 AM CST...
+
+At 150 AM CST, Doppler radar was tracking strong thunderstorms along a line extending from near Sumner to near Roxton. Movement was northeast at 70 mph.
+
+HAZARD...Wind gusts up to 50 mph.
+
+SOURCE...Radar indicated.
+
+IMPACT...Gusty winds could knock down tree limbs and blow around unsecured objects.
+
+Strong thunderstorms will be near... Paris, Lake Crook, Camp Maxey, Sumner, Lake Gibbons, and Pat Mayse Lake around 155 AM CST. Reno, Powderly, and Arthur City around 200 AM CST. Blossom around 205 AM CST.
+
+Other locations impacted by these storms include Toco, Atlas, Glory, Forest Chapel, Broadway Junction, Midcity, Howland, Forest Hill, Chicota, and Globe.
+
+PRECAUTIONARY/PREPAREDNESS ACTIONS...
+
+If outdoors, consider seeking shelter inside a building.
+
+&&
+
+LAT...LON 3393 9556 3388 9554 3389 9551 3388 9551 3389 9546 3387 9546 3387 9534 3389 9533 3388 9531 3366 9531 3348 9562 3347 9568 3349 9570 3349 9576 3369 9584 3394 9559 TIME...MOT...LOC 0750Z 227DEG 62KT 3372 9576 3352 9566
+
+MAX HAIL SIZE...0.00 IN MAX WIND GUST...50 MPH
+
+$$

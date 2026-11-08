@@ -1,0 +1,27 @@
+FPUS51 KLWX 080257 ZFPLWX
+
+Zone Forecast Product National Weather Service Baltimore MD/Washington DC 956 PM EST Sat Nov 7 2026
+
+DCZ001-081000- District of Columbia- Including the cities of Adams Morgan and Washington 956 PM EST Sat Nov 7 2026
+
+.REST OF TONIGHT...Mostly clear. Lows in the lower 40s. West winds around 10 mph with gusts up to 25 mph. .SUNDAY...Sunny. Highs in the lower 60s. West winds around 10 mph with gusts up to 20 mph. .SUNDAY NIGHT...Mostly clear. Lows in the mid 40s. West winds 5 to 10 mph. .MONDAY...Sunny. Highs in the lower 60s. Northwest winds 10 to 15 mph with gusts up to 30 mph. .MONDAY NIGHT...Mostly clear. Lows around 40. West winds 5 to 10 mph. .TUESDAY...Sunny. Highs in the upper 60s. .TUESDAY NIGHT...Mostly clear. Lows in the mid 40s. .VETERANS DAY...Sunny. Highs in the mid 60s. .WEDNESDAY NIGHT...Partly cloudy. Lows in the mid 40s. .THURSDAY...Partly sunny with a 50 percent chance of rain. Highs in the lower 60s. .THURSDAY NIGHT...Mostly cloudy with a 50 percent chance of rain. Lows in the lower 40s. .FRIDAY...Partly sunny with a 50 percent chance of rain. Highs in the lower 50s. .FRIDAY NIGHT...Partly cloudy with a 40 percent chance of rain. Lows in the mid 30s. .SATURDAY...Mostly sunny. Highs in the lower 50s.
+
+$$
+
+VAZ054-081000- Arlington/Falls Church/Alexandria- Including the cities of Reagan National Airport, Arlington, Ballston, Barcroft, Cherrydale, Rivercrest, and Rosslyn 956 PM EST Sat Nov 7 2026
+
+.REST OF TONIGHT...Mostly clear. Lows in the mid 40s. Northwest winds around 10 mph with gusts up to 25 mph. .SUNDAY...Sunny. Highs in the lower 60s. Northwest winds around 10 mph, becoming west in the afternoon. .SUNDAY NIGHT...Mostly clear. Lows in the mid 40s. West winds 5 to 10 mph. .MONDAY...Sunny. Highs in the lower 60s. Northwest winds 10 to 15 mph with gusts up to 30 mph. .MONDAY NIGHT...Mostly clear. Lows in the lower 40s. West winds 5 to 10 mph. .TUESDAY...Sunny. Highs in the upper 60s. .TUESDAY NIGHT...Clear. Lows in the mid 40s. .VETERANS DAY...Sunny. Highs in the upper 60s. .WEDNESDAY NIGHT...Partly cloudy. Lows in the mid 40s. .THURSDAY...Partly sunny with a 50 percent chance of rain. Highs in the lower 60s. .THURSDAY NIGHT...Mostly cloudy with a 50 percent chance of rain. Lows in the lower 40s. .FRIDAY...Partly sunny with a 50 percent chance of rain. Highs in the lower 50s. .FRIDAY NIGHT...Partly cloudy with a 40 percent chance of rain. Lows in the mid 30s. .SATURDAY...Mostly sunny. Highs in the lower 50s.
+
+$$
+
+MDZ011-081000- Southern Baltimore- Including the cities of Baltimore, Fells Point, and Park Heights 956 PM EST Sat Nov 7 2026
+
+.REST OF TONIGHT...Mostly clear. Lows in the lower 40s. West winds 10 to 15 mph with gusts up to 30 mph. .SUNDAY...Sunny. Highs in the lower 60s. West winds 10 to 15 mph with gusts up to 25 mph. .SUNDAY NIGHT...Mostly clear. Lows in the mid 40s. West winds 5 to 10 mph with gusts up to 25 mph. .MONDAY...Sunny. Highs in the lower 60s. West winds 15 to 20 mph with gusts up to 30 mph. .MONDAY NIGHT...Mostly clear in the evening, then becoming partly cloudy. Lows around 40. West winds 5 to 10 mph. .TUESDAY...Sunny. Highs in the mid 60s. .TUESDAY NIGHT...Mostly clear. Lows in the lower 40s. .VETERANS DAY...Mostly sunny. Highs in the mid 60s. .WEDNESDAY NIGHT...Partly cloudy. Lows in the mid 40s. .THURSDAY...Partly sunny with a 50 percent chance of rain. Highs in the upper 50s. .THURSDAY NIGHT...Mostly cloudy with a 50 percent chance of rain. Lows around 40. .FRIDAY...Partly sunny with a 50 percent chance of rain. Highs in the lower 50s. .FRIDAY NIGHT...Mostly cloudy with a 40 percent chance of rain. Lows in the lower 30s. .SATURDAY...Mostly sunny. Highs in the lower 50s.
+
+$$
+
+MDZ004-081000- Frederick- Including the cities of Frederick, Ballenger Creek, Buckeystown, and Park Mills 956 PM EST Sat Nov 7 2026
+
+.REST OF TONIGHT...Partly cloudy. Lows in the lower 40s. West winds 10 to 15 mph with gusts up to 30 mph. .SUNDAY...Sunny. Highs in the lower 60s. West winds 10 to 15 mph with gusts up to 25 mph. .SUNDAY NIGHT...Mostly clear. Lows in the lower 40s. West winds 5 to 10 mph with gusts up to 25 mph. .MONDAY...Sunny. Highs around 60. West winds 15 to 20 mph with gusts up to 35 mph. .MONDAY NIGHT...Mostly clear in the evening, then becoming partly cloudy. Lows in the upper 30s. West winds 5 to 10 mph. .TUESDAY...Sunny. Highs in the upper 60s. .TUESDAY NIGHT...Mostly clear. Lows around 40. .VETERANS DAY...Mostly sunny. Highs in the mid 60s. .WEDNESDAY NIGHT...Partly cloudy. Lows in the lower 40s. .THURSDAY...Partly sunny with a 50 percent chance of rain. Highs in the upper 50s. .THURSDAY NIGHT...Mostly cloudy with a 50 percent chance of rain. Lows in the upper 30s. .FRIDAY...Partly sunny with a 50 percent chance of rain. Highs around 50. .FRIDAY NIGHT...Partly cloudy with a chance of rain. Lows around 30. Chance of rain 40 percent. .SATURDAY...Mostly sunny. Highs around 50.
+
+$$

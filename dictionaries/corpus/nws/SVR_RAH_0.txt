@@ -1,0 +1,31 @@
+WUUS52 KRAH 061808 SVRRAH NCC163-061915- /O.NEW.KRAH.SV.W.0306.261106T1808Z-261106T1915Z/
+
+BULLETIN - IMMEDIATE BROADCAST REQUESTED Severe Thunderstorm Warning National Weather Service Raleigh NC 108 PM EST Fri Nov 6 2026
+
+The National Weather Service in Raleigh has issued a
+
+* Severe Thunderstorm Warning for... Southeastern Sampson County in central North Carolina...
+
+* Until 215 PM EST.
+
+* At 108 PM EST, a severe thunderstorm was located over Lagoon, or 9 miles east of Elizabethtown, moving northeast at 25 mph.
+
+HAZARD...60 mph wind gusts.
+
+SOURCE...Radar indicated.
+
+IMPACT...Expect damage to roofs, siding, and trees.
+
+* Locations impacted include... Harrells and Ivanhoe.
+
+PRECAUTIONARY/PREPAREDNESS ACTIONS...
+
+Remain alert for a possible tornado! Tornadoes can develop quickly from severe thunderstorms. If you spot a tornado go at once into the basement or small central room in a sturdy structure.
+
+For your protection move to an interior room on the lowest floor of a building.
+
+&&
+
+LAT...LON 3458 7826 3460 7830 3461 7831 3462 7831 3463 7832 3464 7831 3465 7832 3467 7832 3468 7835 3474 7820 3471 7813 3472 7811 3471 7811 3468 7816 3455 7825 TIME...MOT...LOC 1808Z 245DEG 24KT 3457 7846
+
+TORNADO...POSSIBLE HAIL THREAT...RADAR INDICATED MAX HAIL SIZE...<.75 IN WIND THREAT...RADAR INDICATED MAX WIND GUST...60 MPH

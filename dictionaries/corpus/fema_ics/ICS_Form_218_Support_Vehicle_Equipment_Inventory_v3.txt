@@ -1,0 +1,125 @@
+SUPPORT VEHICLE/EQUIPMENT INVENTORY (ICS 218) 1. Incident Name:
+
+2. Incident Number:
+
+3. Date/Time Prepared: Date:
+
+4. Vehicle/Equipment Category: Time:
+
+5. Vehicle/Equipment Information Order Request Number
+
+ICS 218
+
+Incident ID No.
+
+Vehicle or Equipment Classification
+
+Vehicle or Equipment Make
+
+Category/ Kind/Type, Capacity, or Size
+
+6. Prepared by: Name:
+
+Vehicle or Equipment Features
+
+Agency or Owner
+
+Operator Name or Contact
+
+Position/Title:
+
+Vehicle License or ID No.
+
+Incident Assignment
+
+Signature:
+
+Incident Start Date and Time
+
+Incident Release Date and Time
+
+ICS 218 Support Vehicle/Equipment Inventory Purpose. The Support Vehicle/Equipment Inventory (ICS 218) provides an inventory of all transportation and support vehicles and equipment assigned to the incident. The information is used by the Ground Support Unit to maintain a record of the types and locations of vehicles and equipment on the incident. The Resources Unit uses the information to initiate and maintain status/resource information. Preparation. The ICS 218 is prepared by Ground Support Unit personnel at intervals specified by the Ground Support Unit Leader. Distribution. Initial inventory information recorded on the form should be given to the Resources Unit. Subsequent changes to the status or location of transportation and support vehicles and equipment should be provided to the Resources Unit immediately. Notes: * If additional pages are needed, use a blank ICS 218 and repaginate as needed. *
+
+Also available as 8 x 14 (legal size) and 11 x 17 chart. Block Number
+
+Block Title
+
+Instructions
+
+Incident Name
+
+Enter the name assigned to the incident.
+
+Incident Number
+
+Enter the number assigned to the incident.
+
+Date/Time Prepared
+
+Enter the date (month/day/year) and time (using the 24-hour clock) the form is prepared.
+
+Vehicle/Equipment Category
+
+Enter the specific vehicle or equipment category (e.g., buses, generators, dozers, pickups/sedans, rental cars, etc.). Use a separate sheet for each vehicle or equipment category.
+
+Vehicle/Equipment Information
+
+Record the following information:
+
+Order Request Number
+
+Enter the order request number for the resource as used by the jurisdiction or discipline, or the relevant EMAC order request number.
+
+Incident Identification Number
+
+Enter any special incident identification numbers or agency radio identifier assigned to the piece of equipment used only during the incident, if this system if used (e.g., "Decontamination Unit 2," or "Water Tender 14").
+
+Vehicle or Equipment Classification
+
+Enter the specific vehicle or equipment classification (e.g., bus, backhoe, Type 2 engine, etc.) as relevant.
+
+Vehicle or Equipment Make
+
+Enter the vehicle or equipment manufacturer name (e.g., "GMC," "International").
+
+Category/Kind/Type, Capacity, or Size
+
+Enter the vehicle or equipment category/kind/type, capacity, or size (e.g., 30person bus, 3/4-ton truck, 50 kW generator).
+
+Vehicle or Equipment Features
+
+Indicate any vehicle or equipment features such as 2WD, 4WD, towing capability, number of axles, heavy-duty tires, high clearance, automatic vehicle locator (AVL), etc.
+
+Agency or Owner
+
+Enter the name of the agency or owner of the vehicle or equipment.
+
+Operator Name or Contact
+
+Enter the operator name and/or contact information (cell phone, radio frequency, etc.).
+
+Vehicle License or Identification Number
+
+Enter the license plate number or another identification number (such as a serial or rig number) of the vehicle or equipment.
+
+Incident Assignment
+
+Enter where the vehicle or equipment will be located at the incident and its function (use abbreviations per discipline or jurisdiction).
+
+Block Number (continued)
+
+Block Title
+
+Instructions
+
+Incident Start Date and Time
+
+Indicate start date (month/day/year) and time (using the 24-hour clock) for driver or for equipment as may be relevant.
+
+Incident Release Date and Time
+
+Enter the date (month/day/year) and time (using the 24-hour clock) the vehicle or equipment is released from the incident.
+
+Prepared by * Name * Position/Title * Signature
+
+Enter the name, ICS position/title, and signature of the person preparing the form.

@@ -1,0 +1,23 @@
+FPUS53 KDTX 072102 ZFPDTX
+
+Southeast Michigan Zone Forecasts National Weather Service Detroit/Pontiac MI 402 PM EST Sat Nov 7 2026
+
+MIZ047-080915- Midland- Including the city of Midland 402 PM EST Sat Nov 7 2026
+
+.TONIGHT...Mostly clear. Lows in the lower 30s. Southwest winds 5 to 10 mph. Gusts up to 25 mph early in the morning. .SUNDAY...Mostly cloudy in the morning, then becoming partly cloudy. Highs in the upper 50s. West winds 10 to 15 mph with gusts up to 30 mph. .SUNDAY NIGHT...Mostly cloudy in the evening, then becoming partly cloudy. Lows in the mid 30s. Northwest winds 5 to 10 mph. .MONDAY...Partly cloudy in the morning, then becoming mostly cloudy. Highs in the mid 50s. West winds 5 to 10 mph. .MONDAY NIGHT...Partly cloudy. Lows in the upper 30s. Southwest winds 5 to 10 mph with gusts up to 20 mph. .TUESDAY...Mostly sunny. Highs in the lower 60s. .TUESDAY NIGHT...Mostly clear in the evening, then becoming partly cloudy. Lows in the lower 30s. .VETERANS DAY...Partly cloudy in the morning, then becoming mostly cloudy. Highs in the mid 50s. .WEDNESDAY NIGHT...Mostly cloudy. Lows in the lower 30s. .THURSDAY...Mostly cloudy. Highs in the upper 40s. .THURSDAY NIGHT...Partly cloudy. Lows in the mid 20s. .FRIDAY...Partly cloudy. Highs in the mid 40s. .FRIDAY NIGHT...Partly cloudy in the evening then clearing. Lows in the upper 20s. .SATURDAY...Mostly sunny in the morning, then becoming partly cloudy. Highs in the lower 50s.
+
+$$
+
+MIZ048-080915- Bay- Including the city of Bay City 402 PM EST Sat Nov 7 2026
+
+.TONIGHT...Mostly clear. Lows around 30. Southwest winds 5 to 15 mph. .SUNDAY...Mostly cloudy. Highs in the upper 50s. West winds 10 to 20 mph with gusts up to 30 mph. .SUNDAY NIGHT...Cloudy. Lows in the mid 30s. Northwest winds 5 to 15 mph with gusts up to 25 mph. .MONDAY...Partly cloudy in the morning, then becoming mostly cloudy. Highs in the mid 50s. West winds 5 to 10 mph. .MONDAY NIGHT...Mostly cloudy in the evening, then becoming partly cloudy. Lows in the mid 30s. Southwest winds 5 to 10 mph with gusts up to 20 mph. .TUESDAY...Mostly sunny. Highs in the lower 60s. .TUESDAY NIGHT...Mostly clear in the evening, then becoming partly cloudy. Lows in the lower 30s. .VETERANS DAY...Partly cloudy in the morning, then becoming mostly cloudy. Highs in the lower 50s. .WEDNESDAY NIGHT...Partly cloudy in the evening, then becoming mostly cloudy. Lows in the lower 30s. .THURSDAY...Mostly cloudy with a 30 percent chance of rain. Highs in the upper 40s. .THURSDAY NIGHT...Partly cloudy. Lows in the upper 20s. .FRIDAY...Partly cloudy. Highs in the mid 40s. .FRIDAY NIGHT...Partly cloudy. Lows in the upper 20s. .SATURDAY...Mostly sunny in the morning, then becoming partly cloudy. Highs in the lower 50s.
+
+$$
+
+MIZ049-080915- Huron- Including the city of Bad Axe 402 PM EST Sat Nov 7 2026
+
+.TONIGHT...Mostly clear. Lows in the lower 30s. Southwest winds 5 to 15 mph. Gusts up to 25 mph, increasing to 30 mph early in the morning. .SUNDAY...Mostly cloudy. Highs in the mid 50s. West winds 15 to 20 mph with gusts up to 30 mph. .SUNDAY NIGHT...Cloudy. Lows in the mid 30s. Northwest winds 10 to 15 mph with gusts up to 30 mph. .MONDAY...Partly cloudy in the morning, then becoming mostly cloudy. Highs in the lower 50s. West winds 5 to 15 mph with gusts up to 25 mph. .MONDAY NIGHT...Mostly cloudy in the evening, then becoming partly cloudy. Lows in the mid 30s. Southwest winds 5 to 15 mph with gusts up to 25 mph. .TUESDAY...Mostly sunny. Highs in the upper 50s. .TUESDAY NIGHT...Mostly clear in the evening, then becoming partly cloudy. Lows in the lower 30s. .VETERANS DAY...Partly cloudy in the morning, then becoming mostly cloudy. Highs in the lower 50s. .WEDNESDAY NIGHT...Mostly cloudy with a 40 percent chance of rain. Lows in the mid 30s. .THURSDAY...Mostly cloudy with a 50 percent chance of rain. Highs in the upper 40s. .THURSDAY NIGHT...Mostly cloudy with a chance of rain, possibly mixed with snow. Lows around 30. Chance of precipitation 50 percent. .FRIDAY...Mostly cloudy. A chance of rain, possibly mixed with snow in the morning, then a chance of rain in the afternoon. Highs in the mid 40s. Chance of precipitation 50 percent. .FRIDAY NIGHT...Mostly cloudy with a chance of rain and snow. Lows around 30. Chance of precipitation 30 percent. .SATURDAY...Mostly cloudy in the morning, then becoming partly cloudy. Highs around 50.
+
+$$
+
+MIZ053-080915- Saginaw- Including the city of Saginaw 402 PM EST Sat Nov 7 2026

@@ -1,0 +1,31 @@
+WWUS84 KAMA 020402 SPSAMA
+
+Special Weather Statement National Weather Service Amarillo TX 1002 PM CST Sun Nov 1 2026
+
+OKZ001-TXZ001-020430- Cimarron OK-Dallam TX- 1002 PM CST Sun Nov 1 2026
+
+...A STRONG THUNDERSTORM WILL IMPACT SOUTHWESTERN CIMARRON AND NORTHWESTERN DALLAM COUNTIES UNTIL 1030 PM CST...
+
+At 1002 PM CST, Doppler radar was tracking a strong thunderstorm 7 miles northeast of Texline, or 31 miles southwest of Boise City, moving northeast at 50 mph.
+
+HAZARD...Wind gusts of 50 to 55 mph.
+
+SOURCE...Radar indicated.
+
+IMPACT...Gusty winds could knock down tree limbs and blow around unsecured objects.
+
+Locations impacted include... Texline and Felt.
+
+PRECAUTIONARY/PREPAREDNESS ACTIONS...
+
+Monitor the weather situation closely and be alert for threatening weather conditions.
+
+Torrential rainfall is also occurring with this storm and may lead to flash flooding. Do not drive your vehicle through flooded roadways.
+
+&&
+
+LAT...LON 3660 10300 3673 10254 3644 10241 3612 10304 3650 10304 3650 10300 TIME...MOT...LOC 0402Z 240DEG 43KT 3642 10292
+
+MAX HAIL SIZE...0.00 IN MAX WIND GUST...50 TO 55 MPH
+
+$$

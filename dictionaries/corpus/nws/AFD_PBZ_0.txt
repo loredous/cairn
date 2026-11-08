@@ -1,0 +1,39 @@
+FXUS61 KPBZ 072325 AFDPBZ
+
+Area Forecast Discussion National Weather Service Pittsburgh PA 625 PM EST Sat Nov 7 2026
+
+.WHAT HAS CHANGED... Updated for 00z TAFs.
+
+&&
+
+.KEY MESSAGES... 1) Outside of scattered showers this afternoon and Monday morning around northwest PA, dry weather with rising temperature is expected through mid week.
+
+2) Potential for the first accumulating snow of the season late this week.
+
+&&
+
+.DISCUSSION... KEY MESSAGE 1... An exiting closed upper low today, followed by a swift-moving trough late Sunday into Monday morning, may drive periods of lake-enhanced light rain showers for portions of northwest PA. Additional tightening of the surface gradient with the second wave yield increased afternoon wind gusts that may see portions of eastern Tucker County approach Wind Advisory criteria.
+
+Outside of these weather features, the prevailing outlook through midweek sees height rises and building high pressure that promotes dry weather and temperature rising about 5 to 10 degrees above normal by Tuesday.
+
+KEY MESSAGE 2... Ensemble model guidance has fairly high certainty in the development of the next upper level trough starting Wednesday with a lobe of energy digging south out of Canada. But starting Wednesday night and beyond, large variances in the development/positioning of this system is resulting in notable swings in potential outcomes. For example, by Saturday, current ensemble cluster analysis suggest that the upper trough axis could either be exiting the Atlantic Coast, OR an nearly cutoff low sits over the eastern Tennessee River Valley. Until closer alignment of outcomes is seen, little actionable weather assessments can be provided.
+
+The broad strokes of what can be said is the transition to an active pattern Thursday through at least Saturday that may include multiple periods of precipitation while likely pushing area temperature below normal. The latter point also means that scenarios do exist for the first accumulating snow of the season, though mainly for northwest PA and the higher terrain.
+
+&&
+
+.AVIATION /00Z SUNDAY THROUGH THURSDAY/... Upper level low pressure and affiliated low moisture will continue to linger tonight bringing continued high probability MVFR cigs (>75%) across the region. IFR cigs are more likely through at least the early overnight hours for FKL/DUJ with higher probability to linger through the rest of the night at DUJ.
+
+As the night progresses, drier air will work in and erode the cloud deck from the west. This is already visible on evening satellite imagery with a sharp cutoff in the stratus shield. Temporal extrapolation of that to the east lends pretty good agreement with model guidance on erosion of restrictions after 02z or so for ZZV and by daybreak for most others tomorrow morning save DUJ and LBE where restrictions linger a bit longer. Either way, areawide VFR returns by mid-morning.
+
+Daytime mixing will again lead to gusty southwest wind in the afternoon to 20-25 knots.
+
+Outlook... A passing cold front late Sunday into Monday brings a 60% chance of MVFR with some rain potential (most likely for DUJ/FKL/BVI).
+
+&&
+
+.PBZ WATCHES/WARNINGS/ADVISORIES... PA...None. OH...None. WV...None.
+
+&&
+
+$$

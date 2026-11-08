@@ -1,0 +1,31 @@
+WGUS54 KJAN 011235 FFWJAN MSC051-011530- /O.NEW.KJAN.FF.W.0059.261101T1235Z-261101T1530Z/ /00000.0.ER.000000T0000Z.000000T0000Z.000000T0000Z.OO/
+
+BULLETIN - EAS ACTIVATION REQUESTED Flash Flood Warning National Weather Service Jackson MS 635 AM CST Sun Nov 1 2026
+
+The National Weather Service in Jackson has issued a
+
+* Flash Flood Warning for... Central Holmes County in central Mississippi...
+
+* Until 930 AM CST.
+
+* At 635 AM CST, Doppler radar indicated thunderstorms producing heavy rain across the warned area. Between 3 and 4 inches of rain have fallen. The expected rainfall rate is 1 to 3 inches in 1 hour. Additional rainfall amounts of 2 to 4 inches are possible in the warned area. Flash flooding is ongoing or expected to begin shortly.
+
+HAZARD...Flash flooding caused by thunderstorms.
+
+SOURCE...Radar indicated.
+
+IMPACT...Flash flooding of small creeks and streams, urban areas, highways, streets and underpasses as well as other poor drainage and low-lying areas.
+
+* Some locations that will experience flash flooding include... Lexington, Franklin, Brozville and Howard.
+
+PRECAUTIONARY/PREPAREDNESS ACTIONS...
+
+Turn around, don't drown when encountering flooded roads. Most flood deaths occur in vehicles.
+
+Be aware of your surroundings and do not drive on flooded roads.
+
+&&
+
+LAT...LON 3317 9019 3303 9022 3295 8997 3315 8984
+
+FLASH FLOOD...RADAR INDICATED EXPECTED RAINFALL RATE...1-3 INCHES IN 1 HOUR

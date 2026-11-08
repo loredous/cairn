@@ -1,0 +1,23 @@
+FPUS53 KMKX 080331 ZFPMKX
+
+SOUTH-CENTRAL AND SOUTHEAST WISCONSIN ZONE FORECAST National Weather Service Milwaukee/Sullivan WI 930 PM CST Sat Nov 7 2026
+
+WIZ066-081000- Milwaukee- Including the city of Milwaukee 930 PM CST Sat Nov 7 2026
+
+.TONIGHT...Mostly clear. Lows in the mid 30s. Southwest winds 5 to 15 mph. .SUNDAY...Sunny. Highs in the upper 50s. West winds 10 to 20 mph. .SUNDAY NIGHT...Mostly clear. Lows in the mid 30s. Northwest winds up to 10 mph. .MONDAY...Partly sunny. Highs in the upper 50s. West winds up to 5 mph increasing to southwest 10 to 15 mph in the afternoon. .MONDAY NIGHT...Partly cloudy. Lows in the lower 40s. West winds 5 to 15 mph. .TUESDAY...Sunny. Highs around 60. .TUESDAY NIGHT...Partly cloudy. Lows in the upper 30s. .VETERANS DAY...Partly sunny. Highs in the mid 50s. .WEDNESDAY NIGHT...Mostly cloudy with a 20 percent chance of light rain. Lows in the upper 30s. .THURSDAY...Partly sunny with a 40 percent chance of light rain. Highs in the upper 40s. .THURSDAY NIGHT...Mostly cloudy with chance of light rain, possibly mixed with snow. Lows in the lower 30s. Chance of precipitation 30 percent. .FRIDAY...Partly sunny. Slight chance of light rain and snow in the morning, then slight chance of light rain in the afternoon. Highs in the upper 40s. Chance of precipitation 20 percent. .FRIDAY NIGHT...Partly cloudy. Lows in the lower 30s. .SATURDAY...Mostly sunny. Highs in the lower 50s.
+
+$$
+
+WIZ065-081000- Waukesha- Including the cities of Waukesha, Brookfield, New Berlin, Menomonee Falls, and Muskego 930 PM CST Sat Nov 7 2026
+
+.TONIGHT...Partly cloudy. Patchy fog after midnight. Lows in the mid 30s. Southwest winds 5 to 15 mph. .SUNDAY...Partly sunny in the morning then clearing. Patchy fog in the morning. Highs in the upper 50s. West winds 10 to 20 mph. .SUNDAY NIGHT...Mostly clear. Lows in the lower 30s. Northwest winds up to 10 mph. .MONDAY...Partly sunny. Highs in the upper 50s. Southwest winds up to 5 mph increasing to around 10 mph in the afternoon. .MONDAY NIGHT...Partly cloudy. Lows around 40. West winds up to 10 mph. .TUESDAY...Sunny. Highs around 60. .TUESDAY NIGHT...Partly cloudy. Lows in the mid 30s. .VETERANS DAY...Partly sunny. Highs in the mid 50s. .WEDNESDAY NIGHT...Mostly cloudy through around midnight then becoming partly cloudy. A 20 percent chance of light rain. Lows in the mid 30s. .THURSDAY...Partly sunny with a 20 percent chance of light rain and snow. Highs in the upper 40s. .THURSDAY NIGHT...Partly cloudy. Lows in the upper 20s. .FRIDAY...Mostly sunny. Highs in the mid 40s. .FRIDAY NIGHT...Partly cloudy. Lows around 30. .SATURDAY...Mostly sunny. Highs in the lower 50s.
+
+$$
+
+WIZ063-081000- Dane- Including the city of Madison 930 PM CST Sat Nov 7 2026
+
+.TONIGHT...Partly cloudy. Lows in the upper 30s. Southwest winds 5 to 15 mph. .SUNDAY...Sunny. Highs in the upper 50s. West winds 5 to 15 mph. .SUNDAY NIGHT...Mostly clear. Lows in the lower 30s. Northwest winds up to 10 mph. .MONDAY...Partly sunny. Highs in the upper 50s. Southwest winds up to 5 mph increasing to 10 to 15 mph in the afternoon. .MONDAY NIGHT...Mostly clear. Lows around 40. West winds up to 10 mph. .TUESDAY...Sunny. Highs around 60. .TUESDAY NIGHT...Partly cloudy. Lows in the upper 30s. .VETERANS DAY...Partly sunny. Highs in the mid 50s. .WEDNESDAY NIGHT...Mostly cloudy through around midnight then becoming partly cloudy. Lows in the mid 30s. .THURSDAY...Partly sunny. Highs in the upper 40s. .THURSDAY NIGHT...Partly cloudy. Lows in the upper 20s. .FRIDAY...Sunny. Highs in the mid 40s. .FRIDAY NIGHT...Mostly clear. Lows around 30. .SATURDAY...Sunny. Highs in the lower 50s.
+
+$$
+
+WIZ071-081000- Racine- Including the city of Racine 930 PM CST Sat Nov 7 2026

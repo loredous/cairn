@@ -1,0 +1,35 @@
+WUUS54 KAMA 020607 SVRAMA TXC195-233-341-421-020645- /O.NEW.KAMA.SV.W.0341.261102T0607Z-261102T0645Z/
+
+BULLETIN - IMMEDIATE BROADCAST REQUESTED Severe Thunderstorm Warning National Weather Service Amarillo TX 1207 AM CST Mon Nov 2 2026
+
+The National Weather Service in Amarillo has issued a
+
+* Severe Thunderstorm Warning for... Southwestern Hansford County in the panhandle of Texas... Northwestern Hutchinson County in the panhandle of Texas... Northeastern Moore County in the panhandle of Texas... Southeastern Sherman County in the panhandle of Texas...
+
+* Until 1245 AM CST.
+
+* At 1207 AM CST, a severe thunderstorm was located over Sunray, or 11 miles northeast of Dumas, moving northeast at 55 mph.
+
+HAZARD...70 mph wind gusts.
+
+SOURCE...Radar indicated.
+
+IMPACT...Expect considerable tree damage. Damage is likely to mobile homes, roofs, and outbuildings.
+
+* Locations impacted include... Sunray, Gruver and Morse.
+
+PRECAUTIONARY/PREPAREDNESS ACTIONS...
+
+Anyone outdoors should move to shelter inside a well-built structure and stay away from windows. This storm is capable of producing widespread damaging winds.
+
+Torrential rainfall is also occurring with this storm and may lead to flash flooding. Do not drive your vehicle through flooded roadways.
+
+A Tornado Watch remains in effect until 200 AM CST for a portion of the Panhandle of Texas.
+
+&&
+
+LAT...LON 3604 10200 3636 10141 3614 10121 3585 10193 TIME...MOT...LOC 0607Z 237DEG 47KT 3599 10186
+
+THUNDERSTORM DAMAGE THREAT...CONSIDERABLE HAIL THREAT...RADAR INDICATED MAX HAIL SIZE...0.00 IN WIND THREAT...RADAR INDICATED MAX WIND GUST...70 MPH
+
+$$

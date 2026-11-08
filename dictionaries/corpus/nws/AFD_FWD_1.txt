@@ -1,0 +1,57 @@
+FXUS64 KFWD 071841 AFDFWD
+
+Area Forecast Discussion National Weather Service Fort Worth TX 1241 PM CST Sat Nov 7 2026
+
+...New SHORT TERM, LONG TERM, AVIATION...
+
+.KEY MESSAGES...
+
+- Cloudy and cool conditions are expected through Monday followed by warmer and dry weather for the middle of next week.
+
+- Scattered light rain will spread across Central Texas later today and continue through Sunday night, with a few showers across North and Central Texas on Monday into Monday night.
+
+- Most areas will see rainfall amounts of a tenth of an inch or less, but parts of western Central Texas could see over a half inch of rain.
+
+&&
+
+.SHORT TERM... (This afternoon through Sunday) Issued at 1137 AM CST Sat Nov 7 2026
+
+Abundant upper level cloudiness will continue to stream eastward across North Central Texas this afternoon, ahead of a nearly stationary closed low over Northwest Mexico. Ahead of this main feature, a weaker advance shortwave, coupled with modest lower level isentropic upglide, will combine to produce lift across Central Texas from this evening through midday Sunday.
+
+Areas of light rain should develop and expand in coverage across our southwestern zones by mid evening, where the better lift and moisture convergence coincide. The northern edge of this shield may approach the I-20 corridor - especially west of I-35 - later tonight, but am not confident that very much precipitation will actually reach the ground along this northern edge. Rainfall will be slightly more generous farther south, though average amounts should remain below one quarter to one half inch in most areas overnight. Maintained the broad outlines of the NBM's PoPs through tonight in our southern counties, but did dial back the probabilities somewhat in areas closer to I-20.
+
+The magnitude of the forcing for ascent seems to wane slightly after daybreak Sunday, per the short-term RRFS and HRRR guidance. As a result, PoPs will be limited to areas south of a Comanche to Waco to Centerville line.
+
+After a seasonably cool, fall-like day today, daytime temperatures on Sunday will rebound slightly, into the upper 60s and lower 70s.
+
+&&
+
+.LONG TERM... (Sunday night through next Friday) Issued at 1137 AM CST Sat Nov 7 2026
+
+The various conventional and AI-based ensemble systems are consistent in moving the closed upper low (now over NW Mexico) eastward, opening it to a wave, and absorbing it into the mean northwesterly flow regime by early next week. We'll flirt with some intermittent low PoPs Tuesday and Wednesday, mainly in the eastern and southern zones, as this wave opens and shifts eastward across the region. Most locations, however, will remain rain-free next week.
+
+Day to day temperatures will moderate through mid week, with increased thicknesses and downslope southwest to west low level flow providing periods of compressional warming. Highs by Wednesday will be pushing 80 degrees in some areas, which is at least 10 degrees above normal for mid November. A weak front may move through North Texas by Wednesday night, bringing afternoon highs on Thursday and Friday closer to seaonal norms.
+
+&&
+
+.AVIATION... (18Z TAFS) Issued at 1137 AM CST Sat Nov 7 2026
+
+VFR conditions should prevail at the D10 TAF sites through midday Sunday. However, substantial mid and high level cloudiness will likely stream across the region throughout the period, ahead of a slow moving upper level low over Northwest Mexico. This feature will provide the lift necessary for the development of lower MVFR clouds and patchy light rain across Central Texas after 00z this evening. While little, if any, of this precipitation will reach the ground in D10, areas farther south will experience intermittent showers through Sunday morning. Waco, in particular, will see the MVFR ceilings developing after 04z tonight, accompanied by periods of light rain through 14z.
+
+Surface high pressure to the North of Texas, coupled with a low over Northern Mexico, will facilitate persistent north to northeast winds at all TAF sites today through Sunday, at speeds averaging 4 to 9 knots.
+
+&&
+
+.SPOTTER INFORMATION STATEMENT... Issued at 1210 AM CST Sat Nov 7 2026
+
+Spotter activation is not expected at this time.
+
+&&
+
+.PRELIMINARY POINT TEMPS/POPS... Dallas-Ft. Worth 53 71 52 72 / 10 0 0 0 Waco 53 70 52 70 / 50 20 0 10 Paris 46 70 45 72 / 0 0 0 0 Denton 45 71 45 72 / 20 0 0 0 McKinney 47 70 47 71 / 10 0 0 0 Dallas 53 71 52 72 / 10 0 0 0 Terrell 50 70 47 71 / 10 0 0 0 Corsicana 54 70 51 70 / 30 10 0 0 Temple 55 68 54 69 / 60 60 20 20 Mineral Wells 48 70 48 72 / 30 10 0 10
+
+&&
+
+.FWD WATCHES/WARNINGS/ADVISORIES... None. &&
+
+$$

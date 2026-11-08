@@ -1,0 +1,51 @@
+SAFETY MESSAGE/PLAN (ICS 208) 1. Incident Name:
+
+2. Operational Period: Date From:
+
+Date To:
+
+Time From:
+
+Time To:
+
+3. Safety Message/Expanded Safety Message, Safety Plan, Site Safety Plan:
+
+4. Site Safety Plan Required? Yes No Approved Site Safety Plan(s) Located At: 5. Prepared by: Name: ICS 208
+
+Position/Title: IAP Page ____
+
+Date/Time:
+
+Signature:
+
+ICS 208 Safety Message/Plan Purpose. The Safety Message/Plan (ICS 208) expands on the Safety Message and Site Safety Plan. Preparation. The ICS 208 is an optional form that may be included and completed by the Safety Officer for the Incident Action Plan (IAP). Distribution. The ICS 208, if developed, will be reproduced with the IAP and given to all recipients as part of the IAP. All completed original forms must be given to the Documentation Unit. Notes: * The ICS 208 may serve (optionally) as part of the IAP. * Use additional copies for continuation sheets as needed, and indicate pagination as used. Block Number
+
+Block Title
+
+Instructions
+
+Incident Name
+
+Enter the name assigned to the incident.
+
+Operational Period * Date and Time From * Date and Time To
+
+Enter the start date (month/day/year) and time (using the 24-hour clock) and end date and time for the operational period to which the form applies.
+
+Safety Message/Expanded Safety Message, Safety Plan, Site Safety Plan
+
+Enter clear, concise statements for safety message(s), priorities, and key command emphasis/decisions/directions. Enter information such as known safety hazards and specific precautions to be observed during this operational period. If needed, additional safety message(s) should be referenced and attached.
+
+Site Safety Plan Required?
+
+Check whether or not a site safety plan is required for this incident.
+
+Yes No
+
+Approved Site Safety Plan(s) Located At
+
+Enter where the approved Site Safety Plan(s) is located.
+
+Prepared by * Name * Position/Title * Signature * Date/Time
+
+Enter the name, ICS position, and signature of the person preparing the form. Enter date (month/day/year) and time prepared (24-hour clock).

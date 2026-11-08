@@ -1,0 +1,33 @@
+FPUS54 KLIX 080436 ZFPLIX
+
+Zone Forecast Product National Weather Service New Orleans LA 1036 PM CST Sat Nov 7 2026
+
+LAZ034-081200- Pointe Coupee- Including the cities of New Roads, Lettsworth, and Livonia 1036 PM CST Sat Nov 7 2026
+
+.OVERNIGHT...Mostly clear. Lows in the mid 40s. Northeast winds around 5 mph. .SUNDAY...Partly sunny. Highs in the upper 60s. North winds 5 to 10 mph. .SUNDAY NIGHT...Partly cloudy. Lows in the mid 40s. North winds around 5 mph. .MONDAY...Mostly sunny. Highs in the mid 70s. North winds around 5 mph. .MONDAY NIGHT...Mostly cloudy in the evening, then becoming partly cloudy. Lows in the upper 40s. Light and variable winds. .TUESDAY AND TUESDAY NIGHT...Partly cloudy. Highs in the upper 70s. Lows in the lower 50s. .VETERANS DAY AND WEDNESDAY NIGHT...Mostly cloudy. Highs in the upper 70s. Lows in the mid 50s. .THURSDAY...Mostly sunny. Highs in the mid 70s. .THURSDAY NIGHT...Mostly clear. Cooler with lows in the lower 40s. .FRIDAY...Sunny. Highs in the upper 60s. .FRIDAY NIGHT AND SATURDAY...Mostly clear. Lows in the upper 30s. Highs in the upper 60s.
+
+$$
+
+LAZ035-081200- West Feliciana- Including the cities of Spillman, St. Francisville, and Wakefield 1036 PM CST Sat Nov 7 2026
+
+.OVERNIGHT...Mostly clear. Lows in the mid 40s. Northeast winds around 5 mph. .SUNDAY...Partly sunny. Highs around 70. North winds 5 to 10 mph. .SUNDAY NIGHT...Partly cloudy. Lows in the mid 40s. North winds around 5 mph. .MONDAY...Mostly sunny. Highs in the mid 70s. North winds around 5 mph. .MONDAY NIGHT...Mostly cloudy in the evening, then becoming partly cloudy. Lows in the upper 40s. North winds around 5 mph in the evening, becoming light and variable. .TUESDAY AND TUESDAY NIGHT...Partly cloudy. Highs in the upper 70s. Lows in the lower 50s. .VETERANS DAY AND WEDNESDAY NIGHT...Mostly cloudy. Highs in the upper 70s. Lows in the mid 50s. .THURSDAY...Mostly sunny. Highs in the mid 70s. .THURSDAY NIGHT AND FRIDAY...Mostly clear. Lows in the lower 40s. Highs in the upper 60s. .FRIDAY NIGHT AND SATURDAY...Mostly clear. Lows in the upper 30s. Highs in the upper 60s.
+
+$$
+
+LAZ036-081200- East Feliciana- Including the cities of Jackson, Clinton, and Felps 1036 PM CST Sat Nov 7 2026
+
+.OVERNIGHT...Mostly clear. Lows in the lower 40s. North winds around 5 mph. .SUNDAY...Partly sunny. Highs in the lower 70s. North winds 5 to 10 mph. .SUNDAY NIGHT...Mostly cloudy in the evening, then becoming partly cloudy. Lows in the mid 40s. North winds around 5 mph. .MONDAY...Mostly sunny. Highs in the mid 70s. Northeast winds around 5 mph. .MONDAY NIGHT...Partly cloudy. Lows in the mid 40s. Light and variable winds. .TUESDAY AND TUESDAY NIGHT...Partly cloudy. Highs in the upper 70s. Lows around 50. .VETERANS DAY AND WEDNESDAY NIGHT...Mostly cloudy. Highs in the upper 70s. Lows in the lower 50s. .THURSDAY...Mostly sunny. Highs in the mid 70s. .THURSDAY NIGHT AND FRIDAY...Mostly clear. Lows in the lower 40s. Highs in the upper 60s. .FRIDAY NIGHT...Clear. Lows in the upper 30s. .SATURDAY...Sunny. Highs in the upper 60s.
+
+$$
+
+LAZ037-081200- St. Helena- Including the cities of Darlington, Easleyville, Greensburg, and Montpelier 1036 PM CST Sat Nov 7 2026
+
+.OVERNIGHT...Mostly clear. Lows in the lower 40s. North winds around 5 mph. .SUNDAY...Partly sunny. Highs in the lower 70s. North winds 5 to 10 mph. .SUNDAY NIGHT...Mostly cloudy in the evening, then becoming partly cloudy. Lows in the mid 40s. North winds around 5 mph. .MONDAY...Mostly sunny. Highs in the upper 70s. Northeast winds around 5 mph. .MONDAY NIGHT...Partly cloudy. Lows in the mid 40s. Light and variable winds. .TUESDAY AND TUESDAY NIGHT...Partly cloudy. Highs in the upper 70s. Lows around 50. .VETERANS DAY AND WEDNESDAY NIGHT...Mostly cloudy. Highs in the upper 70s. Lows in the lower 50s. .THURSDAY...Mostly sunny. Highs in the mid 70s. .THURSDAY NIGHT AND FRIDAY...Mostly clear. Lows in the lower 40s. Highs in the upper 60s. .FRIDAY NIGHT AND SATURDAY...Mostly clear. Lows in the upper 30s. Highs in the upper 60s.
+
+$$
+
+LAZ039-081200- Washington- Including the cities of Bogalusa, Enon, and Franklinton 1036 PM CST Sat Nov 7 2026
+
+.OVERNIGHT...Mostly clear. Lows in the lower 40s. North winds around 5 mph. .SUNDAY...Partly sunny. Highs in the lower 70s. North winds around 5 mph. .SUNDAY NIGHT...Mostly cloudy in the evening, then clearing. Lows in the lower 40s. North winds around 5 mph. .MONDAY...Mostly sunny. Highs in the mid 70s. Northeast winds around 5 mph. .MONDAY NIGHT...Partly cloudy. Lows in the mid 40s. Light and variable winds. .TUESDAY AND TUESDAY NIGHT...Partly cloudy. Highs in the upper 70s. Lows in the upper 40s. .VETERANS DAY AND WEDNESDAY NIGHT...Mostly cloudy. Highs in the upper 70s. Lows in the lower 50s. .THURSDAY...Mostly sunny. Highs in the mid 70s. .THURSDAY NIGHT AND FRIDAY...Mostly clear. Lows in the lower 40s. Highs in the upper 60s. .FRIDAY NIGHT AND SATURDAY...Mostly clear. Lows in the upper 30s. Highs in the upper 60s.
+
+$$

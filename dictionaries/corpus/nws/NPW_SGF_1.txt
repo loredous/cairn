@@ -1,0 +1,21 @@
+WWUS73 KSGF 071206 NPWSGF
+
+URGENT - WEATHER MESSAGE National Weather Service Springfield MO 606 AM CST Sat Nov 7 2026
+
+MOZ055>058-069>071-081>083-092-097-098-106-071315- /O.CAN.KSGF.FZ.W.0002.000000T0000Z-261107T1400Z/ Benton-Morgan-Miller-Maries-Camden-Pulaski-Phelps-Laclede-Texas-Dent- Wright-Howell-Shannon-Oregon- Including the cities of Mora, Lincoln, Pomona, Duncan, Mansfield, Thomasville, Roby, Northwye, Rolla, Waynesville, Winona, Jadwin, White Church, Lebanon, Lake Ozark, West Plains, Crockerville, Aurora Springs, Bendavis, Gladden, Lake Spring, Cole Camp, Whitakerville, Salem, Howes, Graff, Birch Tree, Plato, Roach, Rocky Mount, Mountain Grove, Fort Leonard Wood, Laquey, Siloam Springs, Wilderness, Pottersville, Osage Beach, Lynchburg, Greer, Eldon, Vichy, Huggins, Alton, Laurie, Bangert, Darien, Village of Four Seasons, Dawson, Teresita, Warsaw, Montier, South Fork, Couch, Stover, Thayer, Camdenton, Edmonson, Decaturville, and Versailles 606 AM CST Sat Nov 7 2026
+
+...FREEZE WARNING IS CANCELLED...
+
+Persistent cloud cover has kept temperatures warmer than originally anticipated. Therefore, the threat has ended.
+
+$$
+
+KSZ073-097-101-MOZ066>068-077>080-088>091-093>096-101>105-071315- /O.CAN.KSGF.FR.Y.0003.000000T0000Z-261107T1400Z/ Bourbon-Crawford-Cherokee-Vernon-St. Clair-Hickory-Barton-Cedar- Polk-Dallas-Jasper-Dade-Greene-Webster-Newton-Lawrence-Christian- Douglas-McDonald-Barry-Stone-Taney-Ozark- Including the cities of Edgewater Beach, Kirbyville, Columbus, Rocky Comfort, Carthage, Silver Dollar City, Rogersville, Fort Scott, Wasola, Indian Point, Arnica, Cassville, Buffalo, Quincy, Cedar Springs, Baxter Springs, South West City, Goodman, Mount Vernon, Nevada, Riverton, Tiffin, Noel, Branson, Lone Oak, Goodhope, Olive, Crane, Forsyth, Cross Timbers, Ozark, Hermitage, Springfield, Marionville, Seymour, Squires, Greenfield, Selmore, Stippville, Lowell, Vanzant, Madry, Kenoma, Christian Center, Ava, Rome, Sherwin, Wheatland, Pawnee Station, Bolivar, Kimberling City, Powersite, Weaubleau, Plad, Meinert, Filley, Marshfield, Foose, Elsey, Dogwood, Nixa, Ozark Beach, Anderson, Charity, March, Windyville, Johnson City, Lamar, Stockton, Monett, Northview, Neosho, Aurora, Hollister, Appleton City, Joplin, Lockwood, Caplinger Mills, Neutral, Pineville, Chicopee, Pittsburg, and El Dorado Springs 606 AM CST Sat Nov 7 2026
+
+...FROST ADVISORY IS CANCELLED...
+
+Persistent cloud cover has kept temperatures warmer than originally anticipated. Therefore, the threat has ended.
+
+$$
+
+For more information from the National Weather Service, visit http://weather.gov/sgf

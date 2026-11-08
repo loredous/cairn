@@ -1,0 +1,43 @@
+RESOURCE REQUEST MESSAGE (ICS 213 RR) 1. Incident Name:
+
+2. Date/Time
+
+3. Resource Request Number:
+
+4. Order (Use additional forms when requesting different resource sources of supply.): Kind
+
+Type
+
+Detailed Item Description: (Vital characteristics, brand, specs, experience, size, etc.)
+
+Arrival Date and Time Requested
+
+Cost Estimated
+
+Requestor
+
+Qty.
+
+5. Requested Delivery/Reporting Location: 6. Suitable Substitutes and/or Suggested Sources: 7. Requested by Name/Position:
+
+Logistics
+
+10. Logistics Order Number:
+
+8. Priority: Urgent Routine Low
+
+9. Section Chief Approval: 11. Supplier Phone/Fax/Email:
+
+12. Name of Supplier/POC: 13. Notes:
+
+14. Approval Signature of Auth Logistics Rep:
+
+15. Date/Time:
+
+Finance
+
+16. Order placed by (check box): SPUL PROC 17. Reply/Comments from Finance:
+
+18. Finance Section Signature: ICS 213 RR, Page 1
+
+19. Date/Time:

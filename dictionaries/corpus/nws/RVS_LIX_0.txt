@@ -1,0 +1,47 @@
+FGUS84 KLIX 071800 RVSLIX LAC005-033-037-047-051-057-063-071-075-077-087-089-091-093-095-103-105- 109-117-121-125-MSC045-047-059-109-113-147-157-081800-
+
+Hydrologic Statement National Weather Service New Orleans LA 1200 PM CST Sat Nov 7 2026
+
+Forecasts include 24-Hour observed rainfall ending at 6 AM CST Today and forecast rainfall through 6 AM CST tomorrow.
+
+For Flood Crest stage and date information, see the latest River Flood Warning or Flood Statement NEWFLWLIX or NEWFLSLIX.
+
+FLD STG 24-HR FORECAST 6AM LOCATION STG TDA CHG Sun Mon Tue Wed Thu
+
+Lower Mississippi River Red River Land 48.0 17.8 -0.1 17.5 17.5 17.5 17.7 17.9 Baton Rouge 35.0 6.8 0.0 6.8 7.2 7.4 7.5 7.3 Donaldsonville 27.0 4.0 0.0 4.2 4.5 4.8 4.7 4.7 Reserve 22.0 3.3 0.0 3.5 3.7 3.8 3.9 4.0 New Orleans 17.0 2.7 0.0 2.7 3.0 3.0 3.1 3.1
+
+Atchafalaya River Bayou Sorrel L 12.0 3.5 0.3 3.5 3.4 3.4 3.4 3.4
+
+Amite and Comite Rivers Grangeville 35.0 17.6 0.0 Magnolia 48.0 26.9 0.0 26.9 26.9 26.8 26.8 26.8 Olive Branch 19.0 -1.7 0.1 -1.8 -1.8 -1.8 -1.8 -1.8 Comite Joor Rd 20.0 0.2 0.0 0.2 0.2 0.2 0.2 0.2 Darlington 18.0 -1.4 0.0 -1.3 -1.3 -1.3 -1.3 -1.3 Denham Springs 29.0 9.6 0.0 9.6 9.6 9.6 9.6 9.6 Bayou Manchac 9.0 3.1 3.1 2.9 2.9 2.9 Bayou Manchac 10.0 2.9 -0.2 Port Vincent 8.0 2.9 -0.2 2.6 2.6 2.5 2.5 2.5 French Settlem 4.0 2.2 -0.2 Maurepas 4.0 3.0 -0.2
+
+Tickfaw River Liverpool 9.0 1.6 0.0 1.7 1.6 1.6 1.6 1.6 Montpelier 13.0 2.5 0.0 2.5 2.5 2.5 2.5 2.4 Holden 15.0 0.5 0.0 0.5 0.5 0.5 0.5 0.5 Killian 4.0
+
+Natalbany River Baptist 16.0 3.7 0.0 3.7 3.7 3.7 3.7 3.7
+
+Tangipahoa River Osyka 15.0 8.1 0.0 8.1 8.1 8.1 8.1 8.1 Kentwood 13.0 1.4 0.0 1.4 1.4 1.4 1.4 1.4 Amite 21.0 5.1 0.0 5.0 5.0 5.0 5.0 5.0 Robert 15.0 6.4 0.0 6.4 6.3 6.3 6.3 6.3
+
+Tchefuncte River Folsom 16.0 4.8 0.0 4.8 4.8 4.8 4.8 4.8 U.S. Highway 1 20.0 9.1 0.0 9.1 9.1 9.1 9.1 9.1
+
+Bogue Falaya Camp Covington 45.0 34.6 0.0 34.6 34.6 34.5 34.5 34.5 Boston St in C 6.0 2.0 -0.2 2.0 2.0 2.0 1.9 1.9
+
+Bogue Chitto River Tylertown 15.0 5.3 0.0 5.3 5.3 5.3 5.3 5.3 Franklinton 12.0 0.3 0.0 0.3 0.3 0.3 0.3 0.3 Bush 11.0 2.7 0.0 2.7 2.7 2.7 2.7 2.7
+
+Lower Pearl River Bogalusa 18.0 6.1 -0.1 6.1 6.1 6.1 6.1 6.1 Pearl River 14.0 5.4 -0.3 5.4 5.4 5.3 5.3 5.3
+
+Buffalo River Woodville 20.0 3.9 0.0
+
+West Hobolochitto Creek McNeil 15.0 6.3 -0.2 6.3 6.2 6.1 6.0 6.0
+
+East Hobolochitto Creek Caesar 15.0 4.1 0.0 4.1 4.1 4.0 4.0 4.0
+
+Jourdan River Kiln/Bay St. L 6.0 1.4 -0.1 0.7 0.7 0.9 1.0 1.2
+
+Wolf River Landon 27.0 4.8 -0.3 Gulfport 8.0 2.8 -0.1 1.9 1.9 2.0 2.1 2.3
+
+Biloxi River Wortham 16.0 -0.6 0.0 Lyman 12.0 1.8 -0.1 1.3 1.3 1.3 1.4 1.5
+
+Tchoutacabouffa River D'Iberville 8.0 1.6 -0.2 0.7 0.7 0.8 1.0 1.1
+
+Pascagoula River Graham Ferry 16.0 2.1 -0.1 2.7 2.7 2.8 2.8 2.9
+
+Escatawpa River Orange Grove 8.0 1.4 -0.4 0.9 0.8 0.8 0.9 1.0

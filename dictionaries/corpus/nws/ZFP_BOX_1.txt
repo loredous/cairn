@@ -1,0 +1,23 @@
+FPUS51 KBOX 080304 ZFPBOX
+
+Zone Forecast Product for Southern New England National Weather Service Boston/Norton MA 1003 PM EST Sat Nov 7 2026
+
+MAZ015-081600- Suffolk MA- Including the city of Boston 1003 PM EST Sat Nov 7 2026
+
+.OVERNIGHT...Mostly cloudy. A chance of rain, then rain. Patchy fog. Cooler with lows in the mid 40s. Northwest winds around 5 mph, becoming west 10 to 15 mph with gusts up to 30 mph. Chance of rain 80 percent. .SUNDAY...Mostly sunny. Highs in the upper 50s. West winds 15 to 20 mph with gusts up to 35 mph. .SUNDAY NIGHT...Mostly clear. Lows in the lower 40s. Southwest winds 5 to 10 mph. Gusts up to 20 mph in the evening. .MONDAY...Mostly sunny. Highs in the upper 50s. West winds 10 to 15 mph. .MONDAY NIGHT...Mostly clear. Lows in the upper 30s. West winds 5 to 10 mph. Gusts up to 20 mph in the evening. .TUESDAY...Mostly sunny. Highs in the upper 50s. .TUESDAY NIGHT AND VETERANS DAY...Mostly clear. Lows in the lower 40s. Highs in the upper 50s. .WEDNESDAY NIGHT...Partly cloudy. Lows in the upper 30s. .THURSDAY...Partly sunny. Highs in the lower 50s. .THURSDAY NIGHT...Mostly cloudy with a 40 percent chance of rain. Lows in the mid 30s. .FRIDAY...Rain likely. Highs in the upper 40s. Chance of rain 60 percent. .FRIDAY NIGHT...Mostly cloudy with a chance of rain and snow. Lows in the lower 30s. Chance of precipitation 40 percent. .SATURDAY...Partly sunny with a 40 percent chance of rain. Highs in the upper 40s.
+
+$$
+
+MAZ016-081600- Eastern Norfolk MA- Including the city of Quincy 1003 PM EST Sat Nov 7 2026
+
+.OVERNIGHT...Mostly cloudy. A chance of rain, then rain likely. Patchy fog. Cooler with lows in the mid 40s. West winds around 5 mph, increasing to 10 to 15 mph with gusts up to 25 mph. Chance of rain 70 percent. .SUNDAY...Mostly sunny. Highs in the upper 50s. West winds 10 to 15 mph with gusts up to 30 mph. .SUNDAY NIGHT...Mostly clear. Lows in the lower 40s. Southwest winds 10 to 15 mph. .MONDAY...Mostly sunny. Highs in the upper 50s. West winds 5 to 10 mph with gusts up to 20 mph. .MONDAY NIGHT...Mostly clear. Lows in the upper 30s. West winds 5 to 10 mph. Gusts up to 20 mph in the evening. .TUESDAY...Mostly sunny. Highs in the upper 50s. .TUESDAY NIGHT AND VETERANS DAY...Mostly clear. Lows around 40. Highs in the upper 50s. .WEDNESDAY NIGHT...Partly cloudy. Lows in the mid 30s. .THURSDAY...Partly sunny. Highs in the lower 50s. .THURSDAY NIGHT...Mostly cloudy with a 50 percent chance of rain. Lows in the mid 30s. .FRIDAY...Rain likely. Highs in the upper 40s. Chance of rain 60 percent. .FRIDAY NIGHT...Mostly cloudy with a 50 percent chance of rain. Lows in the lower 30s. .SATURDAY...Partly sunny with a 40 percent chance of rain. Highs in the upper 40s.
+
+$$
+
+MAZ013-081600- Western Norfolk MA- Including the cities of Foxborough and Norwood 1003 PM EST Sat Nov 7 2026
+
+.OVERNIGHT...Mostly cloudy. A chance of rain, then rain likely. Patchy fog. Cooler with lows in the lower 40s. West winds 5 to 10 mph with gusts up to 25 mph. Chance of rain 70 percent. .SUNDAY...Mostly sunny. Highs in the upper 50s. West winds 10 to 15 mph with gusts up to 30 mph. .SUNDAY NIGHT...Mostly clear. Lows in the upper 30s. Southwest winds 5 to 10 mph. .MONDAY...Mostly sunny. Highs in the upper 50s. West winds 5 to 10 mph with gusts up to 20 mph. .MONDAY NIGHT...Mostly clear. Lows in the mid 30s. West winds 5 to 10 mph. .TUESDAY...Mostly sunny. Highs in the upper 50s. .TUESDAY NIGHT AND VETERANS DAY...Mostly clear. Lows in the upper 30s. Highs in the upper 50s. .WEDNESDAY NIGHT...Partly cloudy. Lows in the lower 30s. .THURSDAY...Partly sunny. Highs in the mid 50s. .THURSDAY NIGHT...Mostly cloudy with a 50 percent chance of rain. Lows in the lower 30s. .FRIDAY...Rain likely. Highs in the upper 40s. Chance of rain 60 percent. .FRIDAY NIGHT AND SATURDAY...Mostly cloudy. A chance of rain and snow. Lows in the upper 20s. Highs in the upper 40s. Chance of precipitation 40 percent.
+
+$$
+
+MAZ014-081600- Southeast Middlesex MA- Including the city of Cambridge 1003 PM EST Sat Nov 7 2026

@@ -1,0 +1,33 @@
+WWUS76 KPDT 080354 NPWPDT
+
+URGENT - WEATHER MESSAGE National Weather Service Pendleton OR 754 PM PST Sat Nov 7 2026
+
+ORZ049-080500- /O.EXP.KPDT.WI.Y.0034.000000T0000Z-261108T0400Z/ Grande Ronde Valley- Including the cities of Elgin, Cove, Union, and La Grande 754 PM PST Sat Nov 7 2026
+
+...WIND ADVISORY WILL EXPIRE AT 8 PM PST THIS EVENING...
+
+The threat has ended. Breezy conditions will continue but will be below advisory levels.
+
+$$
+
+ORZ507-080900- /O.CON.KPDT.WI.Y.0034.000000T0000Z-261108T0900Z/ Foothills of the Northern Blue Mountains of Oregon- Including the cities of Athena, Pendleton, and Pilot Rock 754 PM PST Sat Nov 7 2026
+
+...WIND ADVISORY IN EFFECT FROM 4 PM THIS AFTERNOON TO 1 AM PST SUNDAY FOR THE SLOPES OF THE NORTHERN BLUE MOUNTAINS...
+
+* WHAT...Southeast to south winds 20 to 35 mph with gusts of 35 to 50 mph expected for the slopes of the northern Blue Mountains.
+
+* WHERE...Foothills of the Northern Blue Mountains of Oregon.
+
+* WHEN...Until 1 AM PST Sunday.
+
+* IMPACTS...Gusty winds will blow around unsecured objects. Tree limbs could be blown down and a few power outages may result.
+
+* ADDITIONAL DETAILS...Winds are expected to be strongest along the slopes of the northern Blue Mountains, including along Interstate 84 in the vicinity of Cabbage Hill. Winds will be lighter away from the mountains.
+
+PRECAUTIONARY/PREPAREDNESS ACTIONS...
+
+Winds this strong can make driving difficult, especially for high profile vehicles. Use extra caution.
+
+&&
+
+$$

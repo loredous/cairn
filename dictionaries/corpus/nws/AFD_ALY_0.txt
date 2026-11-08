@@ -1,0 +1,27 @@
+FXUS61 KALY 080546 AFDALY
+
+Area Forecast Discussion National Weather Service Albany NY 1246 AM EST Sun Nov 8 2026
+
+.WHAT HAS CHANGED... No significant changes with this forecast update.
+
+&&
+
+.KEY MESSAGES... 1) A series of disturbances will bring additional opportunities for scattered, light showers each day through midweek, though flooding continues to not be a concern.
+
+2) Confidence is increasing in a cooler pattern developing towards the end of the upcoming week but low confidence on the track of a storm system and associated precipitation types.
+
+&&
+
+.DISCUSSION... KEY MESSAGE 1... Latest GOES Water Vapor imagery shows an upper level low departing the area to the east. Rain showers continue to rotate across parts of the area but these will gradually diminish by daybreak. This low did bring a much needed, soaking rainfall to most areas along and north of I-90 with amounts generally between 0.50 and 1.50 inches. Less rain occurred to the south. Moist, cyclonic flow behind the departing low will lead to some additional light showers for west to northwesterly-favored upslope areas including the Adirondacks, Mohawk Valley, eastern Catskills, Taconics and into western New England into the morning hours before brief upper level ridging brings and end to precipitation this afternoon with clouds breaking for a few hours of sunshine. Winds will pick up with occasional gusts of 20-30 mph from late this morning through the afternoon. High temperatures will be right near seasonal values in the mid-40s to upper 50s.
+
+A series of disturbances will bring additional opportunities for light rainfall through mid-week. The first disturbance arrives tonight and continues through Monday and will bring the greatest coverage of showers. The Tuesday and Wednesday disturbances will favor showers for areas mainly north of I-90. Behind the Monday disturbance, it will become breezy once again with gusts 20 to 30 mph. Precipitation will not be heavy enough with any of these to cause any flooding concerns. Temperatures Monday through Wednesday will run slightly above normal for this time of year.
+
+KEY MESSAGE 2... Confidence continues to increase in a large-scale trough to develop over the eastern CONUS later this week into next weekend. This will favor a trend toward below normal temperatures. Whether or not we are impacted by a storm system during this time remains highly uncertain. By later this week, a low pressure system will likely approach the region from the Ohio Valley. The uncertainty increases whether or not this low transfers its energy to a coastal low (Miller-B type system) or remains the dominant feature. In addition, if the coastal low forms, uncertainty exists whether it tracks close enough to bring widespread precipitation to the region or farther away to bring just a glancing blow. The latest global ensemble means and AI forecasts suggest a coastal low will form but be more suppressed to the south and track far enough off the coast (less phasing) to bring minimal precipitation and impacts to the region. Even with this solution, a mix of rain and snow will be possible but accumulating snowfall potential will be reduced with the lack of efficient dynamic cooling. However, there remain some members that bring a system closer to the coast to bring greater precipitation and impacts but that solution looks to be the outlier at this time. This system is still several days out and model outcomes will likely continue to fluctuate in the coming days until they later converge on a more likely solution.
+
+&&
+
+.AVIATION /06Z SUNDAY THROUGH THURSDAY/... Through 06Z Monday...Bands of rain continue to impact KALB/KPSF early this morning with MVFR/IFR conditions. The IFR cigs have been mainly at KPSF and some reduction to IFR vsbys possible prior to 10Z/Sun where a TEMPO group has been issued. Further north, IFR conditions continue to impact KGFL. Cigs may briefly touch LIFR and a VCSH group was used for an isolated shower. KPOU has VFR conditions, but a TEMPO group was used for a few showers potentially impacting KPOU with MVFR cigs/vsbys. The IFR conditions will last for KGFL/KPSF until 09Z-14Z/Sun before some improvement to MVFR. The IFR conditions will last the longest at KPSF with our highest confidence. KALB will remain MVFR in terms of cigs 1.5-3.0 kft AGL until noontime. KPOU should see a return to VFR cigs between 09- 12Z/Sun. All the TAF sites should see a return to VFR conditions by 15Z-18Z/Sun with clearing occurring with just few-scattered stratocumulus. Some mid and high clouds increase towards or just after 00Z/Mon especially for KGFL.
+
+The winds will vary from the west/northwest to southwest at 5-10 KT early this morning with a few gusts 15-18 KT. The winds increase in the late morning into the early afternoon from the west/northwest at 8-14 KT with some gusts 20-25 KT especially at KALB/KPSF. The winds begin to decrease 21Z/Sun to 00Z/Sun and back to the south to southwest at less than 10 KT.
+
+Outlook...

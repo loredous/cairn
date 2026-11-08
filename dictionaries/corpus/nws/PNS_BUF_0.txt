@@ -1,0 +1,25 @@
+NOUS41 KBUF 051338 PNSBUF NYZ001>008-010>014-019>021-085-060138-
+
+Public Information Statement National Weather Service Buffalo NY 838 AM EST Thu Nov 5 2026
+
+...PRECIPITATION REPORTS...
+
+Location Amount Time/Date Provider
+
+...New York...
+
+...Allegany County... 4 S Dalton 0.01 Inch 0820 AM 11/05 NYSM 2 SW Wellsville 0.01 Inch 0756 AM 11/05 ASOS/AWOS 2 SE Friendship 0.01 Inch 0700 AM 11/05 COCORAHS 1 N Belmont 0.00 Inch 0820 AM 11/05 NYSM 1 W Wellsville 0.00 Inch 0800 AM 11/05 HADS Bolivar 0.00 Inch 0745 AM 11/05 HADS Bolivar 0.00 Inch 0745 AM 11/05 USGS HYDRO
+
+...Cattaraugus County... 1 W Little Valley 0.27 Inch 0700 AM 11/05 COOPB 5 S Salamanca 0.14 Inch 0700 AM 11/05 COOPA 3 N Steamburg 0.13 Inch 0820 AM 11/05 NYSM 3 E Lime Lake-Machias 0.08 Inch 0820 AM 11/05 NYSM 4 SE Great Valley 0.07 Inch 0700 AM 11/05 COCORAHS 1 SE Salamanca 0.07 Inch 0745 AM 11/05 HADS Franklinville 0.04 Inch 0741 AM 11/05 COCORAHS 1 SW Franklinville 0.04 Inch 0741 AM 11/05 COOPAB 4 E Franklinville 0.02 Inch 0700 AM 11/05 COCORAHS 1 SW Olean 0.02 Inch 0730 AM 11/05 COOPB 1 SW Olean 0.02 Inch 0730 AM 11/05 HADS 1 SW Franklinville 0.02 Inch 0715 AM 11/05 HADS 1 SE Salamanca 0.02 Inch 0645 AM 11/05 USGS HYDRO 1 NE Olean 0.02 Inch 0820 AM 11/05 NYSM 1 SW Olean 0.01 Inch 0730 AM 11/05 USGS HYDRO Cattaraugus 0.00 Inch 0715 AM 11/05 HADS Cattaraugus 0.00 Inch 0715 AM 11/05 USGS HYDRO 1 SW Franklinville 0.00 Inch 0715 AM 11/05 USGS HYDRO
+
+...Cayuga County... 2 NW Plainville 0.13 Inch 0700 AM 11/05 COCORAHS
+
+...Chautauqua County... Clymer 0.41 Inch 0820 AM 11/05 NYSM 3 SW Bemus Point 0.36 Inch 0700 AM 11/05 COCORAHS Kennedy 0.33 Inch 0700 AM 11/05 COCORAHS 1 E Jamestown West 0.30 Inch 0800 AM 11/05 COCORAHS 2 E Falconer 0.28 Inch 0815 AM 11/05 HADS Falconer 0.26 Inch 0700 AM 11/05 COCORAHS 1 SE Dewittville 0.24 Inch 0600 AM 11/05 COCORAHS 1 SW Sinclairville 0.23 Inch 0715 AM 11/05 HADS 2 E Falconer 0.22 Inch 0700 AM 11/05 COOPAB 1 S Mayville 0.22 Inch 0745 AM 11/05 HADS 3 N Celoron 0.20 Inch 0756 AM 11/05 ASOS/AWOS Findley Lake 0.16 Inch 0715 AM 11/05 HADS 3 E Dunkirk 0.16 Inch 0753 AM 11/05 ASOS/AWOS 1 S Dunkirk 0.13 Inch 0700 AM 11/05 COCORAHS 2 SW Fredonia 0.13 Inch 0820 AM 11/05 NYSM 1 W Fredonia 0.12 Inch 0500 AM 11/05 COCORAHS 1 S Mayville 0.09 Inch 0745 AM 11/05 USGS HYDRO 1 SW Sinclairville 0.06 Inch 0715 AM 11/05 USGS HYDRO Findley Lake 0.02 Inch 0715 AM 11/05 USGS HYDRO
+
+...Erie County... 1 N Clarence Center 0.36 Inch 0700 AM 11/05 COCORAHS 2 S Snyder 0.33 Inch 0700 AM 11/05 COCORAHS 1 NW Colden 0.32 Inch 0700 AM 11/05 COCORAHS Buffalo Airport 0.28 Inch 0815 AM 11/05 ASOS/AWOS 1 SE Amherst 0.27 Inch 0820 AM 11/05 NYSM 3 E West Falls 0.27 Inch 0820 AM 11/05 NYSM 2 SE Williamsville 0.25 Inch 0700 AM 11/05 COCORAHS Clarence Center 0.25 Inch 0630 AM 11/05 COCORAHS 3 S East Aurora 0.25 Inch 0700 AM 11/05 COCORAHS 1 SE Glenwood 0.25 Inch 0700 AM 11/05 COCORAHS 6 N Eden 0.25 Inch 0800 AM 11/05 COCORAHS Kenmore 0.24 Inch 0515 AM 11/05 COCORAHS 2 SE Williamsville 0.24 Inch 0400 AM 11/05 SYNOP 1 S Tonawanda 0.22 Inch 0700 AM 11/05 COCORAHS 1 NW Springville 0.22 Inch 0700 AM 11/05 COCORAHS 3 S Angola 0.21 Inch 0820 AM 11/05 NYSM 3 N Clarence 0.20 Inch 0700 AM 11/05 COCORAHS 3 SE North Tonawanda 0.16 Inch 0500 AM 11/05 COCORAHS 3 E West Seneca 0.16 Inch 0700 AM 11/05 COCORAHS Hamburg 0.14 Inch 0700 AM 11/05 COCORAHS 3 NE Lancaster 0.00 Inch 0900 AM 11/04 COCORAHS 1 SE Elma Center 0.00 Inch 0900 AM 11/04 COCORAHS 2 E Tonawanda 0.00 Inch 0900 AM 11/04 COCORAHS
+
+...Genesee County... 4 SE Alexander 0.15 Inch 0800 AM 11/05 COCORAHS 3 E East Pembroke 0.10 Inch 0800 AM 11/05 COCORAHS 1 NW Alabama 0.09 Inch 0725 AM 11/05 RAWS 3 NW Alexander 0.08 Inch 0700 AM 11/05 COCORAHS 2 N Batavia 0.07 Inch 0814 AM 11/05 ASOS/AWOS 3 NE Batavia 0.07 Inch 0820 AM 11/05 NYSM 2 N Batavia 0.00 Inch 0730 AM 11/05 HADS
+
+...Jefferson County... 2 S Cape Vincent 0.06 Inch 0820 AM 11/05 NYSM 1 W Wellesley Island 0.04 Inch 0820 AM 11/05 NYSM 4 N Ellisburg 0.03 Inch 0820 AM 11/05 NYSM 3 N Philadelphia 0.03 Inch 0820 AM 11/05 NYSM 1 SW Watertown 0.02 Inch 0700 AM 11/05 COCORAHS 2 SE Dexter 0.02 Inch 0756 AM 11/05 ASOS/AWOS 2 E Fort Drum 0.01 Inch 0755 AM 11/05 ASOS/AWOS 1 NW Watertown 0.00 Inch 0700 AM 11/05 HADS 1 NW Watertown 0.00 Inch 0730 AM 11/05 USGS HYDRO
+
+...Lewis County... 7 NW Constableville 0.33 Inch 0600 AM 11/05 COOPB 1 E Osceola 0.27 Inch 0820 AM 11/05 NYSM 1 NW Glenfield 0.18 Inch 0820 AM 11/05 NYSM 3 N Montague 0.18 Inch 0820 AM 11/05 NYSM 1 NW Constableville 0.18 Inch 0600 AM 11/05 COCORAHS 11 NE Croghan 0.12 Inch 0820 AM 11/05 NYSM 1 NE Lowville 0.10 Inch 0700 AM 11/05 COOPAB 4 S West Carthage 0.06 Inch 0820 AM 11/05 NYSM

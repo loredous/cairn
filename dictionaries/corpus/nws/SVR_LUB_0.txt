@@ -1,0 +1,33 @@
+WUUS54 KLUB 020735 SVRLUB TXC017-279-020815- /O.NEW.KLUB.SV.W.0291.261102T0735Z-261102T0815Z/
+
+BULLETIN - IMMEDIATE BROADCAST REQUESTED Severe Thunderstorm Warning National Weather Service Lubbock TX 135 AM CST Mon Nov 2 2026
+
+The National Weather Service in Lubbock Texas has issued a
+
+* Severe Thunderstorm Warning for... Southern Bailey County in northwestern Texas... Western Lamb County in northwestern Texas...
+
+* Until 215 AM CST.
+
+* At 135 AM CST, a severe thunderstorm was located 6 miles northwest of Maple, or 17 miles northwest of Morton, moving northeast at 45 mph.
+
+HAZARD...60 mph wind gusts.
+
+SOURCE...Radar indicated.
+
+IMPACT...Expect damage to roofs, siding, and trees.
+
+* Locations impacted include... Earth, Sudan, Amherst, Needmore, Bula, Muleshoe Wildlife Refuge, Enochs, and Maple.
+
+PRECAUTIONARY/PREPAREDNESS ACTIONS...
+
+For your protection move to an interior room on the lowest floor of a building.
+
+A Tornado Watch remains in effect until 400 AM CST for northwestern Texas.
+
+&&
+
+LAT...LON 3405 10304 3431 10236 3431 10235 3390 10240 3383 10295 3383 10305 TIME...MOT...LOC 0735Z 245DEG 39KT 3393 10295
+
+HAIL THREAT...RADAR INDICATED MAX HAIL SIZE...<.75 IN WIND THREAT...RADAR INDICATED MAX WIND GUST...60 MPH
+
+$$

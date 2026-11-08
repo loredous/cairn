@@ -1,0 +1,73 @@
+FLUS41 KOKX 070703 HWOOKX
+
+Hazardous Weather Outlook National Weather Service New York NY 203 AM EST Sat Nov 7 2026
+
+CTZ005>012-NJZ002-004-006-103>108-NYZ067>075-078>081-176>179-080715- Northern Fairfield-Northern New Haven-Northern Middlesex- Northern New London-Southern Fairfield-Southern New Haven- Southern Middlesex-Southern New London-Western Passaic- Eastern Passaic-Hudson-Western Bergen-Eastern Bergen-Western Essex- Eastern Essex-Western Union-Eastern Union-Orange-Putnam-Rockland- Northern Westchester-Southern Westchester-New York (Manhattan)-Bronx- Richmond (Staten Island)-Kings (Brooklyn)-Northwest Suffolk- Northeast Suffolk-Southwest Suffolk-Southeast Suffolk- Northern Queens-Northern Nassau-Southern Queens-Southern Nassau- 203 AM EST Sat Nov 7 2026
+
+This Hazardous Weather Outlook is for southern Connecticut, northeast New Jersey and southeast New York.
+
+.DAY ONE...Today and tonight.
+
+No hazardous weather is expected at this time.
+
+.DAYS TWO THROUGH SEVEN...Sunday through Friday.
+
+No hazardous weather is expected at this time that would meet NWS warning criteria.
+
+.SPOTTER INFORMATION STATEMENT...
+
+Spotter activation is not expected at this time.
+
+&&
+
+This Hazardous Weather Outlook provides a summary of potential widespread hazardous weather events that may reach NWS warning criteria. Most long fused NWS watches, warnings, and advisories in effect are highlighted.
+
+Please refer to the latest NWS forecasts for weather not meeting NWS warning criteria.
+
+$$
+
+ANZ331-332-335-338-340-345-350-353-355-385-080715- Long Island Sound East of New Haven CT/Port Jefferson NY to the Mouth of the Connecticut River- Long Island Sound East of the Mouth of the Connecticut River- Long Island Sound West of New Haven CT/Port Jefferson NY- New York Harbor-Peconic and Gardiners Bays- South Shore Bays from Jones Inlet through Shinnecock Bay- Moriches Inlet NY to Montauk Point NY out 20 NM- Fire Island Inlet NY to Moriches Inlet NY out 20 NM- Sandy Hook NJ to Fire Island Inlet NY out 20 NM- Waters from Sandy Hook NJ to Fire Island Inlet NY from 20 to 60 nm- 203 AM EST Sat Nov 7 2026
+
+This Hazardous Weather Outlook is for Atlantic coastal waters.
+
+.DAY ONE...Today and tonight.
+
+No hazardous weather is expected at this time.
+
+.DAYS TWO THROUGH SEVEN...Sunday through Friday.
+
+No hazardous weather is expected at this time that would meet NWS warning criteria.
+
+.SPOTTER INFORMATION STATEMENT...
+
+Spotter activation is not expected at this time.
+
+&&
+
+This Hazardous Weather Outlook provides a summary of potential widespread hazardous weather events that may reach NWS warning criteria. Most long fused NWS watches, warnings, and advisories in effect are highlighted.
+
+Please refer to the latest NWS forecasts for weather not meeting NWS warning criteria.
+
+$$
+
+ANZ380-383-080715- Waters from Moriches Inlet NY to Montauk Point NY from 20 to 60 nm- Waters from Fire Island Inlet NY to Moriches Inlet NY from 20 to 60 nm- 203 AM EST Sat Nov 7 2026
+
+This Hazardous Weather Outlook is for Atlantic coastal waters.
+
+.DAY ONE...Today and tonight.
+
+A few possible gale force wind gusts tonight.
+
+.DAYS TWO THROUGH SEVEN...Sunday through Friday.
+
+A few possible gale force wind gusts Sunday.
+
+.SPOTTER INFORMATION STATEMENT...
+
+Spotter activation is not expected at this time.
+
+&&
+
+This Hazardous Weather Outlook provides a summary of potential widespread hazardous weather events that may reach NWS warning criteria. Most long fused NWS watches, warnings, and advisories in effect are highlighted.
+
+Please refer to the latest NWS forecasts for weather not meeting NWS warning criteria.

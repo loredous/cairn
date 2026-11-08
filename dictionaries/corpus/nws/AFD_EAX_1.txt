@@ -1,0 +1,33 @@
+FXUS63 KEAX 072319 AFDEAX
+
+Area Forecast Discussion National Weather Service Kansas City/Pleasant Hill MO 519 PM CST Sat Nov 7 2026
+
+.KEY MESSAGES...
+
+- Frost Advisory South of Interstate 70 Sunday Morning
+
+- Mostly Dry Through Middle of Week
+
+- Next Rain Chances Wednesday into Thursday
+
+&&
+
+.DISCUSSION... Issued at 134 PM CST Sat Nov 7 2026
+
+Surface anticyclone will keep conditions mild for the next few days across the lower Missouri River Valley, while the mid and upper- level pattern will have a weak northwesterly component to it. Clear skies and efficient radiational cooling may allow lows to dip into the lower 30s for areas south of Interstate 70 late tonight and early Sunday, leading to the potential for Frost Conditions. Therefore, have issued a Frost Advisory for this part of the forecast area for Sunday morning. A closed 500mb low moves into the southern Plains Sunday and Monday, while a 500mb ridge attempts to push northeastward into the Central and Eastern Plains. 850mb flow turns south-southwesterly with this feature, and will provide WAA into the region, which will push temperatures back into the 60s to start the next work week.
+
+By the middle of next week, several mid-level features develop. H5 ridge axis is progged to amplify across the western CONUS, while a short-trough with strong vort maxima moves downstream across the Intermountain West and heads toward the Central and Southern Plains. Another mid-level trough with strong vort maxima moves across the Canadian Prairie Provinces and heads for the Great Lakes Region. What remains uncertain at this point, is if these two trough axes will phase or not. Current guidance suggests that these two waves do not phase until after they are further east of our forecast area. So while a surface cyclone is expected to develop with stronger dCVA, a lot of the forcing is either too far south or too far northeast of the forecast, which would keep conditions mostly dry except for our southeastern zones. If the wave over the Intermountain West slows down, we may see more middle and upper-level support that would bring rain showers to central and eastern Missouri. For right now, slight chance POPs will be focused primarily south of Interstate 70 through the middle of this week. Toward the end of the work week, northwesterly flow will bring CAA, sending temperatures back in the mid 50s for highs.
+
+&&
+
+.AVIATION /00Z TAFS THROUGH 00Z MONDAY/... Issued at 513 PM CST Sat Nov 7 2026
+
+VFR prevailing through the early evening and overnight. An otherwise favorable environment for FG development may be inhibited by stronger sfc winds overnight, so expectation is that primary vis reductions will come from BR development between 8-13z. Confidence was not high enough for a direct mention in this TAF issuance for downtown terminals, but have included a TEMPO group at KSTJ, with the expectation that low- lying areas/river valleys will have the greatest probability to see impacts. Will have to monitor overnight trends to see exact impacts from BR/FG development. Otherwise, looking at a wind shift to the NW with a weak cold frontal passage between 15-19z tomorrow.
+
+&&
+
+.EAX WATCHES/WARNINGS/ADVISORIES... MO...Frost Advisory from midnight tonight to 8 AM CST Sunday for MOZ040-044>046-053-054. KS...Frost Advisory from midnight tonight to 8 AM CST Sunday for KSZ060.
+
+&&
+
+$$

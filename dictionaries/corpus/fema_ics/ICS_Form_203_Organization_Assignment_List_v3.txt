@@ -1,0 +1,179 @@
+ORGANIZATION ASSIGNMENT LIST (ICS 203) 1. Incident Name:
+
+2. Operational Period: Date From:
+
+Date To:
+
+Time From:
+
+Time To:
+
+3. Incident Commander(s) and Command Staff:
+
+7. Operations Section:
+
+IC/UCs
+
+Chief Deputy
+
+Deputy
+
+Staging Area
+
+Safety Officer
+
+Branch
+
+Public Info. Officer
+
+Branch Director
+
+Liaison Officer
+
+Deputy
+
+4. Agency/Organization Representatives: Agency/Organization
+
+Division/Group
+
+Name
+
+Division/Group Division/Group Division/Group Division/Group Branch Branch Director Deputy
+
+5. Planning Section:
+
+Division/Group
+
+Chief
+
+Division/Group
+
+Deputy
+
+Division/Group
+
+Resources Unit
+
+Division/Group
+
+Situation Unit
+
+Division/Group
+
+Documentation Unit
+
+Branch
+
+Demobilization Unit
+
+Branch Director
+
+Technical Specialists
+
+Deputy Division/Group Division/Group Division/Group
+
+6. Logistics Section:
+
+Division/Group
+
+Chief
+
+Division/Group
+
+Deputy
+
+Air Operations Branch
+
+Support Branch
+
+Air Ops Branch Dir.
+
+Director Supply Unit
+
+8. Finance/Administration Section:
+
+Facilities Unit Ground Support Unit
+
+Chief
+
+Service Branch
+
+Deputy
+
+Director
+
+Time Unit
+
+Communications Unit
+
+Procurement Unit
+
+Medical Unit
+
+Comp/Claims Unit
+
+Food Unit
+
+Cost Unit
+
+9. Prepared by: Name: ICS 203
+
+Position/Title: IAP Page ____
+
+Date/Time:
+
+Signature:
+
+ICS 203 Organization Assignment List Purpose. The Organization Assignment List (ICS 203) provides ICS personnel with information on the units that are currently activated and the names of personnel staffing each position/unit. It is used to complete the Incident Organization Chart (ICS 207) which is posted on the Incident Command Post display. An actual organization will be incident or event-specific. Not all positions need to be filled. Some blocks may contain more than one name. The size of the organization is dependent on the magnitude of the incident, and can be expanded or contracted as necessary. Preparation. The Resources Unit prepares and maintains this list under the direction of the Planning Section Chief. Complete only the blocks for the positions that are being used for the incident. If a trainee is assigned to a position, indicate this with a "T" in parentheses behind the name (e.g., "A. Smith (T)"). Distribution. The ICS 203 is duplicated and attached to the Incident Objectives (ICS 202) and given to all recipients as part of the Incident Action Plan (IAP). All completed original forms must be given to the Documentation Unit. Notes: * The ICS 203 serves as part of the IAP. * If needed, more than one name can be put in each block by inserting a slash. * If additional pages are needed, use a blank ICS 203 and repaginate as needed. * ICS allows for organizational flexibility, so the Intelligence/Investigations Function can be embedded in several different places within the organizational structure. Block Number
+
+Block Title
+
+Instructions
+
+Incident Name
+
+Enter the name assigned to the incident.
+
+Operational Period * Date and Time From * Date and Time To
+
+Enter the start date (month/day/year) and time (using the 24-hour clock) and end date and time for the operational period to which the form applies.
+
+Incident Commander(s) and Command Staff
+
+Enter the names of the Incident Commander(s) and Command Staff. Label Assistants to Command Staff as such (for example, "Assistant Safety Officer").
+
+* * * * *
+
+IC/UCs Deputy Safety Officer Public Information Officer Liaison Officer
+
+Agency/Organization Representatives * Agency/Organization * Name
+
+Planning Section * Chief * Deputy * Resources Unit * Situation Unit * Documentation Unit * Demobilization Unit * Technical Specialists
+
+For all individuals, use at least the first initial and last name. For Unified Command, also include agency names.
+
+Enter the agency/organization names and the names of their representatives. For all individuals, use at least the first initial and last name. Enter the name of the Planning Section Chief, Deputy, and Unit Leaders after each position title. List Technical Specialists with an indication of specialty. If there is a shift change during the specified operational period, list both names, separated by a slash. For all individuals, use at least the first initial and last name.
+
+Block Number
+
+Block Title
+
+Instructions
+
+Logistics Section * Chief * Deputy Support Branch * Director * Supply Unit * Facilities Unit * Ground Support Unit Service Branch * Director * Communications Unit * Medical Unit * Food Unit Operations Section * Chief * Deputy * Staging Area Branch * Branch Director * Deputy * Division/Group Air Operations Branch * Air Operations Branch Director
+
+Enter the name of the Logistics Section Chief, Deputy, Branch Directors, and Unit Leaders after each position title.
+
+Finance/Administration Section * Chief * Deputy * Time Unit * Procurement Unit * Compensation/Claims Unit * Cost Unit
+
+Enter the name of the Finance/Administration Section Chief, Deputy, and Unit Leaders after each position title.
+
+Prepared by * Name * Position/Title * Signature * Date/Time
+
+Enter the name, ICS position, and signature of the person preparing the form. Enter date (month/day/year) and time prepared (24-hour clock).
+
+If there is a shift change during the specified operational period, list both names, separated by a slash. For all individuals, use at least the first initial and last name.
+
+Enter the name of the Operations Section Chief, Deputy, Branch Director(s), Deputies, and personnel staffing each of the listed positions. For Divisions/Groups, enter the Division/Group identifier in the left column and the individual's name in the right column. Branches and Divisions/Groups may be named for functionality or by geography. For Divisions/Groups, indicate Division/Group Supervisor. Use an additional page if more than three Branches are activated. If there is a shift change during the specified operational period, list both names, separated by a slash. For all individuals, use at least the first initial and last name.
+
+If there is a shift change during the specified operational period, list both names, separated by a slash. For all individuals, use at least the first initial and last name.

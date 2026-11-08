@@ -1,0 +1,25 @@
+NOUS43 KEAX 041920 PNSEAX
+
+Public Information Statement National Weather Service Kansas City/Pleasant Hill MO 120 PM CST Wed Nov 04 2026
+
+...NWS Damage Survey for 11/03/2026 Randolph County Tornado...
+
+.Clark, MO (Southern Randolph County) Tornado...
+
+Rating: EF1 Estimated Peak Wind: 90 mph Path Length /statute/: 1.05 miles Path Width /maximum/: 50 yards Fatalities: 0 Injuries: 0
+
+Start Date: 11/03/2026 Start Time: 10:42 AM CST Start Location: 3 W Clark / Randolph County / MO Start Lat/Lon: 39.2815 / -92.4038
+
+End Date: 11/03/2026 End Time: 10:44 AM CDT End Location: 3 WNW Clark / Randolph County / MO End Lat/Lon: 39.296 / -92.3979
+
+Survey Summary: NWS Storm Survey found damage consistent with a brief tornado embedded within a small linear storm segment west of Clark, MO in rural southern Randolph County around 10:42 AM on November 3rd, 2026. The tornado began near the intersection of Route B and County Road 2690, moving to the north northeast where it damaged a farmstead along 2690, inflicting damage to trees, farm equipment, and farm outbuildings. The tornado ended near the intersection of County Roads 2690 and D234.
+
+&&
+
+EF Scale: The Enhanced Fujita Scale classifies tornadoes into the following categories:
+
+EF0.....65 to 85 mph EF1.....86 to 110 mph EF2.....111 to 135 mph EF3.....136 to 165 mph EF4.....166 to 200 mph EF5.....>200 mph
+
+NOTE: The information in this statement is preliminary and subject to change pending final review of the event and publication in NWS Storm Data.
+
+$$

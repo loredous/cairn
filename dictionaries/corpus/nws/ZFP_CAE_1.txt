@@ -1,0 +1,29 @@
+FPUS52 KCAE 080508 ZFPCAE
+
+Zone Forecast Product for Central South Carolina and East Central Georgia National Weather Service Columbia SC 1208 AM EST Sun Nov 8 2026
+
+GAZ063-081300- McDuffie- Including the city of Thomson 1208 AM EST Sun Nov 8 2026
+
+.REST OF TONIGHT...Mostly clear. Lows in the lower 40s. Light and variable winds. .SUNDAY...Mostly sunny. Highs in the lower 70s. Light and variable winds. .SUNDAY NIGHT...Mostly clear. Lows in the lower 40s. Light and variable winds, becoming west around 5 mph after midnight. .MONDAY...Sunny. Highs in the mid 70s. Light and variable winds. .MONDAY NIGHT...Clear. Lows around 40. Light and variable winds. .TUESDAY...Mostly sunny. Highs in the mid 70s. .TUESDAY NIGHT...Partly cloudy. Lows in the mid 40s. .VETERANS DAY...Mostly sunny. Highs in the lower 70s. .WEDNESDAY NIGHT...Partly cloudy. Lows in the upper 40s. .THURSDAY...Partly sunny. Highs around 70. .THURSDAY NIGHT...Partly cloudy. Lows in the lower 40s. .FRIDAY...Mostly sunny. Highs in the lower 60s. .FRIDAY NIGHT...Mostly clear. Lows in the mid 30s. .SATURDAY...Sunny. Highs around 60.
+
+$$
+
+GAZ040-081300- Lincoln- Including the city of Lincolnton 1208 AM EST Sun Nov 8 2026
+
+.REST OF TONIGHT...Mostly clear. Lows in the lower 40s. Northeast winds around 5 mph. .SUNDAY...Sunny. Highs in the lower 70s. Light and variable winds. .SUNDAY NIGHT...Mostly clear. Lows around 40. Light and variable winds, becoming west around 5 mph after midnight. .MONDAY...Sunny. Highs in the mid 70s. Light and variable winds. .MONDAY NIGHT...Clear. Lows in the lower 40s. Light and variable winds. .TUESDAY...Mostly sunny. Highs in the mid 70s. .TUESDAY NIGHT...Partly cloudy. Lows in the lower 40s. .VETERANS DAY...Mostly sunny. Highs in the mid 70s. .WEDNESDAY NIGHT...Partly cloudy. Lows in the mid 40s. .THURSDAY...Partly sunny. Highs around 70. .THURSDAY NIGHT...Partly cloudy. Lows in the lower 40s. .FRIDAY...Mostly sunny. Highs in the lower 60s. .FRIDAY NIGHT...Mostly clear. Lows in the mid 30s. .SATURDAY...Sunny. Highs in the lower 60s.
+
+$$
+
+GAZ065-081300- Richmond- Including the city of Augusta 1208 AM EST Sun Nov 8 2026
+
+.REST OF TONIGHT...Mostly clear. Lows in the mid 40s. Northeast winds around 5 mph. .SUNDAY...Mostly sunny. Highs in the lower 70s. East winds around 5 mph in the morning, becoming light and variable. .SUNDAY NIGHT...Mostly clear. Lows in the lower 40s. Light and variable winds, becoming west around 5 mph after midnight. .MONDAY...Sunny. Highs in the mid 70s. West winds around 5 mph. .MONDAY NIGHT...Clear. Lows in the lower 40s. Light and variable winds. .TUESDAY...Mostly sunny. Highs in the mid 70s. .TUESDAY NIGHT...Partly cloudy. Lows in the mid 40s. .VETERANS DAY...Mostly sunny. Highs in the mid 70s. .WEDNESDAY NIGHT...Partly cloudy. Lows in the upper 40s. .THURSDAY...Partly sunny. A chance of rain in the afternoon. Highs in the lower 70s. Chance of rain 30 percent. .THURSDAY NIGHT...Partly cloudy. Lows in the mid 40s. .FRIDAY...Mostly sunny. Highs in the lower 60s. .FRIDAY NIGHT...Mostly clear. Lows in the mid 30s. .SATURDAY...Sunny. Highs around 60.
+
+$$
+
+GAZ064-081300- Columbia- Including the cities of Martinez and Evans 1208 AM EST Sun Nov 8 2026
+
+.REST OF TONIGHT...Mostly clear. Lows in the mid 40s. Northeast winds around 5 mph. .SUNDAY...Sunny. Highs around 70. East winds around 5 mph in the morning, becoming light and variable. .SUNDAY NIGHT...Mostly clear. Lows in the lower 40s. Light and variable winds, becoming west around 5 mph after midnight. .MONDAY...Sunny. Highs in the mid 70s. West winds around 5 mph in the morning, becoming light and variable. .MONDAY NIGHT...Clear. Lows in the lower 40s. Light and variable winds. .TUESDAY...Mostly sunny. Highs in the mid 70s. .TUESDAY NIGHT...Partly cloudy. Lows in the mid 40s. .VETERANS DAY...Mostly sunny. Highs in the mid 70s. .WEDNESDAY NIGHT...Partly cloudy. Lows in the upper 40s. .THURSDAY...Partly sunny. Highs in the lower 70s. .THURSDAY NIGHT...Partly cloudy. Lows in the lower 40s. .FRIDAY...Mostly sunny. Highs in the lower 60s. .FRIDAY NIGHT...Mostly clear. Lows in the mid 30s. .SATURDAY...Sunny. Highs around 60.
+
+$$
+
+GAZ077-081300- Burke- Including the city of Waynesboro 1208 AM EST Sun Nov 8 2026

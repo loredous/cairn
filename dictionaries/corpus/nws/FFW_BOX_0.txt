@@ -1,0 +1,35 @@
+WGUS51 KBOX 070154 FFWBOX MAC005-023-070430- /O.NEW.KBOX.FF.W.0015.261107T0154Z-261107T0430Z/ /00000.0.ER.000000T0000Z.000000T0000Z.000000T0000Z.OO/
+
+BULLETIN - EAS ACTIVATION REQUESTED Flash Flood Warning National Weather Service Boston/Norton MA 854 PM EST Fri Nov 6 2026
+
+The National Weather Service in Norton has issued a
+
+* Flash Flood Warning for... Southeastern Bristol County in southeastern Massachusetts... Southern Plymouth County in southeastern Massachusetts...
+
+* Until 1130 PM EST.
+
+* At 854 PM EST, Doppler radar indicated thunderstorms producing heavy rain across the warned area. Between 1.5 and 2.5 inches of rain have fallen. Additional rainfall amounts of 1 to 2.5 inches are possible in the warned area. Flash flooding is ongoing or expected to begin shortly.
+
+HAZARD...Flash flooding caused by thunderstorms.
+
+SOURCE...Radar indicated.
+
+IMPACT...Flash flooding of small creeks and streams, urban areas, highways, streets and underpasses as well as other poor drainage and low-lying areas.
+
+* Some locations that will experience flash flooding include... New Bedford, Fall River, Plymouth, Dartmouth, Marion, Middleborough, Wareham, Bourne, Fairhaven, Westport, Carver, Lakeville, Acushnet, Freetown, Mattapoisett and Rochester.
+
+PRECAUTIONARY/PREPAREDNESS ACTIONS...
+
+Turn around, don't drown when encountering flooded roads. Most flood deaths occur in vehicles.
+
+Be especially cautious at night when it is harder to recognize the dangers of flooding.
+
+Be aware of your surroundings and do not drive on flooded roads.
+
+&&
+
+LAT...LON 4176 7107 4181 7093 4190 7066 4184 7053 4178 7060 4177 7063 4176 7063 4177 7062 4176 7062 4177 7061 4176 7061 4160 7079 4153 7103
+
+FLASH FLOOD...RADAR INDICATED
+
+$$

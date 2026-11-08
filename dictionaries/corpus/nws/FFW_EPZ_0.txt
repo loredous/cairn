@@ -1,0 +1,31 @@
+WGUS54 KEPZ 012058 FFWEPZ NMC017-020300- /O.NEW.KEPZ.FF.W.0257.261101T2058Z-261102T0300Z/ /00000.0.ER.000000T0000Z.000000T0000Z.000000T0000Z.OO/
+
+BULLETIN - EAS ACTIVATION REQUESTED Flash Flood Warning National Weather Service El Paso Tx/Santa Teresa NM 158 PM MST Sun Nov 1 2026
+
+The National Weather Service in El Paso Tx/Santa Teresa has issued a
+
+* Flash Flood Warning for... Northwestern Grant County in southwestern New Mexico...
+
+* Until 800 PM MST Sunday.
+
+* At 158 PM MST, Doppler radar and automated rain gauges indicated thunderstorms producing heavy rain across the warned area. Between 0.5 and 1 inch of rain has fallen. Additional rainfall amounts of 1 to 1.5 inches are possible in the warned area. Flash flooding is ongoing or expected to begin shortly.
+
+HAZARD...Flash flooding caused by thunderstorms.
+
+SOURCE...Radar and automated gauges.
+
+IMPACT...Flash flooding of small creeks and streams, urban areas, highways, streets and underpasses as well as other poor drainage and low-lying areas.
+
+* Some locations that will experience flash flooding include... Mule Creek and Buckhorn.
+
+PRECAUTIONARY/PREPAREDNESS ACTIONS...
+
+Turn around, don't drown when encountering flooded roads. Most flood deaths occur in vehicles.
+
+&&
+
+LAT...LON 3320 10850 3278 10885 3278 10905 3321 10905 3321 10854
+
+FLASH FLOOD...RADAR AND GAUGE INDICATED
+
+$$

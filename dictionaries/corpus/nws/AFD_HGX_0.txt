@@ -1,0 +1,55 @@
+FXUS64 KHGX 080517 AFDHGX
+
+Area Forecast Discussion National Weather Service Houston/Galveston TX 1117 PM CST Sat Nov 7 2026
+
+...New AVIATION...
+
+.KEY MESSAGES...
+
+- Light showers possible tonight and tomorrow, mainly west of I-45.
+
+- Increasing east and northeast winds and building seas tonight into Sunday across the marine areas.
+
+- Cooler weather possible by the end of the week.
+
+&&
+
+.DISCUSSION... Issued at 453 PM CST Sat Nov 7 2026
+
+It is a comfortable Saturday afternoon with temperatures running in the 70s to low 80s, light northeast to east winds and low humidity. Per visible satellite imagery we can see mid to high clouds migrating east into our region, with broken to overcast coverage likely reaching our region from the southwest late this afternoon/early evening. Increased cloud cover is associated to a developing coastal trough along the middle/lower TX coast and vorticity maxima associated to an approaching upper low currently centered over Baja California/northwest Mexico. As the upper low moves east-northeast across Texas and interacts with the surface trough, rain chances will be on the increase, particularly for central and south Texas. Forecast soundings show a gradual increase in low to mid level moisture from the southwest later tonight into Sunday, resulting in increasing rain chances. The main question remains how far east these showers will reach the region. As of now, better forcing and moisture look to remain confined to areas along and west of I-45, particularly for our southwestern counties. Latest Hi-res guidance keeps this trend, with the RRFS solutions even drier than the HRRR, suggesting showers as early as 6 am Sunday. The HRRR brings some light activity overnight. Overall, expect rain showers, moderate at times for areas west of I-10 through the day, with the best chances in our southwestern counties. Continued chances for very light rain/sprinkles (10-20%)will persist for areas east of I- 45 through early evening.
+
+Clouds and light rain chances will continue in the forecast for Monday and Tuesday as the aforementioned upper low moves across TX. Again, best rain chances will remain roughly for our western areas and south of I-10. Lingering impulses of energy and surface convergence associated with an approaching cold front will result in increasing rain and thunderstorm chances by midweek. In the wake of the front, Mid to upper ridge builds in, leading to drier conditions through the weekend. Medium range guidance brings a surge of cooler air due to a deepening low over the northeastern CONUS during this time-frame. GFS/ECMWF show 850mb temperatures dropping into the 5 to 10C Friday into the weekend, especially for our northeastern counties. Confidence in how far south this cooler airmass will sink up remains low to moderate. For now, will keep temperatures as NBM suggests with highs in the low 70s and lows in the 40s and low 50s (Houston metro and coast). Will continue to monitor temperatures and adjust accordingly in the coming days.
+
+JM
+
+&&
+
+.AVIATION... (06Z TAF Issuance) Issued at 1113 PM CST Sat Nov 7 2026
+
+Since the previous update, environmental and model data trends are suggesting a somewhat more moist atmosphere than earlier expected. Widespread SHRA in central TX is slowly drifting in our direction tonight. It will encounter some dry air, but perhaps a little less than previous forecasted. For now, we've added VCSH to the CLL TAF, while adding PROB30s for -SHRA for CLL, IAH, HOU, and SGR. Any rain should be light. But we cannot rule out cig/vis drops in any -SHRA. We'll watch data trends closely, making amendments when warranted.
+
+&&
+
+.MARINE... Issued at 453 PM CST Sat Nov 7 2026
+
+A coastal trough developing off the lower and middle Texas coast will result in moderate east to northeast winds this afternoon and evening. Winds are expected to reach Advisory level overnight into late Sunday, with seas up to 5 to 6 ft. A Small Craft Advisory is in effect from midnight through late Sunday for all waters and Matagorda Bay. Winds over Galveston Bay will remain a tad below criteria, but will continue to monitor trends later tonight for a possible inclusion to the Advisory. Light to moderate northeast winds can be expected on Monday, becoming light and from the ESE, through midweek. Light to moderate offshore flow returns Thursday with the next FROPA.
+
+JM
+
+&&
+
+.PRELIMINARY POINT TEMPS/POPS... College Station (CLL) 76 57 66 55 / 10 30 50 20 Houston (IAH) 80 59 69 58 / 0 10 30 30 Galveston (GLS) 77 66 71 64 / 0 0 20 10
+
+&&
+
+.HGX WATCHES/WARNINGS/ADVISORIES... TX...None. GM...Small Craft Advisory from 6 AM Sunday to midnight CST Sunday night for GMZ330.
+
+Small Craft Should Exercise Caution until midnight CST tonight for GMZ350-355-370-375.
+
+Small Craft Advisory until midnight CST Sunday night for GMZ350- 370.
+
+Small Craft Advisory until noon CST Sunday for GMZ355-375.
+
+&&
+
+$$

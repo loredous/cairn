@@ -1,0 +1,51 @@
+FXUS63 KMKX 072011 AFDMKX
+
+Area Forecast Discussion National Weather Service Milwaukee/Sullivan WI 211 PM CST Sat Nov 7 2026
+
+.KEY MESSAGES...
+
+- Near normal temperatures today will return to above normal for Sunday through Tuesday. Generally dry conditions are expected, with perhaps some fog development into early Sunday morning.
+
+- A colder airmass may return to the region later next week.
+
+- Potential for lake effect rain showers with some snowflakes mixing in late next week.
+
+&&
+
+.SHORT TERM... Issued 210 PM CST Sat Nov 7 2026
+
+Tonight through Sunday night:
+
+Increasing southwesterly winds late this evening through tonight as low pressure swings through the southern Canadian Prairies into Ontario. Increasing dewpoint temperatures may allow for some weak advection fog into the early morning hours Sunday. Upstream in Iowa under a similar advection regime, patchy dense fog has been observed through this afternoon. Expect any fog development to scour out and evaporate into the mid-morning hours as winds become gusty and northwesterly as a cold front from Ontario's low moves through after sunrise.
+
+Expecting highs around 60 degrees to continue Sunday, with northwesterly winds bringing in temperatures back down into the 50s during the afternoon and evening, with lows in the low 30s across much of the area. With Lake Michigan remaining warm, lakeshore areas will see lows in the upper 30s to low 40s.
+
+MH
+
+&&
+
+.LONG TERM... Issued 210 PM CST Sat Nov 7 2026
+
+Monday through Saturday:
+
+High pressure gradually sinks builds across the Lower Mississippi Valley on Monday, turning winds southwesterly and bringing a return to highs around 60 degrees. A strong 500 mb shortwave moving through central Ontario will allow for winds to remain gusty into the evening hours before diminishing. A weak cold front will follow, bringing northwest winds on Tuesday. Still anticipating temperatures around 60 degrees Tuesday afternoon before reinforcing cold high pressure builds in Tuesday evening.
+
+Wednesday, another shortwave propagating through the mean flow aloft looks to move southeastward through the Canadian Prairies/northern Plains and bring a few chances for rain showers (15-20%) as well as highs in the low 50s with plenty of cloud cover. With this less intense shortwave, model uncertainty with placement remains. Euro is the outlier at this time, showing a phasing, deepening system across Illinois as the shortwave swings farther south and interacts with warm, moist air from the Gulf, while GFS/Canadian indicate a weaker system blending into the larger semi-stationary low over the Canadian Maritimes. Kept NBM PoPs for this run due to this uncertainty, but confidence in some kind of scattered showers is increasing.
+
+Moving into Thursday, models have converged on a period of north to northeast flow, bringing large fetch and lake effect showers from Lake Michigan throughout the day through the overnight hours and perhaps as late as Friday night before winds shift north to northwest and bring an end to precipitation. With Lake Michigan water temperatures still in the 50s and inland temperatures falling into the mid to low 30s inland, a mix of rain and snow is possible. At this time, not anticipating a transition to pure snow, but colder trends will be monitored. Duration of lake effect precipitation and cold air potential will be dependent on the depth and placement of a developing Nor'easter along the Atlantic coastal states, with a stronger, farther north solution being the best for longer duration fetch through Friday night. Outside of lake effect regions, expect dry and cloudy conditions Thursday and Friday with highs in the mid-40s and lows around 30 degrees.
+
+High pressure returns for Saturday, with northwest winds and plenty of sunshine. Expect highs around 50 degrees.
+
+MH
+
+&&
+
+.AVIATION... Issued 210 PM CST Sat Nov 7 2026
+
+VFR conditions expected to dominate through the TAF period, with southwest winds becoming steady this afternoon and increasing through the overnight hours. Patchy fog may develop in south- central Wisconsin early Sunday morning as a more moist airmass moves in, but not expecting dense fog at this time. Winds shift to northwesterly as a cold front moves in mid-morning, with gusts around 20 kt expected through the remainder of the day. Winds will gradually diminish into the overnight hours Sunday.
+
+MH
+
+&&
+
+.MARINE... Issued 210 PM CST Sat Nov 7 2026

@@ -1,0 +1,29 @@
+FXUS62 KCAE 071915 AFDCAE
+
+Area Forecast Discussion National Weather Service Columbia SC 215 PM EST Sat Nov 7 2026
+
+.WHAT HAS CHANGED... Some areas of dense fog will linger through sunrise in the southern Midlands. Aviation discussion updated for the 18z TAF issuance.
+
+&&
+
+.KEY MESSAGES... - 1. Seasonable temperatures and dry conditions are expected this weekend and into mid next week.
+
+&&
+
+.DISCUSSION... Key Message 1: Seasonable temperatures and dry conditions are expected this weekend and into next week.
+
+Expansive high pressure will build across the FA this weekend behind the departing cold front. Cool, dry air will drop low temperatures into 40s tonight and Sunday night. Some patchy fog may develop in sheltered locations Sunday morning due to lingering low-level moisture, though widespread fog is not anticipated. High temperatures will trend slightly cooler but remain near climatological normals for this time of year. As the surface high gradually shifts southward, light southerly flow will allow temperatures to gradually rebound through the middle of next week, with widespread highs in the mid to upper 70s and overnight lows in the 40s. Attention will then turn to a complex trough digging across the eastern US late this week and cooler temps to follow behind it. While recent runs of the deterministic GFS have trended more aggressive with multiple shortwaves phasing, the amplitude of the trough has remained tempered in recent ECMWF, GEM, and ensemble runs. While rainfall chances will increase on Thursday into early Friday with this system, significant rainfall is not expected at this time. &&
+
+.AVIATION /19Z SATURDAY THROUGH THURSDAY/... Fog-stratus likely through 14z with associated restrictions, VFR expected Saturday morning onward.
+
+A reinforcing front is moving through the region, with some low level moisture remaining in place ahead of and directly proceeding. As a result, some stratus and fog is occurring, bringing some IFR-MVFR restrictions to AIK, DNL, AGS, and OGB; based on satellite, the restrictions are fairly patchy so a tempo should cover the impacts. These will continue through 13z or so before quick improvement to VFR the remainder of the TAF period. Some borderline LLWS is also expected along this front, but should remain below TAF criteria with 20-25 knots of LLWS. After 13z or so, all sites will remain VFR through the period with north- northeast winds today up to 10 knots.
+
+EXTENDED AVIATION OUTLOOK...Dry air will likely prevent widespread restrictions through the extended.
+
+&&
+
+.CAE WATCHES/WARNINGS/ADVISORIES... SC...None. GA...None.
+
+&&
+
+$$

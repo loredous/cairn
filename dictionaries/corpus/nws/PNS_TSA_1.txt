@@ -1,0 +1,35 @@
+NOUS44 KTSA 032225 PNSTSA ARZ001-002-010-011-119-120-129-219-220-229-OKZ049-053-055>071- 073>075-154-172-176-254-272-276-354-376-041030-
+
+Public Information Statement National Weather Service Tulsa OK 425 PM CST Tue Nov 3 2026
+
+...NWS Damage Survey for 11/02-03/2026 Tornado Event...
+
+.TALALA OKLAHOMA TORNADO...
+
+Rating: EF0 Estimated Peak Wind: 80 to 85 mph Path Length /statute/: 2.7 miles Path Width /maximum/: 275 yards Fatalities: 0 Injuries: 0
+
+Start Date: 11/02/2026 Start Time: 11:16 PM CST Start Location: 4 NW Oologah / Rogers County / OK Start Lat/Lon: 36.484 / -95.764
+
+End Date: 11/02/2026 End Time: 11:20 PM CST End Location: 2 WSW Talala / Rogers County / OK End Lat/Lon: 36.516 / -95.735
+
+Survey Summary: This tornado developed south of Big Sky Lane and east of the S 4060 Road. It moved northeast, crossing Big Sky Lane and the E 360 Road, snapping numerous large tree limbs before moving into open terrain. The tornado dissipated south of the E 340 Road. It produced a tornadic debris signature from the KINX WSR-88D radar, and was likely more intense north of the E 360 Road (based on radar data), but any damage in that part of the path was inaccessible by road, and therefore, couldn't be assessed.
+
+.ADAIR OKLAHOMA TORNADO...
+
+Rating: EF1 Estimated Peak Wind: 95 to 105 mph Path Length /statute/: 3.1 miles Path Width /maximum/: 500 yards Fatalities: 0 Injuries: 0
+
+Start Date: 11/03/2026 Start Time: 01:10 AM CST Start Location: 1 NE Adair / Mayes County / OK Start Lat/Lon: 36.449 / -95.248
+
+End Date: 11/03/2026 End Time: 01:14 AM CST End Location: 3 SSW Big Cabin / Mayes County / OK End Lat/Lon: 36.494 / -95.236
+
+Survey Summary: This tornado developed south of the E 390 Road and east of the N 435 Road. It moved north-northeast across the E 390 Road, where numerous trees were uprooted, and a home and outbuilding were damaged. The tornado then moved through open terrain that was inaccessible by road for about a mile and a half. It then snapped several power poles south of the E 370 Road, uprooted trees along the E 370 Road and S 4360 Road, and dissipated south of the E 360 Road. The tornado produced a tornadic debris signature from the KINX WSR-88D.
+
+&&
+
+EF Scale: The Enhanced Fujita Scale classifies tornadoes into the following categories:
+
+EF0.....65 to 85 mph EF1.....86 to 110 mph EF2.....111 to 135 mph EF3.....136 to 165 mph EF4.....166 to 200 mph EF5.....>200 mph
+
+NOTE: The information in this statement is preliminary and subject to change pending final review of the events and publication in NWS Storm Data.
+
+$$

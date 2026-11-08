@@ -1,0 +1,29 @@
+WWUS86 KHNX 011012 SPSHNX
+
+Special Weather Statement National Weather Service Hanford CA 212 AM PST Sun Nov 1 2026
+
+CAZ317-318-011045- Mariposa-Madera Lower Sierra CA-Mariposa Madera Foothills CA- 212 AM PST Sun Nov 1 2026
+
+...A STRONG THUNDERSTORM WILL IMPACT SOUTHEASTERN MARIPOSA AND CENTRAL MADERA COUNTIES UNTIL 245 AM PST...
+
+At 212 AM PST, Doppler radar was tracking a strong thunderstorm 5 miles south of Yosemite Lakes, or 20 miles north of Clovis, moving northeast at 30 mph.
+
+HAZARD...Pea size hail.
+
+SOURCE...Radar indicated.
+
+IMPACT...Minor damage to outdoor objects is possible.
+
+Locations impacted include... Oakhurst, Yosemite Lakes, Coarsegold, Bass Lake Ranger District, Bass Lake, Crane Valley Reservoir, Batterson and Ahwahnee.
+
+PRECAUTIONARY/PREPAREDNESS ACTIONS...
+
+Monitor the weather situation closely and be alert for threatening weather conditions.
+
+&&
+
+LAT...LON 3712 11989 3743 11970 3733 11947 3732 11948 3732 11947 3731 11948 3731 11945 3702 11969 3703 11972 3704 11971 3705 11972 3704 11972 3705 11973 3704 11973 TIME...MOT...LOC 1011Z 210DEG 24KT 3711 11977
+
+MAX HAIL SIZE...0.25 IN MAX WIND GUST...<30 MPH
+
+$$

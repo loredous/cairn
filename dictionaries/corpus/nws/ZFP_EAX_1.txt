@@ -1,0 +1,29 @@
+FPUS53 KEAX 071827 ZFPEAX
+
+Zone Forecast National Weather Service Kansas City/Pleasant Hill MO 1227 PM CST Sat Nov 7 2026
+
+KSZ103>105-MOZ028-029-037-080200- Leavenworth-Wyandotte-Johnson KS-Platte-Clay-Jackson- Including the cities of Fort Leavenworth, Leavenworth, Lansing, Kansas City Kansas, Overland Park, Stanley, Olathe, Shawnee, Lenexa, Parkville, Platte City, Riverside, Weatherby Lake, Weston, Gladstone, Liberty, Excelsior Springs, Kearney, Kansas City, and Independence 1227 PM CST Sat Nov 7 2026
+
+.THIS AFTERNOON...Mostly sunny. Highs in the mid 50s. Southwest winds around 5 mph. .TONIGHT...Clear. Lows in the upper 30s. Southwest winds around 5 mph. .SUNDAY...Sunny. Highs in the mid 60s. West winds around 5 mph. .SUNDAY NIGHT...Mostly clear in the evening, then becoming partly cloudy. Lows in the lower 40s. Light and variable winds, becoming south around 5 mph after midnight. .MONDAY...Sunny. Highs in the upper 60s. Southwest winds 5 to 10 mph. .MONDAY NIGHT AND TUESDAY...Clear. Lows in the upper 40s. Highs in the upper 60s. .TUESDAY NIGHT...Mostly clear. Lows in the upper 40s. .VETERANS DAY AND WEDNESDAY NIGHT...Partly cloudy. Highs in the mid 60s. Lows in the lower 40s. .THURSDAY...Mostly sunny. Highs in the mid 50s. .THURSDAY NIGHT AND FRIDAY...Mostly clear. Lows in the mid 30s. Highs in the mid 50s.
+
+$$
+
+KSZ057-060-MOZ043-053-080200- Miami-Linn KS-Cass-Bates- Including the cities of Paola, Osawatomie, Louisburg, Pleasanton, La Cygne, Mound City, Belton, Raymore, Harrisonville, Pleasant Hill, Butler, Adrian, and Rich Hill 1227 PM CST Sat Nov 7 2026
+
+.THIS AFTERNOON...Partly sunny. Highs in the mid 50s. Southwest winds around 5 mph. .TONIGHT...Mostly clear. Patchy frost after midnight. Lows in the upper 30s. Southwest winds around 5 mph. .SUNDAY...Sunny, warmer with highs in the upper 60s. West winds around 5 mph. .SUNDAY NIGHT...Mostly clear in the evening, then becoming partly cloudy. Lows in the lower 40s. Light and variable winds. .MONDAY...Sunny. Highs around 70. Southwest winds 5 to 10 mph. .MONDAY NIGHT AND TUESDAY...Clear. Lows in the mid 40s. Highs in the lower 70s. .TUESDAY NIGHT...Mostly clear. Lows around 50. .VETERANS DAY AND WEDNESDAY NIGHT...Partly cloudy. Highs in the upper 60s. Lows in the lower 40s. .THURSDAY THROUGH FRIDAY...Mostly clear. Highs in the upper 50s. Lows in the mid 30s.
+
+$$
+
+MOZ044-045-054-080200- Johnson MO-Pettis-Henry- Including the cities of Warrensburg, Sedalia, Clinton, and Windsor 1227 PM CST Sat Nov 7 2026
+
+.THIS AFTERNOON...Partly sunny. Near steady temperature in the lower 50s. Southwest winds around 5 mph. .TONIGHT...Mostly clear. Patchy frost after midnight. Lows in the mid 30s. Light and variable winds, becoming southwest around 5 mph after midnight. .SUNDAY...Sunny. Not as cool with highs in the mid 60s. West winds around 5 mph. .SUNDAY NIGHT...Mostly clear in the evening, then becoming partly cloudy. Lows around 40. Light and variable winds. .MONDAY...Sunny. Highs in the upper 60s. Southwest winds 5 to 10 mph. .MONDAY NIGHT...Clear. Lows in the mid 40s. .TUESDAY AND TUESDAY NIGHT...Mostly clear. Highs in the upper 60s. Lows in the upper 40s. .VETERANS DAY AND WEDNESDAY NIGHT...Partly cloudy. Highs in the mid 60s. Lows in the lower 40s. .THURSDAY...Mostly sunny. Cooler with highs in the mid 50s. .THURSDAY NIGHT AND FRIDAY...Mostly clear. Lows in the mid 30s. Highs in the mid 50s.
+
+$$
+
+MOZ030-031-038-039-080200- Ray-Carroll-Lafayette-Saline- Including the cities of Richmond, Lawson, Carrollton, Odessa, Higginsville, Lexington, Concordia, and Marshall 1227 PM CST Sat Nov 7 2026
+
+.THIS AFTERNOON...Partly sunny. Highs in the lower 50s. Southwest winds around 5 mph. .TONIGHT...Mostly clear. Patchy frost after midnight. Lows in the mid 30s. Southwest winds around 5 mph. .SUNDAY...Sunny. Highs in the lower 60s. West winds around 5 mph. .SUNDAY NIGHT...Mostly clear in the evening, then becoming partly cloudy. Lows in the upper 30s. Light and variable winds. .MONDAY...Sunny. Highs in the mid 60s. Southwest winds 5 to 10 mph. .MONDAY NIGHT...Clear. Lows in the mid 40s. .TUESDAY AND TUESDAY NIGHT...Mostly clear. Highs in the upper 60s. Lows in the mid 40s. .VETERANS DAY AND WEDNESDAY NIGHT...Partly cloudy. Highs in the lower 60s. Lows in the lower 40s. .THURSDAY...Mostly sunny. Cooler with highs in the lower 50s. .THURSDAY NIGHT AND FRIDAY...Mostly clear. Lows in the lower 30s. Highs in the lower 50s.
+
+$$
+
+KSZ025-102-MOZ012-013-020-021-080200- Atchison KS-Doniphan-Andrew-De Kalb-Buchanan-Clinton- Including the cities of Atchison, Wathena, Elwood, Troy, Highland, Savannah, Country Club Villa, Maysville, Stewartsville, Osborn, Union Star, Clarksdale, St. Joseph Airport, St. Joseph, Cameron, Plattsburg, and Lathrop 1227 PM CST Sat Nov 7 2026

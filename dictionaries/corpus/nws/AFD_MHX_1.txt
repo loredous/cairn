@@ -1,0 +1,41 @@
+FXUS62 KMHX 072312 AFDMHX
+
+Area Forecast Discussion National Weather Service Newport/Morehead City NC 612 PM EST Sat Nov 7 2026
+
+.WHAT HAS CHANGED... Small Craft Advisories issued through this evening.
+
+Decreased temperatures Monday night
+
+&&
+
+.KEY MESSAGES... 1) Cooler, drier, and more seasonable behind the frontal passage this weekend.
+
+&&
+
+.DISCUSSION... KEY MESSAGE 1...Seasonably dry and temperature airmass (perhaps a couple degrees below normal) is being ushered in behind this morning's cold front as it pushes further offshore. In the near term, low stratus will continue dissipating, leading to clear skies this evening. The high will become the dominant weather feature for the weekend and much of next week. Cooler temperatures with highs in the 60s prevail today and tomorrow before a slight warm-up next week into the low 70s, although humidity will remain low. We will have to watch for the risk of some frost over the upcoming nights, although chances have decreased for tonight and Sunday night, and increased for Monday night. Tonight a mixture of high clouds and light winds should keep low temps around 40 inland. NBM had low temps in the mid to upper 30s, but this seems to be an erroneous bias correction as all other available guidance is not that low, and high clouds/light winds should prevent proper radiational cooling. Tomorrow night skies are clear, but light winds are still expected to continue, once again lessening radiational cooling. Monday night however, we have the high firmly overhead with clear skies and calm winds, paired with dewpoints in the 30s. This results in the best chance for frost concerns, and will have to be monitored in subsequent updates. Manually brought the temps down by blending in NBM/NBM10 for the typical radiational cooling areas in Carteret, Onslow, Jones, and Duplin counties, with minTs in the mid 30s Tuesday morning in those locations.
+
+Beyond mid-week most guidance depicts an increasingly unsettled pattern as complex mid-level low deepens over the eastern CONUS. There is at least some signal for a developing low off our coast beyond Wednesday, although its evolution and timing remain highly uncertain.
+
+Guidance is pretty locked in on unseasonable cold temperatures next weekend behind the low pressure system. While there is inherent uncertainty 7 days out, CPC does have a slight risk of much below normal temperatures for our coastal plain counties next weekend. This will be worth monitoring for any freeze headlines, as the end of the growing season is Nov 25 for our land forecast zones.
+
+&&
+
+.AVIATION /00Z SUNDAY THROUGH THURSDAY/... High confidence in VFR conditions through the period as high pressure expands over terminals from the west. Modest increase in cirri coverage expected overnight as a weak mid-level wave shifts across the region, otherwise skies will be primarily clear. NW winds will remain steady overnight as a secondary front crosses terminals, but winds should stay below 5 kt save for nearshore sites.
+
+Skies remain clear tomorrow with NW winds in the morning becoming variable and then more predominantly W to SW by late afternoon, although still remaining at 5 kt or less.
+
+Outlook: An extended period of VFR conditions is expected much drier airmass remains over the region.
+
+&&
+
+.MARINE... High is building in, with a surge in winds earlier this afternoon having since lessened. However, despite winds now below 25 knots, seas responded to the surge, and are now 5-7 ft for coastal waters north of Ocracoke Inlet. The seas should gradually subside with the winds now decreased, but there is uncertainty on how long it takes to do so. As a result, have issued a SCA until 3Z for the aforementioned coastal waters, but a cancellation or extension may be necessitated depending on observational trends. There is another surge in winds expected tonight as dry air advection moves through the region. However, at this point winds are expected to be below 25 knots with the surge. Lighter winds 5-15kts expected Sunday.
+
+Outlook (Sunday through Wednesday): Sunday night, another surge in winds is expected, but at this point should be sub-SCA in strength. High builds into next week, keeping winds below 20 kts and skies rain-free.
+
+&&
+
+.MHX WATCHES/WARNINGS/ADVISORIES... NC...None. MARINE...Small Craft Advisory until 10 PM EST this evening for AMZ150- 152-154.
+
+&&
+
+$$

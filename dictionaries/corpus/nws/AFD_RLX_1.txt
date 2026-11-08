@@ -1,0 +1,53 @@
+FXUS61 KRLX 072338 AFDRLX
+
+Area Forecast Discussion National Weather Service Charleston WV 638 PM EST Sat Nov 7 2026
+
+.WHAT HAS CHANGED... Pops were updated to account for current observations and trends. Some showers were prevalent in the northeast mountains where central guidance did not place any probability of precipitation there.
+
+18Z aviation discussion update.
+
+A Freeze Warning is still in effect from midnight tonight until 10AM Sunday morning. Additional frost/freeze headlines are possible again Monday morning.
+
+&&
+
+.KEY MESSAGES... 1) Mild and pleasant daytime temperatures and weather expected the next few days. Cold and chilly overnight lows will lead to areas of hard freeze or frost in the mornings.
+
+2) A late week disturbance will bring our next round of precipitation across the area.
+
+&&
+
+.DISCUSSION... KEY MESSAGE 1...
+
+High pressure continues to nudge in keeping our weather dry, albeit cloudy today, especially across the mountains where low clouds will linger through Sunday morning. High temperatures will be below normal today with the lowlands staying in the 40s to low 50s. The mountains will remain in the 30s and 40s. A warming trend starts tomorrow with 50s and 60s arriving across the area. This warming trend will continue through at least mid week.
+
+Overnight lows will be quite chilly and below normal the next few nights, especially tonight into Sunday morning. Lows tonight are projected to drop into the mid 20s to the mid 30s. Hard freeze and widespread frost is anticipated Sunday morning and again Monday morning, possibly even Tuesday morning due to these temperatures. As such, a freeze warning is in effect across our active growing season counties from midnight tonight until 10 AM Sunday morning. Additional headlines are possible for Monday morning.
+
+KEY MESSAGE 2...
+
+Dry weather is expected to last through at least Wednesday. A cold front moves into the area and stalls Wednesday night into Thursday. A large, amplified, upper-level disturbance moves through on Friday after small shortwave disturbances cross. These features are projected to bring active weather Thursday through Saturday. Mostly all rain is expected throughout the event, but some rain/snow mix maybe possible at times across the mountains Thursday night through Friday as colder temperatures move in. Models still diverge on a solution this far out so confidence is low.
+
+Strong, blustery northwesterly flow and subsequent colder air will move into the area Friday and Saturday with temperatures projected to be much below normal for next weekend.
+
+&&
+
+.AVIATION /00Z SUNDAY THROUGH THURSDAY/... As clouds clear out across the western terminals first, conditons will become VFR until some valley fog tonight in advance of decoupling wind and clear skies. The eastern terminals will be slow for the clouds to erode and lift out therefore have them under MVFR CIGs for tonight slightly longer than the western sites and along with some developing fog at EKN amid low stratus. Any fog lifts by 13Z and then mostly clear skies along with VFR conditions will prevail through the rest of the TAF period.
+
+FORECAST CONFIDENCE AND ALTERNATE SCENARIOS THROUGH 00Z MONDAY...
+
+FORECAST CONFIDENCE: Medium.
+
+ALTERNATE SCENARIOS: Timing and intensity of VIS restrictions will likely vary from the forecast.
+
+EXPERIMENTAL TABLE OF FLIGHT CATEGORY OBJECTIVELY SHOWS CONSISTENCY OF WFO FORECAST TO AVAILABLE MODEL INFORMATION: H = HIGH: TAF CONSISTENT WITH ALL MODELS OR ALL BUT ONE MODEL. M = MEDIUM: TAF HAS VARYING LEVEL OF CONSISTENCY WITH MODELS. L = LOW: TAF INCONSISTENT WITH ALL MODELS OR ALL BUT ONE MODEL.
+
+DATE SUN UTC 1HRLY 00 01 02 03 04 05 06 07 08 09 10 11 EST 1HRLY 19 20 21 22 23 00 01 02 03 04 05 06 CRW CONSISTENCY H M M M M M L L L L L L HTS CONSISTENCY H H H H H H M L L L L L BKW CONSISTENCY H H H H M M M M M M M L EKN CONSISTENCY H H H H H H H H H M L M PKB CONSISTENCY H M M H M H L L L L L L CKB CONSISTENCY H H H H H H H M M M L L
+
+AFTER 00Z MONDAY... IFR conditions possible in river valley fog each night through at least Tuesday.
+
+&&
+
+.RLX WATCHES/WARNINGS/ADVISORIES... WV...Freeze Warning from midnight tonight to 10 AM EST Sunday for WVZ005-006-013>015-024>027-033-034. OH...Freeze Warning from midnight tonight to 10 AM EST Sunday for OHZ087. KY...Freeze Warning from midnight tonight to 10 AM EST Sunday for KYZ101>103-105. VA...Freeze Warning from midnight tonight to 10 AM EST Sunday for VAZ003-004.
+
+&&
+
+$$

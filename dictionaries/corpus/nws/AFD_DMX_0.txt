@@ -1,0 +1,41 @@
+FXUS63 KDMX 080446 AFDDMX
+
+Area Forecast Discussion National Weather Service Des Moines IA 1046 PM CST Sat Nov 7 2026
+
+...Updated for the 06z Aviation Discussion...
+
+.KEY MESSAGES...
+
+- Clearer skies this afternoon with patchy fog developing overnight.
+
+- Above-average temperatures to start the week before a cooling trend mid-week.
+
+&&
+
+.SHORT TERM /THROUGH MONDAY/... Issued at 206 PM CST Sat Nov 7 2026
+
+A surface high-pressure center currently sitting over the Missouri/Illinois border is yielding southwesterly winds gusting to 15-20 mph alongside clear skies over much of the CWA. A stratus deck, which has now mostly dissipated, is keeping temperatures limited to the mid 40s for portions of central and south-central Iowa, meanwhile areas outside that region have climbed into the 50s. Patchy fog is expected to develop overnight again especially within the Iowa river valleys; surface winds of 5-10 mph should limit the fog from becoming widespread. Chances for fog developing nightly look to persist through the short term period.
+
+An upper-level shortwave trough advecting over northern Minnesota and Wisconsin will bring a cold front to the area late tonight. Ensemble guidance is confident that mid-level saturation associated with the frontal passage will be enough for high-based clouds to briefly blanket the region through late morning tomorrow.
+
+Above-average temperatures (mid-60s) will be seen on Monday as surface high-pressure continues to dominate the central and south- central US. The ECMWF Extreme Forecast Index (EFI) sits in the 50- 60% range, signaling a moderate departure from normal temperatures for this time of year. The warm-air advection associated with this warming trend will allow for breezy conditions on Monday as well.
+
+&&
+
+.LONG TERM /MONDAY NIGHT THROUGH SATURDAY/... Issued at 206 PM CST Sat Nov 7 2026
+
+Warmer temperatures only look to last through Tuesday as ensemble guidance signals a longwave trough expanding over the eastern US later this week. Surface low-pressure associated with this trough will shift winds to become northerly, and with that, ample cold-air advection. Nocturnal radiative cooling and relatively clear skies could allow overnight low temperatures for the second half of the week to fall below freezing. Much of the area is expected to remain dry through the week, but shortwaves associated with the changing weather pattern may induce periods of additional cloud cover and low chances for precipitation (10-20%).
+
+&&
+
+.AVIATION /06Z TAFS THROUGH 06Z MONDAY/... Issued at 1046 PM CST Sat Nov 7 2026
+
+VFR conditions to prevail through the end of this TAF period.Current satellite has high clouds moving through central Iowa tonight but they are expected to clear by daybreak. A wind shift is also expected to shift from the south-southwest to a north-northwest by daybreak. Winds will remain light overnight under 6 kts but may reach up to 10kts at KMCW and KALO tomorrow afternoon. A few localized spots across central Iowa have reported some light patchy fog and this may continue into the morning hours, primarily across traditional low-lying areas and river valleys; terminal impacts will remain low.
+
+&&
+
+.DMX WATCHES/WARNINGS/ADVISORIES... None.
+
+&&
+
+$$

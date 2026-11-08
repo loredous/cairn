@@ -1,0 +1,221 @@
+INCIDENT CHECK-IN LIST (ICS 211)
+
+1. Incident Name:
+
+2. Incident Number:
+
+3. Check-In Location (complete all that apply): Base
+
+Staging Area
+
+ICP
+
+Helibase
+
+Other
+
+4. Start Date/Time: Date: Time:
+
+Check-In Information (use reverse of form for remarks or comments) 5. List single resource personnel (overhead) byagency and name, OR list resources by thefollowing format:
+
+State
+
+Agency
+
+ICS 211
+
+Category
+
+Kind
+
+Type
+
+Resource Name or Identifier
+
+17. Prepared by: Name:
+
+6. Order Request #
+
+7. Date/Time Check-In
+
+8. Leader's Name
+
+9. Total Number of Personnel
+
+10. Incident Contact Information
+
+11. Home Unit or Agency
+
+ST or TF
+
+Position/Title:
+
+Signature:
+
+Date/Time:
+
+12. Departure Point,Date and Time
+
+13. Method of Travel
+
+14. Incident Assignment
+
+15. Other Qualifications
+
+16. Data Provided to Resources Unit
+
+ICS 211 Incident Check-In List Purpose. Personnel and equipment arriving at the incident can check in at various incident locations. Check-in consists of reporting specific information, which is recorded on the Check-In List (ICS 211). The ICS 211 serves several purposes, as it: (1) records arrival times at the incident of all overhead personnel and equipment, (2) records the initial location of personnel and equipment to facilitate subsequent assignments, and (3) supports demobilization by recording the home base, method of travel, etc., for resources checked in. Preparation. The ICS 211 is initiated at a number of incident locations including: Staging Areas, Base, and Incident Command Post (ICP). Preparation may be completed by: (1) overhead at these locations, who record the information and give it to the Resources Unit as soon as possible, (2) the Incident Communications Center Manager located in the Communications Center, who records the information and gives it to the Resources Unit as soon as possible, (3) a recorder from the Resources Unit during check-in to the ICP. As an option, the ICS 211 can be printed on colored paper to match the designated Resource Status Card (ICS 219) colors. The purpose of this is to aid the process of completing a large volume of ICS 219s. The ICS 219 colors are: *
+
+219-1: Header Card - Gray (used only as label cards for T-Card racks)
+
+*
+
+219-2: Crew/Team Card - Green
+
+*
+
+219-3: Engine Card - Rose
+
+*
+
+219-4: Helicopter Card - Blue
+
+*
+
+219-5: Personnel Card - White
+
+* 219-6: Fixed-Wing Card - Orange * 219-7: Equipment Card - Yellow * 219-8: Miscellaneous Equipment/Task Force Card - Tan * 219-10: Generic Card - Light Purple Distribution. ICS 211s, which are completed by personnel at the various check-in locations, are provided to the Resources Unit, Demobilization Unit, and Finance/Administration Section. The Resources Unit maintains a master list of all equipment and personnel that have reported to the incident. Notes: * Also available as 8 x 14 (legal size) or 11 x 17 chart. * Use reverse side of form for remarks or comments. * If additional pages are needed for any form page, use a blank ICS 211 and repaginate as needed. * Contact information for sender and receiver can be added for communications purposes to confirm resource orders. Refer to 213RR example (Appendix B) Block Number
+
+Block Title
+
+Instructions
+
+Incident Name
+
+Enter the name assigned to the incident.
+
+Incident Number
+
+Enter the number assigned to the incident.
+
+Check-In Location Base Staging Area ICP Helibase Other
+
+Check appropriate box and enter the check-in location for the incident. Indicate specific information regarding the locations under each checkbox. ICP is for Incident Command Post.
+
+Start Date/Time * Date * Time
+
+Enter the date (month/day/year) and time (using the 24-hour clock) that the form was started.
+
+Other may include...
+
+Block Number
+
+Block Title
+
+Instructions
+
+Check-In Information
+
+Self explanatory.
+
+List single resource personnel (overhead) by agency and name, OR list resources by the following format
+
+Enter the following information for resources: OPTIONAL: Indicate if resource is a single resource versus part of Strike Team or Task Force. Fields can be left blank if not necessary.
+
+*
+
+State
+
+Use this section to list the home State for the resource.
+
+*
+
+Agency
+
+Use this section to list agency name (or designator), and individual names for all single resource personnel (e.g., ORC, ARL, NYPD).
+
+*
+
+Category
+
+Use this section to list the resource category based on NIMS, discipline, or jurisdiction guidance.
+
+*
+
+Kind
+
+Use this section to list the resource kind based on NIMS, discipline, or jurisdiction guidance.
+
+*
+
+Type
+
+Use this section to list the resource type based on NIMS, discipline, or jurisdiction guidance.
+
+*
+
+Resource Name or Identifier
+
+Use this section to enter the resource name or unique identifier. If it is a Strike Team or a Task Force, list the unique Strike Team or Task Force identifier (if used) on a single line with the component resources of the Strike Team or Task Force listed on the following lines. For example, for an Engine Strike Team with the call sign "XLT459" show "XLT459" in this box and then in the next five rows, list the unique identifier for the five engines assigned to the Strike Team.
+
+*
+
+ST or TF
+
+Use ST or TF to indicate whether the resource is part of a Strike Team or Task Force. See above for additional instructions.
+
+Order Request #
+
+The order request number will be assigned by the agency dispatching resources or personnel to the incident. Use existing protocol as appropriate for the jurisdiction and/or discipline, since several incident numbers may be used for the same incident.
+
+Date/Time Check-In
+
+Enter date (month/day/year) and time of check-in (24-hour clock) to the incident.
+
+Leader's Name
+
+* * *
+
+Total Number of Personnel
+
+Enter total number of personnel associated with the resource. Include leaders.
+
+Incident Contact Information
+
+Enter available contact information (e.g., radio frequency, cell phone number, etc.) for the incident.
+
+Home Unit or Agency
+
+Enter the home unit or agency to which the resource or individual is normally assigned (may not be departure location).
+
+Departure Point, Date and Time
+
+Enter the location from which the resource or individual departed for this incident. Enter the departure time using the 24-hour clock.
+
+Method of Travel
+
+Enter the means of travel the individual used to bring himself/herself to the incident (e.g., bus, truck, engine, personal vehicle, etc.).
+
+Incident Assignment
+
+Enter the incident assignment at time of dispatch.
+
+Other Qualifications
+
+Enter additional duties (ICS positions) pertinent to the incident that the resource/individual is qualified to perform. Note that resources should not be reassigned on the incident without going through the established ordering process. This data may be useful when resources are demobilized and remobilized for another incident.
+
+For equipment, enter the operator's name. Enter the Strike Team or Task Force leader's name. Leave blank for single resource personnel (overhead).
+
+Block Number
+
+Block Title
+
+Instructions
+
+Data Provided to Resources Unit
+
+Enter the date and time that the information pertaining to that entry was transmitted to the Resources Unit, and the initials of the person who transmitted the information.
+
+Prepared by * Name * Position/Title * Signature * Date/Time
+
+Enter the name, ICS position/title, and signature of the person preparing the form. Enter date (month/day/year) and time prepared (24-hour clock).

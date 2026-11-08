@@ -1,0 +1,29 @@
+FPUS52 KMHX 080333 ZFPMHX
+
+Zone Forecast Product for Eastern North Carolina National Weather Service Newport/Morehead City NC 1030 PM EST Sat Nov 7 2026
+
+NCZ029-080900- Martin- Including the cities of Williamston, Robersonville, Oak City, and Jamesville 1030 PM EST Sat Nov 7 2026
+
+.OVERNIGHT...Mostly cloudy. Cooler with lows in the upper 30s. Northwest winds around 5 mph. .SUNDAY...Sunny. Highs in the mid 60s. Northwest winds around 5 mph, becoming west around 5 mph in the afternoon. .SUNDAY NIGHT...Clear. Lows in the lower 40s. Southwest winds around 5 mph. .MONDAY...Sunny. Highs in the upper 60s. West winds 5 to 10 mph. .MONDAY NIGHT...Clear. Lows in the upper 30s. Light and variable winds. .TUESDAY...Sunny. Highs in the lower 70s. .TUESDAY NIGHT...Mostly clear. Lows in the lower 40s. .VETERANS DAY...Sunny. Highs in the lower 70s. .WEDNESDAY NIGHT...Partly cloudy. Lows in the mid 40s. .THURSDAY...Partly sunny. Highs in the upper 60s. .THURSDAY NIGHT...Mostly cloudy. A chance of showers in the evening. Lows in the lower 40s. Chance of rain 30 percent. .FRIDAY...Partly sunny. Highs around 60. .FRIDAY NIGHT...Partly cloudy. Lows in the mid 30s. .SATURDAY...Sunny. Highs in the mid 50s.
+
+$$
+
+NCZ044-080900- Pitt- Including the cities of Greenville, Bethel, Farmville, Grifton, and Grimesland 1030 PM EST Sat Nov 7 2026
+
+.OVERNIGHT...Mostly cloudy. Cooler with lows in the upper 30s. Northwest winds around 5 mph. .SUNDAY...Sunny. Highs in the mid 60s. Northwest winds around 5 mph, becoming west around 5 mph in the afternoon. .SUNDAY NIGHT...Clear. Lows in the lower 40s. Southwest winds around 5 mph. .MONDAY...Sunny. Highs in the upper 60s. West winds 5 to 10 mph with gusts up to 20 mph. .MONDAY NIGHT...Clear. Lows in the upper 30s. Northwest winds around 5 mph in the evening, becoming light and variable. .TUESDAY...Sunny. Highs in the lower 70s. .TUESDAY NIGHT...Mostly clear in the evening, then becoming partly cloudy. Lows in the lower 40s. .VETERANS DAY...Mostly sunny. Highs in the lower 70s. .WEDNESDAY NIGHT...Partly cloudy. Lows in the mid 40s. .THURSDAY...Partly sunny. Highs around 70. .THURSDAY NIGHT...Mostly cloudy. A chance of showers in the evening. Lows in the lower 40s. Chance of rain 30 percent. .FRIDAY...Partly sunny and breezy, cooler with highs around 60. .FRIDAY NIGHT...Partly cloudy. Lows in the mid 30s. .SATURDAY...Sunny. Highs in the mid 50s.
+
+$$
+
+NCZ079-080900- Greene- Including the cities of Snow Hill, Hookerton, and Walstonburg 1030 PM EST Sat Nov 7 2026
+
+.OVERNIGHT...Mostly cloudy. Cooler with lows in the upper 30s. Northwest winds around 5 mph. .SUNDAY...Sunny. Highs in the mid 60s. Northwest winds around 5 mph, becoming west in the afternoon. .SUNDAY NIGHT...Clear. Lows in the lower 40s. Southwest winds around 5 mph. .MONDAY...Sunny. Highs in the upper 60s. West winds 5 to 10 mph. .MONDAY NIGHT...Clear. Lows in the upper 30s. Northwest winds around 5 mph in the evening, becoming light and variable. .TUESDAY...Sunny. Highs in the lower 70s. .TUESDAY NIGHT...Mostly clear in the evening, then becoming partly cloudy. Lows in the lower 40s. .VETERANS DAY...Mostly sunny. Highs in the lower 70s. .WEDNESDAY NIGHT...Partly cloudy. Lows in the mid 40s. .THURSDAY...Partly sunny. Highs in the upper 60s. .THURSDAY NIGHT...Mostly cloudy with a chance of showers in the evening, then partly cloudy after midnight. Lows in the lower 40s. Chance of rain 30 percent. .FRIDAY...Partly sunny and breezy. Highs around 60. .FRIDAY NIGHT...Partly cloudy. Lows in the mid 30s. .SATURDAY...Sunny. Highs in the mid 50s.
+
+$$
+
+NCZ091-080900- Lenoir- Including the cities of Kinston, La Grange, and Pink Hill 1030 PM EST Sat Nov 7 2026
+
+.OVERNIGHT...Mostly cloudy. Cooler with lows in the upper 30s. Northwest winds around 5 mph. .SUNDAY...Sunny. Highs in the mid 60s. North winds around 5 mph, becoming west around 5 mph in the afternoon. .SUNDAY NIGHT...Clear. Lows in the lower 40s. Southwest winds around 5 mph. .MONDAY...Sunny. Highs in the upper 60s. West winds 5 to 10 mph. .MONDAY NIGHT...Clear. Lows in the upper 30s. Northwest winds around 5 mph in the evening, becoming light and variable. .TUESDAY...Sunny. Highs in the lower 70s. .TUESDAY NIGHT...Partly cloudy. Lows in the lower 40s. .VETERANS DAY...Mostly sunny. Highs in the lower 70s. .WEDNESDAY NIGHT...Partly cloudy. Lows in the mid 40s. .THURSDAY...Partly sunny. Highs in the upper 60s. .THURSDAY NIGHT...Mostly cloudy. Lows in the lower 40s. .FRIDAY...Partly sunny. Highs around 60. .FRIDAY NIGHT...Partly cloudy. Lows in the mid 30s. .SATURDAY...Sunny. Highs in the mid 50s.
+
+$$
+
+NCZ090-080900- Duplin- Including the cities of Wallace, Warsaw, Kenansville, Beulaville, and Faison 1030 PM EST Sat Nov 7 2026

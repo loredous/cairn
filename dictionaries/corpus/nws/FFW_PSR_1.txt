@@ -1,0 +1,33 @@
+WGUS55 KPSR 011610 FFWPSR AZC007-013-011915- /O.NEW.KPSR.FF.W.0096.261101T1610Z-261101T1915Z/ /00000.0.ER.000000T0000Z.000000T0000Z.000000T0000Z.OO/
+
+BULLETIN - EAS ACTIVATION REQUESTED Flash Flood Warning National Weather Service Phoenix AZ 910 AM MST Sun Nov 1 2026
+
+The National Weather Service in Phoenix has issued a
+
+* Flash Flood Warning for... Gila County in east central Arizona... Maricopa County in south central Arizona...
+
+* Until 1215 PM MST.
+
+* At 910 AM MST, Doppler radar indicated thunderstorms producing heavy rain across the warned area. Between 0.5 and 1.25 inches of rain have fallen. Additional rainfall amounts of 0.25 to 0.5 inches are possible in the warned area. Flash flooding is ongoing or expected to begin shortly.
+
+HAZARD...Life threatening flash flooding. Thunderstorms producing flash flooding.
+
+SOURCE...Radar indicated.
+
+IMPACT...Life threatening flash flooding of creeks and streams, urban areas, highways, streets and underpasses.
+
+* Some locations that will experience flash flooding include... Four Peaks, Canyon Lake, Saguaro Lake and Tonto Basin.
+
+PRECAUTIONARY/PREPAREDNESS ACTIONS...
+
+Turn around, don't drown when encountering flooded roads. Most flood deaths occur in vehicles.
+
+In hilly terrain there are hundreds of low water crossings which are potentially dangerous in heavy rain. Do not attempt to cross flooded roads. Find an alternate route.
+
+&&
+
+LAT...LON 3372 11120 3348 11147 3358 11158 3383 11132
+
+FLASH FLOOD...RADAR INDICATED FLASH FLOOD DAMAGE THREAT...CONSIDERABLE
+
+$$

@@ -1,0 +1,33 @@
+WWUS82 KMHX 061915 SPSMHX
+
+Special Weather Statement National Weather Service Newport/Morehead City NC 215 PM EST Fri Nov 6 2026
+
+NCZ044-079-090>092-193-198-062000- Greene NC-Jones NC-Lenoir NC-Inland Onslow NC-Northern Craven NC- Duplin NC-Pitt NC- 215 PM EST Fri Nov 6 2026
+
+...STRONG THUNDERSTORMS WILL IMPACT NORTHWESTERN JONES...GREENE... LENOIR...NORTHWESTERN CRAVEN...PITT...NORTHWESTERN ONSLOW... SOUTHWESTERN MARTIN...NORTHWESTERN BEAUFORT AND DUPLIN COUNTIES THROUGH 300 PM EST...
+
+At 214 PM EST, Doppler radar was tracking strong thunderstorms capable of producing a landspout along a line extending from near Farmville to Willard. Movement was east at 20 mph.
+
+HAZARD...Landspouts and wind gusts up to 40 mph.
+
+SOURCE...Radar indicated.
+
+IMPACT...Minor damage to outdoor objects is possible. Gusty winds could knock down tree limbs and blow around unsecured objects.
+
+Locations impacted include... Greenville, Jacksonville, Kinston, Winterville, Ayden, Farmville, Wallace, La Grange, Grifton, Phillips Crossroads, Kornegay, Stokes, Rose Hill, Snow Hill, Richlands, Bell Arthur, Beulaville, Deep Run, Catherine Lake, and House.
+
+PRECAUTIONARY/PREPAREDNESS ACTIONS...
+
+If outdoors, consider seeking shelter inside a building.
+
+Torrential rainfall is also occurring with these storms and may lead to localized flooding. Do not drive your vehicle through flooded roadways.
+
+These storms may intensify, so be certain to monitor local radio stations and available television stations for additional information and possible warnings from the National Weather Service.
+
+&&
+
+LAT...LON 3517 7794 3515 7789 3518 7783 3538 7780 3543 7783 3558 7782 3579 7748 3577 7726 3572 7717 3455 7760 3472 7768 3473 7808 TIME...MOT...LOC 1914Z 284DEG 19KT 3567 7759 3471 7796
+
+LANDSPOUT...POSSIBLE MAX HAIL SIZE...0.00 IN MAX WIND GUST...40 MPH
+
+$$

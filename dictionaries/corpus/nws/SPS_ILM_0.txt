@@ -1,0 +1,31 @@
+WWUS82 KILM 061835 SPSILM
+
+Special Weather Statement National Weather Service Wilmington NC 135 PM EST Fri Nov 6 2026
+
+NCZ099-109-061915- Columbus NC-Inland Brunswick NC- 135 PM EST Fri Nov 6 2026
+
+...A LINE OF STRONG THUNDERSTORMS WILL IMPACT WEST CENTRAL BRUNSWICK AND CENTRAL COLUMBUS COUNTIES UNTIL 215 PM EST...
+
+At 135 PM EST, Doppler radar was tracking a line of strong thunderstorms extending from Crusoe Island to Bughill, or extending from 11 miles southeast of Whiteville to 13 miles north of Little River, moving east at 30 mph.
+
+HAZARD...Wind gusts up to 40 mph.
+
+SOURCE...Radar indicated.
+
+IMPACT...Gusty winds could knock down tree limbs and blow around unsecured objects.
+
+The strong thunderstorm will be near... Bughill, Old Dock, Crusoe Island, Dulah and Pireway around 135 PM EST. Lake Waccamaw around 145 PM EST. Freeland and Ash around 150 PM EST. Exum around 200 PM EST. Makatoka around 205 PM EST.
+
+Other locations impacted by this strong thunderstorm include Bolton.
+
+PRECAUTIONARY/PREPAREDNESS ACTIONS...
+
+Monitor the weather situation closely and be alert for threatening weather conditions.
+
+&&
+
+LAT...LON 3402 7870 3426 7861 3434 7834 3419 7836 3404 7841 TIME...MOT...LOC 1834Z 251DEG 25KT 3421 7858 3414 7860 3406 7865
+
+MAX HAIL SIZE...0.00 IN MAX WIND GUST...40 MPH
+
+$$

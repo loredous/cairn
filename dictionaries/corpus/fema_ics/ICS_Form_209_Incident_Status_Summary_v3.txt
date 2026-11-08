@@ -1,0 +1,785 @@
+INCIDENT STATUS SUMMARY (ICS 209) *1. Incident Name: *3. Report Version (check one box on left): Initial Update
+
+2. Incident Number: *4. Incident Commander(s) & Agency or Organization:
+
+Rpt # (if used):
+
+5. Incident Management Organization:
+
+Date: Time: Time Zone:
+
+Final 7. Current Incident Size or Area Involved (use unit label - e.g., "sq mi," "city block"):
+
+*6. Incident Start Date/Time:
+
+8. Percent (%) Contained
+
+*9. Incident Definition:
+
+10. Incident Complexity Level:
+
+Completed
+
+*11. For Time Period: From Date/Time: To Date/Time:
+
+Approval & Routing Information *12. Prepared By: Print Name:
+
+*13. Date/Time Submitted: ICS Position: Time Zone:
+
+Date/Time Prepared: *14. Approved By: Print Name:
+
+*15. Primary Location, Organization, or Agency Sent To:
+
+ICS Position:
+
+Signature: Incident Location Information *16. State:
+
+*17. County/Parish/Borough:
+
+*18. City:
+
+19. Unit or Other:
+
+*20. Incident Jurisdiction:
+
+21. Incident Location Ownership (if different than jurisdiction):
+
+22. Longitude (indicate format):
+
+23. US National Grid Reference:
+
+24. Legal Description (township, section, range):
+
+Latitude (indicate format): *25. Short Location or Area Description (list all affected areas or a reference point):
+
+26. UTM Coordinates:
+
+27. Note any electronic geospatial data included or attached (indicate data format, content, and collection time information and labels): Incident Summary *28. Significant Events for the Time Period Reported (summarize significant progress made, evacuations, incident growth, etc.):
+
+29. Primary Materials or Hazards Involved (hazardous chemicals, fuel types, infectious agents, radiation, etc.):
+
+30. Damage Assessment Information (summarize damage and/or restriction of use or availability to residential or commercial property, natural resources, critical infrastructure and key resources, etc.):
+
+A. Structural Summary E. Single Residences F. Nonresidential Commercial Property Other Minor Structures Other
+
+ICS 209, Page 1 of ____
+
+* Required when applicable.
+
+B. # Threatened (72 hrs)
+
+C. # Damaged
+
+D. # Destroyed
+
+INCIDENT STATUS SUMMARY (ICS 209) *1. Incident Name:
+
+2. Incident Number:
+
+Additional Incident Decision Support Information
+
+*31. Public Status Summary:
+
+A. # This Reporting Period
+
+B. Total # to Date
+
+*32. Responder Status Summary:
+
+C. Indicate Number of Civilians (Public) Below: D. Fatalities E. With Injuries/Illness F. Trapped/In Need of Rescue G. Missing (note if estimated) H. Evacuated (note if estimated) I. Sheltering in Place (note if estimated) J. In Temporary Shelters (note if est.) K. Have Received Mass Immunizations L. Require Immunizations (note if est.) M. In Quarantine N. Total # Civilians (Public) Affected:
+
+C. Indicate Number of Responders Below: D. Fatalities E. With Injuries/Illness F. Trapped/In Need of Rescue G. Missing H. Sheltering in Place I. Have Received Immunizations J. Require Immunizations K. In Quarantine
+
+33. Life, Safety, and Health Status/Threat Remarks:
+
+*34. Life, Safety, and Health Threat Management:
+
+A. # This Reporting Period
+
+B. Total # to Date
+
+N. Total # Responders Affected:
+
+35. Weather Concerns (synopsis of current and predicted weather; discuss related factors that may cause concern):
+
+A. No Likely Threat B. Potential Future Threat C. Mass Notifications in Progress D. Mass Notifications Completed E. No Evacuation(s) Imminent F. Planning for Evacuation G. Planning for Shelter-in-Place H. Evacuation(s) in Progress I. Shelter-in-Place in Progress J. Repopulation in Progress K. Mass Immunization in Progress L. Mass Immunization Complete M. Quarantine in Progress N. Area Restriction in Effect
+
+A. Check if Active
+
+36. Projected Incident Activity, Potential, Movement, Escalation, or Spread and influencing factors during the next operational period and in 12-, 24-, 48-, and 72-hour timeframes: 12 hours: 24 hours: 48 hours: 72 hours: Anticipated after 72 hours: 37. Strategic Objectives (define planned end-state for incident):
+
+ICS 209, Page 2 of ____
+
+* Required when applicable.
+
+INCIDENT STATUS SUMMARY (ICS 209) *1. Incident Name:
+
+2. Incident Number:
+
+Additional Incident Decision Support Information (continued) 38. Current Incident Threat Summary and Risk Information in 12-, 24-, 48-, and 72-hour timeframes and beyond. Summarize primary incident threats to life, property, communities and community stability, residences, health care facilities, other critical infrastructure and key resources, commercial facilities, natural and environmental resources, cultural resources, and continuity of operations and/or business. Identify corresponding incident-related potential economic or cascading impacts. 12 hours: 24 hours: 48 hours: 72 hours: Anticipated after 72 hours: 39. Critical Resource Needs in 12-, 24-, 48-, and 72-hour timeframes and beyond to meet critical incident objectives. List resource category, kind, and/or type, and amount needed, in priority order: 12 hours: 24 hours: 48 hours: 72 hours: Anticipated after 72 hours: 40. Strategic Discussion: Explain the relation of overall strategy, constraints, and current available information to: 1) critical resource needs identified above, 2) the Incident Action Plan and management objectives and targets, 3) anticipated results. Explain major problems and concerns such as operational challenges, incident management problems, and social, political, economic, or environmental concerns or impacts.
+
+41. Planned Actions for Next Operational Period:
+
+42. Projected Final Incident Size/Area (use unit label - e.g., "sq mi"): 43. Anticipated Incident Management Completion Date: 44. Projected Significant Resource Demobilization Start Date: 45. Estimated Incident Costs to Date: 46. Projected Final Incident Cost Estimate: 47. Remarks (or continuation of any blocks above - list block number in notation):
+
+ICS 209, Page 3 of ____
+
+* Required when applicable.
+
+INCIDENT STATUS SUMMARY (ICS 209) 1. Incident Name:
+
+2. Incident Number:
+
+49. Resources (summarize resources by category, kind, and/or type; show # of resources on top of box, show # of personnel associated with resource on bottom of box):
+
+48. Agency or Organization:
+
+52. Total Resources 53. Additional Cooperating and Assisting Organizations Not Listed Above:
+
+ICS 209, Page ____ of ____
+
+* Required when applicable.
+
+50. Additional Personnel not assigned to a resource:
+
+Incident Resource Commitment Summary 51. Total Personnel (includes those associated with resources - e.g., aircraft or engines - and individual overhead):
+
+ICS 209 Incident Status Summary Purpose. The ICS 209 is used for reporting information on significant incidents. It is not intended for every incident, as most incidents are of short duration and do not require scarce resources, significant mutual aid, or additional support and attention. The ICS 209 contains basic information elements needed to support decisionmaking at all levels above the incident to support the incident. Decisionmakers may include the agency having jurisdiction, but also all multiagency coordination system (MACS) elements and parties, such as cooperating and assisting agencies/organizations, dispatch centers, emergency operations centers, administrators, elected officials, and local, tribal, county, State, and Federal agencies. Once ICS 209 information has been submitted from the incident, decisionmakers and others at all incident support and coordination points may transmit and share the information (based on its sensitivity and appropriateness) for access and use at local, regional, State, and national levels as it is needed to facilitate support. Accurate and timely completion of the ICS 209 is necessary to identify appropriate resource needs, determine allocation of limited resources when multiple incidents occur, and secure additional capability when there are limited resources due to constraints of time, distance, or other factors. The information included on the ICS 209 influences the priority of the incident, and thus its share of available resources and incident support. The ICS 209 is designed to provide a "snapshot in time" to effectively move incident decision support information where it is needed. It should contain the most accurate and up-to-date information available at the time it is prepared. However, readers of the ICS 209 may have access to more up-to-date or real-time information in reference to certain information elements on the ICS 209. Coordination among communications and information management elements within ICS and among MACS should delineate authoritative sources for more up-to-date and/or real-time information when ICS 209 information becomes outdated in a quickly evolving incident. Reporting Requirements. The ICS 209 is intended to be used when an incident reaches a certain threshold where it becomes significant enough to merit special attention, require additional resource support needs, or cause media attention, increased public safety threat, etc. Agencies or organizations may set reporting requirements and, therefore, ICS 209s should be completed according to each jurisdiction or discipline's policies, mobilization guide, or preparedness plans. It is recommended that consistent ICS 209 reporting parameters be adopted and used by jurisdictions or disciplines for consistency over time, documentation, efficiency, trend monitoring, incident tracking, etc. For example, an agency or MAC (Multiagency Coordination) Group may require the submission of an initial ICS 209 when a new incident has reached a certain predesignated level of significance, such as when a given number of resources are committed to the incident, when a new incident is not completed within a certain timeframe, or when impacts/threats to life and safety reach a given level. Typically, ICS 209 forms are completed either once daily or for each operational period - in addition to the initial submission. Jurisdictional or organizational guidance may indicate frequency of ICS 209 submission for particular definitions of incidents or for all incidents. This specific guidance may help determine submission timelines when operational periods are extremely short (e.g., 2 hours) and it is not necessary to submit new ICS 209 forms for all operational periods. Any plans or guidelines should also indicate parameters for when it is appropriate to stop submitting ICS 209s for an incident, based upon incident activity and support levels. Preparation. When an Incident Management Organization (such as an Incident Management Team) is in place, the Situation Unit Leader or Planning Section Chief prepares the ICS 209 at the incident. On other incidents, the ICS 209 may be completed by a dispatcher in the local communications center, or by another staff person or manager. This form should be completed at the incident or at the closest level to the incident. The ICS 209 should be completed with the best possible, currently available, and verifiable information at the time it is completed and signed. This form is designed to serve incidents impacting specific geographic areas that can easily be defined. It also has the flexibility for use on ubiquitous events, or those events that cover extremely large areas and that may involve many jurisdictions and ICS organizations. For these incidents, it will be useful to clarify on the form exactly which portion of the larger incident the ICS 209 is meant to address. For example, a particular ICS 209 submitted during a statewide outbreak of mumps may be relevant only to mumps-related activities in Story County, Iowa. This can be indicated in both the incident name, Block 1, and in the Incident Location Information section in Blocks 16-26.
+
+While most of the "Incident Location Information" in Blocks 16-26 is optional, the more information that can be submitted, the better. Submission of multiple location indicators increases accuracy, improves interoperability, and increases information sharing between disparate systems. Preparers should be certain to follow accepted protocols or standards when entering location information, and clearly label all location information. As with other ICS 209 data, geospatial information may be widely shared and utilized, so accuracy is essential. If electronic data is submitted with the ICS 209, do not attach or send extremely large data files. Incident geospatial data that is distributed with the ICS 209 should be in simple incident geospatial basics, such as the incident perimeter, point of origin, etc. Data file sizes should be small enough to be easily transmitted through dial-up connections or other limited communications capabilities when ICS 209 information is transmitted electronically. Any attached data should be clearly labeled as to format content and collection time, and should follow existing naming conventions and standards. Distribution. ICS 209 information is meant to be completed at the level as close to the incident as possible, preferably at the incident. Once the ICS 209 has been submitted outside the incident to a dispatch center or MACS element, it may subsequently be transmitted to various incident supports and coordination entities based on the support needs and the decisions made within the MACS in which the incident occurs. Coordination with public information system elements and investigative/intelligence information organizations at the incident and within MACS is essential to protect information security and to ensure optimal information sharing and coordination. There may be times in which particular ICS 209s contain sensitive information that should not be released to the public (such as information regarding active investigations, fatalities, etc.). When this occurs, the ICS 209 (or relevant sections of it) should be labeled appropriately, and care should be taken in distributing the information within MACS. All completed and signed original ICS 209 forms MUST be given to the incident's Documentation Unit and/or maintained as part of the official incident record. Notes: * To promote flexibility, only a limited number of ICS 209 blocks are typically required, and most of those are required only when applicable. * Most fields are optional, to allow responders to use the form as best fits their needs and protocols for information collection. * For the purposes of the ICS 209, responders are those personnel who are assigned to an incident or who are a part of the response community as defined by NIMS. This may include critical infrastructure owners and operators, nongovernmental and nonprofit organizational personnel, and contract employees (such as caterers), depending on local/jurisdictional/discipline practices. * For additional flexibility only pages 1-3 are numbered, for two reasons: o Possible submission of additional pages for the Remarks Section (Block 47), and o Possible submission of additional copies of the fourth/last page (the "Incident Resource Commitment Summary") to provide a more detailed resource summary. Block Number *1
+
+Block Title
+
+Instructions
+
+Incident Name
+
+REQUIRED BLOCK. * Enter the full name assigned to the incident. * Check spelling of the full incident name. * For an incident that is a Complex, use the word "Complex" at the end of the incident name. * If the name changes, explain comments in Remarks, Block 47. * Do not use the same incident name for different incidents in the same calendar year.
+
+Block Number
+
+Block Title
+
+Instructions
+
+Incident Number
+
+* Enter the appropriate number based on current guidance. The incident number may vary by jurisdiction and discipline. * Examples include: o A computer-aided dispatch (CAD) number. o An accounting number. o A county number. o A disaster declaration number. o A combination of the State, unit/agency ID, and a dispatch system number. o A mission number. o Any other unique number assigned to the incident and derived by means other than those above. * Make sure the number entered is correct. * Do not use the same incident number for two different incidents in the same calendar year. * Incident numbers associated with host jurisdictions or agencies and incident numbers assigned by agencies represented in Unified Command should be listed, or indicated in Remarks, Block 47.
+
+*3
+
+Report Version (check one box on left)
+
+REQUIRED BLOCK. * This indicates the current version of the ICS 209 form being submitted. * If only one ICS 209 will be submitted, check BOTH "Initial" and "Final" (or check only "Final").
+
+Initial
+
+Check "Initial" if this is the first ICS 209 for this incident.
+
+Update
+
+Check "Update" if this is a subsequent report for the same incident. These can be submitted at various time intervals (see "Reporting Requirements" above).
+
+Final
+
+* Check "Final" if this is the last ICS 209 to be submitted for this incident (usually when the incident requires only minor support that can be supplied by the organization having jurisdiction). * Incidents may also be marked as "Final" if they become part of a new Complex (when this occurs, it can be indicated in Remarks, Block 47).
+
+Report # (if used)
+
+Use this optional field if your agency or organization requires the tracking of ICS 209 report numbers. Agencies may also track the ICS 209 by the date/time submitted.
+
+*4
+
+Incident Commander(s) & Agency or Organization
+
+REQUIRED BLOCK. * Enter both the first and last name of the Incident Commander. * If the incident is under a Unified Command, list all Incident Commanders by first initial and last name separated by a comma, including their organization. For example: L. Burnett - Minneapolis FD, R. Domanski - Minneapolis PD, C. Taylor - St. Paul PD, Y. Martin - St. Paul FD, S. McIntyre - U.S. Army Corps, J. Hartl - NTSB
+
+Incident Management Organization
+
+Indicate the incident management organization for the incident, which may be a Type 1, 2, or 3 Incident Management Team (IMT), a Unified Command, a Unified Command with an IMT, etc. This block should not be completed unless a recognized incident management organization is assigned to the incident.
+
+Block Number
+
+Block Title
+
+Instructions
+
+Incident Start Date/Time
+
+REQUIRED. This is always the start date and time of the incident (not the report date and time or operational period).
+
+Date
+
+Enter the start date (month/day/year).
+
+Time
+
+Enter the start time (using the 24-hour clock).
+
+Time Zone
+
+Enter the time zone of the incident (e.g., EDT, PST).
+
+Current Incident Size or Area Involved (use unit label - e.g., "sq mi," "city block")
+
+* Enter the appropriate incident descriptive size or area involved (acres, number of buildings, square miles, hectares, square kilometers, etc.). * Enter the total area involved for incident Complexes in this block, and list each sub-incident and size in Remarks (Block 47). * Indicate that the size is an estimate, if a more specific figure is not available. * Incident size may be a population figure rather than a geographic figure, depending on the incident definition and objectives. * If the incident involves more than one jurisdiction or mixed ownership, agencies/organizations may require listing a size breakdown by organization, or including this information in Remarks (Block 47). * The incident may be one part of a much larger event (refer to introductory instructions under "Preparation). Incident size/area depends on the area actively managed within the incident objectives and incident operations, and may also be defined by a delegation of authority or letter of expectation outlining management bounds.
+
+Percent (%) Contained or Completed (circle one)
+
+* Enter the percent that this incident is completed or contained (e.g., 50%), with a % label. * For example, a spill may be 65% contained, or flood response objectives may be 50% met.
+
+*9
+
+Incident Definition
+
+REQUIRED BLOCK. Enter a general definition of the incident in this block. This may be a general incident category or kind description, such as "tornado," "wildfire," "bridge collapse," "civil unrest," "parade," "vehicle fire," "mass casualty," etc.
+
+Incident Complexity Level
+
+Identify the incident complexity level as determined by Unified/Incident Commanders, if available or used.
+
+*11
+
+For Time Period
+
+REQUIRED BLOCK. * Enter the time interval for which the form applies. This period should include all of the time since the last ICS 209 was submitted, or if it is the initial ICS 209, it should cover the time lapsed since the incident started. * The time period may include one or more operational periods, based on agency/organizational reporting requirements.
+
+From Date/Time
+
+* Enter the start date (month/day/year). * Enter the start time (using the 24-hour clock).
+
+To Date/Time
+
+* Enter the end date (month/day/year). * Enter the end time (using the 24-hour clock).
+
+*6
+
+Block Number
+
+Block Title
+
+Instructions
+
+APPROVAL & ROUTING INFORMATION *12
+
+*13
+
+*14
+
+*15
+
+Prepared By
+
+REQUIRED BLOCK. When an incident management organization is in place, this would be the Situation Unit Leader or Planning Section Chief at the incident. On other incidents, it could be a dispatcher in the local emergency communications center, or another staff person or manager.
+
+Print Name
+
+Print the name of the person preparing the form.
+
+ICS Position
+
+The ICS title of the person preparing the form (e.g., "Situation Unit Leader").
+
+Date/Time Prepared
+
+Enter the date (month/day/year) and time (using the 24-hour clock) the form was prepared. Enter the time zone if appropriate.
+
+Date/Time Submitted
+
+REQUIRED. Enter the submission date (month/day/year) and time (using the 24-hour clock).
+
+Time Zone
+
+Enter the time zone from which the ICS 209 was submitted (e.g., EDT, PST).
+
+Approved By
+
+REQUIRED. When an incident management organization is in place, this would be the Planning Section Chief or Incident Commander at the incident. On other incidents, it could be the jurisdiction's dispatch center manager, organizational administrator, or other manager.
+
+Print Name
+
+Print the name of the person approving the form.
+
+ICS Position
+
+The position of the person signing the ICS 209 should be entered (e.g., "Incident Commander").
+
+Signature
+
+Signature of the person approving the ICS 209, typically the Incident Commander. The original signed ICS 209 should be maintained with other incident documents.
+
+Primary Location, Organization, or Agency Sent To
+
+REQUIRED BLOCK. Enter the appropriate primary location or office the ICS 209 was sent to apart from the incident. This most likely is the entity or office that ordered the incident management organization that is managing the incident. This may be a dispatch center or a MACS element such as an emergency operations center. If a dispatch center or other emergency center prepared the ICS 209 for the incident, indicate where it was submitted initially.
+
+INCIDENT LOCATION INFORMATION * Much of the "Incident Location Information" in Blocks 16-26 is optional, but completing as many fields as possible increases accuracy, and improves interoperability and information sharing between disparate systems. * As with all ICS 209 information, accuracy is essential because the information may be widely distributed and used in a variety of systems. Location and/or geospatial data may be used for maps, reports, and analysis by multiple parties outside the incident. * Be certain to follow accepted protocols, conventions, or standards where appropriate when submitting location information, and clearly label all location information. * Incident location information is usually based on the point of origin of the incident, and the majority of the area where the incident jurisdiction is. *16
+
+State
+
+REQUIRED BLOCK WHEN APPLICABLE. * Enter the State where the incident originated. * If other States or jurisdictions are involved, enter them in Block 25 or Block 44.
+
+Block Number
+
+Block Title
+
+Instructions
+
+*17
+
+County / Parish / Borough
+
+REQUIRED BLOCK WHEN APPLICABLE. * Enter the county, parish, or borough where the incident originated. * If other counties or jurisdictions are involved, enter them in Block 25 or Block 47.
+
+*18
+
+City
+
+REQUIRED BLOCK WHEN APPLICABLE. * Enter the city where the incident originated. * If other cities or jurisdictions are involved, enter them in Block 25 or Block 47.
+
+Unit or Other
+
+Enter the unit, sub-unit, unit identification (ID) number or code (if used), or other information about where the incident originated. This may be a local identifier that indicates primary incident jurisdiction or responsibility (e.g., police, fire, public works, etc.) or another type of organization. Enter specifics in Block 25.
+
+*20
+
+Incident Jurisdiction
+
+REQUIRED BLOCK WHEN APPLICABLE. Enter the jurisdiction where the incident originated (the entry may be general, such as Federal, city, or State, or may specifically identify agency names such as Warren County, U.S. Coast Guard, Panama City, NYPD).
+
+Incident Location Ownership (if different than jurisdiction)
+
+* When relevant, indicate the ownership of the area where the incident originated, especially if it is different than the agency having jurisdiction. * This may include situations where jurisdictions contract for emergency services, or where it is relevant to include ownership by private entities, such as a large industrial site.
+
+22. Longitude (indicate format):
+
+* Enter the longitude and latitude where the incident originated, if available and normally used by the authority having jurisdiction for the incident. * Clearly label the data, as longitude and latitude can be derived from various sources. For example, if degrees, minutes, and seconds are used, label as "33 degrees, 45 minutes, 01 seconds."
+
+Latitude (indicate format):
+
+US National Grid Reference
+
+* Enter the US National Grid (USNG) reference where the incident originated, if available and commonly used by the agencies/jurisdictions with primary responsibility for the incident. * Clearly label the data.
+
+Legal Description (township, section, range)
+
+* Enter the legal description where the incident originated, if available and commonly used by the agencies/jurisdictions with primary responsibility for the incident. * Clearly label the data (e.g., N 1/2 SE 1/4, SW 1/4, S24, T32N, R18E).
+
+*25
+
+Short Location or Area Description (list all affected areas or a reference point)
+
+REQUIRED BLOCK. * List all affected areas as described in instructions for Blocks 16-24 above, OR summarize a general location, OR list a reference point for the incident (e.g., "the southern third of Florida," "in ocean 20 miles west of Catalina Island, CA," or "within a 5 mile radius of Walden, CO"). * This information is important for readers unfamiliar with the area (or with other location identification systems) to be able to quickly identify the general location of the incident on a map. * Other location information may also be listed here if needed or relevant for incident support (e.g., base meridian).
+
+UTM Coordinates
+
+Indicate Universal Transverse Mercator reference coordinates if used by the discipline or jurisdiction.
+
+Block Number
+
+Block Title
+
+Instructions
+
+Note any electronic geospatial data included or attached (indicate data format, content, and collection time information and labels)
+
+* Indicate whether and how geospatial data is included or attached. * Utilize common and open geospatial data standards. * WARNING: Do not attach or send extremely large data files with the ICS 209. Incident geospatial data that is distributed with the ICS 209 should be simple incident geospatial basics, such as the incident perimeter, origin, etc. Data file sizes should be small enough to be easily transmitted through dial-up connections or other limited communications capabilities when ICS 209 information is transmitted electronically. * NOTE: Clearly indicate data content. For example, data may be about an incident perimeter (such as a shape file), the incident origin (a point), a point and radius (such as an evacuation zone), or a line or lines (such as a pipeline). * NOTE: Indicate the data format (e.g., .shp, .kml, .kmz, or .gml file) and any relevant information about projection, etc. * NOTE: Include a hyperlink or other access information if incident map data is posted online or on an FTP (file transfer protocol) site to facilitate downloading and minimize information requests. * NOTE: Include a point of contact for getting geospatial incident information, if included in the ICS 209 or available and supporting the incident.
+
+INCIDENT SUMMARY *28
+
+Significant Events for the Time Period Reported (summarize significant progress made, evacuations, incident growth, etc.)
+
+REQUIRED BLOCK. * Describe significant events that occurred during the period being reported in Block 6. Examples include: o Road closures. o Evacuations. o Progress made and accomplishments. o Incident command transitions. o Repopulation of formerly evacuated areas and specifics. o Containment. * Refer to other blocks in the ICS 209 when relevant for additional information (e.g., "Details on evacuations may be found in Block 33"), or in Remarks, Block 47. * Be specific and detailed in reference to events. For example, references to road closures should include road number and duration of closure (or include further detail in Block 33). Use specific metrics if needed, such as the number of people or animals evacuated, or the amount of a material spilled and/or recovered. * This block may be used for a single-paragraph synopsis of overall incident status.
+
+Primary Materials or Hazards Involved (hazardous chemicals, fuel types, infectious agents, radiation, etc.)
+
+* When relevant, enter the appropriate primary materials, fuels, or other hazards involved in the incident that are leaking, burning, infecting, or otherwise influencing the incident. * Examples include hazardous chemicals, wildland fuel models, biohazards, explosive materials, oil, gas, structural collapse, avalanche activity, criminal activity, etc.
+
+Other
+
+Enter any miscellaneous issues which impacted Critical Infrastructure and Key Resources.
+
+Block Number
+
+Block Title
+
+Instructions
+
+Damage Assessment Information (summarize damage and/or restriction of use or availability to residential or commercial property, natural resources, critical infrastructure and key resources, etc.)
+
+* Include a short summary of damage or use/access restrictions/ limitations caused by the incident for the reporting period, and cumulatively. * Include if needed any information on the facility status, such as operational status, if it is evacuated, etc. when needed. * Include any critical infrastructure or key resources damaged/destroyed/ impacted by the incident, the kind of infrastructure, and the extent of damage and/or impact and any known cascading impacts. * Refer to more specific or detailed damage assessment forms and packages when they are used and/or relevant.
+
+A. Structural Summary
+
+Complete this table as needed based on the definitions for 30B-F below. Note in table or in text block if numbers entered are estimates or are confirmed. Summaries may also include impact to Shoreline and Wildlife, etc.
+
+B. # Threatened (72 hrs)
+
+Enter the number of structures potentially threatened by the incident within the next 72 hours, based on currently available information.
+
+C. # Damaged
+
+Enter the number of structures damaged by the incident.
+
+D. # Destroyed
+
+Enter the number of structures destroyed beyond repair by the incident.
+
+E. Single Residences
+
+Enter the number of single dwellings/homes/units impacted in Columns 30B-D. Note any specifics in the text block if needed, such as type of residence (apartments, condominiums, single-family homes, etc.).
+
+F. Nonresidential Commercial Properties
+
+Enter the number of buildings or units impacted in Columns 30B-D. This includes any primary structure used for nonresidential purposes, excluding Other Minor Structures (Block 30G). Note any specifics regarding building or unit types in the text block.
+
+Other Minor Structures
+
+Enter any miscellaneous structures impacted in Columns 30B-D not covered in 30E-F above, including any minor structures such as booths, sheds, or outbuildings.
+
+Other
+
+Enter any miscellaneous issues which impacted Critical Infrastructure and Key Resources.
+
+Block Number
+
+Block Title
+
+Instructions
+
+ADDITIONAL INCIDENT DECISION SUPPORT INFORMATION (PAGE 2) *31
+
+Public Status Summary
+
+* This section is for summary information regarding incident-related injuries, illness, and fatalities for civilians (or members of the public); see 31C-N below. * Explain or describe the nature of any reported injuries, illness, or other activities in Life, Safety, and Health Status/Threat Remarks (Block 33). * Illnesses include those that may be caused through a biological event such as an epidemic or an exposure to toxic or radiological substances. * NOTE: Do not estimate any fatality information. * NOTE: Please use caution when reporting information in this section that may be on the periphery of the incident or change frequently. This information should be reported as accurately as possible as a snapshot in time, as much of the information is subject to frequent change. * NOTE: Do not complete this block if the incident covered by the ICS 209 is not directly responsible for these actions (such as evacuations, sheltering, immunizations, etc.) even if they are related to the incident. o Only the authority having jurisdiction should submit reports for these actions, to mitigate multiple/conflicting reports. o For example, if managing evacuation shelters is part of the incident operation itself, do include these numbers in Block 31J with any notes in Block 33. * NOTE: When providing an estimated value, denote in parenthesis: "est." Handling Sensitive Information * Release of information in this section should be carefully coordinated within the incident management organization to ensure synchronization with public information and investigative/intelligence actions. * Thoroughly review the "Distribution" section in the introductory ICS 209 instructions for details on handling sensitive information. Use caution when providing information in any situation involving fatalities, and verify that appropriate notifications have been made prior to release of this information. Electronic transmission of any ICS 209 may make information available to many people and networks at once. * Information regarding fatalities should be cleared with the Incident Commander and/or an organizational administrator prior to submission of the ICS 209.
+
+A. # This Reporting Period
+
+Enter the total number of individuals impacted in each category for this reporting period (since the previous ICS 209 was submitted).
+
+B. Total # to Date
+
+* Enter the total number of individuals impacted in each category for the entire duration of the incident. * This is a cumulative total number that should be adjusted each reporting period.
+
+C. Indicate Number of Civilians (Public) Below
+
+* For lines 31D-M below, enter the number of civilians affected for each category. * Indicate if numbers are estimates, for those blocks where this is an option. * Civilians are those members of the public who are affected by the incident, but who are not included as part of the response effort through Unified Command partnerships and those organizations and agencies assisting and cooperating with response efforts.
+
+D. Fatalities
+
+* Enter the number of confirmed civilian/public fatalities. * See information in introductory instructions ("Distribution") and in Block 31 instructions regarding sensitive handling of fatality information.
+
+Block Number
+
+*31 (continued)
+
+*32
+
+Block Title
+
+Instructions
+
+E. With Injuries/Illness
+
+Enter the number of civilian/public injuries or illnesses directly related to the incident. Injury or illness is defined by the incident or jurisdiction(s).
+
+F. Trapped/In Need of Rescue
+
+Enter the number of civilians who are trapped or in need of rescue due to the incident.
+
+G. Missing (note if estimated)
+
+Enter the number of civilians who are missing due to the incident. Indicate if an estimate is used.
+
+H. Evacuated (note if estimated)
+
+Enter the number of civilians who are evacuated due to the incident. These are likely to be best estimates, but indicate if they are estimated.
+
+I. Sheltering-in-Place (note if estimated)
+
+Enter the number of civilians who are sheltering in place due to the incident. Indicate if estimates are used.
+
+J. In Temporary Shelters (note if estimated)
+
+Enter the number of civilians who are in temporary shelters as a direct result of the incident, noting if the number is an estimate.
+
+K. Have Received Mass Immunizations
+
+Enter the number of civilians who have received mass immunizations due to the incident and/or as part of incident operations. Do not estimate.
+
+L. Require Mass Immunizations (note if estimated)
+
+Enter the number of civilians who require mass immunizations due to the incident and/or as part of incident operations. Indicate if it is an estimate.
+
+M. In Quarantine
+
+Enter the number of civilians who are in quarantine due to the incident and/or as part of incident operations. Do not estimate.
+
+N. Total # Civilians (Public) Affected
+
+Enter sum totals for Columns 31A and 31B for Rows 31D-M.
+
+Responder Status Summary
+
+* This section is for summary information regarding incident-related injuries, illness, and fatalities for responders; see 32C-N. * Illnesses include those that may be related to a biological event such as an epidemic or an exposure to toxic or radiological substances directly in relation to the incident. * Explain or describe the nature of any reported injuries, illness, or other activities in Block 33. * NOTE: Do not estimate any fatality information or responder status information. * NOTE: Please use caution when reporting information in this section that may be on the periphery of the incident or change frequently. This information should be reported as accurately as possible as a snapshot in time, as much of the information is subject to frequent change. * NOTE: Do not complete this block if the incident covered by the ICS 209 is not directly responsible for these actions (such as evacuations, sheltering, immunizations, etc.) even if they are related to the incident. Only the authority having jurisdiction should submit reports for these actions, to mitigate multiple/conflicting reports. Handling Sensitive Information * Release of information in this section should be carefully coordinated within the incident management organization to ensure synchronization with public information and investigative/intelligence actions. * Thoroughly review the "Distribution" section in the introductory ICS 209 instructions for details on handling sensitive information. Use caution when providing information in any situation involving fatalities, and verify that appropriate notifications have been made prior to release of this information. Electronic transmission of any ICS 209 may make information available to many people and networks at once. * Information regarding fatalities should be cleared with the Incident Commander and/or an organizational administrator prior to submission of the ICS 209.
+
+Block Number *32 (continued)
+
+Block Title
+
+Instructions
+
+A. # This Reporting Period
+
+Enter the total number of responders impacted in each category for this reporting period (since the previous ICS 209 was submitted).
+
+B. Total # to Date
+
+* Enter the total number of individuals impacted in each category for the entire duration of the incident. * This is a cumulative total number that should be adjusted each reporting period.
+
+C. Indicate Number of Responders Below
+
+* For lines 32D-M below, enter the number of responders relevant for each category. * Responders are those personnel included as part of Unified Command partnerships and those organizations and agencies assisting and cooperating with response efforts.
+
+D. Fatalities
+
+* Enter the number of confirmed responder fatalities. * See information in introductory instructions ("Distribution") and for Block 32 regarding sensitive handling of fatality information.
+
+E. With Injuries/Illness
+
+* Enter the number of incident responders with serious injuries or illnesses due to the incident. * For responders, serious injuries or illness are typically those in which the person is unable to continue to perform in his or her incident assignment, but the authority having jurisdiction may have additional guidelines on reporting requirements in this area.
+
+F. Trapped/In Need Of Rescue
+
+Enter the number of incident responders who are in trapped or in need of rescue due to the incident.
+
+G. Missing
+
+Enter the number of incident responders who are missing due to incident conditions.
+
+H.
+
+(BLANK; use however is appropriate.)
+
+I. Sheltering in Place
+
+Enter the number of responders who are sheltering in place due to the incident. Once responders become the victims, this needs to be noted in Block 33 or Block 47 and handled accordingly.
+
+J.
+
+(BLANK; use however is appropriate.)
+
+L. Require Immunizations
+
+Enter the number of responders who require immunizations due to the incident and/or as part of incident operations.
+
+M. In Quarantine
+
+Enter the number of responders who are in quarantine as a direct result of the incident and/or related to incident operations.
+
+N. Total # Responders Affected
+
+Enter sum totals for Columns 32A and 32B for Rows 32D-M.
+
+Life, Safety, and Health Status/Threat Remarks
+
+* Enter any details needed for Blocks 31, 32, and 34. Enter any specific comments regarding illness, injuries, fatalities, and threat management for this incident, such as whether estimates were used for numbers given in Block 31. * This information should be reported as accurately as possible as a snapshot in time, as much of the information is subject to frequent change. * Evacuation information can be very sensitive to local residents and officials. Be accurate in the assessment. * Clearly note primary responsibility and contacts for any activities or information in Blocks 31, 32, and 34 that may be caused by the incident, but that are being managed and/or reported by other parties. * Provide additional explanation or information as relevant in Blocks 28, 36, 38, 40, 41, or in Remarks (Block 47).
+
+Block Number *34
+
+Block Title
+
+Instructions
+
+Life, Safety, and Health Threat Management
+
+Note any details in Life, Safety, and Health Status/Threat Remarks (Block 33), and provide additional explanation or information as relevant in Blocks 28, 36, 38, 40, 41, or in Remarks (Block 47). Additional pages may be necessary for notes.
+
+A. Check if Active
+
+Check any applicable blocks in 34C-P based on currently available information regarding incident activity and potential.
+
+B. Notes
+
+Note any specific details, or include in Block 33.
+
+C. No Likely Threat
+
+Check if there is no likely threat to life, health, and safety.
+
+D. Potential Future Threat
+
+Check if there is a potential future threat to life, health, and safety.
+
+E. Mass Notifications In Progress
+
+* Check if there are any mass notifications in progress regarding emergency situations, evacuations, shelter in place, or other public safety advisories related to this incident. * These may include use of threat and alert systems such as the Emergency Alert System or a "reverse 911" system. * Please indicate the areas where mass notifications have been completed (e.g., "mass notifications to ZIP codes 50201, 50014, 50010, 50011," or "notified all residents within a 5-mile radius of Gatlinburg").
+
+F. Mass Notifications Completed
+
+Check if actions referred to in Block 34E above have been completed.
+
+G. No Evacuation(s) Imminent
+
+Check if evacuations are not anticipated in the near future based on current information.
+
+H. Planning for Evacuation
+
+Check if evacuation planning is underway in relation to this incident.
+
+I. Planning for Shelter-inPlace
+
+Check if planning is underway for shelter-in-place activities related to this incident.
+
+J. Evacuation(s) in Progress
+
+Check if there are active evacuations in progress in relation to this incident.
+
+K. Shelter-In-Place in Progress
+
+Check if there are active shelter-in-place actions in progress in relation to this incident.
+
+L. Repopulation in Progress
+
+Check if there is an active repopulation in progress related to this incident.
+
+M. Mass Immunization in Progress
+
+Check if there is an active mass immunization in progress related to this incident.
+
+N. Mass Immunization Complete
+
+Check if a mass immunization effort has been completed in relation to this incident.
+
+O. Quarantine in Progress
+
+Check if there is an active quarantine in progress related to this incident.
+
+P. Area Restriction in Effect
+
+Check if there are any restrictions in effect, such as road or area closures, especially those noted in Block 28.
+
+Block Number
+
+Block Title
+
+Instructions
+
+Weather Concerns (synopsis of current and predicted weather; discuss related factors that may cause concern)
+
+* Complete a short synopsis/discussion on significant weather factors that could cause concerns for the incident when relevant. * Include current and/or predicted weather factors, and the timeframe for predictions. * Include relevant factors such as: o Wind speed (label units, such as mph). o Wind direction (clarify and label where wind is coming from and going to in plain language - e.g., "from NNW," "from E," or "from SW"). o Temperature (label units, such as F). o Relative humidity (label %). o Watches. o Warnings. o Tides. o Currents. * Any other weather information relative to the incident, such as flooding, hurricanes, etc.
+
+Projected Incident Activity, Potential, Movement, Escalation, or Spread and influencing factors during the next operational period and in 12-, 24-, 48-, and 72-hour timeframes
+
+* Provide an estimate (when it is possible to do so) of the direction/scope in which the incident is expected to spread, migrate, or expand during the next indicated operational period, or other factors that may cause activity changes. * Discuss incident potential relative to values at risk, or values to be protected (such as human life), and the potential changes to those as the incident changes. * Include an estimate of the acreage or area that will likely be affected. * If known, provide the above information in 12-, 24-, 48- and 72-hour timeframes, and any activity anticipated after 72 hours.
+
+12 hours 24 hours 48 hours 72 hours Anticipated after 72 hours
+
+Strategic Objectives (define planned end-state for incident)
+
+Briefly discuss the desired outcome for the incident based on currently available information. Note any high-level objectives and any possible strategic benefits as well (especially for planned events).
+
+Block Number
+
+Block Title
+
+Instructions
+
+ADDITIONAL INCIDENT DECISION SUPPORT INFORMATION (continued) (PAGE 3)
+
+Current Incident Threat Summary and Risk Information in 12-, 24-, 48-, and 72-hour timeframes and beyond. Summarize primary incident threats to life, property, communities and community stability, residences, health care facilities, other critical infrastructure and key resources, commercial facilities, natural and environmental resources, cultural resources, and continuity of operations and/or business. Identify corresponding incidentrelated potential economic or cascading impacts. 12 hours 24 hours 48 hours 72 hours Anticipated after 72 hours
+
+Summarize major or significant threats due to incident activity based on currently available information. Include a breakdown of threats in terms of 12-, 24-, 48-, and 72-hour timeframes.
+
+Block Number
+
+Block Title
+
+Instructions
+
+Critical Resource Needs in 12-, 24-, 48-, and 72hour timeframes and beyond to meet critical incident objectives. List resource category, kind, and/or type, and amount needed, in priority order:
+
+* List the specific critical resources and numbers needed, in order of priority. Be specific as to the need. * Use plain language and common terminology for resources, and indicate resource category, kind, and type (if available or known) to facilitate incident support. * If critical resources are listed in this block, there should be corresponding orders placed for them through appropriate resource ordering channels. * Provide critical resource needs in 12-, 24-, 48- and 72-hour increments. List the most critical resources needed for each timeframe, if needs have been identified for each timeframe. Listing critical resources by the time they are needed gives incident support personnel a "heads up" for shortrange planning, and assists the ordering process to ensure these resources will be in place when they are needed. * More than one resource need may be listed for each timeframe. For example, a list could include: o 24 hrs: 3 Type 2 firefighting helicopters, 2 Type I Disaster Medical Assistance Teams o 48 hrs: Mobile Communications Unit (Law/Fire) o After 72 hrs: 1 Type 2 Incident Management Team * Documentation in the ICS 209 can help the incident obtain critical regional or national resources through outside support mechanisms including multiagency coordination systems and mutual aid. o Information provided in other blocks on the ICS 209 can help to support the need for resources, including Blocks 28, 29, 31-38, and 40-42. o Additional comments in the Remarks section (Block 47) can also help explain what the incident is requesting and why it is critical (for example, "Type 2 Incident Management Team is needed in three days to transition command when the current Type 2 Team times out"). * Do not use this block for noncritical resources.
+
+12 hours 24 hours 48 hours 72 hours Anticipated after 72 hours
+
+Strategic Discussion: Explain the relation of overall strategy, constraints, and current available information to: 1) critical resource needs identified above, 2) the Incident Action Plan and management objectives and targets, 3) anticipated results. Explain major problems and concerns such as operational challenges, incident management problems, and social, political, economic, or environmental concerns or impacts.
+
+* Wording should be consistent with Block 39 to justify critical resource needs, which should relate to planned actions in the Incident Action Plan. * Give a short assessment of the likelihood of meeting the incident management targets, given the current management strategy and currently known constraints. * Identify when the chosen management strategy will succeed given the current constraints. Adjust the anticipated incident management completion target in Block 43 as needed based on this discussion. * Explain major problems and concerns as indicated.
+
+Block Number
+
+Block Title
+
+Instructions
+
+Planned Actions for Next Operational Period
+
+* Provide a short summary of actions planned for the next operational period. * Examples: o "The current Incident Management Team will transition out to a replacement IMT." o "Continue to review operational/ engineering plan to facilitate removal of the partially collapsed west bridge supports." o "Continue refining mapping of the recovery operations and damaged assets using GPS." o "Initiate removal of unauthorized food vendors."
+
+Projected Final Incident Size/Area (use unit label - e.g., "sq mi")
+
+* Enter an estimate of the total area likely to be involved or affected over the course of the incident. * Label the estimate of the total area or population involved, affected, or impacted with the relevant units such as acres, hectares, square miles, etc. * Note that total area involved may not be limited to geographic area (see previous discussions regarding incident definition, scope, operations, and objectives). Projected final size may involve a population rather than a geographic area.
+
+Anticipated Incident Management Completion Date
+
+* Enter the date (month/day/year) at which time it is expected that incident objectives will be met. This is often explained similar to incident containment or control, or the time at which the incident is expected to be closed or when significant incident support will be discontinued. * Avoid leaving this block blank if possible, as this is important information for managers.
+
+Projected Significant Resource Demobilization Start Date
+
+Enter the date (month/day/year) when initiation of significant resource demobilization is anticipated.
+
+Estimated Incident Costs to Date
+
+* Enter the estimated total incident costs to date for the entire incident based on currently available information. * Incident costs include estimates of all costs for the response, including all management and support activities per discipline, agency, or organizational guidance and policy. * This does not include damage assessment figures, as they are impacts from the incident and not response costs. * If costs decrease, explain in Remarks (Block 47). * If additional space is required, please add as an attachment.
+
+Projected Final Incident Cost Estimate
+
+* Enter an estimate of the total costs for the incident once all costs have been processed based on current spending and projected incident potential, per discipline, agency, or organizational guidance and policy. This is often an estimate of daily costs combined with incident potential information. * This does not include damage assessment figures, as they are impacts from the incident and not response costs. * If additional space is required, please add as an attachment.
+
+Block Number
+
+Block Title
+
+Instructions
+
+Remarks (or continuation of any blocks above - list block number in notation)
+
+* Use this block to expand on information that has been entered in previous blocks, or to include other pertinent information that has not been previously addressed. * List the block number for any information continued from a previous block. * Additional information may include more detailed weather information, specifics on injuries or fatalities, threats to critical infrastructure or other resources, more detailed evacuation site locations and number of evacuated, information or details regarding incident cause, etc. * For Complexes that include multiple incidents, list all sub-incidents included in the Complex. * List jurisdictional or ownership breakdowns if needed when an incident is in more than one jurisdiction and/or ownership area. Breakdown may be: o By size (e.g., 35 acres in City of Gatlinburg, 250 acres in Great Smoky Mountains), and/or o By geography (e.g., incident area on the west side of the river is in jurisdiction of City of Minneapolis; area on east side of river is City of St. Paul jurisdiction; river is joint jurisdiction with USACE). * Explain any reasons for incident size reductions or adjustments (e.g., reduction in acreage due to more accurate mapping). * This section can also be used to list any additional information about the incident that may be needed by incident support mechanisms outside the incident itself. This may be basic information needed through multiagency coordination systems or public information systems (e.g., a public information phone number for the incident, or the incident Web site address). * Attach additional pages if it is necessary to include additional comments in the Remarks section.
+
+INCIDENT RESOURCE COMMITMENT SUMMARY (PAGE 4) * This last/fourth page of the ICS 209 can be copied and used if needed to accommodate additional resources, agencies, or organizations. Write the actual page number on the pages as they are used. * Include only resources that have been assigned to the incident and that have arrived and/or been checked in to the incident. Do not include resources that have been ordered but have not yet arrived. For summarizing: * When there are large numbers of responders, it may be helpful to group agencies or organizations together. Use the approach that works best for the multiagency coordination system applicable to the incident. For example, o Group State, local, county, city, or Federal responders together under such headings, or o Group resources from one jurisdiction together and list only individual jurisdictions (e.g., list the public works, police, and fire department resources for a city under that city's name). * On a large incident, it may also be helpful to group similar categories, kinds, or types of resources together for this summary.
+
+Block Number
+
+Block Title
+
+Instructions
+
+Agency or Organization
+
+* List the agencies or organizations contributing resources to the incident as responders, through mutual aid agreements, etc. * List agencies or organizations using clear language so readers who may not be from the discipline or host jurisdiction can understand the information. * Agencies or organizations may be listed individually or in groups. * When resources are grouped together, individual agencies or organizations may be listed below in Block 53. * Indicate in the rows under Block 49 how many resources are assigned to the incident under each resource identified. o These can listed with the number of resources on the top of the box, and the number of personnel associated with the resources on the bottom half of the box. o For example: * Resource: Type 2 Helicopters... 3/8 (indicates 3 aircraft, 8 personnel). * Resource: Type 1 Decontamination Unit... 1/3 (indicates 1 unit, 3 personnel). * Indicate in the rows under Block 51 the total number of personnel assigned for each agency listed under Block 48, including both individual overhead and those associated with other resources such as fire engines, decontamination units, etc.
+
+Resources (summarize resources by category, kind, and/or type; show # of resources on top of box, show # of personnel associated with resource on bottom of box)
+
+* List resources using clear language when possible - so ICS 209 readers who may not be from the discipline or host jurisdiction can understand the information. o Examples: Type 1 Fire Engines, Type 4 Helicopters * Enter total numbers in columns for each resource by agency, organization, or grouping in the proper blocks. o These can listed with the number of resources on the top of the box, and the number of personnel associated with the resources on the bottom half of the box. o For example: * Resource: Type 2 Helicopters... 3/8 (indicates 3 aircraft, 8 personnel). * Resource: Type 1 Decontamination Unit... 1/3 (indicates 1 unit, 3 personnel). * NOTE: One option is to group similar resources together when it is sensible to do so for the summary. o For example, do not list every type of fire engine - rather, it may be advisable to list two generalized types of engines, such as "structure fire engines" and "wildland fire engines" in separate columns with totals for each. * NOTE: It is not advisable to list individual overhead personnel individually in the resource section, especially as this form is intended as a summary. These personnel should be included in the Total Personnel sums in Block 51.
+
+Additional Personnel not assigned to a resource
+
+List the number of additional individuals (or overhead) that are not assigned to a specific resource by agency or organization.
+
+Total Personnel (includes those associated with resources - e.g., aircraft or engines - and individual overhead)
+
+* Enter the total personnel for each agency, organization, or grouping in the Total Personnel column. * WARNING: Do not simply add the numbers across! * The number of Total Personnel for each row should include both: o The total number of personnel assigned to each of the resources listed in Block 49, and o The total number of additional individual overhead personnel from each agency, organization, or group listed in Block 50.
+
+Block Number
+
+Block Title
+
+Instructions
+
+Total Resources
+
+Include the sum total of resources for each column, including the total for the column under Blocks 49, 50, and 51. This should include the total number of resources in Block 49, as personnel totals will be counted under Block 51.
+
+Additional Cooperating and Assisting Organizations Not Listed Above
+
+* List all agencies and organizations that are not directly involved in the incident, but are providing support. * Examples may include ambulance services, Red Cross, DHS, utility companies, etc. * Do not repeat any resources counted in Blocks 48-52, unless explanations are needed for groupings created under Block 48 (Agency or Organization).

@@ -1,0 +1,53 @@
+COMMUNICATIONS LIST (ICS 205A) 1. Incident Name:
+
+2. Operational Period: Date From: Time From:
+
+Date To: Time To:
+
+3. Basic Local Communications Information: Incident Assigned Position
+
+Name (Alphabetized)
+
+4. Prepared by: Name: ICS 205A
+
+Position/Title: IAP Page ____
+
+Date/Time:
+
+Method(s) of Contact (phone, pager, cell, etc.)
+
+Signature:
+
+ICS 205A Communications List Purpose. The Communications List (ICS 205A) records methods of contact for incident personnel. While the Incident Radio Communications Plan (ICS 205) is used to provide information on all radio frequencies down to the Division/Group level, the ICS 205A indicates all methods of contact for personnel assigned to the incident (radio frequencies, phone numbers, pager numbers, etc.), and functions as an incident directory. Preparation. The ICS 205A can be filled out during check-in and is maintained and distributed by Communications Unit personnel. This form should be updated each operational period. Distribution. The ICS 205A is distributed within the ICS organization by the Communications Unit, and posted as necessary. All completed original forms must be given to the Documentation Unit. If this form contains sensitive information such as cell phone numbers, it should be clearly marked in the header that it contains sensitive information and is not for public release. Notes: * The ICS 205A is an optional part of the Incident Action Plan (IAP). * This optional form is used in conjunction with the ICS 205. * If additional pages are needed, use a blank ICS 205A and repaginate as needed. Block Number
+
+Block Title
+
+Instructions
+
+Incident Name
+
+Enter the name assigned to the incident.
+
+Operational Period * Date and Time From * Date and Time To
+
+Enter the start date (month/day/year) and time (using the 24-hour clock) and end date and time for the operational period to which the form applies.
+
+Basic Local Communications Information
+
+Enter the communications methods assigned and used for personnel by their assigned ICS position.
+
+* Incident Assigned Position
+
+Enter the ICS organizational assignment.
+
+* Name
+
+Enter the name of the assigned person.
+
+* Method(s) of Contact (phone, pager, cell, etc.)
+
+For each assignment, enter the radio frequency and contact number(s) to include area code, etc. If applicable, include the vehicle license or ID number assigned to the vehicle for the incident (e.g., HAZMAT 1, etc.).
+
+Prepared by * Name * Position/Title * Signature * Date/Time
+
+Enter the name, ICS position, and signature of the person preparing the form. Enter date (month/day/year) and time prepared (24-hour clock).

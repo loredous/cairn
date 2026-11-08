@@ -1,0 +1,13 @@
+WWUS75 KBOU 021509 NPWBOU
+
+URGENT - WEATHER MESSAGE National Weather Service Denver CO 809 AM MST Mon Nov 2 2026
+
+COZ040-043-045-021615- /O.EXP.KBOU.FG.Y.0006.000000T0000Z-261102T1500Z/ North Douglas County Below 6000 Feet/Denver/West Adams and Arapahoe Counties/East Broomfield County-Central and South Weld County-Central and East Adams and Arapahoe Counties- Including the cities of Byers, Parker, Eaton, Fort Lupton, City of Denver, Littleton, Deer Trail, Denver International Airport, Leader, Brighton, Bennett, Aurora, Greeley, Highlands Ranch, and Roggen 809 AM MST Mon Nov 2 2026
+
+...DENSE FOG ADVISORY HAS EXPIRED...
+
+Visibility has slowly been improving over the past hour, so the Dense Fog Advisory has been allowed to expire. However, there could still be localized areas of patchy dense fog for the next hour.
+
+$$
+
+For more information from the National Weather Service, visit https://weather.gov/bou

@@ -1,0 +1,11 @@
+WWUS74 KFWD 011553 NPWFWD
+
+URGENT - WEATHER MESSAGE National Weather Service Fort Worth TX 953 AM CST Sun Nov 1 2026
+
+TXZ091>095-102>107-117>123-131-133>135-145>148-158>162-174-175- 011700- /O.EXP.KFWD.FG.Y.0005.000000T0000Z-261101T1600Z/ Montague-Cooke-Grayson-Fannin-Lamar-Wise-Denton-Collin-Hunt-Delta- Hopkins-Parker-Tarrant-Dallas-Rockwall-Kaufman-Van Zandt-Rains-Hood- Johnson-Ellis-Henderson-Hill-Navarro-Freestone-Anderson-Bell- McLennan-Falls-Limestone-Leon-Milam-Robertson- Including the cities of Hillsboro, Sulphur Springs, Marlin, Granbury, Teague, Cooper, Burleson, Fort Worth, Centerville, Mexia, Fairfield, Oakwood, Edgewood, East Tawakoni, Sherman, McKinney, Temple, Ennis, Paris, Cameron, Waxahachie, Plano, Rockdale, Decatur, Briar, Denison, Nocona, Heath, Cleburne, Athens, Gun Barrel City, Palestine, Forney, Calvert, Van, Wills Point, Midlothian, Franklin, Hearne, Allen, Waco, Corsicana, Oak Trail Shores, Terrell, Lewisville, Commerce, Denton, Bridgeport, Bowie, Weatherford, Wortham, Normangee, Emory, Buffalo, Gainesville, Canton, Killeen, Dallas, Frisco, Groesbeck, Greenville, Jewett, Bonham, Kaufman, Flower Mound, Fort Hood, Carrollton, Rockwall, Grand Saline, Point, and Arlington 953 AM CST Sun Nov 1 2026
+
+...DENSE FOG ADVISORY WILL EXPIRE AT 10 AM CST THIS MORNING...
+
+The dense fog continues to dissipate across the advisory area. However, patchy fog with visibilities near 1-3 miles will remain through the next couple of hours.
+
+$$
