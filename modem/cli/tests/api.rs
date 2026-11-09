@@ -54,6 +54,9 @@ struct Harness {
     schema: Schema,
     /// Lines the modems sent, all validated.
     checked: usize,
+    /// The longest one call into a station's API (a request, the worker
+    /// pump) took, wall time: how long the event loop was held.
+    max_block: Duration,
 }
 
 impl Harness {
@@ -71,7 +74,7 @@ impl Harness {
             let ring = sim.stations[i].modem.config().ring_seconds;
             nodes.push(Node { srv, inbound, api: HostApi::new(cfg, ring).unwrap(), rx_dir: None });
         }
-        Harness { sim, nodes, schema: Schema::api(), checked: 0 }
+        Harness { sim, nodes, schema: Schema::api(), checked: 0, max_block: Duration::ZERO }
     }
 
     fn check(&mut self, line: &str) {
@@ -93,7 +96,9 @@ impl Harness {
                 }
                 Inbound::Line(id, line) => {
                     let node = &mut self.nodes[i];
+                    let t0 = std::time::Instant::now();
                     let h = self.sim.modem_call(i, |m, now| node.api.request(&line, m, now));
+                    self.max_block = self.max_block.max(t0.elapsed());
                     self.check(&h.response);
                     if let Some(s) = h.subscribe {
                         self.nodes[i].srv.subscribe(id, s);
@@ -783,4 +788,74 @@ fn capture_wav_holds_exactly_the_audio_that_went_in() {
     let m3 = api.capture(&modem, Some(10.0), None, "api").unwrap();
     assert_eq!(m3["samples"], 96_000);
     let _ = std::fs::remove_dir_all(&dir);
+}
+
+/// Two stations with the evaluation dictionaries both ways (three usable
+/// in the session), connected.
+#[cfg(feature = "zstd")]
+fn zstd_pair(name: &str, seeds: (u64, u64)) -> (Harness, Client, Client, PathBuf) {
+    let dir = tmp(name);
+    let mut sim = Sim::new();
+    let mut a = station("N0AAA", seeds.0, 0.0);
+    a.dictionaries = eval_dictionaries();
+    let mut b = station("N0BBB", seeds.1, 0.0);
+    b.dictionaries = eval_dictionaries();
+    sim.add(a, 20.0, 25.0, seeds.0);
+    sim.add(b, -20.0, 25.0, seeds.1);
+    let mut h = Harness::new(sim, &dir);
+    let addr_a = h.nodes[0].srv.listen_tcp("127.0.0.1:0").unwrap();
+    let addr_b = h.nodes[1].srv.listen_tcp("127.0.0.1:0").unwrap();
+    let mut a = Client::tcp(addr_a);
+    let mut b = Client::tcp(addr_b);
+    hello(&mut h, &mut a);
+    hello(&mut h, &mut b);
+    request(&mut h, &mut a, json!({"cmd": "connect", "peer": "N0BBB"}));
+    let open = |c: &Client| c.has(|v| v["event"] == "session" && v["state"] == "open");
+    run_until(&mut h, &mut [&mut a, &mut b], 30.0, |cs| open(cs[0]) && open(cs[1]));
+    (h, a, b, dir)
+}
+
+/// Text of `n` bytes from the dictionary corpus, repeated.
+#[cfg(feature = "zstd")]
+fn corpus_bytes(n: usize) -> Vec<u8> {
+    let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../dictionaries/corpus");
+    let mut files: Vec<PathBuf> = std::fs::read_dir(root.join("fema_ics"))
+        .unwrap()
+        .map(|e| e.unwrap().path())
+        .chain([root.join("ecfr_part97/part97.txt")])
+        .collect();
+    files.sort();
+    let mut out = Vec::with_capacity(n + 200_000);
+    while out.len() < n {
+        for f in &files {
+            out.extend(std::fs::read(f).unwrap());
+        }
+    }
+    out.truncate(n);
+    out
+}
+
+/// How long the event loop is held by `send` of a 1 MB and an 8 MB file
+/// with three dictionaries negotiated (`cargo test --release -p cairn-modem
+/// --test api -- --ignored --nocapture send_blocking`).
+#[test]
+#[ignore]
+#[cfg(feature = "zstd")]
+fn send_blocking_time() {
+    let (mut h, mut a, _b, dir) = zstd_pair("bench", (71, 72));
+    for mb in [1usize, 8] {
+        let file = dir.join(format!("{mb}mb.txt"));
+        std::fs::write(&file, corpus_bytes(mb << 20)).unwrap();
+        h.max_block = Duration::ZERO;
+        let t0 = std::time::Instant::now();
+        let r = request(&mut h, &mut a, json!({"cmd": "send", "file": file.display().to_string()}));
+        println!(
+            "BENCH {mb} MB: response after {:.0} ms, longest hold of the loop {:.0} ms ({} PDUs, {} -> {} bytes)",
+            t0.elapsed().as_secs_f64() * 1e3,
+            h.max_block.as_secs_f64() * 1e3,
+            r["pdus"],
+            r["bytes"],
+            r["pdu_bytes"]
+        );
+    }
 }
