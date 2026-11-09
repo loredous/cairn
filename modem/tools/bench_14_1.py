@@ -1475,7 +1475,7 @@ def _main(args) -> int:
             if not sys.stdin.isatty():
                 raise BenchError("confirmation needs a terminal (or pass --no-confirm)")
             ans = input(f"\nType the callsign of station A ({cfg.a.callsign}) to go on the air, anything else to stop: ")
-            if ans.strip().upper() != cfg.a.callsign:
+            if ans.strip().upper() != cfg.a.callsign.strip().upper():
                 raise BenchError("not confirmed; nothing was transmitted")
     out = Path(args.out_dir) if args.out_dir else Path("bench-14-1-results") / dt.datetime.now().strftime("%Y%m%d-%H%M%S")
     out = out.resolve()
