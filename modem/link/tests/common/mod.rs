@@ -84,12 +84,66 @@ pub struct Link {
     pub block_loss: f64,
     /// Tones that arrive this many dB below the rest.
     pub impaired: Vec<(u8, f64)>,
+    /// Lines at k kHz (k = 1, 2, ...) added at the receiver's audio output,
+    /// each this many dB against one tone's power (empty: none). A line
+    /// midway between two tones leaks into tone t with 1 / (pi d)^2 of its
+    /// power, d the distance in tone spacings ([`comb_noise`]). 2026-11-08 on
+    /// 70 cm: about [-9, -5, -4, -24] at the worst setup, 8 dB less at the
+    /// best ([`COMB_70CM`]).
+    pub comb_db: Vec<f64>,
 }
 
 impl Default for Link {
     fn default() -> Self {
-        Link { audible: true, snr_db: 25.0, header_loss: 0.0, ack_loss: 0.0, block_loss: 0.0, impaired: vec![] }
+        Link {
+            audible: true,
+            snr_db: 25.0,
+            header_loss: 0.0,
+            ack_loss: 0.0,
+            block_loss: 0.0,
+            impaired: vec![],
+            comb_db: vec![],
+        }
     }
+}
+
+/// The 2026-11-08 70 cm comb (the mean of four setups, `sim` channel
+/// `CAPTURE_COMBS["70cm"]`: -24.5, -20.3, -19.6, -39.4 dB against the whole
+/// 32-tone signal), against one tone of 29 in use.
+pub const COMB_70CM: [f64; 4] = [-9.9, -5.7, -5.0, -24.8];
+/// How far the receiver's line canceller (`cairn_phy::rx::remove_lines`)
+/// pushes a line down: on the 70 cm fixtures and in simulation, at least 25 dB.
+pub const LINE_CANCEL_DB: f64 = 25.0;
+/// Exponential effective-SNR mapping per rung (linear SNR units): a frame
+/// whose data tones see unequal SNRs fails as one whose tones all see
+/// -beta ln(mean exp(-snr / beta)). Fitted to the simulator's 1% points with
+/// the 70 cm comb at 24 and 32 tones, comb tones in use and masked
+/// (`sim/results/comb.json`): within 1.5 dB of them at MCS 3-6; MCS 0 from
+/// the header-limited points, MCS 1-2 from 32 tones (`sim/findings.md`).
+pub const ESM_BETA: [f64; 7] = [1.1, 1.9, 5.0, 10.0, 32.0, 55.0, 300.0];
+
+/// Noise power each of `n` tones receives from `comb_db` (line powers, dB
+/// against one tone) after a canceller that removes `cancel_db` of it.
+pub fn comb_noise(comb_db: &[f64], n: usize, cancel_db: f64) -> Vec<f64> {
+    (0..n)
+        .map(|t| {
+            comb_db
+                .iter()
+                .enumerate()
+                .map(|(k, &c)| {
+                    // Tone t is at 350 + 100 t Hz; line k + 1 at 1000 (k + 1) Hz.
+                    let d = t as f64 + 3.5 - 10.0 * (k + 1) as f64;
+                    10f64.powf((c - cancel_db) / 10.0) / (std::f64::consts::PI * d).powi(2)
+                })
+                .sum()
+        })
+        .collect()
+}
+
+/// Effective SNR (dB) of tones at `snr_db` for a rung with mapping `beta`.
+pub fn effective_snr(snr_db: &[f64], beta: f64) -> f64 {
+    let m = snr_db.iter().map(|&s| (-(10f64.powf(s / 10.0)) / beta).exp()).sum::<f64>() / snr_db.len() as f64;
+    10.0 * (-beta * m.ln()).log10()
 }
 
 #[derive(Debug)]
@@ -103,6 +157,7 @@ enum Ev {
     Audible { from: usize, to: usize, on: bool },
     Raw { st: usize, ev: Event },
     Impair { from: usize, to: usize, tones: Vec<(u8, f64)> },
+    Comb { from: usize, to: usize, comb_db: Vec<f64> },
 }
 
 pub struct SimStation {
@@ -145,6 +200,9 @@ pub struct Sim {
     /// tones 0-2 past the cyclic prefix, spills them onto their neighbours
     /// (2026-11-08 on 1.25 m). Masking tones 0-2 removes it.
     pub low_tone_spill_db: Option<f64>,
+    /// How far the receiving station's canceller removes a link's
+    /// `comb_db` lines (0: a receiver without one).
+    pub line_cancel_db: f64,
     pub csma_violations: Vec<String>,
     pub turn_holder_overlaps: Vec<String>,
     pub mask_mismatches: usize,
@@ -169,6 +227,7 @@ impl Sim {
             meas_noise_db: 0.25,
             tone_powers: false,
             low_tone_spill_db: None,
+            line_cancel_db: LINE_CANCEL_DB,
             csma_violations: Vec::new(),
             turn_holder_overlaps: Vec::new(),
             mask_mismatches: 0,
@@ -266,6 +325,11 @@ impl Sim {
     /// Schedule a tone impairment on one directed link.
     pub fn impair(&mut self, at: Instant, from: usize, to: usize, tones: Vec<(u8, f64)>) {
         self.push(at, Ev::Impair { from, to, tones });
+    }
+
+    /// Schedule a change of one directed link's comb (`Link::comb_db`).
+    pub fn comb(&mut self, at: Instant, from: usize, to: usize, comb_db: Vec<f64>) {
+        self.push(at, Ev::Comb { from, to, comb_db });
     }
 
     /// A third station keys up for `dur` at `at` (heard by stations whose
@@ -460,11 +524,35 @@ impl Sim {
             _ => {}
         }
         let snr = link.snr_db;
-        if self.rng.chance(link.header_loss) || self.rng.chance(bler(snr, RUNG_THRESHOLDS_DB[0])) {
+        // With a comb, each tone's SNR and an effective SNR per segment: the
+        // header on the 24 base tones, control blocks on the base tones the
+        // mask keeps, data on the tones the mask keeps.
+        let comb = (!link.comb_db.is_empty()).then(|| {
+            let n = usize::from(frame.tx.width).max(24);
+            let mut noise = comb_noise(&link.comb_db, n, self.line_cancel_db);
+            for (k, v) in noise.iter_mut().enumerate() {
+                let depth = link.impaired.iter().find(|(t, _)| usize::from(*t) == k).map_or(0.0, |x| x.1);
+                *v += 10f64.powf(-(snr - depth) / 10.0);
+            }
+            noise.iter().map(|v| -10.0 * v.log10()).collect::<Vec<f64>>()
+        });
+        let used = |n: usize| -> Vec<usize> {
+            (0..n.min(usize::from(frame.tx.width))).filter(|&k| frame.tx.mask >> k & 1 == 1).collect()
+        };
+        let eff_of = |tones: &[usize], mcs: usize| -> f64 {
+            let s = comb.as_ref().expect("comb");
+            effective_snr(&tones.iter().map(|&k| s[k]).collect::<Vec<f64>>(), ESM_BETA[mcs])
+        };
+        let header_snr = if comb.is_some() { eff_of(&(0..24).collect::<Vec<_>>(), 0) } else { snr };
+        if self.rng.chance(link.header_loss) || self.rng.chance(bler(header_snr, RUNG_THRESHOLDS_DB[0])) {
             return Some(Event::HeaderFailed);
         }
         let impaired_used = link.impaired.iter().any(|(t, _)| frame.tx.mask >> t & 1 == 1 && *t < frame.tx.width);
         let eff = if impaired_used { snr - IMPAIRED_TONE_PENALTY_DB } else { snr };
+        let (eff_control, eff_data) = match comb {
+            Some(_) => (eff_of(&used(24), 0), eff_of(&used(56), frame.mcs as usize)),
+            None => (eff, eff),
+        };
         let mut rx = RxFrame::perfect(&frame, Measurement::default(), a.last_symbol);
         // Mask by ID: the receiver demaps with the mask the header names.
         let mask_ok = match self.stations[r].st.rx_mask(&rx.header) {
@@ -483,13 +571,16 @@ impl Sim {
             let ack_lost =
                 k == 0 && matches!(c, Some(cairn_link::ControlBlock::Ack(_))) && self.rng.chance(link.ack_loss);
             let dropped = matches!(&fate, Fate::DropControls(v) if v.contains(&k));
-            if !mask_ok || ack_lost || dropped || self.rng.chance(bler(eff, RUNG_THRESHOLDS_DB[0])) {
+            if !mask_ok || ack_lost || dropped || self.rng.chance(bler(eff_control, RUNG_THRESHOLDS_DB[0])) {
                 *c = None;
             }
         }
         let thr = RUNG_THRESHOLDS_DB[frame.mcs as usize];
         for d in rx.data.iter_mut() {
-            if !mask_ok || fate == Fate::DropData || self.rng.chance(link.block_loss) || self.rng.chance(bler(eff, thr))
+            if !mask_ok
+                || fate == Fate::DropData
+                || self.rng.chance(link.block_loss)
+                || self.rng.chance(bler(eff_data, thr))
             {
                 *d = None;
             }
@@ -501,7 +592,10 @@ impl Sim {
                 tones[*t as usize] -= depth;
             }
         }
-        let (snr_db, tone_powers) = if self.tone_powers {
+        if let Some(s) = &comb {
+            tones = s.iter().map(|v| v + noise).collect();
+        }
+        let (snr_db, tone_powers) = if self.tone_powers || comb.is_some() {
             let mut p: Vec<(f64, f64)> = tones.iter().map(|&t| (1.0, 10f64.powf(-t / 10.0))).collect();
             let w = usize::from(frame.tx.width).min(tones.len());
             if let Some(spill) = self.low_tone_spill_db {
@@ -541,6 +635,7 @@ impl Sim {
             Ev::Host { st, cmd } => self.deliver(st, Event::Host(cmd)),
             Ev::Snr { from, to, snr } => self.links[from][to].snr_db = snr,
             Ev::Impair { from, to, tones } => self.links[from][to].impaired = tones,
+            Ev::Comb { from, to, comb_db } => self.links[from][to].comb_db = comb_db,
             Ev::Raw { st, ev } => self.deliver(st, ev),
             Ev::Audible { from, to, on } => {
                 // A carrier on the air when the link changes is lost, or
