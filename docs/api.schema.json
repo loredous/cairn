@@ -262,7 +262,7 @@
         "bad_json", "bad_request", "unknown_command", "unsupported", "no_session", "busy", "invalid_state",
         "not_found", "io_error", "too_large", "line_too_long", "read_only", "out_of_range", "internal",
         "send_rejected", "broadcast_rejected", "pdu_error", "tx_failed", "receive_clipping", "distortion",
-        "capture_failed"
+        "capture_failed", "ptt_fault"
       ]
     },
     "error": {

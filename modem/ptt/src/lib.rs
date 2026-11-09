@@ -206,23 +206,151 @@ impl fmt::Display for PttSpec {
     }
 }
 
-/// A PTT shared between the transmitter and an emergency release path
-/// (signal handler thread). Locks are held only for one key/unkey call.
-#[derive(Clone)]
-pub struct SharedPtt(Arc<Mutex<Box<dyn Ptt>>>);
+/// Opens the PTT backend again (resolving its stable path afresh), used to
+/// recover from a dead interface.
+pub type Reopen = Box<dyn Fn() -> io::Result<Box<dyn Ptt>> + Send + Sync>;
 
-impl SharedPtt {
-    /// Share `ptt`.
-    pub fn new(ptt: Box<dyn Ptt>) -> Self {
-        SharedPtt(Arc::new(Mutex::new(ptt)))
+/// Times a failed key or release is retried (dropping the line) before the
+/// device is closed and reopened.
+pub const RELEASE_RETRIES: usize = 3;
+/// Pause between those retries.
+const RETRY_PAUSE: std::time::Duration = std::time::Duration::from_millis(50);
+
+/// Stands in for a backend that was closed after it failed.
+struct DeadPtt;
+
+impl Ptt for DeadPtt {
+    fn set(&mut self, _keyed: bool) -> io::Result<()> {
+        Err(io::Error::other("PTT device is closed"))
+    }
+    fn describe(&self) -> String {
+        "closed after a failure".into()
+    }
+}
+
+struct Inner {
+    ptt: Box<dyn Ptt>,
+    reopen: Option<Reopen>,
+    /// Why the device is not trusted, until it has been reopened.
+    fault: Option<String>,
+    /// Operator-facing warnings not yet taken by [`SharedPtt::take_warnings`].
+    warnings: Vec<String>,
+    pause: std::time::Duration,
+}
+
+impl Inner {
+    fn warn(&mut self, text: String) {
+        eprintln!("WARNING: {text}");
+        self.warnings.push(text);
     }
 
-    fn lock(&self) -> MutexGuard<'_, Box<dyn Ptt>> {
+    /// Reopen (or, with no way to reopen, just drop the line again) and
+    /// put the idle state on the line. Clears the fault on success.
+    fn recover(&mut self) -> io::Result<()> {
+        match &self.reopen {
+            Some(open) => {
+                let mut fresh = open()?;
+                // Opening already sets the idle state; make it explicit.
+                fresh.set(false)?;
+                self.ptt = fresh;
+            }
+            None => self.ptt.set(false)?,
+        }
+        self.fault = None;
+        Ok(())
+    }
+
+    /// A key or release failed: do what can be done for a transmitter that
+    /// may still be keyed (retry dropping the line, close and reopen the
+    /// device), warn loudly, and refuse to key until it works again.
+    fn failed(&mut self, what: &str, err: &io::Error) {
+        let desc = self.ptt.describe();
+        for _ in 0..RELEASE_RETRIES {
+            std::thread::sleep(self.pause);
+            if self.ptt.set(false).is_ok() {
+                self.warn(format!(
+                    "PTT {what} failed on {desc}: {err}. The line was dropped on a retry, but the interface is \
+                     misbehaving: check it before relying on it."
+                ));
+                return;
+            }
+        }
+        // Close the dead device and reopen it by its stable path.
+        self.ptt = Box::new(DeadPtt);
+        self.fault = Some(format!("{desc}: {err}"));
+        match self.recover() {
+            Ok(()) => self.warn(format!(
+                "PTT {what} failed on {desc}: {err}. The transmitter MAY HAVE BEEN LEFT KEYED. The device was \
+                 reopened and set idle; check the interface and the radio now."
+            )),
+            Err(e) => self.warn(format!(
+                "PTT {what} failed on {desc}: {err}. The transmitter MAY STILL BE KEYED and the device could not be \
+                 reopened ({e}). Check the interface and the radio now (unplug it if need be). Keying is refused \
+                 until the PTT device reopens."
+            )),
+        }
+    }
+
+    fn set(&mut self, keyed: bool) -> io::Result<()> {
+        if let Some(why) = self.fault.clone() {
+            // Not keying until the device is back; releasing is always tried.
+            if let Err(e) = self.recover() {
+                return Err(io::Error::other(if keyed {
+                    format!("PTT device lost ({why}) and not reopened ({e}); not keying")
+                } else {
+                    format!("PTT device lost ({why}) and not reopened ({e})")
+                }));
+            }
+            self.warn("PTT device reopened and set idle; check the interface.".into());
+        }
+        match self.ptt.set(keyed) {
+            Ok(()) => Ok(()),
+            Err(e) => {
+                self.failed(if keyed { "keying" } else { "release" }, &e);
+                Err(e)
+            }
+        }
+    }
+}
+
+/// A PTT shared between the transmitter and an emergency release path
+/// (signal handler thread). Locks are held only for one key/unkey call
+/// (and, after a failure, the recovery of the device).
+///
+/// A failed key or release is not final: the line is dropped again a few
+/// times, then the device is closed and reopened by its stable path (when a
+/// [`Reopen`] was given), with the idle state set. An operator warning is
+/// queued ([`SharedPtt::take_warnings`]) and printed, and until the device
+/// reopens, keying is refused.
+#[derive(Clone)]
+pub struct SharedPtt(Arc<Mutex<Inner>>);
+
+impl SharedPtt {
+    /// Share `ptt`, with no way to reopen it.
+    pub fn new(ptt: Box<dyn Ptt>) -> Self {
+        SharedPtt(Arc::new(Mutex::new(Inner {
+            ptt,
+            reopen: None,
+            fault: None,
+            warnings: Vec::new(),
+            pause: RETRY_PAUSE,
+        })))
+    }
+
+    /// Share `ptt`, reopened with `reopen` after a failure.
+    pub fn with_reopen(ptt: Box<dyn Ptt>, reopen: Reopen) -> Self {
+        let s = Self::new(ptt);
+        s.lock().reopen = Some(reopen);
+        s
+    }
+
+    fn lock(&self) -> MutexGuard<'_, Inner> {
         // A panic while holding the lock must not stop a later release.
         self.0.lock().unwrap_or_else(|e| e.into_inner())
     }
 
-    /// Key or unkey.
+    /// Key or unkey. A failure runs the recovery described above and is
+    /// still returned. While the device is lost, keying is refused.
     pub fn set(&self, keyed: bool) -> io::Result<()> {
         self.lock().set(keyed)
     }
@@ -239,11 +367,11 @@ impl SharedPtt {
     pub fn try_release(&self) -> bool {
         match self.0.try_lock() {
             Ok(mut p) => {
-                let _ = p.set(false);
+                let _ = p.ptt.set(false);
                 true
             }
             Err(std::sync::TryLockError::Poisoned(e)) => {
-                let _ = e.into_inner().set(false);
+                let _ = e.into_inner().ptt.set(false);
                 true
             }
             Err(std::sync::TryLockError::WouldBlock) => false,
@@ -252,17 +380,35 @@ impl SharedPtt {
 
     /// Read the line back, where the backend can.
     pub fn read_back(&self) -> io::Result<Option<bool>> {
-        self.lock().read_back()
+        self.lock().ptt.read_back()
     }
 
     /// Backend description.
     pub fn describe(&self) -> String {
-        self.lock().describe()
+        self.lock().ptt.describe()
     }
 
     /// True for none and VOX.
     pub fn is_null(&self) -> bool {
-        self.lock().is_null()
+        self.lock().ptt.is_null()
+    }
+
+    /// True while the device failed and has not been reopened: keying is
+    /// refused and the transmitter may still be keyed.
+    pub fn is_faulted(&self) -> bool {
+        self.lock().fault.is_some()
+    }
+
+    /// Warnings raised since the last call (a failure and its recovery),
+    /// for the operator and the host API.
+    pub fn take_warnings(&self) -> Vec<String> {
+        std::mem::take(&mut self.lock().warnings)
+    }
+
+    /// Shorten the pause between release retries (tests).
+    #[doc(hidden)]
+    pub fn set_retry_pause(&self, pause: std::time::Duration) {
+        self.lock().pause = pause;
     }
 }
 
@@ -335,6 +481,93 @@ mod tests {
         let bad = SharedPtt::new(Box::new(Probe(line.clone(), true)));
         assert!(PttGuard::key(&bad).is_err());
         assert!(!line.load(Ordering::SeqCst));
+    }
+
+    /// A backend that fails every call once `dead` is set, logging the
+    /// last state it was told to take.
+    struct Flaky {
+        dead: Arc<AtomicBool>,
+        line: Arc<AtomicBool>,
+    }
+    impl Ptt for Flaky {
+        fn set(&mut self, keyed: bool) -> io::Result<()> {
+            if self.dead.load(Ordering::SeqCst) {
+                return Err(io::Error::from_raw_os_error(32)); // Broken pipe
+            }
+            self.line.store(keyed, Ordering::SeqCst);
+            Ok(())
+        }
+        fn describe(&self) -> String {
+            "flaky".into()
+        }
+    }
+
+    /// A flaky PTT whose reopen works only while `usb_back` is set.
+    #[allow(clippy::type_complexity)]
+    fn flaky() -> (SharedPtt, Arc<AtomicBool>, Arc<AtomicBool>, Arc<AtomicBool>, Arc<Mutex<usize>>) {
+        let dead = Arc::new(AtomicBool::new(false));
+        let line = Arc::new(AtomicBool::new(false));
+        let usb_back = Arc::new(AtomicBool::new(false));
+        let opens = Arc::new(Mutex::new(0usize));
+        let (l2, b2, o2) = (line.clone(), usb_back.clone(), opens.clone());
+        let ptt = SharedPtt::with_reopen(
+            Box::new(Flaky { dead: dead.clone(), line: line.clone() }),
+            Box::new(move || {
+                *o2.lock().unwrap() += 1;
+                if b2.load(Ordering::SeqCst) {
+                    Ok(Box::new(Flaky { dead: Arc::new(AtomicBool::new(false)), line: l2.clone() }) as Box<dyn Ptt>)
+                } else {
+                    Err(io::Error::new(io::ErrorKind::NotFound, "no such device"))
+                }
+            }),
+        );
+        ptt.set_retry_pause(std::time::Duration::from_millis(1));
+        (ptt, dead, line, usb_back, opens)
+    }
+
+    #[test]
+    fn dead_device_is_warned_about_and_keying_refused_until_reopened() {
+        let (ptt, dead, line, usb_back, opens) = flaky();
+        ptt.set(true).unwrap();
+        assert!(line.load(Ordering::SeqCst));
+        // The interface dies while keyed: the release fails, retries fail,
+        // the reopen fails: loud warning, device marked lost.
+        dead.store(true, Ordering::SeqCst);
+        assert!(ptt.set(false).is_err());
+        assert!(ptt.is_faulted());
+        assert_eq!(*opens.lock().unwrap(), 1);
+        let w = ptt.take_warnings();
+        assert_eq!(w.len(), 1, "{w:?}");
+        assert!(w[0].contains("MAY STILL BE KEYED") && w[0].contains("Check the interface"), "{}", w[0]);
+        assert!(ptt.take_warnings().is_empty(), "taken once");
+        // Keying is refused (and the reopen retried) while it stays gone.
+        let e = ptt.set(true).unwrap_err();
+        assert!(e.to_string().contains("not keying"), "{e}");
+        assert_eq!(*opens.lock().unwrap(), 2);
+        assert!(line.load(Ordering::SeqCst), "the line was never raised again");
+        // The interface comes back: reopened, idle, keying works again.
+        usb_back.store(true, Ordering::SeqCst);
+        ptt.set(true).unwrap();
+        assert!(!ptt.is_faulted());
+        assert!(line.load(Ordering::SeqCst));
+        ptt.set(false).unwrap();
+        assert!(!line.load(Ordering::SeqCst));
+        assert!(ptt.take_warnings().iter().any(|w| w.contains("reopened")));
+    }
+
+    #[test]
+    fn failed_key_reopens_at_once_when_the_device_is_back() {
+        let (ptt, dead, line, usb_back, _) = flaky();
+        usb_back.store(true, Ordering::SeqCst);
+        dead.store(true, Ordering::SeqCst);
+        assert!(PttGuard::key(&ptt).is_err());
+        // Reopened and set idle right away; the next key is allowed.
+        assert!(!ptt.is_faulted());
+        assert!(!line.load(Ordering::SeqCst));
+        let w = ptt.take_warnings();
+        assert!(w[0].contains("MAY HAVE BEEN LEFT KEYED"), "{w:?}");
+        ptt.set(true).unwrap();
+        assert!(line.load(Ordering::SeqCst));
     }
 
     #[test]

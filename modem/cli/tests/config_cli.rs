@@ -88,6 +88,19 @@ fn rigs_lists_builtin_and_user_profiles() {
 }
 
 #[test]
+fn selftest_has_a_callsign_flag() {
+    // --help opens no device.
+    let d = tmp("selftest-help");
+    let o = modem(&d, &["selftest", "--help"]);
+    assert!(o.status.success(), "{}", text(&o));
+    assert!(text(&o).contains("--callsign"), "{}", text(&o));
+    // A bad value is refused by the parser before anything runs.
+    let o = modem(&d, &["selftest", "--level-seconds", "x"]);
+    assert!(!o.status.success());
+    std::fs::remove_dir_all(&d).unwrap();
+}
+
+#[test]
 fn run_rejects_bad_unattended_settings_before_opening_anything() {
     let d = tmp("unattended");
     let o = modem(&d, &["--no-config", "run", "--callsign", "N0X-1", "--unattended", "--allow", "N0*"]);

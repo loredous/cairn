@@ -746,8 +746,14 @@ fn caller_driven_detectors_and_hold() {
 
 #[test]
 fn quieting_band_for_width() {
-    assert_eq!(DcdConfig::for_width(24).quieting_band_hz, (2700.0, 3100.0));
+    assert_eq!(DcdConfig::for_width(24).quieting_band_hz, (2800.0, 3200.0));
+    assert_eq!(DcdConfig::for_width(32).quieting_band_hz, (3600.0, 4150.0));
     assert_eq!(DcdConfig::for_width(56).quieting_band_hz, (6000.0, 7000.0));
+    // Every width: 100 Hz above the highest tone's edge (centre + 50 Hz).
+    for w in 24..=56 {
+        let lo = DcdConfig::for_width(w).quieting_band_hz.0;
+        assert_eq!(lo, cairn_phy::params::band_high_hz(w) + 100.0, "width {w}");
+    }
     assert_eq!(DcdConfig::default(), DcdConfig::for_width(24));
 }
 

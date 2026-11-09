@@ -372,7 +372,7 @@ M=modem/target/release/cairn-modem
 #    or with `cairn-modem setup` (above), after which the flags below that the
 #    config holds (-d, --ptt, --txdelay, --txtail, --cap, --callsign) can go.
 #    Open the squelch on both radios and keep it open: carrier detect watches
-#    the noise above the signal band (2700-3100 Hz at 24 tones, 3600-4150 Hz
+#    the noise above the signal band (2800-3200 Hz at 24 tones, 3600-4150 Hz
 #    with --cap 32) and needs it. With the squelch open the two handhelds of
 #    the first session ran TXDelay 300 ms (--txdelay 300) and TXTail 20 ms
 #    (--txtail 20), and their AIOC playback levels ended at

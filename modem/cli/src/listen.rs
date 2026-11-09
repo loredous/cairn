@@ -211,9 +211,12 @@ impl HeaderFirst {
     }
 }
 
+/// Margin `header_samples` adds past the header's last symbol, samples.
+pub const HEADER_MARGIN: usize = 64;
+
 /// Samples from a frame's start through its header, with a little margin.
 pub fn header_samples(cp: usize) -> usize {
-    (PREAMBLE_SYMBOLS + cairn_phy::params::header_symbols()) * (cairn_phy::params::N_USEFUL + cp) + 64
+    (PREAMBLE_SYMBOLS + cairn_phy::params::header_symbols()) * (cairn_phy::params::N_USEFUL + cp) + HEADER_MARGIN
 }
 
 impl ConfigSource for HeaderFirst {

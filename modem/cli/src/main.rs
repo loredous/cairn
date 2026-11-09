@@ -91,6 +91,9 @@ struct SelftestArgs {
     /// PTT spec (overrides the config)
     #[arg(long)]
     ptt: Option<String>,
+    /// This station's callsign, CALL[-SSID] (or station.callsign in the config)
+    #[arg(long, env = "CAIRN_CALLSIGN")]
+    callsign: Option<String>,
     /// Seconds of input to measure for the receive level (0: skip)
     #[arg(long, default_value_t = 2.0)]
     level_seconds: f64,
@@ -173,11 +176,17 @@ impl PttOpts {
     ) -> Result<SharedPtt, String> {
         let spec =
             PttSpec::parse(&realhw::resolve_ptt_spec(&self.ptt)?, self.ptt_line, self.ptt_invert, self.ptt_gpio)?;
-        let mut ptt = spec.open().map_err(|e| format!("PTT {spec}: {e}"))?;
-        if let Some(w) = watch {
-            ptt = Box::new(cairn_modem::unattended::WatchedPtt::new(ptt, w));
-        }
-        let shared = SharedPtt::new(ptt);
+        // Opened again (by the spec's stable path, with the watchdog still
+        // attached) if the interface fails mid-transmission.
+        let open = move || -> std::io::Result<Box<dyn cairn_ptt::Ptt>> {
+            let ptt = spec.open()?;
+            Ok(match &watch {
+                Some(w) => Box::new(cairn_modem::unattended::WatchedPtt::new(ptt, w.clone())),
+                None => ptt,
+            })
+        };
+        let first = open().map_err(|e| format!("PTT {}: {e}", self.ptt))?;
+        let shared = SharedPtt::with_reopen(first, Box::new(open));
         signals::register_ptt(&shared);
         Ok(shared)
     }
@@ -473,7 +482,7 @@ struct RunArgs {
     /// Save received files (FILE-CHUNK objects) and text messages in this directory
     #[arg(long)]
     rx_dir: Option<PathBuf>,
-    /// Quieting band for carrier detect, Hz (default just above the cap: 2700-3100 at 24 tones, 3600-4150 at 32)
+    /// Quieting band for carrier detect, Hz (default just above the cap: 2800-3200 at 24 tones, 3600-4150 at 32)
     #[arg(long)]
     quieting: Option<String>,
     /// Carrier detect as first built (no quieting hysteresis or recovery after own PTT), for comparisons
@@ -737,6 +746,7 @@ impl Loaded {
             cli.config.as_deref().map(config::expand_home).or_else(config::default_config_path)
         };
         let (state, file) = match &path {
+            None if cli.no_config => (ConfigState::Skipped, FileConfig::default()),
             None => (ConfigState::Missing(None), FileConfig::default()),
             Some(p) => match FileConfig::load(p, cli.config.is_none()) {
                 Ok(f) if p.exists() => (ConfigState::Loaded(p.clone()), f),
@@ -902,18 +912,27 @@ fn setup(l: &Loaded) -> Result<(), String> {
     }
 }
 
-fn selftest(a: SelftestArgs, l: &Loaded) -> Result<(), String> {
-    use cairn_modem::selftest::{self, Options, Status};
+/// What the self-test checks: the effective config with the flags on top.
+fn selftest_config(a: &SelftestArgs, l: &Loaded) -> (ConfigState, FileConfig) {
     let (state, mut cfg) = match &l.effective {
         Ok(c) => (l.state.clone(), c.clone()),
         Err(e) => (ConfigState::Error(e.clone()), l.file.clone()),
     };
-    if let Some(d) = a.device {
-        cfg.audio.device = Some(d);
+    if let Some(d) = &a.device {
+        cfg.audio.device = Some(d.clone());
     }
-    if let Some(p) = a.ptt {
-        cfg.ptt.method = Some(p);
+    if let Some(p) = &a.ptt {
+        cfg.ptt.method = Some(p.clone());
     }
+    if let Some(c) = &a.callsign {
+        cfg.station.callsign = Some(c.clone());
+    }
+    (state, cfg)
+}
+
+fn selftest(a: SelftestArgs, l: &Loaded) -> Result<(), String> {
+    use cairn_modem::selftest::{self, Options, Status};
+    let (state, cfg) = selftest_config(&a, l);
     let checks = selftest::run(
         &state,
         &cfg,
@@ -1102,7 +1121,7 @@ fn play(items: &[Item], a: &AudioOpts, p: &PttOpts, timing: &TxTiming, gap_s: f6
         let audio: Vec<f32> = it.samples.iter().map(|&v| v as f32).collect();
         let r = txseq::transmit(&mut out, &ptt, &audio, timing, &signals::STOP).map_err(|e| match e {
             txseq::TxError::Aborted => "interrupted (PTT released)".to_string(),
-            e => format!("{e} (PTT released)"),
+            e => txseq::failure_text(&e, !ptt.take_warnings().is_empty()),
         })?;
         println!(
             "tx {}/{}: {}; keyed {:.3} s, TXDelay {:.1} ms, TXTail {:.1} ms (measured at the DAC), underruns {}",
@@ -1496,4 +1515,28 @@ fn listen_cmd(a: ListenArgs) -> Result<(), String> {
         ));
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn cfg_for(args: &[&str]) -> (ConfigState, FileConfig) {
+        let mut v = vec!["cairn-modem"];
+        v.extend_from_slice(args);
+        let cli = Cli::try_parse_from(v).expect("parse");
+        let l = Loaded::new(&cli);
+        let Cmd::Selftest(a) = cli.cmd else { panic!("selftest") };
+        selftest_config(&a, &l)
+    }
+
+    #[test]
+    fn selftest_takes_the_callsign_flag() {
+        let (state, cfg) = cfg_for(&["--no-config", "selftest", "--callsign", "N0TST-1", "-d", "x", "--ptt", "none"]);
+        assert_eq!(state, ConfigState::Skipped, "--no-config is not a missing home directory");
+        assert_eq!(cfg.station.callsign.as_deref(), Some("N0TST-1"));
+        assert_eq!((cfg.audio.device.as_deref(), cfg.ptt.method.as_deref()), (Some("x"), Some("none")));
+        let (_, cfg) = cfg_for(&["--no-config", "selftest"]);
+        assert_eq!(cfg.station.callsign, None);
+    }
 }

@@ -563,6 +563,22 @@ fn capture_is_unsupported_without_a_ring() {
 }
 
 #[test]
+fn ptt_fault_is_a_schema_valid_warning_event() {
+    let dir = tmp("pttfault");
+    let mut api =
+        HostApi::new(HostApiConfig { capture_dir: dir.clone(), heard_file: None, epoch_unix_us: EPOCH_US }, 2.0)
+            .unwrap();
+    api.on_ptt_fault("PTT release failed: Broken pipe. The transmitter MAY STILL BE KEYED", Instant(1_000));
+    let evs = api.take_events();
+    assert_eq!(evs.len(), 1);
+    assert_eq!(evs[0].name, "error");
+    let v: serde_json::Value = serde_json::from_str(&evs[0].line).unwrap();
+    assert_eq!((v["code"].as_str(), v["severity"].as_str()), (Some("ptt_fault"), Some("warning")));
+    Schema::api().validate_line(&evs[0].line).unwrap();
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+#[test]
 fn capture_wav_holds_exactly_the_audio_that_went_in() {
     let dir = tmp("capture");
     let mut modem = Modem::new(station("N0AAA", 71, 2.0));

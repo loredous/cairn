@@ -2,7 +2,7 @@
 //! the quieting rises counted by where they fall.
 //!
 //! ```sh
-//! cargo run --release --example dcd_wav -- cap.wav [--band 2700-3100] [--width 24] [--legacy] [-v]
+//! cargo run --release --example dcd_wav -- cap.wav [--band 2800-3200] [--width 24] [--legacy] [-v]
 //!     [--confirm HOPS] [--min-off S] [--min-on S]
 //! ```
 //!

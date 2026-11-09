@@ -57,6 +57,7 @@ pub enum Code {
     ReceiveClipping,
     Distortion,
     CaptureFailed,
+    PttFault,
 }
 
 impl Code {
@@ -84,6 +85,7 @@ impl Code {
             Code::ReceiveClipping => "receive_clipping",
             Code::Distortion => "distortion",
             Code::CaptureFailed => "capture_failed",
+            Code::PttFault => "ptt_fault",
         }
     }
 }

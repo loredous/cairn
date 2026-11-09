@@ -185,4 +185,22 @@ fn modem_flags_gapped_frames_and_header_failures() {
     let s = &modem.stats;
     assert_eq!((s.audio_gaps, s.audio_gap_samples, s.gapped_frames), (3, d.iter().map(|g| g.1).sum(), 2));
     assert_eq!(s.header_failures, 1);
+
+    // ADR 0014: the header failed, so the correlator's raw output falls a
+    // fixed 500 ms after the header's last symbol (not at once, and not at
+    // the frame's end, which is unknown).
+    let start4 = at[4].0 as f64 / FS as f64;
+    let header_end = at[4].0 + header_samples(CP_SHORT) - 64;
+    let fell: Vec<f64> = outs
+        .iter()
+        .filter_map(|o| match o {
+            Output::Dcd { at: t, state } if !state.preamble && t.as_secs_f64() > start4 + 0.05 => Some(t.as_secs_f64()),
+            _ => None,
+        })
+        .collect();
+    let want = (header_end + 24_000) as f64 / FS as f64;
+    assert!(
+        fell.first().is_some_and(|t| (t - want).abs() < 0.015),
+        "preamble output falls at {fell:?}, want {want} (header end + 500 ms)"
+    );
 }

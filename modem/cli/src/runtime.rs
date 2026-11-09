@@ -43,13 +43,17 @@ use cairn_phy::rx::{extent_samples, frame_link};
 use cairn_phy::{ConfigError, FrameConfig, LinkState, Receiver, RxOptions, Transmitter};
 
 use crate::agc::{LevelKind, LevelObs};
-use crate::listen::{self, ConfigSource, FrameGap, Job, Listener, Plan, Resolution, header_samples};
+use crate::listen::{self, ConfigSource, FrameGap, HEADER_MARGIN, Job, Listener, Plan, Resolution, header_samples};
 use crate::phymodel::{PhyFrameModel, mask_tones};
 
 /// How long the preamble correlator holds DCD after its early confirmation
 /// while the detection and header resolve (the final detection comes about
 /// 85 ms after the frame's start, the header 124 ms after it).
 const EARLY_HOLD: usize = 7_200;
+/// When a frame's header fails the length is unknown: the preamble
+/// correlator's raw output falls this long after the header's last symbol
+/// (500 ms, ADR 0014).
+pub const HEADER_FAIL_HOLD: usize = 24_000;
 /// Longest a frame can be, samples (4 s of data, a probe, slack), for
 /// "on the air" before the frame's length is known.
 const ON_AIR_MAX: usize = 5 * 48_000;
@@ -783,6 +787,8 @@ impl Modem {
                     };
                     if failed {
                         self.stats.header_failures += 1;
+                        let header_end = d.start + header_samples(d.cp) - HEADER_MARGIN;
+                        self.pre_hold_until = self.pre_hold_until.max(header_end + HEADER_FAIL_HOLD);
                         let at = self.time_of(d.start);
                         self.out.push_back(Output::HeaderFailed { at, audio_gap });
                         self.queue(at.max(self.time_of(d.start + header_samples(d.cp))), Event::HeaderFailed);
