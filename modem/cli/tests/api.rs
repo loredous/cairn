@@ -97,13 +97,15 @@ impl Harness {
                 Inbound::Line(id, line) => {
                     let node = &mut self.nodes[i];
                     let t0 = std::time::Instant::now();
-                    let h = self.sim.modem_call(i, |m, now| node.api.request(&line, m, now));
+                    let h = self.sim.modem_call(i, |m, now| node.api.request(id, &line, m, now));
                     self.max_block = self.max_block.max(t0.elapsed());
-                    self.check(&h.response);
                     if let Some(s) = h.subscribe {
                         self.nodes[i].srv.subscribe(id, s);
                     }
-                    self.nodes[i].srv.send(id, &h.response);
+                    if let Some(r) = h.response {
+                        self.check(&r);
+                        self.nodes[i].srv.send(id, &r);
+                    }
                 }
                 Inbound::TooLong(id) | Inbound::NotUtf8(id) => {
                     let error = match m {
@@ -116,6 +118,14 @@ impl Harness {
                 }
                 Inbound::Disconnected(_) => {}
             }
+        }
+        let t0 = std::time::Instant::now();
+        let node = &mut self.nodes[i];
+        let late = self.sim.modem_call(i, |m, now| node.api.pump(m, now));
+        self.max_block = self.max_block.max(t0.elapsed());
+        for (c, line) in late {
+            self.check(&line);
+            self.nodes[i].srv.send(c, &line);
         }
         let outs = std::mem::take(self.sim.stations[i].outputs.as_mut().expect("outputs"));
         for (t, o) in outs {
@@ -858,4 +868,179 @@ fn send_blocking_time() {
             r["pdu_bytes"]
         );
     }
+}
+
+/// Send a request without waiting for its response; its id.
+#[cfg(feature = "zstd")]
+fn submit(c: &mut Client, mut req: Value) -> Value {
+    let id = c.next_id;
+    c.next_id += 1;
+    req["id"] = json!(id);
+    c.raw(format!("{req}\n").as_bytes());
+    json!(id)
+}
+
+/// The position of a response among the lines a client has received.
+#[cfg(feature = "zstd")]
+fn response_at(c: &Client, id: &Value) -> Option<usize> {
+    c.lines.iter().position(|v| v.get("ok").is_some() && v["id"] == *id)
+}
+
+/// A big file is compressed off the event loop: a `status` sent after it is
+/// answered while the file is still being prepared, a message of more
+/// urgent priority passes it, one of the same priority follows it, and the
+/// queue order is the order of the requests.
+#[test]
+#[cfg(feature = "zstd")]
+fn big_file_does_not_hold_the_loop_and_keeps_order() {
+    let (mut h, mut a, _b, dir) = zstd_pair("worker-order", (81, 82));
+    let big = dir.join("big.txt");
+    std::fs::write(&big, corpus_bytes(8 << 20)).unwrap();
+    h.max_block = Duration::ZERO;
+    let file = submit(&mut a, json!({"cmd": "send", "file": big.display().to_string()}));
+    let status = submit(&mut a, json!({"cmd": "status"}));
+    let urgent = submit(&mut a, json!({"cmd": "send", "text": "urgent", "priority": 0}));
+    let same = submit(&mut a, json!({"cmd": "send", "text": "same priority", "priority": 3}));
+    let bad = submit(&mut a, json!({"cmd": "send", "file": dir.join("missing").display().to_string()}));
+    let t0 = std::time::Instant::now();
+    while response_at(&a, &same).is_none() {
+        h.step(Duration::from_millis(10));
+        a.drain();
+        assert!(t0.elapsed() < Duration::from_secs(60), "no response");
+    }
+    let at = |id: &Value| response_at(&a, id).unwrap_or_else(|| panic!("no response to {id}"));
+    // Answered at once: status, the more urgent message, the missing file.
+    for early in [&status, &urgent, &bad] {
+        assert!(at(early) < at(&file), "{early} should be answered before the file's response");
+    }
+    assert!(at(&file) < at(&same), "the same-priority message waits for the file");
+    assert_eq!(a.lines[at(&bad)]["error"]["code"], "not_found");
+    assert_eq!(a.lines[at(&status)]["ok"], true);
+    let (rf, rs, ru) = (&a.lines[at(&file)]["ref"], &a.lines[at(&same)]["ref"], &a.lines[at(&urgent)]["ref"]);
+    // Refs are given when a send is queued: urgent first, then file, then same.
+    let n = |v: &Value| v.as_u64().unwrap();
+    assert!(n(ru) < n(rf) && n(rf) < n(rs), "queue order {ru} {rf} {rs}");
+    assert_eq!(a.lines[at(&file)]["pdus"], 4097);
+    assert!(h.max_block < Duration::from_millis(100), "the loop was held {:?}", h.max_block);
+}
+
+/// Over the air, a message after a file of the same priority arrives after
+/// its last chunk, and the file arrives whole.
+#[test]
+#[cfg(feature = "zstd")]
+fn message_after_a_file_arrives_after_it() {
+    let (mut h, mut a, mut b, dir) = zstd_pair("worker-air", (83, 84));
+    let data = corpus_bytes(30_000);
+    let f = dir.join("f.txt");
+    std::fs::write(&f, &data).unwrap();
+    let file = submit(&mut a, json!({"cmd": "send", "file": f.display().to_string(), "priority": 1}));
+    let msg = submit(&mut a, json!({"cmd": "send", "text": "after the file", "priority": 1}));
+    let (rf, rm) = (wait_response(&mut h, &mut a, file), wait_response(&mut h, &mut a, msg));
+    assert!(rf["ref"].as_u64() < rm["ref"].as_u64());
+    let done = |c: &Client, r: &Value| c.has(|v| v["event"] == "session" && v["kind"] == "delivered" && v["ref"] == *r);
+    let (r1, r2) = (rf["ref"].clone(), rm["ref"].clone());
+    run_until(&mut h, &mut [&mut a, &mut b], 300.0, move |cs| done(cs[0], &r1) && done(cs[0], &r2));
+    let rx = b.events("rx");
+    let kinds: Vec<&str> = rx.iter().map(|v| v["pdu_type"].as_str().unwrap()).collect();
+    let last_chunk = kinds.iter().rposition(|k| *k == "file_chunk").unwrap();
+    assert_eq!(kinds.iter().position(|k| *k == "message"), Some(last_chunk + 1), "{kinds:?}");
+    let mut rebuilt = vec![0u8; data.len()];
+    for v in rx.iter().filter(|v| v["pdu_type"] == "file_chunk") {
+        let bytes = base64_decode(v["data"].as_str().unwrap()).unwrap();
+        let off = v["offset"].as_u64().unwrap() as usize;
+        rebuilt[off..off + bytes.len()].copy_from_slice(&bytes);
+    }
+    assert_eq!(rebuilt, data);
+}
+
+/// An abort while a file is being compressed drops it (answered
+/// `no_session`); a graceful disconnect waits for the sends before it, so
+/// the file is queued first and still delivered.
+#[test]
+#[cfg(feature = "zstd")]
+fn disconnect_while_a_file_is_being_compressed() {
+    let (mut h, mut a, mut b, dir) = zstd_pair("worker-disc", (85, 86));
+    let big = dir.join("big.txt");
+    std::fs::write(&big, corpus_bytes(8 << 20)).unwrap();
+    let file = submit(&mut a, json!({"cmd": "send", "file": big.display().to_string()}));
+    let abort = submit(&mut a, json!({"cmd": "disconnect", "graceful": false}));
+    let (rf, rd) = (wait_response(&mut h, &mut a, file), wait_response(&mut h, &mut a, abort));
+    assert_eq!((rf["ok"].clone(), rf["error"]["code"].clone()), (json!(false), json!("no_session")), "{rf}");
+    assert_eq!(rd["ok"], true, "{rd}");
+    let gone = |c: &Client| c.has(|v| v["event"] == "session" && v["state"] == "disconnected");
+    run_until(&mut h, &mut [&mut a, &mut b], 60.0, |cs| gone(cs[0]));
+    let st = request(&mut h, &mut a, json!({"cmd": "status"}));
+    assert!(st["session"].is_null(), "{st}");
+
+    // Graceful: the file first, then the disconnect.
+    request(&mut h, &mut a, json!({"cmd": "connect", "peer": "N0BBB"}));
+    let (na, nb) = (a.events("session").len(), b.events("session").len());
+    run_until(&mut h, &mut [&mut a, &mut b], 60.0, |cs| {
+        let opened = |c: &Client, n: usize| c.events("session").iter().skip(n).any(|v| v["state"] == "open");
+        opened(cs[0], na) && opened(cs[1], nb)
+    });
+    let small = dir.join("small.txt");
+    std::fs::write(&small, corpus_bytes(5_000)).unwrap();
+    let file = submit(&mut a, json!({"cmd": "send", "file": small.display().to_string()}));
+    let bye = submit(&mut a, json!({"cmd": "disconnect"}));
+    let (rf, rd) = (wait_response(&mut h, &mut a, file.clone()), wait_response(&mut h, &mut a, bye.clone()));
+    assert_eq!((rf["ok"].clone(), rd["ok"].clone()), (json!(true), json!(true)), "{rf} {rd}");
+    assert!(response_at(&a, &file) < response_at(&a, &bye));
+    let chunks = |c: &Client| c.events("rx").iter().filter(|v| v["pdu_type"] == "file_chunk").count();
+    run_until(&mut h, &mut [&mut a, &mut b], 200.0, |cs| chunks(cs[1]) == 3);
+}
+
+/// The peer ends the session while the file is still being compressed:
+/// the send is answered `no_session` as soon as the loop sees it.
+#[test]
+#[cfg(feature = "zstd")]
+fn session_lost_while_a_file_is_being_compressed() {
+    let (mut h, mut a, mut b, dir) = zstd_pair("worker-lost", (87, 88));
+    let big = dir.join("big.txt");
+    std::fs::write(&big, corpus_bytes(32 << 20)).unwrap();
+    let file = submit(&mut a, json!({"cmd": "send", "file": big.display().to_string()}));
+    request(&mut h, &mut b, json!({"cmd": "disconnect", "graceful": false}));
+    let gone = |c: &Client| c.has(|v| v["event"] == "session" && v["state"] == "disconnected");
+    run_until(&mut h, &mut [&mut a, &mut b], 60.0, |cs| gone(cs[0]));
+    let r = wait_response(&mut h, &mut a, file);
+    assert_eq!(r["error"]["code"], "no_session", "{r}");
+}
+
+/// Errors keep their request's id and code whether they are found at once
+/// or by the worker.
+#[test]
+#[cfg(feature = "zstd")]
+fn send_errors_through_the_worker() {
+    let (mut h, mut a, _b, dir) = zstd_pair("worker-err", (89, 90));
+    let code = |r: &Value| r["error"]["code"].as_str().unwrap_or("").to_string();
+    let r = request(&mut h, &mut a, json!({"cmd": "send", "file": dir.join("nope").display().to_string()}));
+    assert_eq!(code(&r), "not_found");
+    let r = request(&mut h, &mut a, json!({"cmd": "send", "file": dir.display().to_string()}));
+    assert_eq!(code(&r), "io_error", "{r}");
+    let f = dir.join("f.txt");
+    std::fs::write(&f, corpus_bytes(3_000)).unwrap();
+    let r = request(
+        &mut h,
+        &mut a,
+        json!({"cmd": "send", "file": f.display().to_string(), "encoding": "zstd_dict", "dictionary": "0a0b0c0d"}),
+    );
+    assert_eq!(code(&r), "unknown_dictionary");
+    // Found by the worker: incompressible chunks forced into zstd do not
+    // fit one broadcast frame.
+    let rnd = dir.join("rnd.bin");
+    std::fs::write(&rnd, payload(6_000, 5)).unwrap();
+    let ok = submit(&mut a, json!({"cmd": "send", "file": f.display().to_string()}));
+    let bad = submit(
+        &mut a,
+        json!({"cmd": "send", "mode": "broadcast", "file": rnd.display().to_string(), "encoding": "zstd"}),
+    );
+    let after = submit(&mut a, json!({"cmd": "send", "text": "still works"}));
+    let (rok, rbad, rafter) = (
+        wait_response(&mut h, &mut a, ok.clone()),
+        wait_response(&mut h, &mut a, bad.clone()),
+        wait_response(&mut h, &mut a, after),
+    );
+    assert_eq!(rok["ok"], true, "{rok}");
+    assert_eq!((rbad["id"].clone(), code(&rbad)), (bad, "too_large".to_string()), "{rbad}");
+    assert_eq!(rafter["ok"], true, "{rafter}");
 }

@@ -11,6 +11,9 @@
 
 use std::collections::{BTreeSet, HashMap, VecDeque};
 use std::path::PathBuf;
+use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::mpsc::{Receiver, Sender, channel};
 use std::time::Duration;
 
 use cairn_api::capture::{SAMPLE_RATE, capture_paths, valid_label, write_wav};
@@ -145,8 +148,9 @@ pub struct ApiEvent {
 /// The answer to one request line.
 #[derive(Clone, Debug, PartialEq)]
 pub struct Handled {
-    /// The response line.
-    pub response: String,
+    /// The response line; None when the request waits for the send worker
+    /// (the line comes from [`HostApi::pump`]).
+    pub response: Option<String>,
     /// A `subscribe` to apply: the events (None: all).
     pub subscribe: Option<Option<BTreeSet<String>>>,
 }
@@ -242,6 +246,179 @@ impl Diag {
     }
 }
 
+/// Bodies up to this size are compressed on the event loop (a few
+/// milliseconds at most); anything bigger, and every file, goes to the
+/// send worker.
+const INLINE_BODY_MAX: usize = 8 * 1024;
+
+/// Encoded PDUs of one `send` and the payload bytes each carries.
+type Encoded = Vec<(Pdu, usize)>;
+
+/// What a `send` has to encode, validated up front. Runs on the event loop
+/// for a small body and on the send worker otherwise.
+struct SendPlan {
+    source: Source,
+    ptype: u8,
+    stream_byte: u8,
+    pref: Preference,
+    usable: Vec<DictionaryId>,
+    /// A broadcast's frame size (only raw messages are fragmented).
+    frame_bytes: Option<usize>,
+    object: Option<u32>,
+}
+
+enum Source {
+    Body(Vec<u8>),
+    File(String),
+}
+
+/// What the event loop needs to queue the encoded PDUs.
+struct SendDone {
+    session: bool,
+    repeats: u8,
+    object: Option<u32>,
+}
+
+fn file_error(path: &str, e: &std::io::Error) -> ApiError {
+    match e.kind() {
+        std::io::ErrorKind::NotFound => ApiError::new(Code::NotFound, format!("{path}: no such file")),
+        _ => ApiError::new(Code::IoError, format!("{path}: {e}")),
+    }
+}
+
+impl SendPlan {
+    fn encode(&self, codec: &mut Codec, ptype: u8, body: Vec<u8>) -> Result<Pdu, ApiError> {
+        let (pref, stream_byte) = (self.pref, self.stream_byte);
+        let p = codec.encode(ptype, stream_byte, body.clone(), pref, &self.usable).map_err(codec_api_error)?;
+        if p.length_field() > cairn_link::params::PDU_MAX_LENGTH {
+            // A forced encoding that grew an incompressible body past 65,535.
+            return Err(ApiError::new(
+                Code::TooLarge,
+                format!(
+                    "the {} PDU would be {} bytes, over 65,535; send it raw",
+                    encoding_name(p.encoding),
+                    p.wire_len()
+                ),
+            ));
+        }
+        match self.frame_bytes {
+            Some(max) if p.encoding != encoding::RAW && p.wire_len() > max => {
+                if pref != Preference::Auto {
+                    return Err(ApiError::new(
+                        Code::TooLarge,
+                        format!(
+                            "a compressed broadcast PDU must fit one frame ({max} bytes at the broadcast \
+                             settings; this one is {}); send it raw",
+                            p.wire_len()
+                        ),
+                    ));
+                }
+                Ok(Pdu {
+                    pdu_type: ptype,
+                    stream: stream_byte,
+                    encoding: encoding::RAW,
+                    dictionary_id: None,
+                    body,
+                    crc: None,
+                })
+            }
+            _ => Ok(p),
+        }
+    }
+
+    /// Read and encode everything; stops early when `cancel` is set.
+    fn run(&self, codec: &mut Codec, cancel: &AtomicBool) -> Result<Encoded, ApiError> {
+        let mut pdus = Vec::new();
+        match &self.source {
+            Source::File(path) => {
+                let bytes = std::fs::read(path).map_err(|e| file_error(path, &e))?;
+                let obj = self.object.unwrap_or(0);
+                let mut chunks: Vec<&[u8]> = bytes.chunks(FILE_CHUNK_DATA).collect();
+                if bytes.len() % FILE_CHUNK_DATA == 0 {
+                    chunks.push(&[]);
+                }
+                for (k, c) in chunks.into_iter().enumerate() {
+                    if cancel.load(Ordering::Relaxed) {
+                        return Err(ApiError::new(Code::NoSession, "cancelled"));
+                    }
+                    let mut body = Vec::with_capacity(c.len() + 8);
+                    body.extend_from_slice(&obj.to_be_bytes());
+                    body.extend_from_slice(&((k * FILE_CHUNK_DATA) as u32).to_be_bytes());
+                    body.extend_from_slice(c);
+                    pdus.push((self.encode(codec, pdu_type::FILE_CHUNK, body)?, c.len()));
+                }
+            }
+            Source::Body(b) => pdus.push((self.encode(codec, self.ptype, b.clone())?, b.len())),
+        }
+        Ok(pdus)
+    }
+}
+
+struct Job {
+    seq: u64,
+    plan: SendPlan,
+    cancel: Arc<AtomicBool>,
+}
+
+/// The thread that reads and compresses files, one job at a time in the
+/// order the requests came, so the PDUs of earlier sends are ready first.
+struct Worker {
+    jobs: Sender<Job>,
+    done: Receiver<(u64, Result<Encoded, ApiError>)>,
+}
+
+impl Worker {
+    fn spawn(mut codec: Codec) -> Worker {
+        let (jobs, job_rx) = channel::<Job>();
+        let (done_tx, done) = channel();
+        std::thread::Builder::new()
+            .name("send-worker".into())
+            .spawn(move || {
+                // Ends when the API state (the sender) is dropped.
+                for j in job_rx {
+                    let r = if j.cancel.load(Ordering::Relaxed) {
+                        Err(ApiError::new(Code::NoSession, "cancelled"))
+                    } else {
+                        j.plan.run(&mut codec, &j.cancel)
+                    };
+                    if done_tx.send((j.seq, r)).is_err() {
+                        break;
+                    }
+                }
+            })
+            .expect("spawn the send worker");
+        Worker { jobs, done }
+    }
+}
+
+/// A request that waits for earlier work: a send being prepared, or a
+/// graceful `disconnect` behind the sends before it.
+struct Pending {
+    seq: u64,
+    client: u64,
+    req: Request,
+    /// The session it was issued in (peer, session id); None: broadcast.
+    session: Option<(Address, u16)>,
+    /// 0 for a disconnect: nothing passes it.
+    priority: u8,
+    cancel: Arc<AtomicBool>,
+    what: What,
+}
+
+enum What {
+    Send { done: SendDone, result: Option<Result<Encoded, ApiError>> },
+    Disconnect { graceful: bool },
+}
+
+impl Pending {
+    fn ready(&self) -> bool {
+        match &self.what {
+            What::Send { result, .. } => result.is_some(),
+            What::Disconnect { .. } => true,
+        }
+    }
+}
+
 /// The API's state on the modem side.
 pub struct HostApi {
     cfg: HostApiConfig,
@@ -264,6 +441,20 @@ pub struct HostApi {
     audio: Option<AudioStatus>,
     /// The last decoded frame's source and capture gap, for `rx` events.
     last_frame_gap: Option<(Address, bool)>,
+    /// Sends and disconnects waiting for the send worker, in request order.
+    pending: VecDeque<Pending>,
+    next_seq: u64,
+    worker: Option<Worker>,
+    /// Responses to give with the next [`HostApi::pump`].
+    outbox: Vec<(u64, String)>,
+}
+
+impl Drop for HostApi {
+    fn drop(&mut self) {
+        for p in &self.pending {
+            p.cancel.store(true, Ordering::Relaxed);
+        }
+    }
 }
 
 /// The SPEC 8.4 name of a frame type.
@@ -401,6 +592,10 @@ impl HostApi {
             now: Instant::ZERO,
             audio: None,
             last_frame_gap: None,
+            pending: VecDeque::new(),
+            next_seq: 1,
+            worker: None,
+            outbox: Vec::new(),
         })
     }
 
@@ -492,18 +687,30 @@ impl HostApi {
 
     // --- Requests ------------------------------------------------------------------
 
-    /// Answer one request line.
-    pub fn request(&mut self, line: &str, modem: &mut Modem, now: Instant) -> Handled {
+    /// Answer one request line from `client`. A `send` that needs the send
+    /// worker (a file, a large body, or one that must follow a send still
+    /// being prepared) and a graceful `disconnect` behind such sends are
+    /// answered later: `response` is None and the line comes from
+    /// [`HostApi::pump`], tagged with `client`.
+    pub fn request(&mut self, client: u64, line: &str, modem: &mut Modem, now: Instant) -> Handled {
         self.tick(now);
         let req = match parse_request(line) {
             Ok(r) => r,
-            Err(rej) => return Handled { response: rej.response().to_string(), subscribe: None },
+            Err(rej) => return Handled { response: Some(rej.response().to_string()), subscribe: None },
         };
         let mut subscribe = None;
         let result = match req.cmd.as_str() {
             "connect" => self.cmd_connect(&req, modem),
-            "disconnect" => self.cmd_disconnect(&req, modem),
-            "send" => self.cmd_send(&req, modem),
+            "disconnect" => match self.cmd_disconnect(client, &req, modem) {
+                Ok(Some(m)) => Ok(m),
+                Ok(None) => return Handled { response: None, subscribe: None },
+                Err(e) => Err(e),
+            },
+            "send" => match self.cmd_send(client, &req, modem) {
+                Ok(Some(m)) => Ok(m),
+                Ok(None) => return Handled { response: None, subscribe: None },
+                Err(e) => Err(e),
+            },
             "beacon" => self.cmd_beacon(&req, modem),
             "probe" => self.cmd_probe(&req, modem),
             "heard" => self.cmd_heard(&req),
@@ -540,7 +747,55 @@ impl HostApi {
                 req.err(&e)
             }
         };
-        Handled { response: response.to_string(), subscribe }
+        Handled { response: Some(response.to_string()), subscribe }
+    }
+
+    /// Finish what the send worker has done, in request order: queue the
+    /// PDUs of each send that is ready (and run a graceful `disconnect`
+    /// that waited behind them), answer sends whose session ended
+    /// meanwhile, and return the responses as (client, line). Call it each
+    /// pass of the event loop; it never waits.
+    pub fn pump(&mut self, modem: &mut Modem, now: Instant) -> Vec<(u64, String)> {
+        self.tick(now);
+        if let Some(w) = &self.worker {
+            while let Ok((seq, r)) = w.done.try_recv() {
+                if let Some(p) = self.pending.iter_mut().find(|p| p.seq == seq) {
+                    if let What::Send { result, .. } = &mut p.what {
+                        *result = Some(r);
+                    }
+                }
+            }
+        }
+        // A session that ended (or was replaced) takes its waiting requests
+        // with it.
+        let key = modem.station().session_info().map(|i| (i.peer, i.session_id));
+        let (gone, keep): (VecDeque<Pending>, VecDeque<Pending>) =
+            std::mem::take(&mut self.pending).into_iter().partition(|p| p.session.is_some() && p.session != key);
+        self.pending = keep;
+        for p in gone {
+            self.drop_pending(&p, "the session ended before the send was queued");
+        }
+        while self.pending.front().is_some_and(Pending::ready) {
+            let p = self.pending.pop_front().expect("front");
+            let result = match p.what {
+                What::Send { done, result } => {
+                    result.expect("ready").and_then(|pdus| self.queue_send(modem, &done, pdus))
+                }
+                What::Disconnect { graceful } => self.disconnect_now(modem, graceful),
+            };
+            let line = match result {
+                Ok(m) => p.req.ok(m),
+                Err(e) => p.req.err(&e),
+            };
+            self.outbox.push((p.client, line.to_string()));
+        }
+        std::mem::take(&mut self.outbox)
+    }
+
+    /// Cancel a waiting request and answer it with `no_session`.
+    fn drop_pending(&mut self, p: &Pending, why: &str) {
+        p.cancel.store(true, Ordering::Relaxed);
+        self.outbox.push((p.client, p.req.err(&ApiError::new(Code::NoSession, why)).to_string()));
     }
 
     fn host_id(&mut self) -> u64 {
@@ -569,8 +824,37 @@ impl HostApi {
         Ok(members(json!({"peer": peer.to_string(), "resuming": resuming})))
     }
 
-    fn cmd_disconnect(&mut self, req: &Request, modem: &mut Modem) -> Result<Map<String, Value>, ApiError> {
+    fn cmd_disconnect(
+        &mut self,
+        client: u64,
+        req: &Request,
+        modem: &mut Modem,
+    ) -> Result<Option<Map<String, Value>>, ApiError> {
         let graceful = req.opt_bool("graceful")?.unwrap_or(true);
+        let Some(i) = modem.station().session_info() else {
+            return Err(ApiError::new(Code::NoSession, "no session"));
+        };
+        if !self.pending.is_empty() {
+            if graceful {
+                // Sends before it are still being prepared: it follows them,
+                // as it would had they been queued already.
+                let seq = self.next_seq;
+                self.next_seq += 1;
+                let session = Some((i.peer, i.session_id));
+                let cancel = Arc::default();
+                let what = What::Disconnect { graceful };
+                self.pending.push_back(Pending { seq, client, req: req.clone(), session, priority: 0, cancel, what });
+                return Ok(None);
+            }
+            // An abort drops them.
+            for p in std::mem::take(&mut self.pending) {
+                self.drop_pending(&p, "the session was aborted before the send was queued");
+            }
+        }
+        self.disconnect_now(modem, graceful).map(Some)
+    }
+
+    fn disconnect_now(&mut self, modem: &mut Modem, graceful: bool) -> Result<Map<String, Value>, ApiError> {
         let Some(i) = modem.station().session_info() else {
             return Err(ApiError::new(Code::NoSession, "no session"));
         };
@@ -585,7 +869,12 @@ impl HostApi {
         Ok(members(json!({"peer": i.peer.to_string(), "graceful": graceful})))
     }
 
-    fn cmd_send(&mut self, req: &Request, modem: &mut Modem) -> Result<Map<String, Value>, ApiError> {
+    fn cmd_send(
+        &mut self,
+        client: u64,
+        req: &Request,
+        modem: &mut Modem,
+    ) -> Result<Option<Map<String, Value>>, ApiError> {
         let session = match req.opt_str("mode")?.unwrap_or("session") {
             "session" => true,
             "broadcast" => false,
@@ -673,65 +962,17 @@ impl HostApi {
         // A compressed broadcast must fit one frame: only raw messages are
         // fragmented (ADR 0009 `broadcast-message-fragments`).
         let frame_bytes = (!session).then(|| modem.station().broadcast_frame_bytes());
-        let encode = |modem: &mut Modem, ptype: u8, body: Vec<u8>| -> Result<Pdu, ApiError> {
-            let p = modem.content().encode(ptype, stream_byte, body.clone(), pref, &usable).map_err(codec_api_error)?;
-            if p.length_field() > cairn_link::params::PDU_MAX_LENGTH {
-                // A forced encoding that grew an incompressible body past 65,535.
-                return Err(ApiError::new(
-                    Code::TooLarge,
-                    format!(
-                        "the {} PDU would be {} bytes, over 65,535; send it raw",
-                        encoding_name(p.encoding),
-                        p.wire_len()
-                    ),
-                ));
+        let (source, object) = if let Some(path) = file {
+            let meta = std::fs::metadata(path).map_err(|e| file_error(path, &e))?;
+            if !meta.is_file() {
+                return Err(ApiError::new(Code::IoError, format!("{path}: not a regular file")));
             }
-            match frame_bytes {
-                Some(max) if p.encoding != encoding::RAW && p.wire_len() > max => {
-                    if pref != Preference::Auto {
-                        return Err(ApiError::new(
-                            Code::TooLarge,
-                            format!(
-                                "a compressed broadcast PDU must fit one frame ({max} bytes at the broadcast \
-                                 settings; this one is {}); send it raw",
-                                p.wire_len()
-                            ),
-                        ));
-                    }
-                    Ok(Pdu {
-                        pdu_type: ptype,
-                        stream: stream_byte,
-                        encoding: encoding::RAW,
-                        dictionary_id: None,
-                        body,
-                        crc: None,
-                    })
-                }
-                _ => Ok(p),
+            if meta.len() > u32::MAX as u64 {
+                return Err(ApiError::new(Code::TooLarge, format!("{path}: over 4 GiB (file offsets are 32 bits)")));
             }
-        };
-        // (PDU, payload bytes) list.
-        let mut pdus: Vec<(Pdu, usize)> = Vec::new();
-        let mut object = None;
-        if let Some(path) = file {
-            let bytes = std::fs::read(path).map_err(|e| match e.kind() {
-                std::io::ErrorKind::NotFound => ApiError::new(Code::NotFound, format!("{path}: no such file")),
-                _ => ApiError::new(Code::IoError, format!("{path}: {e}")),
-            })?;
             let obj = self.next_object;
             self.next_object += 1;
-            object = Some(obj);
-            let mut chunks: Vec<&[u8]> = bytes.chunks(FILE_CHUNK_DATA).collect();
-            if bytes.len() % FILE_CHUNK_DATA == 0 {
-                chunks.push(&[]);
-            }
-            for (k, c) in chunks.into_iter().enumerate() {
-                let mut body = Vec::with_capacity(c.len() + 8);
-                body.extend_from_slice(&obj.to_be_bytes());
-                body.extend_from_slice(&((k * FILE_CHUNK_DATA) as u32).to_be_bytes());
-                body.extend_from_slice(c);
-                pdus.push((encode(modem, pdu_type::FILE_CHUNK, body)?, c.len()));
-            }
+            (Source::File(path.to_string()), Some(obj))
         } else {
             let body = match (text, data) {
                 (Some(t), _) => t.as_bytes().to_vec(),
@@ -744,8 +985,39 @@ impl HostApi {
                     format!("{} bytes do not fit one PDU ({MAX_PDU_BODY}); send them as a file", body.len()),
                 ));
             }
-            let n = body.len();
-            pdus.push((encode(modem, ptype, body)?, n));
+            (Source::Body(body), None)
+        };
+        let small = matches!(&source, Source::Body(b) if b.len() <= INLINE_BODY_MAX);
+        let plan = SendPlan { source, ptype, stream_byte, pref, usable, frame_bytes, object };
+        let done = SendDone { session, repeats, object };
+        // Queue order within a priority is request order, so a send passes
+        // the ones still being prepared only when it is more urgent than
+        // every one of them (and a disconnect, priority 0, is passed by none).
+        if small && self.pending.iter().all(|p| p.priority > priority) {
+            let pdus = plan.run(modem.content(), &AtomicBool::new(false))?;
+            return self.queue_send(modem, &done, pdus).map(Some);
+        }
+        let worker = self.worker.get_or_insert_with(|| Worker::spawn(modem.content().clone()));
+        let seq = self.next_seq;
+        self.next_seq += 1;
+        let cancel = Arc::new(AtomicBool::new(false));
+        let key = session.then(|| modem.station().session_info().map(|i| (i.peer, i.session_id))).flatten();
+        worker.jobs.send(Job { seq, plan, cancel: cancel.clone() }).expect("the send worker runs");
+        let what = What::Send { done, result: None };
+        self.pending.push_back(Pending { seq, client, req: req.clone(), session: key, priority, cancel, what });
+        Ok(None)
+    }
+
+    /// Queue encoded PDUs with the link layer and describe them.
+    fn queue_send(
+        &mut self,
+        modem: &mut Modem,
+        done: &SendDone,
+        pdus: Encoded,
+    ) -> Result<Map<String, Value>, ApiError> {
+        let SendDone { session, repeats, object } = *done;
+        if session && modem.station().session_info().is_none() {
+            return Err(ApiError::new(Code::NoSession, "no session: the session ended before the send was queued"));
         }
         let encodings: BTreeSet<u8> = pdus.iter().map(|(p, _)| p.encoding).collect();
         let dicts: BTreeSet<DictionaryId> = pdus.iter().filter_map(|(p, _)| p.dictionary_id).collect();
