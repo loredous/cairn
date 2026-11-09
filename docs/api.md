@@ -67,9 +67,10 @@ A client that needs a newer schema than the modem's `api_version` should say
 so to its user and disconnect.
 
 **0.2.0** (from 0.1.0): `send` takes `encoding` (default `auto`) and
-`dictionary`, and its response reports `encoding`, `dictionary` and
-`pdu_bytes`; `rx` reports `encoding`, `dictionary`, `decoded` and
-`encoded_bytes`; new error codes `unknown_dictionary` and `ptt_fault`.
+`dictionary`, and its response reports `encoding` (which may be `mixed`),
+`dictionary` and `pdu_bytes`; `rx` reports `encoding`, `dictionary`,
+`decoded` and `encoded_bytes`, and its `crc` may be `unchecked`; new error
+codes `unknown_dictionary` and `ptt_fault`.
 
 ## Common types
 
