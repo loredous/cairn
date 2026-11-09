@@ -472,6 +472,8 @@ pub fn run(
     let mut kiss_id: u64 = 1 << 40;
     let mut err = None;
     let mut audio_published = std::time::Instant::now();
+    // After a PTT fault: reopen the device on a backoff timer.
+    let mut ptt_reopen = cairn_ptt::ReopenTimer::default();
     while !quit && !stop.load(Ordering::Relaxed) {
         if opts.seconds.is_some_and(|s| origin.elapsed().as_secs_f64() >= s) {
             break;
@@ -697,6 +699,10 @@ pub fn run(
                     }
                 }
             }
+        }
+        if let Some(text) = ptt_reopen.poll(&ptt, std::time::Instant::now()) {
+            output_line(&format!("WARNING: {text}"), &clients);
+            api.on_ptt_fault(&text, now());
         }
         if audio_published.elapsed() >= Duration::from_millis(250) {
             audio_published = std::time::Instant::now();

@@ -88,6 +88,9 @@ pub enum Outcome {
     NotWritten,
     /// End of input: nothing written.
     Aborted,
+    /// A key or release failed (the transmitter may still be keyed): setup
+    /// stopped at once, nothing written. The text is the failure.
+    PttFault(String),
 }
 
 /// The wizard.
@@ -204,6 +207,21 @@ impl Wizard {
             txdelay_s: d.timing.txdelay_ms.unwrap_or(150.0) / 1e3,
             txtail_s: d.timing.txtail_ms.unwrap_or(10.0) / 1e3,
         }
+    }
+
+    /// A hardware error from a keying step: when it is a PTT fault, say so
+    /// loudly and end the wizard (no more keying, nothing written);
+    /// otherwise `None`.
+    fn ptt_fault(&mut self, t: &mut dyn Terminal, e: &str) -> Option<Step> {
+        if !crate::hw::is_ptt_fault(e) {
+            return None;
+        }
+        t.say(&format!(
+            "\n*** {e}\nSetup stops here and nothing is written: fix the PTT interface (replug it, check the \
+             cable and the device path), then run `cairn-modem setup` again. Nothing more will be transmitted."
+        ));
+        self.outcome = Some(Outcome::PttFault(e.to_string()));
+        Some(Step::Done)
     }
 
     /// Run the whole wizard.
@@ -565,7 +583,12 @@ impl Wizard {
                         t.say("Check the line (dtr/rts), polarity (active low) or GPIO pin, and the cable; then rerun setup.");
                     }
                 }
-                Err(e) => t.say(&format!("PTT test failed: {e} (released)")),
+                Err(e) => {
+                    if let Some(next) = self.ptt_fault(t, &e) {
+                        return Ok(next);
+                    }
+                    t.say(&format!("PTT test failed: {e} (released)"))
+                }
             }
         }
         Ok(Step::TxLevel)
@@ -610,6 +633,9 @@ impl Wizard {
                     t.say(&format!("Tone sent: keyed {:.1} s.", m.keyed_ms / 1e3));
                 }
                 Err(e) => {
+                    if let Some(next) = self.ptt_fault(t, &e) {
+                        return Ok(next);
+                    }
                     t.say(&format!("Transmit failed: {e} (PTT released)"));
                     break;
                 }
@@ -675,6 +701,9 @@ impl Wizard {
                             t.say(&format!("sent TXDELAY {v:.0} (measured TXDelay {:.0} ms at the DAC)", m.txdelay_ms))
                         }
                         Err(e) => {
+                            if let Some(next) = self.ptt_fault(t, &e) {
+                                return Ok(next);
+                            }
                             t.say(&format!("Transmit failed: {e} (PTT released)"));
                             break;
                         }
@@ -765,7 +794,12 @@ impl Wizard {
                             self.unidentified = false;
                             t.say("ID frame sent.");
                         }
-                        Err(e) => t.say(&format!("Transmit failed: {e} (PTT released). Identify by voice.")),
+                        Err(e) => {
+                            if let Some(next) = self.ptt_fault(t, &e) {
+                                return Ok(next);
+                            }
+                            t.say(&format!("Transmit failed: {e} (PTT released). Identify by voice."))
+                        }
                     },
                     None => t.say("Identify by voice (or CW) now, as your licence requires."),
                 }
@@ -883,6 +917,38 @@ mod tests {
         let (p, text) = hw.written.last().expect("a file written");
         assert_eq!(p, Path::new("/home/op/.config/cairn/cairn.toml"));
         FileConfig::parse(text).unwrap()
+    }
+
+    /// Answers up to and including the PTT test's confirmation.
+    const TO_PTT_TEST: [&str; 12] = ["n0call-1", "EM10", "", "", "", "", "", "", "", "", "", "yes"];
+
+    #[test]
+    fn a_ptt_fault_in_the_ptt_test_stops_setup_loudly_with_nothing_written() {
+        let mut hw = aioc_hw();
+        hw.ptt_fault = Some("Broken pipe (os error 32)".into());
+        // No answers are left for later steps: it must not ask any.
+        let (o, t) = run(&TO_PTT_TEST, &mut hw, FileConfig::default());
+        let text = t.text();
+        assert!(matches!(&o, Outcome::PttFault(e) if e.contains("Broken pipe")), "{o:?}\n{text}");
+        assert!(text.contains("MAY STILL BE KEYED") && text.contains("nothing is written"), "{text}");
+        assert!(text.contains("replug") || text.contains("fix the PTT"), "{text}");
+        assert_eq!(hw.keyed.len(), 1, "keyed once, then no more: {:?}", hw.keyed);
+        assert!(hw.written.is_empty());
+        assert!(!text.contains("<EOF>"), "setup did not go on to ask more: {text}");
+    }
+
+    #[test]
+    fn a_ptt_fault_while_sending_the_tone_stops_setup() {
+        let mut hw = aioc_hw();
+        let mut answers = TO_PTT_TEST.to_vec();
+        answers.extend(["", "y", "yes"]); // did it transmit; send the tone; confirm
+        hw.ptt_fault_after = 1; // the PTT test works, the tone does not
+        hw.ptt_fault = Some("Broken pipe (os error 32)".into());
+        let (o, t) = run(&answers, &mut hw, FileConfig::default());
+        assert!(matches!(o, Outcome::PttFault(_)), "{o:?}\n{}", t.text());
+        assert_eq!(hw.keyed.len(), 2, "{:?}", hw.keyed);
+        assert!(hw.written.is_empty());
+        assert!(!t.text().contains("Transmit failed"), "reported as a fault, not a plain failure");
     }
 
     #[test]
