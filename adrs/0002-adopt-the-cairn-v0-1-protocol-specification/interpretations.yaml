@@ -318,3 +318,16 @@
     path. Keep it short against the receive turnaround (7.3) so that it
     does not delay the decode of a fast reply.
   date: 2026-11-08
+
+- slug: connect-ack-lists-shared-dictionaries
+  decision: connect-control-block
+  question: >-
+    Which dictionary IDs does a CONNECT-ACK's connect-parameters block list:
+    all of the responder's dictionaries, or only those both stations have?
+  interpretation: >-
+    Those both stations have: the CONNECT-ACK carries the accepted
+    parameters (SPEC §8.4), and a session uses the intersection of both
+    stations' lists (SPEC §12.2). The initiator takes the intersection of
+    its own list and whatever the CONNECT-ACK lists, so a responder that
+    lists all of its dictionaries reaches the same agreed set (ADR 0016).
+  date: 2026-11-08
