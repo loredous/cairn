@@ -486,11 +486,13 @@ pub fn run(
                     match i {
                         Inbound::Connected(id) => srv.send_hello(id, &api.hello(id, &modem, now())),
                         Inbound::Line(id, line) => {
-                            let h = api.request(&line, &mut modem, now());
+                            let h = api.request(id, &line, &mut modem, now());
                             if let Some(sub) = h.subscribe {
                                 srv.subscribe(id, sub);
                             }
-                            srv.send(id, &h.response);
+                            if let Some(r) = h.response {
+                                srv.send(id, &r);
+                            }
                         }
                         Inbound::TooLong(id) | Inbound::NotUtf8(id) => {
                             let error = match i {
@@ -883,6 +885,13 @@ pub fn run(
             match api.capture(&modem, None, Some("auto"), "auto") {
                 Ok(m) => output_line(&format!("auto capture after a failed frame: {}", m["wav"]), &clients),
                 Err(e) => output_line(&format!("error: auto capture: {}", e.message), &clients),
+            }
+        }
+        // Sends the worker has finished (their responses; a client that has
+        // gone is skipped by the server).
+        for (c, line) in api.pump(&mut modem, now()) {
+            if let Some(srv) = &server {
+                srv.send(c, &line);
             }
         }
         publish(&mut api, &server);

@@ -215,6 +215,20 @@ before block and frame overhead). Errors: `bad_request`, `no_session`
 connecting is queued), `not_found`, `io_error`, `too_large`, `unsupported`,
 `unknown_dictionary`.
 
+A file, or a body over 8 KiB, is read and compressed on a worker thread so
+the modem keeps handling audio, carrier detect, turn-taking and other
+requests meanwhile; the `send` response then arrives when the PDUs are
+queued, possibly after the responses to later requests. Requests are
+otherwise answered in order. The queue order is the order of the requests:
+a send waits for earlier sends still being prepared, except that one with a
+numerically lower `priority` (more urgent) than all of them is queued at
+once; a graceful `disconnect` issued behind such sends waits for them. If
+the session ends first (an abort `disconnect` with `graceful` false, or loss
+of the session), a send still being prepared is answered `no_session`
+and queues nothing. A send is not cancelled when the client that issued it
+disconnects; its response is dropped. No schema change: the API version
+stays 0.2.0.
+
 Completion: a session send ends with `session` `delivered` (every PDU of it
 acknowledged by the peer) or `undelivered`; a broadcast with `tx`
 `broadcast_sent`, or an `error` `broadcast_rejected`.

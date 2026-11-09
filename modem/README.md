@@ -424,6 +424,10 @@ printf '%s\n' '{"id":1,"cmd":"status"}' | nc -q1 127.0.0.1 8002     # by hand
   persistence, slot time, maximum frame time, broadcast rung, width cap
   outside a session, TXDelay, TXTail, accepting CONNECTs; all or nothing),
   `calibrate`, `capture`, and `subscribe` (per-client event filter).
+  A file send is read and compressed on a worker thread (the event loop is
+  held for milliseconds, not the seconds an 8 MB file takes), so its
+  response can come after those of later requests; queue order and
+  cancellation are in `docs/api.md` (`send`).
 - **Events**: `rx` (every delivered PDU: source, mode, stream, priority,
   type, encoding, CRC, signature result, the body in base64 and as text,
   where `--rx-dir` saved it), `session` (state changes; progress: bytes
