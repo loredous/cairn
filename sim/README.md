@@ -28,7 +28,8 @@ uv run --package cairn-sim pytest sim/tests          # add -m slow for the long 
 | `preamble` | S1/S2 (chosen by the Stage 1 search) and the SPEC 6.1 dual-lag detector |
 | `preamble_eval` | Detection, false-alarm and prefix-identification measurements |
 | `frame` | Frame assembly (preamble, header, width probe, control and data blocks, SPEC 5.4 tone masks) and the receiver, header first when not told the configuration |
-| `channel` | AWGN and the SPEC 14.2 FM audio chain (`mic`, `flat12`, `flat25`, `repeater`) |
+| `channel` | AWGN and the SPEC 14.2 FM audio chain (`mic`, `flat12`, `flat25`, `repeater`; `mic_wide`, the mic chain to 4.25 kHz as the 2026-11-08 handhelds pass it); an FM link at a carrier-to-noise ratio through its threshold (`cnr_db`, `fm_discriminate`); lines at harmonics of 1 kHz (`Comb`, the 2026-11-08 70 cm comb in `CAPTURE_COMBS`) |
+| `weak_fm_eval` | The weak 70 cm link of 2026-11-08: what impaired it (`captures`), the receiver's line canceller on every captured frame (`canceller`), the model against each setup (`calibrate`) |
 | `link_sim` | Block error rate against SNR, rung thresholds, and the SPEC 7.4 time budget |
 | `interleaver_eval` | SPEC 6.4 interleaver checks: bit layout under tone masks, dead-tone and burst BLER |
 | `dict_eval` | zstd dictionary evaluation (SPEC 12.2, 20.9): corpus loader over `dictionaries/corpus`, synthetic ICS messages, dictionary training at 32/64/112 kB, held-out ratios, blocks and air time; writes `results/dict_eval.{md,json}` |
@@ -37,7 +38,7 @@ uv run --package cairn-sim pytest sim/tests          # add -m slow for the long 
 | `bench` | The `cairn-bench` CLI: test WAV out (`tx`), offline decode of a radio recording (`rx`), optional `play`/`record`/`levels`/`ptt-test` |
 
 ```sh
-uv run --package cairn-sim python -m cairn_sim.experiments awgn      # also: channels, clip, interleaver, header
+uv run --package cairn-sim python -m cairn_sim.experiments awgn      # also: channels, clip, interleaver, header, fm_cnr, comb
 uv run --package cairn-sim python -m cairn_sim.report
 uv run --package cairn-sim python -m cairn_sim.dict_eval --write-dicts   # dictionary ratios; evaluation dictionaries to dictionaries/eval/
 uv run --package cairn-sim python -m cairn_sim.vectors               # regenerate codes/ and vectors/

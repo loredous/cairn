@@ -5,6 +5,8 @@
     uv run --package cairn-sim python -m cairn_sim.experiments channels
     uv run --package cairn-sim python -m cairn_sim.experiments interleaver
     uv run --package cairn-sim python -m cairn_sim.experiments header
+    uv run --package cairn-sim python -m cairn_sim.experiments fm_cnr
+    uv run --package cairn-sim python -m cairn_sim.experiments comb
 
 Each experiment is a list of jobs run in parallel processes with fixed
 seeds, so results are reproducible. A threshold job finds one rung's 1%
@@ -38,10 +40,27 @@ from . import link_sim, params
 RESULTS = Path(__file__).resolve().parents[1] / "results"
 
 
-def _channel(profile: str | None):
+def _channel(profile: str | None, job: dict | None = None):
     if profile in (None, "awgn"):
         return link_sim.awgn_channel
     from . import channel  # the FM chain (channel.FmChannel), when available
+
+    if profile == "fm_mic":
+        # The SNR axis is the carrier-to-noise ratio of an FM link (channel.fm_discriminate).
+        def fm(x, cnr_db, width, rng):
+            return channel.FmChannel(profile="mic_wide", cnr_db=cnr_db, width=width)(x, rng)
+        return fm
+    if profile == "comb":
+        # The SNR axis is the signal-to-comb ratio (all lines together, 7 dB-
+        # equivalent scale) of the 70 cm captures' comb, over a Gaussian floor
+        # at job["floor_db"] (7 dB-equivalent audio SNR) on the mic_wide profile.
+        shape = channel.CAPTURE_COMBS["70cm"]
+        off = params.clip_offset_db(job["mcs"])
+
+        def comb(x, sir_db, width, rng, _floor=job["floor_db"] - off):
+            c = shape.scaled(-sir_db - shape.total_dbc + off)
+            return channel.FmChannel(profile="mic_wide", snr_db=_floor, width=width, comb=c)(x, rng)
+        return comb
 
     def run(x, snr_db, width, rng, _p=profile):
         return channel.FmChannel(profile=_p, snr_db=snr_db, width=width)(x, rng)
@@ -64,7 +83,7 @@ def run_job(job: dict) -> dict:
                for s in job["snrs"]]
         return {**job, "points": [_point_row(p) for p in pts], "seconds": round(time.time() - t0, 1)}
     kw = dict(width=job["width"], clip_db=job.get("clip_db", params.clip_db(job["mcs"])),
-              clip=job.get("clip", True), chan=_channel(job.get("profile")), rng=rng,
+              clip=job.get("clip", True), chan=_channel(job.get("profile"), job), rng=rng,
               blocks_per_frame=job.get("blocks_per_frame", 16),
               cp=params.CP_LONG if job.get("profile") == "repeater" else params.CP_SHORT,
               rx_kw=job.get("rx_kw"))
@@ -74,6 +93,7 @@ def run_job(job: dict) -> dict:
         kw.update({k: job[k] for k in ("min_blocks", "max_blocks", "min_errors", "quick_bler") if k in job})
         pts = [link_sim.bler_point(job["mcs"], s, **kw) for s in job["snrs"]]
         return {**job, "points": [_point_row(p) for p in pts], "seconds": round(time.time() - t0, 1)}
+    kw.update({k: job[k] for k in ("min_blocks", "max_blocks", "min_errors") if k in job})
     thr, pts = link_sim.threshold(job["mcs"], start_db=job["start_db"], step_db=job.get("step_db", 1.0),
                                   max_db=job.get("max_db", 40.0), **kw)
     return {**job, "threshold_db": thr, "points": [_point_row(p) for p in pts],
@@ -144,12 +164,51 @@ def jobs_for(name: str) -> list[dict]:
                              "snrs": snrs, "blocks_per_frame": 2, "rx_kw": {"header_noise": hn},
                              "min_blocks": 2000, "max_blocks": 2000, "min_errors": 0, "quick_bler": 1.1,
                              "seed": 5000 + (cp == params.CP_LONG)})
+    elif name == "fm_cnr":
+        # The mic chain as the 2026-11-08 radios pass it (mic_wide, to 4.25
+        # kHz) with the noise of an FM link at a carrier-to-noise ratio (wide
+        # FM: 5 kHz deviation at the clip, 16 kHz IF): the ladder against
+        # CNR, through the FM threshold. 32 tones with tones 0-2 masked, as
+        # in the captures.
+        start = {0: 4.0, 1: 5.0, 2: 6.0, 3: 7.0, 4: 9.0, 5: 12.0, 6: 15.0}
+        for width in (24, 32):
+            for r in params.RUNGS:
+                job = {"experiment": name, "mcs": r.mcs, "width": width, "profile": "fm_mic",
+                       "clip_db": params.clip_db(r.mcs), "start_db": start[r.mcs],
+                       "min_blocks": 3200, "max_blocks": 8000, "min_errors": 60,
+                       "seed": 7000 + 10 * r.mcs + width}
+                if width == 32:
+                    job["mask"] = list(range(3, 32))
+                jobs.append(job)
+    elif name == "comb":
+        # The 70 cm comb (lines at 1-4 kHz) at a signal-to-comb ratio, over a
+        # floor 30 dB down: the ladder with the comb's tones in use, and with
+        # the tones either side of each line masked, as the receiver's mask
+        # rule (SPEC 10.3) did on air.
+        # Then the comb's tones in use again, with the receiver subtracting the
+        # lines (frame.remove_lines; the rows without it ran without).
+        start = {0: -6.0, 1: -2.0, 2: 0.0, 3: 4.0, 4: 8.0, 5: 12.0, 6: 16.0}
+        for width in (24, 32):
+            for masked, cancel in ((False, False), (True, False), (False, True)):
+                drop = set(range(3)) if width == 32 else set()
+                if masked:
+                    drop |= {t for t in (6, 7, 16, 17, 26, 27) if t < width}
+                for r in params.RUNGS:
+                    job = {"experiment": name, "mcs": r.mcs, "width": width, "profile": "comb",
+                           "floor_db": 30.0, "comb_tones_masked": masked,
+                           "rx_kw": {"cancel_lines": cancel},
+                           "clip_db": params.clip_db(r.mcs), "start_db": start[r.mcs] - 12 * cancel,
+                           "min_blocks": 3200, "max_blocks": 8000, "min_errors": 60,
+                           "seed": 8000 + 10 * r.mcs + width + 1000 * masked}
+                    if drop:
+                        job["mask"] = sorted(set(range(width)) - drop)
+                    jobs.append(job)
     else:
         raise SystemExit(f"unknown experiment {name}")
     return jobs
 
 
-EXPERIMENTS = ("awgn", "clip", "channels", "interleaver", "header", "repeater_masked")
+EXPERIMENTS = ("awgn", "clip", "channels", "interleaver", "header", "repeater_masked", "fm_cnr", "comb")
 
 
 def _key(job: dict) -> str:

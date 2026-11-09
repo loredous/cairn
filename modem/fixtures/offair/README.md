@@ -74,3 +74,34 @@ symbol gives):
 | B to A 4 s | 13/13 (11/13) | +2.2 +- 0.8 | 13.6 | +6.24 (+6.21) |
 | B to A PROBE | - | -24.6 +- 48.7 | 14.5 | +6.16 |
 | B to A UI | 1/1 (1/1) | -3.8 +- 7.7 | 13.9 | +6.22 (+6.20) |
+
+## A weak 70 cm link (`w70_*`, `weak70.json`)
+
+- **When:** 2026-11-08, the three-band session (`2026-11-08-3band`), 70 cm
+  (441.000 MHz), K0JLB-2 receiving K0JLB-1, the weak direction. Same stations
+  and AIOCs as above, wide FM, squelch open; recorded by
+  `cairn-modem listen --record` on the receiving station.
+- **Frames:** sent by `cairn-modem tx --type data` (two frames per run,
+  default seed: frame i carries the random payloads of seed 1000 + i) at 32
+  tones with tones 0-2 masked under mask ID 1, and one `t1f` UI frame at 24
+  tones. The listener decoded them with that link state.
+- **What impaired them:** the sender's audio carried steady lines at 1, 2, 3
+  and 4 kHz, 13-26 dB below the data depending on the setup, each midway
+  between two tones; the receiver was fully quieted (`sim/findings.md`, "A
+  weak 70 cm link"). Both receivers now subtract the lines
+  (`frame.remove_lines`, `cairn_phy::rx::remove_lines`).
+- **Cut by** `modem/tools/cut_weak70_fixtures.py`, as above: 0.1 s before the
+  first preamble sample to 0.05 s after the frame. 827,412 bytes of WAV and a
+  22,722-byte index.
+
+| File | Frame | Python and Rust receivers: blocks (SNR, dB) with the lines subtracted / without |
+| --- | --- | --- |
+| `w70_l2_m5.wav` | DATA, MCS 5, 41 blocks (3.96 s); a new antenna on the sender, lines 21-26 dB down | 41/41 (26.7) / 6/41 (19.4) |
+| `w70_l4_m4.wav` | DATA, MCS 4, 33 blocks (3.98 s); the strongest lines, 14-20 dB down | 28/33 (19.3) / 0/33 (8.8) |
+| `w70_t1f.wav` | UI, MCS 2, 24 tones, 1 block (0.68 s) | 1/1 (13.1) / 1/1 (10.5) |
+
+`weak70.json` holds each frame's link state, header and control block bits,
+payloads, and what the Python receiver decodes with and without the lines
+removed; `sim/tests/test_offair_weak70.py` and `modem/phy/tests/offair.rs`
+hold both receivers to at least those blocks with the canceller, exactly
+those without, and the SNR to 0.5 dB.

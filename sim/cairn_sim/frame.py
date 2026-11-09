@@ -1288,6 +1288,70 @@ def _data_noise(noise: np.ndarray, thermal: np.ndarray, gain: float) -> np.ndarr
     return np.maximum(noise - thermal * (1 - gain ** -2), noise / gain ** 2)
 
 
+# Lines at harmonics of 1 kHz (non-normative): a USB sound card's 1 ms frame
+# can leak into a transmitter's audio as a comb of steady lines. On the
+# 2026-11-08 70 cm captures they sat 13-24 dB below the data, each midway
+# between two tones (k kHz is never a tone: tones are at 350 + 100 t Hz),
+# and cost those tones 8-12 dB. Over a whole frame a line stands far above
+# the data's own projection on its frequency (about 41 dB below the data for
+# a 4 s frame), so it can be measured and subtracted without knowing what
+# was sent.
+LINE_F0_HZ = 1000.0
+LINE_REFERENCE_OFFSETS_HZ = (-30.0, -20.0, 20.0, 30.0)   # the data's own level beside each line
+LINE_MARGIN_DB = 10.0       # a line is removed only this far above that level
+LINE_MIN_SAMPLES = 4800     # spans shorter than 0.1 s are left alone
+LINE_PRESCREEN_SLACK_DB = 6.0   # a line needing a neighbourhood this much below the band average is skipped
+LINE_PERIOD = 48            # samples in one period of LINE_F0_HZ
+
+
+def _projection(seg: np.ndarray, f_hz: float) -> complex:
+    """Complex amplitude of the component of ``seg`` at ``f_hz`` (least squares
+    for a span much longer than the period): x(t) ~ Re{c exp(j 2 pi f t)}."""
+    w = 2 * np.pi * f_hz / params.FS * np.arange(seg.size)
+    return complex(2.0 / seg.size * np.sum(seg * np.cos(w)), -2.0 / seg.size * np.sum(seg * np.sin(w)))
+
+
+def remove_lines(rx: np.ndarray, start: int, n: int, width: int) -> tuple[np.ndarray, list[tuple[int, float]]]:
+    """Subtract the lines at harmonics of ``LINE_F0_HZ`` inside the occupied
+    band (and the first above it) from the frame's span ``rx[start:start + n]``:
+    each harmonic's complex amplitude over the span, removed when its power is
+    ``LINE_MARGIN_DB`` above the mean of the projections at
+    ``LINE_REFERENCE_OFFSETS_HZ`` beside it. Returns the samples (``rx``
+    itself when nothing is removed) and (harmonic, line power in dB against
+    a full-scale sine) for each line removed."""
+    lo, hi = max(start, 0), min(start + n, rx.size)
+    if hi - lo < LINE_MIN_SAMPLES:
+        return rx, []
+    seg = rx[lo:hi]
+    out, removed = rx, []
+    margin = 10 ** (LINE_MARGIN_DB / 10)
+    # What a projection of the span would hold if all its power were spread
+    # evenly over the occupied band. A line less than
+    # LINE_MARGIN_DB - LINE_PRESCREEN_SLACK_DB above that could clear the
+    # margin only if its neighbourhood were that much quieter than the band,
+    # so the reference projections are skipped for it.
+    even = 2 * params.FS * float(np.var(seg)) / (seg.size * (params.band_high_hz(width) - params.BAND_LOW_HZ))
+    # A harmonic of 1 kHz repeats every LINE_PERIOD samples, so its
+    # projection over the span is a DFT bin of the span folded onto one period.
+    fold = np.bincount(np.arange(seg.size) % LINE_PERIOD, weights=seg, minlength=LINE_PERIOD)
+    m = np.arange(LINE_PERIOD)
+    wave = np.zeros(LINE_PERIOD)
+    for k in range(1, int(params.band_high_hz(width) // LINE_F0_HZ) + 2):   # the first above the band too
+        f = k * LINE_F0_HZ
+        bins = np.exp(2j * np.pi * k * m / LINE_PERIOD)
+        c = complex(2.0 / seg.size * np.sum(fold * np.conj(bins)))
+        if abs(c) ** 2 <= even * 10 ** ((LINE_MARGIN_DB - LINE_PRESCREEN_SLACK_DB) / 10):
+            continue
+        ref = np.mean([abs(_projection(seg, f + d)) ** 2 for d in LINE_REFERENCE_OFFSETS_HZ])
+        if abs(c) ** 2 > margin * ref:
+            wave += np.real(c * bins)
+            removed.append((k, float(10 * np.log10(abs(c) ** 2))))
+    if removed:
+        out = rx.astype(float, copy=True)
+        out[lo:hi] -= wave[np.arange(hi - lo) % LINE_PERIOD]
+    return out, removed
+
+
 def find_start(rx: np.ndarray, reference: np.ndarray) -> int:
     """Frame start by cross-correlation with the known preamble waveform."""
     corr = signal.correlate(rx, reference, mode="valid", method="fft")
@@ -1301,7 +1365,7 @@ def receive(rx: np.ndarray, cfg: FrameConfig | None = None, *, link: LinkSource 
             decision_directed: bool = True, burst_aware: bool = True,
             header_noise: str = "measured", measure_snr: bool = True,
             clock_prior: ClockPrior | Callable[[fields.Header], ClockPrior | None] | None = None,
-            track_levels: bool = True, header_channel: bool = True) -> RxResult:
+            track_levels: bool = True, header_channel: bool = True, cancel_lines: bool = True) -> RxResult:
     """Decode one frame from real samples ``rx``.
 
     Give ``start`` (index of the frame's first sample) or ``reference`` (the
@@ -1332,7 +1396,9 @@ def receive(rx: np.ndarray, cfg: FrameConfig | None = None, *, link: LinkSource 
     estimated again from the S2 pair and the header's symbols (and the
     probe's), each row at its tracked level (``header_channel_estimate``),
     and every row equalised by it (``detail["header_channel"]``; the S2
-    estimate stays in ``detail["h_s2"]``).
+    estimate stays in ``detail["h_s2"]``). With ``cancel_lines``, lines at
+    harmonics of 1 kHz well above the data are first subtracted from the
+    frame's span (``remove_lines``; those removed in ``detail["lines"]``).
 
     Without ``cfg`` the header is decoded first and the frame's geometry
     taken from its fields (``receive_header_first``), with width and mask
@@ -1347,13 +1413,16 @@ def receive(rx: np.ndarray, cfg: FrameConfig | None = None, *, link: LinkSource 
                                     decision_directed=decision_directed, burst_aware=burst_aware,
                                     header_noise=header_noise, measure_snr=measure_snr,
                                     clock_prior=clock_prior, track_levels=track_levels,
-                                    header_channel=header_channel)
+                                    header_channel=header_channel, cancel_lines=cancel_lines)
     if callable(clock_prior):
         raise ValueError("a clock prior per header needs the header-first receiver (no cfg)")
     if start is None:
         if reference is None:
             reference = ofdm.modulate(preamble.grid(cfg.width), cfg.cp, active=cfg.width)
         start = find_start(rx, reference)
+    lines: list[tuple[int, float]] = []
+    if cancel_lines:
+        rx, lines = remove_lines(rx, start, cfg.n_samples, cfg.width)
     advance = cfg.cp // 4 if advance is None else advance
     n_sym = cfg.total_symbols
     first = params.PREAMBLE_SYMBOLS
@@ -1479,7 +1548,7 @@ def receive(rx: np.ndarray, cfg: FrameConfig | None = None, *, link: LinkSource 
                           cfg.n_blocks, 1 + cfg.n_control, cfg.interleaver)
     detail = {"h": h, "noise": noise, "thermal": thermal, "eq": eq, "d0": d0, "c0": c0,
               "window_start": window_start, "shifts": shifts, "drift": drift, "drift_sd": drift_sd,
-              "corr": corr, "level": level, "nv": nv, "h_s2": h_s2, "header_channel": hch}
+              "corr": corr, "level": level, "nv": nv, "h_s2": h_s2, "header_channel": hch, "lines": lines}
     header, header_error = parse_header(bool(hres.ok[0]), hres.bits[0])
     controls = parse_controls(cres.ok, cres.bits)
     out = RxResult(bool(hres.ok[0]), hres.bits[0], dres.ok, dres.bits, start, snr_db, dres.iterations, detail,
@@ -1735,6 +1804,7 @@ def receive_header_first(rx: np.ndarray, link: LinkSource = None, *,
     (``track_drift``); the header pass uses the default unless it is fixed.
     """
     prior = kw.pop("clock_prior", None)
+    cancel = kw.get("cancel_lines", True)
     if callable(prior):
         kw_head = kw
         frame_prior = None
@@ -1751,9 +1821,10 @@ def receive_header_first(rx: np.ndarray, link: LinkSource = None, *,
         cp = known.cp if known is not None and known.cp is not None else params.CP_SHORT
     head_cfg = FrameConfig(width=params.BASE_TONES, n_blocks=0, cp=cp, probe=False)
     head = receive(rx, head_cfg, start=start, measure_snr=False, **kw_head)
+    rx_head = remove_lines(rx, start, head_cfg.n_samples, head_cfg.width)[0] if cancel else rx
     if head.header is None:
         if measure_snr:
-            _add_channel_snr(rx, head_cfg, head)
+            _add_channel_snr(rx_head, head_cfg, head)
         head.config = None
         return head
     link = _link_for(link, head.header)
@@ -1768,7 +1839,7 @@ def receive_header_first(rx: np.ndarray, link: LinkSource = None, *,
     except UnknownMask as e:
         # ADR 0011 mask-id: the frame's control and data blocks count as failed.
         if measure_snr:
-            _add_channel_snr(rx, head_cfg, head)
+            _add_channel_snr(rx_head, head_cfg, head)
         h = head.header
         head.config, head.link_error, head.block_sequences = None, str(e), None
         head.control_ok = np.zeros(h.n_control, dtype=bool)
@@ -1780,10 +1851,14 @@ def receive_header_first(rx: np.ndarray, link: LinkSource = None, *,
         return head
     except ValueError as e:
         if measure_snr:
-            _add_channel_snr(rx, head_cfg, head)
+            _add_channel_snr(rx_head, head_cfg, head)
         head.header_error = f"header describes no decodable frame: {e}"
         head.header, head.config = None, None
         return head
+    removed: list[tuple[int, float]] = []
+    if cancel:
+        # Once, over the whole frame: the receptions below find nothing more.
+        rx, removed = remove_lines(rx, start, cfg.n_samples, cfg.width)
     r = receive(rx, cfg, start=start, measure_snr=False, **kw)
     if extent is not None and cfg.n_blocks and not r.block_ok.any():
         # No block decoded at the probe's width: a weak edge tone can mislead
@@ -1807,6 +1882,7 @@ def receive_header_first(rx: np.ndarray, link: LinkSource = None, *,
         # the probe's reading stands in the configuration, unconfirmed.
         extent.data_width = cfg.width if cfg.n_blocks and r.block_ok.any() else None
     r.detail["probe_extent"] = extent
+    r.detail["lines"] = removed
     if measure_snr:
         _add_channel_snr(rx, cfg, r)
     return r

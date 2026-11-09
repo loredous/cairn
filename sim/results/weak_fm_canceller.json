@@ -1,0 +1,1318 @@
+[
+ {
+  "file": "70cm/l_AtoB_m4.wav",
+  "frame": 0,
+  "mcs": 4,
+  "blocks": 33,
+  "lines_kept": {
+   "blocks_ok": 25,
+   "snr_db": 15.16,
+   "lines": []
+  },
+  "lines_removed": {
+   "blocks_ok": 33,
+   "snr_db": 22.33,
+   "lines": [
+    [
+     1,
+     -44.2
+    ],
+    [
+     2,
+     -40.7
+    ],
+    [
+     3,
+     -39.9
+    ]
+   ]
+  }
+ },
+ {
+  "file": "70cm/l_AtoB_m4.wav",
+  "frame": 1,
+  "mcs": 4,
+  "blocks": 33,
+  "lines_kept": {
+   "blocks_ok": 25,
+   "snr_db": 15.48,
+   "lines": []
+  },
+  "lines_removed": {
+   "blocks_ok": 33,
+   "snr_db": 23.18,
+   "lines": [
+    [
+     1,
+     -44.6
+    ],
+    [
+     2,
+     -40.9
+    ],
+    [
+     3,
+     -41.0
+    ]
+   ]
+  }
+ },
+ {
+  "file": "70cm/l_AtoB_m5.wav",
+  "frame": 0,
+  "mcs": 5,
+  "blocks": 41,
+  "lines_kept": {
+   "blocks_ok": 0,
+   "snr_db": 12.38,
+   "lines": []
+  },
+  "lines_removed": {
+   "blocks_ok": 41,
+   "snr_db": 24.96,
+   "lines": [
+    [
+     1,
+     -44.8
+    ],
+    [
+     2,
+     -40.0
+    ],
+    [
+     3,
+     -41.6
+    ]
+   ]
+  }
+ },
+ {
+  "file": "70cm/l_AtoB_m5.wav",
+  "frame": 1,
+  "mcs": 5,
+  "blocks": 41,
+  "lines_kept": {
+   "blocks_ok": 0,
+   "snr_db": 13.25,
+   "lines": []
+  },
+  "lines_removed": {
+   "blocks_ok": 39,
+   "snr_db": 25.17,
+   "lines": [
+    [
+     1,
+     -44.2
+    ],
+    [
+     2,
+     -40.5
+    ],
+    [
+     3,
+     -41.2
+    ]
+   ]
+  }
+ },
+ {
+  "file": "70cm/l_AtoB_m6.wav",
+  "frame": 0,
+  "mcs": 6,
+  "blocks": 49,
+  "lines_kept": {
+   "blocks_ok": 0,
+   "snr_db": 13.31,
+   "lines": []
+  },
+  "lines_removed": {
+   "blocks_ok": 43,
+   "snr_db": 26.51,
+   "lines": [
+    [
+     1,
+     -44.5
+    ],
+    [
+     2,
+     -40.2
+    ],
+    [
+     3,
+     -41.1
+    ],
+    [
+     4,
+     -60.2
+    ]
+   ]
+  }
+ },
+ {
+  "file": "70cm/l_AtoB_m6.wav",
+  "frame": 1,
+  "mcs": 6,
+  "blocks": 49,
+  "lines_kept": {
+   "blocks_ok": 0,
+   "snr_db": 13.46,
+   "lines": []
+  },
+  "lines_removed": {
+   "blocks_ok": 42,
+   "snr_db": 26.16,
+   "lines": [
+    [
+     1,
+     -44.5
+    ],
+    [
+     2,
+     -40.4
+    ],
+    [
+     3,
+     -41.0
+    ]
+   ]
+  }
+ },
+ {
+  "file": "70cm/l2_AtoB_m4.wav",
+  "frame": 0,
+  "mcs": 4,
+  "blocks": 33,
+  "lines_kept": {
+   "blocks_ok": 33,
+   "snr_db": 18.89,
+   "lines": []
+  },
+  "lines_removed": {
+   "blocks_ok": 33,
+   "snr_db": 24.27,
+   "lines": [
+    [
+     1,
+     -49.5
+    ],
+    [
+     2,
+     -44.8
+    ],
+    [
+     3,
+     -43.5
+    ]
+   ]
+  }
+ },
+ {
+  "file": "70cm/l2_AtoB_m4.wav",
+  "frame": 1,
+  "mcs": 4,
+  "blocks": 33,
+  "lines_kept": {
+   "blocks_ok": 33,
+   "snr_db": 18.86,
+   "lines": []
+  },
+  "lines_removed": {
+   "blocks_ok": 33,
+   "snr_db": 24.68,
+   "lines": [
+    [
+     1,
+     -49.4
+    ],
+    [
+     2,
+     -45.4
+    ],
+    [
+     3,
+     -44.4
+    ]
+   ]
+  }
+ },
+ {
+  "file": "70cm/l2_AtoB_m5.wav",
+  "frame": 0,
+  "mcs": 5,
+  "blocks": 41,
+  "lines_kept": {
+   "blocks_ok": 6,
+   "snr_db": 19.43,
+   "lines": []
+  },
+  "lines_removed": {
+   "blocks_ok": 41,
+   "snr_db": 26.73,
+   "lines": [
+    [
+     1,
+     -48.9
+    ],
+    [
+     2,
+     -43.9
+    ],
+    [
+     3,
+     -43.1
+    ]
+   ]
+  }
+ },
+ {
+  "file": "70cm/l2_AtoB_m5.wav",
+  "frame": 1,
+  "mcs": 5,
+  "blocks": 41,
+  "lines_kept": {
+   "blocks_ok": 6,
+   "snr_db": 19.5,
+   "lines": []
+  },
+  "lines_removed": {
+   "blocks_ok": 41,
+   "snr_db": 26.98,
+   "lines": [
+    [
+     1,
+     -50.1
+    ],
+    [
+     2,
+     -44.9
+    ],
+    [
+     3,
+     -43.6
+    ]
+   ]
+  }
+ },
+ {
+  "file": "70cm/l2_AtoB_m6.wav",
+  "frame": 0,
+  "mcs": 6,
+  "blocks": 49,
+  "lines_kept": {
+   "blocks_ok": 0,
+   "snr_db": 16.51,
+   "lines": []
+  },
+  "lines_removed": {
+   "blocks_ok": 49,
+   "snr_db": 27.85,
+   "lines": [
+    [
+     1,
+     -48.4
+    ],
+    [
+     2,
+     -45.7
+    ],
+    [
+     3,
+     -43.6
+    ]
+   ]
+  }
+ },
+ {
+  "file": "70cm/l2_AtoB_m6.wav",
+  "frame": 1,
+  "mcs": 6,
+  "blocks": 49,
+  "lines_kept": {
+   "blocks_ok": 0,
+   "snr_db": 16.21,
+   "lines": []
+  },
+  "lines_removed": {
+   "blocks_ok": 47,
+   "snr_db": 27.88,
+   "lines": [
+    [
+     1,
+     -49.9
+    ],
+    [
+     2,
+     -43.8
+    ],
+    [
+     3,
+     -43.8
+    ]
+   ]
+  }
+ },
+ {
+  "file": "70cm/l3_AtoB_m4.wav",
+  "frame": 0,
+  "mcs": 4,
+  "blocks": 33,
+  "lines_kept": {
+   "blocks_ok": 29,
+   "snr_db": 16.15,
+   "lines": []
+  },
+  "lines_removed": {
+   "blocks_ok": 33,
+   "snr_db": 22.5,
+   "lines": [
+    [
+     1,
+     -46.1
+    ],
+    [
+     2,
+     -41.5
+    ],
+    [
+     3,
+     -41.1
+    ]
+   ]
+  }
+ },
+ {
+  "file": "70cm/l3_AtoB_m4.wav",
+  "frame": 1,
+  "mcs": 4,
+  "blocks": 33,
+  "lines_kept": {
+   "blocks_ok": 29,
+   "snr_db": 15.98,
+   "lines": []
+  },
+  "lines_removed": {
+   "blocks_ok": 33,
+   "snr_db": 22.91,
+   "lines": [
+    [
+     1,
+     -45.7
+    ],
+    [
+     2,
+     -41.9
+    ],
+    [
+     3,
+     -41.2
+    ]
+   ]
+  }
+ },
+ {
+  "file": "70cm/l3_AtoB_m5.wav",
+  "frame": 0,
+  "mcs": 5,
+  "blocks": 41,
+  "lines_kept": {
+   "blocks_ok": 0,
+   "snr_db": 13.51,
+   "lines": []
+  },
+  "lines_removed": {
+   "blocks_ok": 41,
+   "snr_db": 24.94,
+   "lines": [
+    [
+     1,
+     -46.2
+    ],
+    [
+     2,
+     -41.0
+    ],
+    [
+     3,
+     -40.6
+    ]
+   ]
+  }
+ },
+ {
+  "file": "70cm/l3_AtoB_m5.wav",
+  "frame": 1,
+  "mcs": 5,
+  "blocks": 41,
+  "lines_kept": {
+   "blocks_ok": 0,
+   "snr_db": 13.16,
+   "lines": []
+  },
+  "lines_removed": {
+   "blocks_ok": 41,
+   "snr_db": 25.19,
+   "lines": [
+    [
+     1,
+     -47.1
+    ],
+    [
+     2,
+     -42.1
+    ],
+    [
+     3,
+     -40.8
+    ]
+   ]
+  }
+ },
+ {
+  "file": "70cm/l3_AtoB_m6.wav",
+  "frame": 0,
+  "mcs": 6,
+  "blocks": 49,
+  "lines_kept": {
+   "blocks_ok": 0,
+   "snr_db": 13.98,
+   "lines": []
+  },
+  "lines_removed": {
+   "blocks_ok": 40,
+   "snr_db": 26.31,
+   "lines": [
+    [
+     1,
+     -47.1
+    ],
+    [
+     2,
+     -42.8
+    ],
+    [
+     3,
+     -41.8
+    ]
+   ]
+  }
+ },
+ {
+  "file": "70cm/l3_AtoB_m6.wav",
+  "frame": 1,
+  "mcs": 6,
+  "blocks": 49,
+  "lines_kept": {
+   "blocks_ok": 0,
+   "snr_db": 14.01,
+   "lines": []
+  },
+  "lines_removed": {
+   "blocks_ok": 42,
+   "snr_db": 26.54,
+   "lines": [
+    [
+     1,
+     -45.6
+    ],
+    [
+     2,
+     -42.3
+    ],
+    [
+     3,
+     -41.3
+    ]
+   ]
+  }
+ },
+ {
+  "file": "70cm/l4_AtoB_m4.wav",
+  "frame": 0,
+  "mcs": 4,
+  "blocks": 33,
+  "lines_kept": {
+   "blocks_ok": 0,
+   "snr_db": 8.84,
+   "lines": []
+  },
+  "lines_removed": {
+   "blocks_ok": 28,
+   "snr_db": 19.3,
+   "lines": [
+    [
+     1,
+     -41.3
+    ],
+    [
+     2,
+     -36.8
+    ],
+    [
+     3,
+     -35.9
+    ],
+    [
+     4,
+     -55.8
+    ]
+   ]
+  }
+ },
+ {
+  "file": "70cm/l4_AtoB_m4.wav",
+  "frame": 1,
+  "mcs": 4,
+  "blocks": 33,
+  "lines_kept": {
+   "blocks_ok": 0,
+   "snr_db": 9.07,
+   "lines": []
+  },
+  "lines_removed": {
+   "blocks_ok": 32,
+   "snr_db": 19.15,
+   "lines": [
+    [
+     1,
+     -41.8
+    ],
+    [
+     2,
+     -37.0
+    ],
+    [
+     3,
+     -36.4
+    ],
+    [
+     4,
+     -55.9
+    ]
+   ]
+  }
+ },
+ {
+  "file": "70cm/l4_AtoB_m5.wav",
+  "frame": 0,
+  "mcs": 5,
+  "blocks": 41,
+  "lines_kept": {
+   "blocks_ok": 0,
+   "snr_db": 9.0,
+   "lines": []
+  },
+  "lines_removed": {
+   "blocks_ok": 25,
+   "snr_db": 22.01,
+   "lines": [
+    [
+     1,
+     -41.3
+    ],
+    [
+     2,
+     -37.6
+    ],
+    [
+     3,
+     -35.9
+    ],
+    [
+     4,
+     -55.8
+    ]
+   ]
+  }
+ },
+ {
+  "file": "70cm/l4_AtoB_m5.wav",
+  "frame": 1,
+  "mcs": 5,
+  "blocks": 41,
+  "lines_kept": {
+   "blocks_ok": 0,
+   "snr_db": 10.02,
+   "lines": []
+  },
+  "lines_removed": {
+   "blocks_ok": 25,
+   "snr_db": 22.17,
+   "lines": [
+    [
+     1,
+     -42.0
+    ],
+    [
+     2,
+     -37.3
+    ],
+    [
+     3,
+     -36.4
+    ],
+    [
+     4,
+     -55.9
+    ]
+   ]
+  }
+ },
+ {
+  "file": "70cm/l4_AtoB_m6.wav",
+  "frame": 0,
+  "mcs": 6,
+  "blocks": 49,
+  "lines_kept": {
+   "blocks_ok": 0,
+   "snr_db": 10.22,
+   "lines": []
+  },
+  "lines_removed": {
+   "blocks_ok": 9,
+   "snr_db": 24.45,
+   "lines": [
+    [
+     1,
+     -41.9
+    ],
+    [
+     2,
+     -37.3
+    ],
+    [
+     3,
+     -37.0
+    ],
+    [
+     4,
+     -56.7
+    ]
+   ]
+  }
+ },
+ {
+  "file": "70cm/l4_AtoB_m6.wav",
+  "frame": 1,
+  "mcs": 6,
+  "blocks": 49,
+  "lines_kept": {
+   "blocks_ok": 0,
+   "snr_db": 10.79,
+   "lines": []
+  },
+  "lines_removed": {
+   "blocks_ok": 18,
+   "snr_db": 25.39,
+   "lines": [
+    [
+     1,
+     -42.6
+    ],
+    [
+     2,
+     -37.5
+    ],
+    [
+     3,
+     -37.0
+    ],
+    [
+     4,
+     -57.0
+    ]
+   ]
+  }
+ },
+ {
+  "file": "70cm/l_BtoA_m4.wav",
+  "frame": 0,
+  "mcs": 4,
+  "blocks": 33,
+  "lines_kept": {
+   "blocks_ok": 33,
+   "snr_db": 28.41,
+   "lines": []
+  },
+  "lines_removed": {
+   "blocks_ok": 33,
+   "snr_db": 28.41,
+   "lines": []
+  }
+ },
+ {
+  "file": "70cm/l_BtoA_m4.wav",
+  "frame": 1,
+  "mcs": 4,
+  "blocks": 33,
+  "lines_kept": {
+   "blocks_ok": 33,
+   "snr_db": 28.96,
+   "lines": []
+  },
+  "lines_removed": {
+   "blocks_ok": 33,
+   "snr_db": 28.96,
+   "lines": []
+  }
+ },
+ {
+  "file": "70cm/l_BtoA_m5.wav",
+  "frame": 0,
+  "mcs": 5,
+  "blocks": 41,
+  "lines_kept": {
+   "blocks_ok": 41,
+   "snr_db": 30.86,
+   "lines": []
+  },
+  "lines_removed": {
+   "blocks_ok": 41,
+   "snr_db": 30.86,
+   "lines": []
+  }
+ },
+ {
+  "file": "70cm/l_BtoA_m5.wav",
+  "frame": 1,
+  "mcs": 5,
+  "blocks": 41,
+  "lines_kept": {
+   "blocks_ok": 41,
+   "snr_db": 30.66,
+   "lines": []
+  },
+  "lines_removed": {
+   "blocks_ok": 41,
+   "snr_db": 30.66,
+   "lines": []
+  }
+ },
+ {
+  "file": "70cm/l_BtoA_m6.wav",
+  "frame": 0,
+  "mcs": 6,
+  "blocks": 49,
+  "lines_kept": {
+   "blocks_ok": 49,
+   "snr_db": 31.92,
+   "lines": []
+  },
+  "lines_removed": {
+   "blocks_ok": 49,
+   "snr_db": 31.92,
+   "lines": []
+  }
+ },
+ {
+  "file": "70cm/l_BtoA_m6.wav",
+  "frame": 1,
+  "mcs": 6,
+  "blocks": 49,
+  "lines_kept": {
+   "blocks_ok": 49,
+   "snr_db": 31.25,
+   "lines": []
+  },
+  "lines_removed": {
+   "blocks_ok": 49,
+   "snr_db": 31.25,
+   "lines": []
+  }
+ },
+ {
+  "file": "125cm/l_AtoB_m4.wav",
+  "frame": 0,
+  "mcs": 4,
+  "blocks": 33,
+  "lines_kept": {
+   "blocks_ok": 33,
+   "snr_db": 25.87,
+   "lines": []
+  },
+  "lines_removed": {
+   "blocks_ok": 33,
+   "snr_db": 25.87,
+   "lines": []
+  }
+ },
+ {
+  "file": "125cm/l_AtoB_m4.wav",
+  "frame": 1,
+  "mcs": 4,
+  "blocks": 33,
+  "lines_kept": {
+   "blocks_ok": 33,
+   "snr_db": 26.23,
+   "lines": []
+  },
+  "lines_removed": {
+   "blocks_ok": 33,
+   "snr_db": 26.23,
+   "lines": []
+  }
+ },
+ {
+  "file": "125cm/l_AtoB_m5.wav",
+  "frame": 0,
+  "mcs": 5,
+  "blocks": 41,
+  "lines_kept": {
+   "blocks_ok": 41,
+   "snr_db": 29.24,
+   "lines": []
+  },
+  "lines_removed": {
+   "blocks_ok": 41,
+   "snr_db": 29.24,
+   "lines": []
+  }
+ },
+ {
+  "file": "125cm/l_AtoB_m5.wav",
+  "frame": 1,
+  "mcs": 5,
+  "blocks": 41,
+  "lines_kept": {
+   "blocks_ok": 41,
+   "snr_db": 29.23,
+   "lines": []
+  },
+  "lines_removed": {
+   "blocks_ok": 41,
+   "snr_db": 29.23,
+   "lines": []
+  }
+ },
+ {
+  "file": "125cm/l_AtoB_m6.wav",
+  "frame": 0,
+  "mcs": 6,
+  "blocks": 49,
+  "lines_kept": {
+   "blocks_ok": 49,
+   "snr_db": 30.9,
+   "lines": []
+  },
+  "lines_removed": {
+   "blocks_ok": 49,
+   "snr_db": 30.9,
+   "lines": []
+  }
+ },
+ {
+  "file": "125cm/l_AtoB_m6.wav",
+  "frame": 1,
+  "mcs": 6,
+  "blocks": 49,
+  "lines_kept": {
+   "blocks_ok": 49,
+   "snr_db": 30.57,
+   "lines": []
+  },
+  "lines_removed": {
+   "blocks_ok": 49,
+   "snr_db": 30.57,
+   "lines": []
+  }
+ },
+ {
+  "file": "125cm/l_BtoA_m4.wav",
+  "frame": 0,
+  "mcs": 4,
+  "blocks": 33,
+  "lines_kept": {
+   "blocks_ok": 33,
+   "snr_db": 28.41,
+   "lines": []
+  },
+  "lines_removed": {
+   "blocks_ok": 33,
+   "snr_db": 28.41,
+   "lines": []
+  }
+ },
+ {
+  "file": "125cm/l_BtoA_m4.wav",
+  "frame": 1,
+  "mcs": 4,
+  "blocks": 33,
+  "lines_kept": {
+   "blocks_ok": 33,
+   "snr_db": 28.51,
+   "lines": []
+  },
+  "lines_removed": {
+   "blocks_ok": 33,
+   "snr_db": 28.51,
+   "lines": []
+  }
+ },
+ {
+  "file": "125cm/l_BtoA_m5.wav",
+  "frame": 0,
+  "mcs": 5,
+  "blocks": 41,
+  "lines_kept": {
+   "blocks_ok": 41,
+   "snr_db": 30.34,
+   "lines": []
+  },
+  "lines_removed": {
+   "blocks_ok": 41,
+   "snr_db": 30.34,
+   "lines": []
+  }
+ },
+ {
+  "file": "125cm/l_BtoA_m5.wav",
+  "frame": 1,
+  "mcs": 5,
+  "blocks": 41,
+  "lines_kept": {
+   "blocks_ok": 41,
+   "snr_db": 30.38,
+   "lines": []
+  },
+  "lines_removed": {
+   "blocks_ok": 41,
+   "snr_db": 30.38,
+   "lines": []
+  }
+ },
+ {
+  "file": "125cm/l_BtoA_m6.wav",
+  "frame": 0,
+  "mcs": 6,
+  "blocks": 49,
+  "lines_kept": {
+   "blocks_ok": 49,
+   "snr_db": 31.29,
+   "lines": []
+  },
+  "lines_removed": {
+   "blocks_ok": 49,
+   "snr_db": 31.29,
+   "lines": []
+  }
+ },
+ {
+  "file": "125cm/l_BtoA_m6.wav",
+  "frame": 1,
+  "mcs": 6,
+  "blocks": 49,
+  "lines_kept": {
+   "blocks_ok": 49,
+   "snr_db": 30.93,
+   "lines": []
+  },
+  "lines_removed": {
+   "blocks_ok": 49,
+   "snr_db": 30.93,
+   "lines": []
+  }
+ },
+ {
+  "file": "2m/l_AtoB_m4.wav",
+  "frame": 0,
+  "mcs": 4,
+  "blocks": 33,
+  "lines_kept": {
+   "blocks_ok": 33,
+   "snr_db": 26.02,
+   "lines": []
+  },
+  "lines_removed": {
+   "blocks_ok": 33,
+   "snr_db": 26.02,
+   "lines": []
+  }
+ },
+ {
+  "file": "2m/l_AtoB_m4.wav",
+  "frame": 1,
+  "mcs": 4,
+  "blocks": 33,
+  "lines_kept": {
+   "blocks_ok": 33,
+   "snr_db": 26.44,
+   "lines": []
+  },
+  "lines_removed": {
+   "blocks_ok": 33,
+   "snr_db": 26.44,
+   "lines": []
+  }
+ },
+ {
+  "file": "2m/l_AtoB_m5.wav",
+  "frame": 0,
+  "mcs": 5,
+  "blocks": 41,
+  "lines_kept": {
+   "blocks_ok": 41,
+   "snr_db": 29.58,
+   "lines": []
+  },
+  "lines_removed": {
+   "blocks_ok": 41,
+   "snr_db": 29.58,
+   "lines": []
+  }
+ },
+ {
+  "file": "2m/l_AtoB_m5.wav",
+  "frame": 1,
+  "mcs": 5,
+  "blocks": 41,
+  "lines_kept": {
+   "blocks_ok": 41,
+   "snr_db": 29.44,
+   "lines": []
+  },
+  "lines_removed": {
+   "blocks_ok": 41,
+   "snr_db": 29.44,
+   "lines": []
+  }
+ },
+ {
+  "file": "2m/l_AtoB_m6.wav",
+  "frame": 0,
+  "mcs": 6,
+  "blocks": 49,
+  "lines_kept": {
+   "blocks_ok": 49,
+   "snr_db": 31.29,
+   "lines": []
+  },
+  "lines_removed": {
+   "blocks_ok": 49,
+   "snr_db": 31.29,
+   "lines": []
+  }
+ },
+ {
+  "file": "2m/l_AtoB_m6.wav",
+  "frame": 1,
+  "mcs": 6,
+  "blocks": 49,
+  "lines_kept": {
+   "blocks_ok": 49,
+   "snr_db": 30.95,
+   "lines": []
+  },
+  "lines_removed": {
+   "blocks_ok": 49,
+   "snr_db": 30.95,
+   "lines": []
+  }
+ },
+ {
+  "file": "2m/l_BtoA_m4.wav",
+  "frame": 0,
+  "mcs": 4,
+  "blocks": 33,
+  "lines_kept": {
+   "blocks_ok": 33,
+   "snr_db": 28.34,
+   "lines": []
+  },
+  "lines_removed": {
+   "blocks_ok": 33,
+   "snr_db": 28.34,
+   "lines": []
+  }
+ },
+ {
+  "file": "2m/l_BtoA_m4.wav",
+  "frame": 1,
+  "mcs": 4,
+  "blocks": 33,
+  "lines_kept": {
+   "blocks_ok": 33,
+   "snr_db": 28.87,
+   "lines": []
+  },
+  "lines_removed": {
+   "blocks_ok": 33,
+   "snr_db": 28.87,
+   "lines": []
+  }
+ },
+ {
+  "file": "2m/l_BtoA_m5.wav",
+  "frame": 0,
+  "mcs": 5,
+  "blocks": 41,
+  "lines_kept": {
+   "blocks_ok": 41,
+   "snr_db": 30.39,
+   "lines": []
+  },
+  "lines_removed": {
+   "blocks_ok": 41,
+   "snr_db": 30.39,
+   "lines": []
+  }
+ },
+ {
+  "file": "2m/l_BtoA_m5.wav",
+  "frame": 1,
+  "mcs": 5,
+  "blocks": 41,
+  "lines_kept": {
+   "blocks_ok": 41,
+   "snr_db": 30.25,
+   "lines": []
+  },
+  "lines_removed": {
+   "blocks_ok": 41,
+   "snr_db": 30.25,
+   "lines": []
+  }
+ },
+ {
+  "file": "2m/l_BtoA_m6.wav",
+  "frame": 0,
+  "mcs": 6,
+  "blocks": 49,
+  "lines_kept": {
+   "blocks_ok": 49,
+   "snr_db": 31.43,
+   "lines": []
+  },
+  "lines_removed": {
+   "blocks_ok": 49,
+   "snr_db": 31.43,
+   "lines": []
+  }
+ },
+ {
+  "file": "2m/l_BtoA_m6.wav",
+  "frame": 1,
+  "mcs": 6,
+  "blocks": 49,
+  "lines_kept": {
+   "blocks_ok": 49,
+   "snr_db": 30.82,
+   "lines": []
+  },
+  "lines_removed": {
+   "blocks_ok": 49,
+   "snr_db": 30.82,
+   "lines": []
+  }
+ },
+ {
+  "file": "70cm/t1_AtoB.wav",
+  "frame": 0,
+  "mcs": 2,
+  "blocks": 1,
+  "lines_kept": {
+   "blocks_ok": 1,
+   "snr_db": 11.78,
+   "lines": []
+  },
+  "lines_removed": {
+   "blocks_ok": 1,
+   "snr_db": 13.05,
+   "lines": [
+    [
+     1,
+     -43.4
+    ],
+    [
+     2,
+     -38.5
+    ],
+    [
+     3,
+     -39.3
+    ]
+   ]
+  }
+ },
+ {
+  "file": "70cm/t1d_AtoB.wav",
+  "frame": 0,
+  "mcs": 2,
+  "blocks": 1,
+  "lines_kept": {
+   "blocks_ok": 1,
+   "snr_db": 12.75,
+   "lines": []
+  },
+  "lines_removed": {
+   "blocks_ok": 1,
+   "snr_db": 12.79,
+   "lines": [
+    [
+     1,
+     -44.4
+    ],
+    [
+     3,
+     -43.6
+    ]
+   ]
+  }
+ },
+ {
+  "file": "70cm/t1e_AtoB.wav",
+  "frame": 0,
+  "mcs": 2,
+  "blocks": 1,
+  "lines_kept": {
+   "blocks_ok": 1,
+   "snr_db": 11.85,
+   "lines": []
+  },
+  "lines_removed": {
+   "blocks_ok": 1,
+   "snr_db": 13.07,
+   "lines": [
+    [
+     1,
+     -44.5
+    ],
+    [
+     2,
+     -39.1
+    ],
+    [
+     3,
+     -38.6
+    ]
+   ]
+  }
+ },
+ {
+  "file": "70cm/t1f_AtoB.wav",
+  "frame": 0,
+  "mcs": 2,
+  "blocks": 1,
+  "lines_kept": {
+   "blocks_ok": 1,
+   "snr_db": 10.52,
+   "lines": []
+  },
+  "lines_removed": {
+   "blocks_ok": 1,
+   "snr_db": 13.08,
+   "lines": [
+    [
+     1,
+     -42.1
+    ],
+    [
+     2,
+     -36.2
+    ],
+    [
+     3,
+     -34.8
+    ]
+   ]
+  }
+ }
+]
