@@ -562,6 +562,147 @@ the noise to about -20 dBFS and stop. It needs a real card (`hw:` or
 `plughw:`), not the `default`/`pipewire` device; without one it prints a
 warning and leaves the gain alone.
 
+## The SPEC 14.1 bench script: the v0.5 two-radio-makes check
+
+The v0.5 row of [SPEC §16.2](SPEC.md) closes when the 24-tone targets of
+[§14.1](SPEC.md) are met on two radio makes. `modem/tools/bench_14_1.py`
+(Python standard library only) runs that measurement on a pair of stations and
+writes `results.json` and `results.md`: one line per §14.1 row with the target,
+the measured value, how it was measured, and PASS, FAIL, INCONCLUSIVE, INFO,
+MANUAL or NOT_MEASURABLE (with the reason). Run it once per pair of radios, then
+merge the files.
+
+```sh
+python3 modem/tools/bench_14_1.py --list-targets      # every row, its procedure, and why some cannot be run
+python3 modem/tools/bench_14_1.py --simulate --quick  # the same procedure against the simulator (about 30 s)
+python3 modem/tools/bench_14_1.py --config bench.toml --plan-only   # what each station would transmit; keys nothing
+python3 modem/tools/bench_14_1.py --config bench.toml --i-have-permission-to-transmit
+python3 modem/tools/bench_14_1.py --merge runA/results.json runB/results.json --out-dir merged   # across radio makes
+```
+
+### Setup
+
+Build `cairn-modem` (`cargo build --release` in `modem/`) on both machines, set
+levels and TXDelay as for the two-station test above (`cairn-modem setup`, or the
+tone and `levels`), and write a config. Station A is this machine; station B is
+this machine too (two interfaces) or another reached over ssh (key login, no
+password prompt; use a host name or an ssh config alias):
+
+```toml
+[run]
+rig_pair = "make one handheld + make two mobile"   # label for the results
+frequency_notes = "simplex, dummy loads through a step attenuator, data port both ends"
+txdelay_ms = 300          # what the radios need; the throughput row is defined at 150 (see below)
+txtail_ms = 20
+attenuator = "manual"     # "none" if there is no step attenuator: SNR-dependent rows then come out INCONCLUSIVE
+fcd_s = 600               # idle seconds for the false carrier-detect row
+
+[station.a]
+callsign = "K1ABC-1"      # your own; placeholders such as N0CALL are refused on air
+make = "Make One HT"      # radio make and model: the milestone counts distinct makes
+device = "All-In-One-Cable"
+ptt = "serial:All-In-One-Cable"
+rig = "aioc-ht"           # optional rig profile (docs/rigs)
+
+[station.b]
+callsign = "K1ABC-2"
+make = "Make Two mobile"
+device = "front:CARD=AllInOneCable,DEV=0"
+ptt = "serial:e5a2ed9d"
+ssh = "bench-b"           # omit when B is on this machine
+modem = "/home/bench/cairn/modem/target/release/cairn-modem"   # absolute path of cairn-modem on B's machine
+```
+
+Run the script from a terminal. `max_keyed_s` (default 1800 s per station) caps
+the keyed time; the plan prints the estimate first. Other `[run]` keys: `frames`
+(frames per point, 10), `detection_frames` (30), `file_kb` (40), `cap` (24),
+`switch_margin_db` (2), `path_notes`, `afsk_source_cmd`.
+
+What it does, in order:
+
+1. **Refuses what it should.** On air it needs `--i-have-permission-to-transmit`,
+   two valid, different callsigns that are not placeholders (N0CALL and similar are
+   accepted in `--simulate` only), a plan within the keyed-time budget, and the
+   station A callsign typed at the prompt after the plan has been shown (`--no-confirm`
+   skips only that prompt). The plan names the station that keys each frame.
+2. **Pre-flight.** Refuses to start if a `cairn-modem` is already running on either
+   machine (it would hold the sound card and possibly the PTT line; stop it first), then runs
+   `cairn-modem selftest` on each station (no transmission).
+3. **Channel check.** Both stations listen only (no PTT options are passed, so these
+   commands cannot key) for `channel_check_s` (60 s). Any detection or decoded frame
+   and the run stops with nothing transmitted.
+4. **Frame measurements** (broadcast frames, each station keys its own with the ID
+   block; the other records and decodes): minimum usable link, block error rate at
+   each rung's switching point, preamble detection, and the sample-clock offset the
+   cards show. With `attenuator = "manual"` it measures the SNR with a few MCS 0
+   frames and asks you to add or remove attenuation until the receiver's SNR is within
+   2 dB of the point, one level at a time with both directions run at each.
+5. **Session measurements**: both stations run `cairn-modem run` with the API on
+   loopback ports (B's reached through an ssh tunnel), and the script drives them: idle
+   false carrier-detect, link test, width, a file each way (throughput), a long
+   transfer for rate adaptation, the distortion report and session resume. The
+   modems are stopped on every exit path (SIGTERM, which releases PTT).
+
+Operator prompts appear only for the steps that need hands: attenuation changes
+(6 dB steps for adaptation, SNR points), the 6 dB drive overdrive and its restoration,
+and radio B's power for the 60 s and 120 s outages. Press Enter the moment the action
+is done; frames are counted from the Enter. `--non-interactive` turns prompt-needing
+rows into failures instead of waiting.
+
+### How each row is measured
+
+| §14.1 row | On air | Notes |
+| --- | --- | --- |
+| Net throughput (4 s frames, TXDelay 150 ms) | Session, one file each way; payload bits over time from send to delivered, with the receiver's measured SNR | Valid at an SNR of 24 dB or more, else INCONCLUSIVE. Judged at your TXDelay; the figure with the excess TXDelay removed is reported next to it. Radios that need 300 ms cannot literally meet a target defined at 150 ms: the project owner decides which figure counts. |
+| Minimum usable link | MCS 0 frames each way at 8 dB | Net rate by the Appendix A.2 cycle model times (1 minus BLER). A.2 gives 1.21 kbps against the 1.2 target, so one lost block fails the row. |
+| Rate adaptation | Rung timeline from the API; 60 s at constant SNR (reversals), then a 6 dB step down and up | The steps need the attenuator. Frame 1 is the first frame decoded after your Enter; INCONCLUSIVE if the rung does not change. |
+| Width negotiation | One CONNECT, session open, same width both ways | The restore of a masked tone needs an impairment on one tone, which the script cannot inject: reported as not measured. |
+| BLER at each rung's switching point | Frames at each rung at its threshold plus 2 dB (the lowest SNR at which 10.1 steps up), each direction | The "switching point" is read as that SNR (an interpretation; `switch_margin_db`). MCS 6 may not pass on a handheld mic path. |
+| Distortion report | A's drive raised 6 dB, then restored, with the index from B's link events | The modem's measurement is a constant 0 today (`runtime.rs`), so this row fails until it is implemented. |
+| Session resume | 60 s then 120 s outage of radio B during a 60 kB transfer: link lost or not, resumed flag, delivered, sha256 at B | A block re-sent after acknowledgement is not visible in the API; the file hash and the resumed flag stand in for it. |
+| Link test | `probe` before the session: keyed seconds of both stations, forward and reverse kbps against the following sessions | |
+| False carrier-detect | Both modems idle with the squelch open for `fcd_s`; rises from `status` | A decoded frame in the window makes it INCONCLUSIVE. Shorter than 10 minutes is scaled and says so. |
+| Deference to AFSK | Needs `afsk_source_cmd`: a command that sends one Bell 202 packet from a third station while A has data queued; dcd and tx events compared | MANUAL without it. At least 5 bursts must be detected. |
+| Sample-clock tolerance | Observed ppm of the cards and BLER (INFO) | The ±100 ppm span cannot be forced on air; only the simulator forces it. |
+| Drive calibration, repeater mode, soft combining, multi-mode receiver, interoperability | Not measurable | `calibrate` is unsupported (v1.0, three makes); no repeater mode (v1.x) or repeater to test it through; no combining of repeats; an offline capture comparison; one implementation only. They stay open for the milestone; the merged table lists them. |
+
+### Results and the milestone
+
+`results.json` holds the configuration (callsigns, makes, devices, notes), the
+pre-flight, the channel check and every row with its evidence (per-point block
+counts and SNRs, rung timelines, session figures); `logs/` holds every command's
+output, the remote modem logs and the selftests, enough to redo any row by hand.
+`--merge` combines several `results.json` files into one table (it refuses simulated
+files) and says whether every measurable row passes and at least two distinct makes
+were named.
+
+### Practical lessons from the first two-machine sessions
+
+- Kill leftover modems before opening a device; the script refuses to start over
+  one, but a modem you started by hand in another terminal holds the card until it exits.
+- Background jobs started over ssh need `setsid nohup ... </dev/null &`; the script does
+  that and ends B's modem by pid file, not `pkill -f` (a pattern that matches its own command
+  line kills the shell running it).
+- Mixer settings (playback and capture levels) are reset when an interface is replugged:
+  re-check them with `cairn-modem levels` and the tone after any replug, and note the levels
+  in the config's `path_notes`.
+- Squelch open on both radios; record the data port or mic path and the attenuation next to
+  every result, as for the WAV tests.
+- Station identification: every frame header carries the callsign, `tx --id` and the session
+  ID blocks add the full callsign, and the modem repeats the ID at least every 9 minutes
+  in a session. Where your rules also require a CW or voice ID, send it between runs.
+
+### The simulated run
+
+`--simulate` runs the same procedure with no hardware: the frame measurements through
+`cairn-modem tx --wav`, the Stage 1 FM channel at each point's SNR (and ±100 ppm for the clock
+row), and `cairn-modem listen --wav`; the session rows through the matching tests in
+`modem/cli/tests/two_station.rs` (two complete modems on the simulated channel;
+`--sim-proxies none|quick|all`). The results say `SIMULATION` throughout and `--merge` rejects
+them: they show that the script and the reference modem agree on what a pass looks like, not
+that any radio meets a target. `tests/test_bench_14_1.py` runs it with `--quick`, and checks
+that the on-air refusals hold.
+
 ## What this cannot test
 
 The offline decoder and the broadcast test above test the waveform on a real audio chain, one
