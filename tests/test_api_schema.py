@@ -102,7 +102,7 @@ def test_example_client_speaks_the_schema() -> None:
             ev(
                 "hello",
                 api="cairn",
-                api_version="0.1.0",
+                api_version="0.2.0",
                 implementation={"name": "stand-in", "version": "0"},
                 station="N0AAA",
                 client=1,
