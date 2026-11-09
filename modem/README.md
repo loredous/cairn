@@ -188,6 +188,16 @@ $M run -d All-In-One-Cable --ptt serial:All-In-One-Cable --callsign N0CALL-1   #
   the PTT at once from the signal thread (a second signal, or 3 s without
   a clean exit, exits the process after releasing again); a panic hook
   releases too.
+- **PTT failures.** Every keying path opens the PTT through `SharedPtt` with
+  a reopen function. A failed key or release is retried (dropping the
+  line), then the device is closed and reopened by its configured path with
+  the idle state set; a `WARNING` says the transmitter may still be keyed,
+  and keying is refused until the device is back. In `run`, a
+  `ReopenTimer` (1 s, doubling to 10 s) polled by the event loop reopens it
+  in the background and reports it ("PTT device is back"); there is no
+  extra thread. `setup`, `selftest --transmit`, `ptt-test`, `tone` and `tx`
+  report the fault as `PTT FAULT` and end with a non-zero status (`setup`
+  stops without writing the configuration).
 - **Serial PTT** opens the port with `open(2)` and touches only the
   modem-control lines, both at once with one `TIOCMSET` (no termios
   changes, so no baud-rate side effects). Linux raises DTR and RTS

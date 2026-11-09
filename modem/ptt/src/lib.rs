@@ -399,6 +399,24 @@ impl SharedPtt {
         self.lock().fault.is_some()
     }
 
+    /// If the device is lost, try to reopen it now and set it idle. The
+    /// result is returned, not queued as a warning: the caller reports it
+    /// (the warning queued by the failure itself is left for the
+    /// transmitting thread, which reports a transmission's outcome).
+    pub fn try_recover(&self) -> Recovery {
+        let mut g = self.lock();
+        let Some(why) = g.fault.clone() else { return Recovery::Healthy };
+        match g.recover() {
+            Ok(()) => {
+                let text =
+                    format!("PTT device is back ({why}): reopened and set idle; check the interface and the radio.");
+                eprintln!("WARNING: {text}");
+                Recovery::Reopened(text)
+            }
+            Err(e) => Recovery::StillLost(e.to_string()),
+        }
+    }
+
     /// Warnings raised since the last call (a failure and its recovery),
     /// for the operator and the host API.
     pub fn take_warnings(&self) -> Vec<String> {
@@ -409,6 +427,85 @@ impl SharedPtt {
     #[doc(hidden)]
     pub fn set_retry_pause(&self, pause: std::time::Duration) {
         self.lock().pause = pause;
+    }
+}
+
+/// What [`SharedPtt::try_recover`] found.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum Recovery {
+    /// Nothing was wrong.
+    Healthy,
+    /// Still gone; the reason the reopen failed.
+    StillLost(String),
+    /// Reopened and set idle; the operator text for it.
+    Reopened(String),
+}
+
+/// First wait before reopening a lost device again.
+pub const REOPEN_MIN: std::time::Duration = std::time::Duration::from_secs(1);
+/// The wait stops doubling here.
+pub const REOPEN_MAX: std::time::Duration = std::time::Duration::from_secs(10);
+
+/// Retries reopening a lost PTT device on a timer with backoff (1 s, 2 s,
+/// 4 s, 8 s, then every 10 s), so the device is back, and the operator
+/// told, soon after it returns rather than at the next transmission.
+///
+/// Time is passed in, so the owner polls it from a loop that is awake
+/// anyway: there is no thread and no sleeping here.
+#[derive(Debug)]
+pub struct ReopenTimer {
+    min: std::time::Duration,
+    max: std::time::Duration,
+    delay: std::time::Duration,
+    due: Option<std::time::Instant>,
+}
+
+impl Default for ReopenTimer {
+    fn default() -> Self {
+        Self::new(REOPEN_MIN, REOPEN_MAX)
+    }
+}
+
+impl ReopenTimer {
+    /// Waits start at `min` and double up to `max`.
+    pub fn new(min: std::time::Duration, max: std::time::Duration) -> Self {
+        ReopenTimer { min, max, delay: min, due: None }
+    }
+
+    /// Call often. When `ptt` is faulted and an attempt is due, reopen it:
+    /// returns the operator text once when it came back. Does nothing (and
+    /// resets the backoff) while the device is healthy.
+    pub fn poll(&mut self, ptt: &SharedPtt, now: std::time::Instant) -> Option<String> {
+        if !ptt.is_faulted() {
+            self.delay = self.min;
+            self.due = None;
+            return None;
+        }
+        let due = *self.due.get_or_insert(now + self.delay);
+        if now < due {
+            return None;
+        }
+        match ptt.try_recover() {
+            Recovery::Reopened(text) => {
+                self.delay = self.min;
+                self.due = None;
+                Some(text)
+            }
+            Recovery::Healthy => {
+                self.due = None;
+                None
+            }
+            Recovery::StillLost(_) => {
+                self.delay = (self.delay * 2).min(self.max);
+                self.due = Some(now + self.delay);
+                None
+            }
+        }
+    }
+
+    /// When the next attempt is due, if the device is lost.
+    pub fn next_due(&self) -> Option<std::time::Instant> {
+        self.due
     }
 }
 
@@ -568,6 +665,113 @@ mod tests {
         assert!(w[0].contains("MAY HAVE BEEN LEFT KEYED"), "{w:?}");
         ptt.set(true).unwrap();
         assert!(line.load(Ordering::SeqCst));
+    }
+
+    #[test]
+    fn fault_during_key_refuses_keying_and_never_raises_the_line() {
+        let (ptt, dead, line, _usb_back, opens) = flaky();
+        dead.store(true, Ordering::SeqCst);
+        let e = ptt.set(true).unwrap_err();
+        assert_eq!(e.raw_os_error(), Some(32));
+        assert!(ptt.is_faulted());
+        assert!(!line.load(Ordering::SeqCst), "the line never went up");
+        let w = ptt.take_warnings();
+        assert!(w[0].contains("keying failed") && w[0].contains("MAY STILL BE KEYED"), "{w:?}");
+        // Another try is refused without touching the dead device.
+        assert!(ptt.set(true).unwrap_err().to_string().contains("not keying"));
+        assert!(!line.load(Ordering::SeqCst));
+        assert_eq!(*opens.lock().unwrap(), 2, "one reopen after the failure, one per refused key");
+    }
+
+    #[test]
+    fn fault_during_release_warns_and_the_device_is_recovered_when_it_returns() {
+        let (ptt, dead, line, usb_back, _) = flaky();
+        let g = PttGuard::key(&ptt).unwrap();
+        assert!(line.load(Ordering::SeqCst));
+        dead.store(true, Ordering::SeqCst);
+        let e = g.release().unwrap_err();
+        assert_eq!(e.raw_os_error(), Some(32));
+        assert!(ptt.is_faulted());
+        assert!(line.load(Ordering::SeqCst), "a dead interface stays keyed: nothing here can change that");
+        let w = ptt.take_warnings();
+        assert!(w[0].contains("release failed") && w[0].contains("MAY STILL BE KEYED"), "{w:?}");
+        usb_back.store(true, Ordering::SeqCst);
+        assert!(matches!(ptt.try_recover(), Recovery::Reopened(_)));
+        assert!(!line.load(Ordering::SeqCst), "reopening puts the idle state on the line");
+    }
+
+    #[test]
+    fn try_recover_reports_without_taking_the_failure_warning() {
+        let (ptt, dead, _line, usb_back, _) = flaky();
+        assert_eq!(ptt.try_recover(), Recovery::Healthy);
+        dead.store(true, Ordering::SeqCst);
+        assert!(ptt.set(true).is_err());
+        assert!(matches!(ptt.try_recover(), Recovery::StillLost(_)));
+        usb_back.store(true, Ordering::SeqCst);
+        let r = ptt.try_recover();
+        assert!(matches!(&r, Recovery::Reopened(t) if t.contains("back")), "{r:?}");
+        assert!(!ptt.is_faulted());
+        // The failure's own warning is still queued for the transmitting thread.
+        let w = ptt.take_warnings();
+        assert_eq!(w.len(), 1, "{w:?}");
+        assert!(w[0].contains("MAY STILL BE KEYED"));
+        ptt.set(true).unwrap();
+    }
+
+    fn ms(n: u64) -> std::time::Duration {
+        std::time::Duration::from_millis(n)
+    }
+
+    #[test]
+    fn reopen_timer_backs_off_then_reports_the_device_coming_back() {
+        let (ptt, dead, _line, usb_back, opens) = flaky();
+        let mut timer = ReopenTimer::default();
+        let t0 = std::time::Instant::now();
+        assert_eq!(timer.poll(&ptt, t0), None);
+        assert!(timer.next_due().is_none(), "nothing to do while healthy");
+        dead.store(true, Ordering::SeqCst);
+        assert!(ptt.set(true).is_err());
+        assert_eq!(*opens.lock().unwrap(), 1);
+        // Attempts at +1 s, +3 s, +7 s, +15 s, +25 s, +35 s: delays 1, 2, 4, 8, 10, 10.
+        assert_eq!(timer.poll(&ptt, t0), None, "arms the timer");
+        let mut at = ms(0);
+        for (i, wait) in [1000u64, 2000, 4000, 8000, 10000, 10000].into_iter().enumerate() {
+            assert_eq!(timer.poll(&ptt, t0 + at + ms(wait - 1)), None, "not yet, step {i}");
+            assert_eq!(*opens.lock().unwrap(), 1 + i);
+            at += ms(wait);
+            assert_eq!(timer.poll(&ptt, t0 + at), None);
+            assert_eq!(*opens.lock().unwrap(), 2 + i, "one attempt, step {i}");
+        }
+        // The device returns: the next attempt reports it, once.
+        usb_back.store(true, Ordering::SeqCst);
+        let n = *opens.lock().unwrap();
+        assert_eq!(timer.poll(&ptt, t0 + at + ms(9999)), None);
+        let text = timer.poll(&ptt, t0 + at + ms(10000)).expect("came back");
+        assert!(text.contains("back"), "{text}");
+        assert_eq!(*opens.lock().unwrap(), n + 1);
+        assert!(!ptt.is_faulted());
+        assert_eq!(timer.poll(&ptt, t0 + at + ms(60000)), None, "reported once, idle afterwards");
+        assert_eq!(*opens.lock().unwrap(), n + 1);
+        // The next fault starts from the short delay again.
+        dead.store(false, Ordering::SeqCst);
+        ptt.set(true).unwrap();
+    }
+
+    #[test]
+    fn reopen_timer_does_not_spin_when_the_device_never_returns() {
+        let (ptt, dead, _line, _usb_back, opens) = flaky();
+        let mut timer = ReopenTimer::new(ms(10), ms(40));
+        dead.store(true, Ordering::SeqCst);
+        assert!(ptt.set(true).is_err());
+        let t0 = std::time::Instant::now();
+        // Polled every millisecond for a simulated minute: attempts follow
+        // the schedule 10, 20, 40, 40, ... ms, not the polling rate.
+        for i in 0..60_000u64 {
+            assert_eq!(timer.poll(&ptt, t0 + ms(i)), None);
+        }
+        let n = *opens.lock().unwrap();
+        assert!((1490..=1520).contains(&n), "about one attempt per 40 ms, got {n}");
+        assert!(ptt.is_faulted());
     }
 
     #[test]

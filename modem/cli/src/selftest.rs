@@ -492,6 +492,8 @@ fn transmit_check(
         return Check::new(NAME, Status::Skip, "declined at the prompt; nothing transmitted");
     };
     match hw.transmit_and_listen(&ok, device, ptt, timing, &audio, 1.0) {
+        Err(e) if crate::hw::is_ptt_fault(&e) => Check::new(NAME, Status::Fail, e)
+            .hint("the PTT interface failed: replug it and check the radio is not keyed, then rerun; nothing more was transmitted"),
         Err(e) => Check::new(NAME, Status::Fail, format!("{e} (PTT released)")),
         Ok((m, heard)) => {
             if m.after_read == Some(true) {
@@ -660,6 +662,27 @@ mod tests {
         assert!(checks.iter().all(|c| c.name != "receive level"), "no level without an input");
         assert!(by_name(&checks, "PTT").detail.contains("broadcast only"));
         assert!(!hw.calls.iter().any(|c| c.starts_with("ptt_idle")), "VOX has no line to open");
+    }
+
+    #[test]
+    fn a_ptt_fault_in_the_transmit_check_fails_the_self_test_clearly() {
+        let mut hw = MockHw { ptt_fault: Some("Broken pipe (os error 32)".into()), ..Default::default() };
+        let mut term = ScriptTerm::new(&["yes"]);
+        let checks = run(
+            &ConfigState::Loaded("c".into()),
+            &owner_like(),
+            &mut hw,
+            &mut term,
+            &Options { transmit: true, level_seconds: 0.0 },
+        );
+        let c = by_name(&checks, "transmit loopback");
+        assert_eq!(c.status, Status::Fail);
+        assert!(c.detail.contains("MAY STILL BE KEYED") && c.detail.contains("Broken pipe"), "{}", c.detail);
+        assert!(!c.detail.contains("(PTT released)"));
+        assert!(c.hint.as_ref().unwrap().contains("replug"));
+        let (text, worst) = report(&checks);
+        assert_eq!(worst, Status::Fail, "{text}");
+        assert_eq!(hw.keyed.len(), 1, "no second attempt");
     }
 
     #[test]

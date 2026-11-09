@@ -10,7 +10,9 @@ use std::time::{Duration, Instant};
 use cairn_audio::rt::{self, ThreadRole};
 use cairn_audio::{InputStream, LevelMeter, OutputPort, OutputStream, RtConfig, RtGrant, StreamOptions};
 use cairn_modem::detect::{self, PttCandidate};
-use cairn_modem::hw::{AudioDev, Confirmed, Hardware, KeyReport, LevelReport, PttChoice, Terminal, TxMeasure};
+use cairn_modem::hw::{
+    AudioDev, Confirmed, Hardware, KeyReport, LevelReport, PttChoice, Terminal, TxMeasure, ptt_fault_text,
+};
 use cairn_modem::txseq::{self, TxTiming};
 use cairn_ptt::{PttGuard, PttSpec, SharedPtt};
 
@@ -52,7 +54,9 @@ pub fn resolve_ptt_spec(spec: &str) -> Result<String, String> {
 
 fn open_ptt(p: &PttChoice) -> Result<SharedPtt, String> {
     let spec = PttSpec::parse(&resolve_ptt_spec(&p.spec)?, p.line, p.invert, p.gpio)?;
-    let ptt = SharedPtt::new(spec.open().map_err(|e| format!("PTT {spec}: {e}"))?);
+    // Reopened by the spec's stable path if the interface fails mid-transmission.
+    let first = spec.open().map_err(|e| format!("PTT {spec}: {e}"))?;
+    let ptt = SharedPtt::with_reopen(first, Box::new(move || spec.open()));
     signals::register_ptt(&ptt);
     Ok(ptt)
 }
@@ -75,6 +79,13 @@ fn measure(m: &txseq::TxReport, ptt: &SharedPtt, keyed_read: Option<bool>) -> Tx
     }
 }
 
+/// `e` as a PTT fault (what failed, that the transmitter may still be keyed,
+/// what to check) when the PTT reported one, else as it is.
+fn ptt_error(ptt: &SharedPtt, what: &str, e: &str) -> String {
+    let warnings = ptt.take_warnings();
+    if warnings.is_empty() && !ptt.is_faulted() { e.to_string() } else { ptt_fault_text(what, e, &warnings) }
+}
+
 /// Transmit on this thread; what the line read while keyed comes from a
 /// helper thread that samples it half way through TXDelay.
 fn play(device: &str, ptt: &SharedPtt, timing: TxTiming, audio: &[f32]) -> Result<TxMeasure, String> {
@@ -89,7 +100,8 @@ fn play(device: &str, ptt: &SharedPtt, timing: TxTiming, audio: &[f32]) -> Resul
         std::thread::sleep(wait);
         probe.read_back().ok().flatten()
     });
-    let r = txseq::transmit(&mut out, ptt, audio, &timing, &signals::STOP).map_err(|e| e.to_string());
+    let r = txseq::transmit(&mut out, ptt, audio, &timing, &signals::STOP)
+        .map_err(|e| ptt_error(ptt, "transmit", &e.to_string()));
     let keyed_read = reader.join().ok().flatten();
     let r = r?;
     Ok(measure(&r, ptt, keyed_read))
@@ -199,13 +211,13 @@ impl Hardware for RealHardware {
 
     fn key_ptt(&mut self, _ok: &Confirmed, p: &PttChoice, seconds: f64) -> Result<KeyReport, String> {
         let ptt = open_ptt(p)?;
-        let guard = PttGuard::key(&ptt).map_err(|e| format!("keying: {e}"))?;
+        let guard = PttGuard::key(&ptt).map_err(|e| ptt_error(&ptt, "keying", &e.to_string()))?;
         let keyed_read = ptt.read_back().ok().flatten();
         let t0 = Instant::now();
         while !stopped() && t0.elapsed() < Duration::from_secs_f64(seconds.min(5.0)) {
             std::thread::sleep(Duration::from_millis(20));
         }
-        guard.release().map_err(|e| format!("release: {e}"))?;
+        guard.release().map_err(|e| ptt_error(&ptt, "release", &e.to_string()))?;
         Ok(KeyReport { keyed_read, after_read: ptt.read_back().ok().flatten() })
     }
 

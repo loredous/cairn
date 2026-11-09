@@ -228,6 +228,27 @@ pub trait Hardware {
     ) -> Result<(TxMeasure, Vec<f32>), String>;
 }
 
+/// Marks an error from a keying call as a PTT fault: the key or release
+/// write failed, so the transmitter may still be keyed.
+pub const PTT_FAULT_MARK: &str = "PTT FAULT";
+
+/// The error text for a key or release that failed, with the PTT's own
+/// warnings and what to check.
+pub fn ptt_fault_text(what: &str, err: &str, warnings: &[String]) -> String {
+    let mut s = format!("{PTT_FAULT_MARK}: {what}: {err}.");
+    for w in warnings {
+        s += &format!(" {w}");
+    }
+    s += " The transmitter MAY STILL BE KEYED. Check the radio's TX indicator and the interface (unplug it if need \
+          be) before anything else.";
+    s
+}
+
+/// True when `e` came from [`ptt_fault_text`].
+pub fn is_ptt_fault(e: &str) -> bool {
+    e.starts_with(PTT_FAULT_MARK)
+}
+
 /// The real-time instructions printed when a request was refused.
 pub const RT_HELP: &str = "\
 Real-time priority keeps the audio threads from losing samples under load. Either:
@@ -282,6 +303,10 @@ pub(crate) mod mock {
         pub control: Result<(String, f64), String>,
         pub busy_ports: Vec<String>,
         pub fail_open: bool,
+        /// Keying calls fail as a PTT fault with this detail (after recording the attempt).
+        pub ptt_fault: Option<String>,
+        /// Keying calls that succeed before `ptt_fault` takes effect.
+        pub ptt_fault_after: usize,
         /// Audio returned by transmit_and_listen (None: the transmitted audio, as a loopback).
         pub heard: Option<Vec<f32>>,
         pub calls: Vec<String>,
@@ -313,11 +338,21 @@ pub(crate) mod mock {
                 control: Ok(("AIOC Audio In".into(), 0.0)),
                 busy_ports: Vec::new(),
                 fail_open: false,
+                ptt_fault: None,
+                ptt_fault_after: 0,
                 heard: None,
                 calls: Vec::new(),
                 keyed: Vec::new(),
                 written: Vec::new(),
             }
+        }
+    }
+
+    impl MockHw {
+        /// The PTT fault for this keying call, once `ptt_fault_after` calls went by.
+        fn fault_now(&self) -> Option<String> {
+            let f = self.ptt_fault.as_ref()?;
+            (self.keyed.len() > self.ptt_fault_after).then(|| ptt_fault_text("release", f, &[]))
         }
     }
 
@@ -368,6 +403,9 @@ pub(crate) mod mock {
         }
         fn key_ptt(&mut self, _ok: &Confirmed, ptt: &PttChoice, seconds: f64) -> Result<KeyReport, String> {
             self.keyed.push(format!("key_ptt {} {seconds}", ptt.spec));
+            if let Some(e) = self.fault_now() {
+                return Err(e);
+            }
             Ok(KeyReport { keyed_read: Some(true), after_read: Some(false) })
         }
         fn transmit(
@@ -384,6 +422,9 @@ pub(crate) mod mock {
                 timing.txdelay_s * 1e3,
                 audio.len() as f64 / 48_000.0
             ));
+            if let Some(e) = self.fault_now() {
+                return Err(e);
+            }
             Ok(TxMeasure {
                 keyed_ms: (timing.txdelay_s + timing.txtail_s) * 1e3 + audio.len() as f64 / 48.0,
                 txdelay_ms: timing.txdelay_s * 1e3,

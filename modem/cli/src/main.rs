@@ -927,6 +927,7 @@ fn setup(l: &Loaded) -> Result<(), String> {
     let env = SetupEnv { config_path, user_rigs_dir: dir, rigs, existing: l.file.clone() };
     match Wizard::new(env).run(&mut realhw::StdTerminal, &mut realhw::RealHardware) {
         Outcome::Aborted => Err("setup stopped".into()),
+        Outcome::PttFault(_) => Err("setup stopped: PTT fault (the transmitter may still be keyed)".into()),
         Outcome::NotWritten | Outcome::Written { .. } => Ok(()),
     }
 }
@@ -1082,11 +1083,19 @@ fn ptt_test(a: PttTestArgs) -> Result<(), String> {
         Err(e) => println!("  {what}: read-back failed: {e}"),
     };
     show("before");
-    let guard = PttGuard::key(&ptt).map_err(|e| format!("keying: {e}"))?;
+    let fault = |what: &str, e: std::io::Error| {
+        let warned = ptt.take_warnings();
+        if warned.is_empty() && !ptt.is_faulted() {
+            format!("{what}: {e}")
+        } else {
+            cairn_modem::hw::ptt_fault_text(what, &e.to_string(), &warned)
+        }
+    };
+    let guard = PttGuard::key(&ptt).map_err(|e| fault("keying", e))?;
     let t0 = Instant::now();
     show("keyed");
     nap(Duration::from_secs_f64(a.seconds));
-    guard.release().map_err(|e| format!("release: {e}"))?;
+    guard.release().map_err(|e| fault("release", e))?;
     println!("  keyed for {:.3} s", t0.elapsed().as_secs_f64());
     show("after");
     if stopped() {

@@ -155,7 +155,9 @@ for it. You get the measured TXDelay and TXTail, and the PTT line read back
 while keyed and after release. The frame is heard back only when something
 feeds the output back to the input, such as a second receiver on the
 frequency or a loopback cable. A half-duplex radio cannot hear its own
-transmission.
+transmission. If the PTT interface fails while it keys, the check fails
+with a `PTT FAULT` message (the transmitter may still be keyed: check the
+radio and the interface) and nothing else is transmitted.
 
 ## First contact
 
@@ -321,9 +323,20 @@ These notes are informational, not legal advice.
   keyed. The same warning goes to API clients as a `ptt_fault` warning. It
   refuses to key until the device has reopened, so frames are reported as
   not sent (`tx_failed`) while the session layer carries on. An audio output
-  error mid-frame releases the PTT at once. After a `ptt_fault`, check the
-  interface and the radio by hand (power-cycle or unplug the interface if
-  the radio is still keyed).
+  error mid-frame releases the PTT at once. While the device is lost, `run`
+  keeps trying to reopen it in the background (after 1 s, then 2, 4, 8 and
+  every 10 s), so it prints a second `WARNING` and sends a second
+  `ptt_fault` warning ("PTT device is back") soon after the interface
+  returns, and the next transmission is not delayed by the reopen. After a
+  `ptt_fault`, check the interface and the radio by hand (power-cycle or
+  unplug the interface if the radio is still keyed).
+- **The same protection outside `run`.** `setup`, `selftest --transmit`,
+  `ptt-test`, `tone` and `tx` use the same PTT handling. When a key or
+  release fails there, the console says `PTT FAULT`, names what failed, says
+  the transmitter may still be keyed and what to check, and nothing more is
+  transmitted: `setup` stops at once without writing the configuration (run
+  it again once the interface is back), the `selftest` transmit check fails
+  (so the command exits non-zero), and the other commands exit non-zero.
 - **Predictable limits.** The session limit and the daily budget bound how
   much your station can transmit for others. The log and the captures let
   you account for every transmission afterwards.
@@ -343,7 +356,7 @@ These notes are informational, not legal advice.
 | The station never transmits | `status`: "why waiting" | The channel is busy (carrier detect), the squelch is closed, or the budget is used up (log) |
 | Sessions stay at low rungs | `probe CALL` both ways | Levels at either end. Weak low tones on mic-path radios are expected: masks drop them |
 | "watchdog: PTT keyed …" in the log | The log, `selftest` | A transmission ran long: check the PTT polarity (`ptt.invert`) and the interface. Report it with the log |
-| "WARNING: PTT keying/release failed … MAY STILL BE KEYED" | The log, `ptt_fault` API warning | The PTT interface dropped out (USB reset, cable). Check the radio and the interface now; the modem refuses to key until the device reopens |
+| "WARNING: PTT keying/release failed … MAY STILL BE KEYED" | The log, `ptt_fault` API warning | The PTT interface dropped out (USB reset, cable). Check the radio and the interface now; the modem refuses to key until the device reopens and says so ("PTT device is back") when it does |
 | "watchdog: no audio …" | `selftest`, `dmesg` | The sound card stopped (unplugged, USB reset) or the machine stalled |
 | Audio gaps in the log | The input line and `status` | Real-time priority was not granted. See the setup's real-time step |
 
