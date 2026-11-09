@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://loredous.github.io/cairn/api.schema.json",
-  "title": "Cairn native host API (SPEC 13.2), schema version 0.1.0",
+  "title": "Cairn native host API (SPEC 13.2), schema version 0.2.0",
   "description": "Every line on a Cairn native API connection is one JSON object: a request (client to modem), a response (modem to the client that asked) or an event (modem to every subscribed client). docs/api.md is the normative prose; this file is its machine-readable form. Unknown members are ignored by receivers, so the object schemas below do not forbid additional properties.",
   "oneOf": [
     { "$ref": "#/$defs/request" },
@@ -9,7 +9,7 @@
     { "$ref": "#/$defs/event" }
   ],
   "$defs": {
-    "api_version": { "type": "string", "const": "0.1.0" },
+    "api_version": { "type": "string", "const": "0.2.0" },
     "id": {
       "description": "Client-chosen request identifier, echoed in the response. A string of at most 64 characters or an integer; null or absent when the client does not care.",
       "anyOf": [
@@ -106,7 +106,8 @@
         "rx": { "$ref": "#/$defs/direction" },
         "idle": { "type": "boolean" },
         "drained": { "type": "boolean" },
-        "progress": { "$ref": "#/$defs/progress" }
+        "progress": { "$ref": "#/$defs/progress" },
+        "dictionaries": { "type": "array", "items": { "type": "string", "pattern": "^[0-9a-f]{8}$" }, "description": "Dictionaries negotiated for this session (SPEC 12.2), empty until it is open." }
       }
     },
     "channel_state": {
@@ -261,8 +262,8 @@
       "enum": [
         "bad_json", "bad_request", "unknown_command", "unsupported", "no_session", "busy", "invalid_state",
         "not_found", "io_error", "too_large", "line_too_long", "read_only", "out_of_range", "internal",
-        "send_rejected", "broadcast_rejected", "pdu_error", "tx_failed", "receive_clipping", "distortion",
-        "capture_failed", "ptt_fault"
+        "send_rejected", "broadcast_rejected", "pdu_error", "unknown_dictionary", "tx_failed", "receive_clipping",
+        "distortion", "capture_failed", "ptt_fault"
       ]
     },
     "error": {
@@ -476,7 +477,9 @@
         "bytes": { "type": "integer", "minimum": 0 },
         "pdus": { "type": "integer", "minimum": 1 },
         "object": { "type": "integer", "minimum": 0, "description": "FILE-CHUNK object ID (file sends)." },
-        "encoding": { "type": "string", "enum": ["raw", "zstd", "zstd_dict"], "description": "The encoding used." }
+        "encoding": { "type": "string", "enum": ["raw", "zstd", "zstd_dict", "mixed"], "description": "The encoding used; 'mixed' when the PDUs of a file send differ." },
+        "dictionary": { "type": ["string", "null"], "pattern": "^[0-9a-f]{8}$", "description": "The dictionary ID when the zstd_dict PDUs all use one, else null." },
+        "pdu_bytes": { "type": "integer", "minimum": 0, "description": "The PDUs as sent on the block stream, Length field to CRC-32, compressed bodies included." }
       }
     },
     "res_beacon": {
@@ -518,6 +521,19 @@
         "time": { "$ref": "#/$defs/time" },
         "modem_time": { "$ref": "#/$defs/modem_time" },
         "session": { "anyOf": [{ "type": "null" }, { "$ref": "#/$defs/session_status" }] },
+        "dictionaries": {
+          "type": "array",
+          "description": "The dictionary set this modem offers (SPEC 12.2, 13.4).",
+          "items": {
+            "type": "object",
+            "required": ["id", "name", "bytes"],
+            "properties": {
+              "id": { "type": "string", "pattern": "^[0-9a-f]{8}$" },
+              "name": { "type": "string" },
+              "bytes": { "type": "integer", "minimum": 0 }
+            }
+          }
+        },
         "channel": { "$ref": "#/$defs/channel_state" },
         "dcd": {
           "type": "object",
@@ -664,8 +680,9 @@
         "priority": { "type": "integer", "minimum": 0, "maximum": 3 },
         "encoding": { "type": "string", "enum": ["raw", "zstd", "zstd_dict", "unknown"] },
         "dictionary": { "type": ["string", "null"], "pattern": "^[0-9a-f]{8}$" },
-        "decoded": { "type": "boolean", "description": "False when the body is still compressed (an encoding this modem cannot decode); data then holds the encoded body." },
-        "crc": { "type": "string", "enum": ["ok"], "description": "PDUs that fail their CRC are not delivered; they are reported as pdu_error." },
+        "decoded": { "type": "boolean", "description": "False when the body is still compressed (a dictionary or encoding this modem lacks); data then holds the encoded body." },
+        "encoded_bytes": { "type": "integer", "minimum": 0, "description": "The body's bytes on the air (compressed, for zstd and zstd_dict)." },
+        "crc": { "type": "string", "enum": ["ok", "unchecked"], "description": "ok: checked over the decoded body. unchecked: the body is not decoded (decoded false). PDUs that fail their CRC, or whose body fails to decompress, are not delivered; they are reported as pdu_error." },
         "verify": { "type": "string", "enum": ["unsigned", "valid", "invalid", "unknown_key"], "description": "SPEC 12.3 signature check; 'unsigned' until signatures are implemented." },
         "bytes": { "type": "integer", "minimum": 0, "description": "Length of the body, or of the chunk's data for file_chunk." },
         "data": { "type": "string", "description": "The body (file_chunk: the chunk's data after object and offset), base64." },

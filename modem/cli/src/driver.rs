@@ -547,6 +547,13 @@ pub fn run(
                         Ok((cmds, line)) => {
                             output_line(&line, &clients);
                             for cmd in cmds {
+                                // Console session sends are compressed when it helps.
+                                let cmd = match cmd {
+                                    HostCommand::Send { id, pdu } => {
+                                        HostCommand::Send { id, pdu: modem.auto_encode(pdu) }
+                                    }
+                                    c => c,
+                                };
                                 modem.host(cmd, now());
                             }
                         }
@@ -700,8 +707,13 @@ pub fn run(
             let mut saved = None;
             if let Some(r) = rx_dir.as_mut() {
                 let res = match &o {
-                    Output::Deliver { from, pdu } => Some((*from, pdu, r.save(*from, pdu, false))),
-                    Output::DeliverBroadcast { from, ftype: cairn_link::FrameType::Ui, pdu } => {
+                    // Bodies this modem could not decode are not saved.
+                    Output::Deliver { from, pdu, coding } if coding.decoded() => {
+                        Some((*from, pdu, r.save(*from, pdu, false)))
+                    }
+                    Output::DeliverBroadcast { from, ftype: cairn_link::FrameType::Ui, pdu, coding }
+                        if coding.decoded() =>
+                    {
                         Some((*from, pdu, r.save(*from, pdu, true)))
                     }
                     _ => None,
@@ -788,7 +800,7 @@ pub fn run(
                         err = Some("the transmit thread stopped".into());
                     }
                 }
-                Output::DeliverBroadcast { pdu, .. } if pdu.pdu_type == pdu_type::AX25 => {
+                Output::DeliverBroadcast { pdu, coding, .. } if pdu.pdu_type == pdu_type::AX25 && coding.decoded() => {
                     if let Some(h) = &hub {
                         h.send(&pdu.body);
                     }

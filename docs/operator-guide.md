@@ -112,6 +112,7 @@ output_db = -10.0            # where you set the drive control (recorded, never 
 txdelay_ms = 250.0           # txtail_ms
 
 [link]                       # cap, no_mask, persistence, slot_ms, max_frame, broadcast_mcs, quieting, refuse, id_broadcasts
+dict_dir = "~/cairn-dicts"   # zstd dictionaries (*.zdict) offered at session setup (SPEC 12.2)
 
 [host]
 rx_dir = "~/cairn-rx"
@@ -184,6 +185,22 @@ disconnect
 The ID block goes out in CONNECT, CONNECT-ACK and DISCONNECT, and at least
 every 9 minutes within a session (ADR 0010 `session-id-cadence`). Every
 header carries the callsign (SPEC §8.3).
+
+### Compression
+
+Messages and file chunks are compressed with zstd when that makes them
+smaller (SPEC §12.2). With `--dict-dir` (or `link.dict_dir`) pointing at a
+directory of dictionary files (`*.zdict`), `run` prints the dictionaries
+it loaded and offers them at session setup; a session uses the ones both
+stations have, so give both stations the same files. A 280-byte ICS-213
+message took 129 bytes with the 64 kB evaluation dictionary, 219 without a
+dictionary. No dictionary has been released yet: the files in
+`dictionaries/eval/` are evaluation artifacts that may change, so use them
+only between stations you control. Compressed content is still published:
+anyone with the published dictionary and a standard zstd decoder can read
+it (§97.309(b)). Already-compressed files (zip, jpeg) are sent raw, since
+compression would not shrink them. A message that names a dictionary this
+station does not have is shown as undecoded, with a warning.
 
 ## Unattended operation
 

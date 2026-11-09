@@ -30,6 +30,7 @@ use std::time::Duration;
 use cairn_api::capture::AudioRing;
 use cairn_audio::LevelMeter;
 use cairn_link::adapter::{FieldCodec, PhyCodec, address_from_phy, header_from_phy};
+use cairn_link::compress::{Codec, CodecError, Dictionaries};
 use cairn_link::session::Phase;
 use cairn_link::{
     Action, Address, Config, Event, FrameType, HostCommand, HostEvent, Instant, LinkFrame, Measurement, Pdu, RxHeader,
@@ -99,6 +100,10 @@ pub struct ModemConfig {
     /// The quieting band follows a live width-cap change
     /// ([`Modem::set_cap`]); off when it was set explicitly.
     pub quieting_follows_cap: bool,
+    /// The dictionary set (SPEC 12.2, 13.4). The station offers these IDs at
+    /// session setup (replacing `station.dict_ids`) when compression is
+    /// built in, and received bodies are decoded against them.
+    pub dictionaries: Dictionaries,
 }
 
 impl ModemConfig {
@@ -115,6 +120,7 @@ impl ModemConfig {
             unmute_guard: Duration::from_millis(5),
             ring_seconds: 120.0,
             quieting_follows_cap: true,
+            dictionaries: Dictionaries::new(),
         }
     }
 }
@@ -200,6 +206,31 @@ impl FrameInfo {
     }
 }
 
+/// How a delivered PDU's body travelled (SPEC 12.2).
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Coding {
+    /// Body bytes on the air (the compressed body for encodings 1 and 2).
+    pub encoded_bytes: usize,
+    /// Why the body is still encoded when this modem could not decode it (a
+    /// dictionary it does not have, an encoding it does not implement, a
+    /// build without zstd); the PDU's body is then the body as received and
+    /// its CRC-32 unchecked. None: the body is the decoded body, CRC-32
+    /// checked.
+    pub undecoded: Option<CodecError>,
+}
+
+impl Coding {
+    /// The body is decoded.
+    pub fn decoded(&self) -> bool {
+        self.undecoded.is_none()
+    }
+
+    /// A raw body of `n` bytes.
+    pub fn raw(n: usize) -> Coding {
+        Coding { encoded_bytes: n, undecoded: None }
+    }
+}
+
 /// What the modem has to say.
 #[derive(Clone, Debug)]
 pub enum Output {
@@ -207,14 +238,18 @@ pub enum Output {
     Transmit(TxRequest),
     /// A host event from the link layer.
     Host(HostEvent),
-    /// A session PDU, in order, exactly once.
+    /// A session PDU, in order, exactly once. Its body is decoded (SPEC
+    /// 12.2) unless `coding` says otherwise; encoding and Dictionary ID are
+    /// as received.
     Deliver {
         /// The peer.
         from: Address,
         /// The PDU.
         pdu: Pdu,
+        /// How its body travelled.
+        coding: Coding,
     },
-    /// A broadcast PDU.
+    /// A broadcast PDU, decoded as [`Output::Deliver`].
     DeliverBroadcast {
         /// The source.
         from: Address,
@@ -222,6 +257,21 @@ pub enum Output {
         ftype: FrameType,
         /// The PDU.
         pdu: Pdu,
+        /// How its body travelled.
+        coding: Coding,
+    },
+    /// A received PDU whose body failed to decode, exceeded the decoded-size
+    /// bound or failed its CRC-32: discarded, not delivered (ADR 0014
+    /// `zstd-frame-format`). Its session blocks were delivered all the same.
+    Discarded {
+        /// The source.
+        from: Address,
+        /// DATA (session), UI or BEACON.
+        ftype: FrameType,
+        /// The PDU as received.
+        pdu: Pdu,
+        /// Why.
+        error: CodecError,
     },
     /// Every decoded header.
     Heard(FrameInfo),
@@ -446,6 +496,8 @@ pub struct Modem {
     cfg: ModemConfig,
     station: Station,
     codec: PhyCodec,
+    /// Content encoding (SPEC 12.2).
+    content: Codec,
     tx: Transmitter,
     listener: Listener,
     jobs: ChanRx<Job>,
@@ -483,9 +535,13 @@ pub struct Modem {
 
 impl Modem {
     /// A modem with this configuration.
-    pub fn new(cfg: ModemConfig) -> Self {
+    pub fn new(mut cfg: ModemConfig) -> Self {
         let model = PhyFrameModel::new(cfg.txdelay, cfg.txtail, Duration::ZERO);
-        let station = Station::new(cfg.station.clone(), Box::new(model));
+        let content = Codec::new(cfg.dictionaries.clone());
+        cfg.station.dict_ids = content.offered_ids();
+        let mut station = Station::new(cfg.station.clone(), Box::new(model));
+        let mut slices = content.clone();
+        station.set_slice_decoder(Box::new(move |p| slices.decode(p).ok()));
         let view = Arc::new(Mutex::new(RxView::default()));
         let source = StationSource {
             view: view.clone(),
@@ -499,6 +555,7 @@ impl Modem {
         Modem {
             station,
             codec: PhyCodec,
+            content,
             tx: Transmitter::new(),
             listener,
             jobs,
@@ -531,6 +588,34 @@ impl Modem {
     /// The link layer.
     pub fn station(&self) -> &Station {
         &self.station
+    }
+
+    /// Content encoding: the dictionaries, and the codec a host sends
+    /// through (SPEC 12.2).
+    pub fn content(&mut self) -> &mut Codec {
+        &mut self.content
+    }
+
+    /// A raw session PDU in the encoding the codec's automatic choice
+    /// takes against the session's negotiated dictionaries (SPEC 12.2; the
+    /// console's sends). Any other PDU, or one that fails to encode, comes
+    /// back unchanged.
+    pub fn auto_encode(&mut self, pdu: Pdu) -> Pdu {
+        if pdu.encoding != cairn_link::pdu::encoding::RAW {
+            return pdu;
+        }
+        let usable: Vec<_> = self
+            .station
+            .session_info()
+            .map(|i| i.dictionaries.iter().map(|&d| cairn_link::compress::id_from_u32(d)).collect())
+            .unwrap_or_default();
+        let auto = cairn_link::compress::Preference::Auto;
+        self.content.encode(pdu.pdu_type, pdu.stream, pdu.body.clone(), auto, &usable).unwrap_or(pdu)
+    }
+
+    /// The dictionary set.
+    pub fn dictionaries(&self) -> &Dictionaries {
+        self.content.dictionaries()
     }
 
     /// The link layer, for configuration changes (KISS parameters).
@@ -985,6 +1070,26 @@ impl Modem {
         self.queue(ready, Event::Frame(f));
     }
 
+    /// Decode a received PDU's body (SPEC 12.2) and pass it on, undecoded
+    /// when this modem cannot decode it, or discard it (ADR 0014).
+    fn deliver(&mut self, from: Address, ftype: FrameType, pdu: Pdu) {
+        let encoded_bytes = pdu.body.len();
+        let (pdu, undecoded) = match self.content.decode(&pdu) {
+            Ok(body) => (Pdu { body, ..pdu }, None),
+            Err(error) if error.must_discard() => {
+                self.out.push_back(Output::Discarded { from, ftype, pdu, error });
+                return;
+            }
+            Err(e) => (pdu, Some(e)),
+        };
+        let coding = Coding { encoded_bytes, undecoded };
+        self.out.push_back(if ftype == FrameType::Data {
+            Output::Deliver { from, pdu, coding }
+        } else {
+            Output::DeliverBroadcast { from, ftype, pdu, coding }
+        });
+    }
+
     fn handle(&mut self, ev: Event, at: Instant) {
         if at > self.now {
             self.now = at;
@@ -995,10 +1100,8 @@ impl Modem {
             match a {
                 Action::Transmit { frame, turn_holder } => self.transmit(frame, turn_holder, now),
                 Action::Wakeup(t) => self.wake = Some(t),
-                Action::Deliver { from, pdu } => self.out.push_back(Output::Deliver { from, pdu }),
-                Action::DeliverBroadcast { from, ftype, pdu } => {
-                    self.out.push_back(Output::DeliverBroadcast { from, ftype, pdu })
-                }
+                Action::Deliver { from, pdu } => self.deliver(from, FrameType::Data, pdu),
+                Action::DeliverBroadcast { from, ftype, pdu } => self.deliver(from, ftype, pdu),
                 Action::Host(e) => self.out.push_back(Output::Host(e)),
             }
         }
@@ -1133,6 +1236,48 @@ tx mask ID {}: {}; rx mask ID {}: {}; tx MCS {}, rx MCS {} requested",
                 self.out.push_back(Output::Log(format!("could not build {:?}: {e}", frame.ftype)));
                 self.handle(Event::TxDone, now);
             }
+        }
+    }
+}
+
+#[cfg(all(test, feature = "zstd"))]
+mod tests {
+    use cairn_link::compress::{Dictionary, Preference, id_to_u32};
+
+    use super::*;
+
+    /// Received bodies (SPEC 12.2, ADR 0014): decoded and delivered, kept
+    /// undecoded when the dictionary is missing, discarded when they fail
+    /// the CRC-32.
+    #[test]
+    fn received_bodies_are_decoded_kept_or_discarded() {
+        let d = Dictionary::new("t.zdict", b"shelter status report: occupants, water, power; ".repeat(40));
+        let mut cfg = ModemConfig::new(Config::for_callsign("N0AAA", 0));
+        cfg.dictionaries.insert(d.clone());
+        let mut m = Modem::new(cfg);
+        assert_eq!(m.station().config().dict_ids, vec![id_to_u32(d.id())], "offered at setup");
+        let from = Address::callsign("N0BBB", 0).unwrap();
+        let body = b"shelter status report: 42 occupants, water OK, power OK".to_vec();
+        let good = m.content().encode(1, 0, body.clone(), Preference::ZstdDict(Some(d.id())), &[d.id()]).unwrap();
+        m.deliver(from, FrameType::Data, good.clone());
+        m.deliver(from, FrameType::Data, Pdu { crc: Some(0), ..good.clone() });
+        m.deliver(from, FrameType::Ui, Pdu { dictionary_id: Some([1, 2, 3, 4]), ..good.clone() });
+        let out = m.drain();
+        assert_eq!(out.len(), 3);
+        match &out[0] {
+            Output::Deliver { pdu, coding, .. } => {
+                assert_eq!((&pdu.body, pdu.encoding, coding.encoded_bytes), (&body, 2, good.body.len()));
+                assert!(coding.decoded());
+            }
+            o => panic!("{o:?}"),
+        }
+        assert!(matches!(&out[1], Output::Discarded { error: CodecError::CrcMismatch, .. }), "{:?}", out[1]);
+        match &out[2] {
+            Output::DeliverBroadcast { pdu, coding, .. } => {
+                assert_eq!(coding.undecoded, Some(CodecError::UnknownDictionary([1, 2, 3, 4])));
+                assert_eq!(pdu.body, good.body, "the body as received");
+            }
+            o => panic!("{o:?}"),
         }
     }
 }

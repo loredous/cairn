@@ -8,13 +8,20 @@ rust-version.workspace = true
 publish = false
 
 [features]
-default = ["phy"]
+default = ["phy", "zstd"]
 # The adapter between the link layer's frame types and `cairn_phy::fields`.
 # The link layer itself never needs the PHY.
 phy = ["dep:cairn-phy"]
+# PDU body compression, encodings 1 and 2 (SPEC 12.2, ADR 0014
+# `zstd-frame-format`): libzstd through the `zstd` crate, which builds the C
+# library from source. Without it `compress` still parses frame headers and
+# computes dictionary IDs, but sends raw only and decodes only raw bodies.
+zstd = ["dep:zstd"]
 
 [dependencies]
 cairn-phy = { path = "../phy", optional = true }
+sha2 = "0.10"
+zstd = { version = "0.14.3", default-features = false, optional = true }
 
 [dev-dependencies]
 proptest = { version = "1", default-features = false, features = ["std"] }

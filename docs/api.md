@@ -2,7 +2,7 @@
 
 The native API of [SPEC §13.2](SPEC.md): how an application drives a Cairn
 modem, with sessions, broadcasts, link quality and diagnostics. This page is
-the normative schema, **version 0.1.0**; [`api.schema.json`](api.schema.json)
+the normative schema, **version 0.2.0**; [`api.schema.json`](api.schema.json)
 is the same schema as a JSON Schema (draft 2020-12) document, and the
 reference implementation's tests validate every message it emits against it.
 A second implementation speaks this schema to count toward v1.0 (SPEC §16.2).
@@ -48,7 +48,7 @@ example client is `modem/tools/api_client.py`.
 The first line a modem sends on every new connection is a `hello` event:
 
 ```json
-{"event":"hello","time":"2026-11-07T18:00:00.000Z","modem_time":12.5,"api":"cairn","api_version":"0.1.0","implementation":{"name":"cairn-modem","version":"0.1.0"},"station":"N0CALL-1","client":1,"commands":["connect","disconnect","send","beacon","probe","heard","status","config","calibrate","capture","subscribe"],"unsupported":["calibrate"],"events":["hello","rx","session","link","heard","channel","dcd","tx","error"],"encodings":["raw"]}
+{"event":"hello","time":"2026-11-07T18:00:00.000Z","modem_time":12.5,"api":"cairn","api_version":"0.2.0","implementation":{"name":"cairn-modem","version":"0.1.0"},"station":"N0CALL-1","client":1,"commands":["connect","disconnect","send","beacon","probe","heard","status","config","calibrate","capture","subscribe"],"unsupported":["calibrate"],"events":["hello","rx","session","link","heard","channel","dcd","tx","error"],"encodings":["raw","zstd","zstd_dict"]}
 ```
 
 | Member | Type | Meaning |
@@ -65,6 +65,12 @@ The first line a modem sends on every new connection is a `hello` event:
 
 A client that needs a newer schema than the modem's `api_version` should say
 so to its user and disconnect.
+
+**0.2.0** (from 0.1.0): `send` takes `encoding` (default `auto`) and
+`dictionary`, and its response reports `encoding` (which may be `mixed`),
+`dictionary` and `pdu_bytes`; `rx` reports `encoding`, `dictionary`,
+`decoded` and `encoded_bytes`, and its `crc` may be `unchecked`; new error
+codes `unknown_dictionary` and `ptt_fault`.
 
 ## Common types
 
@@ -129,7 +135,8 @@ null:
 | `internal` | response, event | A bug; the message says what |
 | `send_rejected` | event | The link layer refused a session send (`ref`) |
 | `broadcast_rejected` | event | A broadcast could not be framed (`ref`) |
-| `pdu_error` | event | A received PDU failed to parse or its CRC failed; it was not delivered |
+| `pdu_error` | event | A received PDU failed to parse, its body failed to decompress or decoded to more than 65,528 bytes, or its CRC-32 failed; it was not delivered |
+| `unknown_dictionary` | response, event (warning) | `send`: the named dictionary is not one this modem has, or (session) not one negotiated with the peer. Event: a received PDU names a dictionary this modem lacks; it is delivered undecoded (`rx` `"decoded":false`) |
 | `tx_failed` | event | A transmission failed (audio or PTT error); PTT was released |
 | `receive_clipping` | event, warning | This receiver's input clipped on frames from `peer`: lower the receive level (SPEC §10.1) |
 | `distortion` | event, warning | `peer` reports a distortion index of 3 or more: lower the transmit drive (SPEC §13.5) |
@@ -187,8 +194,8 @@ Queue data in the session or as a broadcast.
 | `pdu_type` | `"message"` or `"ax25"` | `"message"` | PDU type for `text` and `data` (SPEC §12.1). A `file` is always sent as FILE-CHUNK PDUs |
 | `stream` | integer 0-63 | 0 | Stream number (SPEC §12.1) |
 | `priority` | integer 0-3 | 0 (`file`: 3) | 0 is highest. Queued PDUs start highest priority first, first in first out within a priority; a PDU in progress is finished first (ADR 0009 `stream-interleaving-at-pdu-boundaries`) |
-| `encoding` | `"auto"`, `"raw"`, `"zstd"`, `"zstd_dict"` | `"auto"` | Content encoding preference (SPEC §12.2). `auto` lets the modem choose; `raw` forces encoding 0 |
-| `dictionary` | string, 8 hex digits | | Dictionary ID for `zstd_dict` |
+| `encoding` | `"auto"`, `"raw"`, `"zstd"`, `"zstd_dict"` | `"auto"` | Content encoding (SPEC §12.2). `auto` sends each PDU in whichever of raw, zstd and zstd with each usable dictionary makes it smallest; `raw`, `zstd` and `zstd_dict` force encoding 0, 1 or 2 |
+| `dictionary` | string, 8 lower-case hex digits | | With `zstd_dict` only: the dictionary ID. In a session it must be one negotiated with the peer; without it the best negotiated one is used. A broadcast must name one |
 | `repeats` | integer 0-3 | 0 | Broadcast only: identical repeats of each frame |
 
 Exactly one of `text`, `data` and `file` is required. `text` and `data` make
@@ -200,9 +207,13 @@ where it ends (the protocol carries no object length).
 
 Result: `ref` (integer naming this send in later events), `mode`, `bytes`
 (payload bytes), `pdus`, `object` (file sends), `encoding` (the encoding
-used). Errors: `bad_request`, `no_session` (session mode without a session;
-a send while the session is still connecting is queued), `not_found`,
-`io_error`, `too_large`, `unsupported`.
+used; `mixed` when a file's chunks differ), `dictionary` (the dictionary ID
+when the `zstd_dict` PDUs use one, else null) and `pdu_bytes` (the PDUs on
+the block stream, Length field to CRC-32: what the send costs on the air
+before block and frame overhead). Errors: `bad_request`, `no_session`
+(session mode without a session; a send while the session is still
+connecting is queued), `not_found`, `io_error`, `too_large`, `unsupported`,
+`unknown_dictionary`.
 
 Completion: a session send ends with `session` `delivered` (every PDU of it
 acknowledged by the peer) or `undelivered`; a broadcast with `tx`
@@ -210,17 +221,32 @@ acknowledged by the peer) or `undelivered`; a broadcast with `tx`
 
 ```json
 {"id":4,"cmd":"send","text":"hello from N0CALL-1"}
-{"id":4,"ok":true,"cmd":"send","ref":7,"mode":"session","bytes":19,"pdus":1,"encoding":"raw"}
+{"id":4,"ok":true,"cmd":"send","ref":7,"mode":"session","bytes":19,"pdus":1,"encoding":"raw","dictionary":null,"pdu_bytes":28}
 {"id":5,"cmd":"send","file":"/home/op/report.txt","priority":2}
-{"id":5,"ok":true,"cmd":"send","ref":8,"mode":"session","bytes":9000,"pdus":5,"object":1,"encoding":"raw"}
+{"id":5,"ok":true,"cmd":"send","ref":8,"mode":"session","bytes":9000,"pdus":5,"object":1,"encoding":"zstd_dict","dictionary":"80301843","pdu_bytes":3650}
 {"id":6,"cmd":"send","mode":"broadcast","data":"AQIDBA==","stream":1}
-{"id":6,"ok":true,"cmd":"send","ref":9,"mode":"broadcast","bytes":4,"pdus":1,"encoding":"raw"}
+{"id":6,"ok":true,"cmd":"send","ref":9,"mode":"broadcast","bytes":4,"pdus":1,"encoding":"raw","dictionary":null,"pdu_bytes":13}
+{"id":7,"cmd":"send","text":"ICS 213 GENERAL MESSAGE. TO: Planning Section Chief. FROM: Communications Unit Leader. SUBJECT: Repeater status. MESSAGE: The county repeater on 146.940 is back on emergency power; net control will resume at 1900 local. Please relay to all field teams. APPROVED: J. Smith, COML."}
+{"id":7,"ok":true,"cmd":"send","ref":10,"mode":"session","bytes":278,"pdus":1,"encoding":"zstd_dict","dictionary":"80301843","pdu_bytes":142}
 ```
 
-**Encodings in this implementation.** `auto` and `raw` send raw (encoding
-0). `zstd` and `zstd_dict` answer `unsupported`: the reference modem has no
-zstd codec or dictionary set yet (SPEC §12.2, a v1.0 item). Received PDUs in
-those encodings are delivered still encoded (`rx` with `"decoded":false`).
+**Encodings.** A compressed body is one standard zstd frame (RFC 8878)
+with the magic number and without checksum, in-frame dictionary ID or
+content size (ADR 0014 `zstd-frame-format`); the PDU's Dictionary ID names
+the dictionary. The dictionaries a session may use are those both stations
+listed at setup (`status` `session.dictionaries`); a broadcast has no such
+agreement, so `auto` sends broadcasts raw or as zstd without a dictionary,
+and compresses one only when the result fits a single frame (only raw
+messages are fragmented across frames); a forced `zstd` or `zstd_dict`
+broadcast that does not fit answers `too_large`. A modem built without
+zstd lists only `raw` in `hello` `encodings`, sends `auto` raw, and answers
+`unsupported` to `zstd` and `zstd_dict`. In this implementation bodies up
+to 1 kB are compressed at zstd level 19, longer ones (file chunks) at 9;
+the level is the sender's choice and not on the air. Received bodies are
+decoded before `rx`: one that decodes to more than 65,528 bytes (the
+largest raw body), is malformed or fails its CRC-32 is discarded and
+reported as `pdu_error`; one naming a dictionary the modem lacks is
+delivered undecoded with an `unknown_dictionary` warning.
 
 ### `beacon`
 
@@ -306,6 +332,7 @@ Result members:
 | `capture` | object | `ring_seconds` (raw-audio ring length, 0 when off), `buffered_seconds` (audio in it now) |
 | `audio` | object or null | The capture side (below); null where the modem has no sound card (a simulator) |
 | `heard_stations` | integer | Entries in the heard list |
+| `dictionaries` | array | The dictionary set this modem offers at session setup (SPEC §12.2, §13.4): `id` (8 hex digits), `name` (its file name), `bytes` |
 
 `audio`: `backend` (`alsa`, `cpal` or `mock`), `period_ms` and `buffer_ms`
 (the capture device's period and buffer), `realtime` (what the capture
@@ -323,11 +350,13 @@ else `agc` (true), `control` (the mixer control), `gain_db`, `min_db`,
 direction: `mcs`, `width`, `mask_id`, `mask`, `masked`; in `rx`, `mcs` is the
 rung this station requests of the peer), `idle` (neither station owes a
 reply), `drained` (everything queued is acknowledged), `progress` (as the
-`session` `progress` event).
+`session` `progress` event), `dictionaries` (the dictionary IDs negotiated
+for this session: this modem's that the peer also listed; empty until the
+session is open).
 
 ```json
 {"id":10,"cmd":"status"}
-{"id":10,"ok":true,"cmd":"status","station":"N0CALL-1","time":"2026-11-07T18:03:01.000Z","modem_time":185.3,"session":{"peer":"N0CALL-2","phase":"open","role":"initiator","session_id":4660,"tx":{"mcs":4,"width":32,"mask_id":1,"mask":"0x00000000fffffff8","masked":[0,1,2]},"rx":{"mcs":4,"width":32,"mask_id":0,"mask":"0x00000000ffffffff","masked":[]},"idle":false,"drained":false,"progress":{"tx":{"queued_bytes":9019,"acked_bytes":4096,"pending_bytes":4923,"rate_bps":5210.0,"eta_s":7.6},"rx":{"delivered_bytes":0,"rate_bps":0.0},"retransmissions":2,"blocks_sent":48}},"channel":{"dcd":true,"dcd_raw":true,"keyed":false,"holder":"peer","holder_address":"N0CALL-2","turn":"peer","waiting":null,"next_yield_s":12.0,"legacy":false},"dcd":{"raw":true,"detectors":{"quieting":true,"preamble":true,"afsk":false,"cos":false},"quieting_floor_dbfs":-31.5},"counters":{"samples":8894400,"detections":31,"header_failures":0,"frames":31,"blocks_ok":402,"blocks":404,"tx_frames":30,"keyed_s":61.2,"dcd_rises":{"quieting":30,"preamble":31,"afsk":0,"cos":0},"audio_gaps":0,"gapped_frames":0},"capture":{"ring_seconds":120.0,"buffered_seconds":120.0},"audio":{"backend":"alsa","period_ms":10.0,"buffer_ms":200.0,"realtime":"SCHED_RR 20 via rtkit","xruns":0,"gaps":0,"gap_ms":0.0,"filled_samples":0,"overflows":0,"ring_ms":8000.0,"ring_high_water_ms":31.2,"rx_gain":{"agc":true,"control":"hw:CARD=AllInOneCable 'AIOC Audio In'","gain_db":-6.0,"min_db":-24.0,"max_db":0.0,"changes":2,"last_reason":"open-squelch noise -16.4 dBFS, above -17"}},"heard_stations":2}
+{"id":10,"ok":true,"cmd":"status","station":"N0CALL-1","time":"2026-11-07T18:03:01.000Z","modem_time":185.3,"session":{"peer":"N0CALL-2","phase":"open","role":"initiator","session_id":4660,"tx":{"mcs":4,"width":32,"mask_id":1,"mask":"0x00000000fffffff8","masked":[0,1,2]},"rx":{"mcs":4,"width":32,"mask_id":0,"mask":"0x00000000ffffffff","masked":[]},"idle":false,"drained":false,"progress":{"tx":{"queued_bytes":9019,"acked_bytes":4096,"pending_bytes":4923,"rate_bps":5210.0,"eta_s":7.6},"rx":{"delivered_bytes":0,"rate_bps":0.0},"retransmissions":2,"blocks_sent":48},"dictionaries":["80301843"]},"channel":{"dcd":true,"dcd_raw":true,"keyed":false,"holder":"peer","holder_address":"N0CALL-2","turn":"peer","waiting":null,"next_yield_s":12.0,"legacy":false},"dcd":{"raw":true,"detectors":{"quieting":true,"preamble":true,"afsk":false,"cos":false},"quieting_floor_dbfs":-31.5},"counters":{"samples":8894400,"detections":31,"header_failures":0,"frames":31,"blocks_ok":402,"blocks":404,"tx_frames":30,"keyed_s":61.2,"dcd_rises":{"quieting":30,"preamble":31,"afsk":0,"cos":0},"audio_gaps":0,"gapped_frames":0},"capture":{"ring_seconds":120.0,"buffered_seconds":120.0},"audio":{"backend":"alsa","period_ms":10.0,"buffer_ms":200.0,"realtime":"SCHED_RR 20 via rtkit","xruns":0,"gaps":0,"gap_ms":0.0,"filled_samples":0,"overflows":0,"ring_ms":8000.0,"ring_high_water_ms":31.2,"rx_gain":{"agc":true,"control":"hw:CARD=AllInOneCable 'AIOC Audio In'","gain_db":-6.0,"min_db":-24.0,"max_db":0.0,"changes":2,"last_reason":"open-squelch noise -16.4 dBFS, above -17"}},"heard_stations":2,"dictionaries":[{"id":"80301843","name":"eval-forms-64k.zdict","bytes":65536}]}
 ```
 
 ### `config`
@@ -379,7 +408,7 @@ calibration of SPEC §13.4-13.5.
 | `step` | `"tone"`, `"turnaround"`, `"drive"`, `"all"` | `"all"` | |
 
 An implementation with host level control answers with a `result` object
-(not specified in 0.1.0). Any implementation may answer `unsupported`, and
+(not specified in this version). Any implementation may answer `unsupported`, and
 this one does: it has no receive auto-gain or CAL-REQUEST exchange yet (SPEC
 §21.3 step 7).
 
@@ -464,8 +493,9 @@ suppressed.
 | `stream`, `priority` | integer | From the PDU's stream byte |
 | `encoding` | string | `raw`, `zstd`, `zstd_dict`, `unknown` |
 | `dictionary` | string or null | Dictionary ID (8 hex digits) |
-| `decoded` | boolean | False when the body is still compressed |
-| `crc` | `"ok"` | The PDU's CRC-32 checked (PDUs that fail are not delivered; see `pdu_error`) |
+| `decoded` | boolean | False when the body is still compressed (a dictionary or encoding this modem lacks); `data` is then the body as received |
+| `encoded_bytes` | integer | The body's bytes on the air (the compressed size for `zstd` and `zstd_dict`) |
+| `crc` | `"ok"` or `"unchecked"` | `ok`: the PDU's CRC-32 checked over the decoded body. `unchecked`: the body is not decoded. PDUs that fail, or whose body fails to decompress, are not delivered; see `pdu_error` |
 | `verify` | string | Signature result (SPEC §12.3): `unsigned`, `valid`, `invalid`, `unknown_key`. This implementation has no signatures yet: always `unsigned` |
 | `bytes` | integer | Body length (`file_chunk`: the chunk's data) |
 | `data` | string | Body, base64 (`file_chunk`: the data after object and offset) |
@@ -475,8 +505,8 @@ suppressed.
 | `audio_gap` | boolean | The frame that completed the PDU had a capture gap inside (audio lost and replaced by zeros); its blocks passed their CRC all the same |
 
 ```json
-{"event":"rx","time":"2026-11-07T18:02:10.120Z","modem_time":154.4,"from":"N0CALL-2","mode":"session","frame_type":"DATA","pdu_type":"message","pdu_type_code":1,"stream":0,"priority":0,"encoding":"raw","dictionary":null,"decoded":true,"crc":"ok","verify":"unsigned","bytes":5,"data":"aGVsbG8=","text":"hello","audio_gap":false}
-{"event":"rx","time":"2026-11-07T18:02:14.500Z","modem_time":158.8,"from":"N0CALL-2","mode":"session","frame_type":"DATA","pdu_type":"file_chunk","pdu_type_code":2,"stream":0,"priority":3,"encoding":"raw","dictionary":null,"decoded":true,"crc":"ok","verify":"unsigned","bytes":3,"data":"AAEC","object":1,"offset":8192,"saved":{"path":"rx/N0CALL-2_obj1.bin","complete":true,"bytes":8195,"sha256":"0f5a6e5e28e5a1d1c5a7e8b2a8f1c7c2b0a4d9a4c3f2e1d0c9b8a7f6e5d4c3b2"},"audio_gap":false}
+{"event":"rx","time":"2026-11-07T18:02:10.120Z","modem_time":154.4,"from":"N0CALL-2","mode":"session","frame_type":"DATA","pdu_type":"message","pdu_type_code":1,"stream":0,"priority":0,"encoding":"raw","dictionary":null,"decoded":true,"encoded_bytes":5,"crc":"ok","verify":"unsigned","bytes":5,"data":"aGVsbG8=","text":"hello","audio_gap":false}
+{"event":"rx","time":"2026-11-07T18:02:14.500Z","modem_time":158.8,"from":"N0CALL-2","mode":"session","frame_type":"DATA","pdu_type":"file_chunk","pdu_type_code":2,"stream":0,"priority":3,"encoding":"raw","dictionary":null,"decoded":true,"encoded_bytes":11,"crc":"ok","verify":"unsigned","bytes":3,"data":"AAEC","object":1,"offset":8192,"saved":{"path":"rx/N0CALL-2_obj1.bin","complete":true,"bytes":8195,"sha256":"0f5a6e5e28e5a1d1c5a7e8b2a8f1c7c2b0a4d9a4c3f2e1d0c9b8a7f6e5d4c3b2"},"audio_gap":false}
 ```
 
 ### `session`
@@ -652,7 +682,7 @@ What a client sees (events filtered to `session`, `rx` and `tx` for brevity):
 {"event":"tx","time":"2026-11-07T18:01:00.100Z","modem_time":104.4,"kind":"start","frame_type":"CONNECT","dst":"N0CALL-2","seq":0,"mcs":0,"width":24,"blocks":0,"turn_holder":false,"keyed_s":0.58}
 {"event":"session","time":"2026-11-07T18:01:01.900Z","modem_time":106.2,"kind":"state","peer":"N0CALL-2","state":"open","session_id":4660,"initiator":true,"resumed":false,"reason":null}
 {"id":2,"cmd":"send","text":"hello","audio_gap":false}
-{"id":2,"ok":true,"cmd":"send","ref":1,"mode":"session","bytes":5,"pdus":1,"encoding":"raw"}
+{"id":2,"ok":true,"cmd":"send","ref":1,"mode":"session","bytes":5,"pdus":1,"encoding":"raw","dictionary":null,"pdu_bytes":14}
 {"event":"session","time":"2026-11-07T18:01:06.000Z","modem_time":110.3,"kind":"delivered","peer":"N0CALL-2","ref":1,"bytes":5}
 {"id":3,"cmd":"disconnect"}
 {"id":3,"ok":true,"cmd":"disconnect","peer":"N0CALL-2","graceful":true}

@@ -34,6 +34,8 @@ pub struct Retained {
     pub peer_width_cap: u8,
     /// Peer maximum frame time (B.3).
     pub peer_max_frame: Duration,
+    /// Dictionary IDs the peer listed at setup (SPEC §12.2).
+    pub peer_dicts: Vec<u32>,
     /// When the link was declared lost.
     pub lost_at: Instant,
 }

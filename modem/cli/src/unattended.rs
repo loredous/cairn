@@ -998,7 +998,8 @@ mod tests {
 
         let pdu = Pdu::message(b"hello; $(rm -rf ~)".to_vec());
         let saved = Saved { path: "/rx/N0AAA-2_msg1.txt".into(), completed: None, message: true };
-        let c = hook_calls(&Output::Deliver { from: peer, pdu: pdu.clone() }, Some(&saved), me);
+        let coding = crate::runtime::Coding::raw(pdu.body.len());
+        let c = hook_calls(&Output::Deliver { from: peer, pdu: pdu.clone(), coding }, Some(&saved), me);
         assert_eq!(c[0].event, HookEvent::ReceivedMessage);
         assert_eq!(c[0].stdin, pdu.body);
         assert!(c[0].env.contains(&("CAIRN_FILE".into(), "/rx/N0AAA-2_msg1.txt".into())));
@@ -1013,7 +1014,8 @@ mod tests {
             }),
             message: false,
         };
-        let c = hook_calls(&Output::Deliver { from: peer, pdu }, Some(&saved), me);
+        let coding = crate::runtime::Coding::raw(pdu.body.len());
+        let c = hook_calls(&Output::Deliver { from: peer, pdu, coding }, Some(&saved), me);
         assert_eq!(c[0].event, HookEvent::ReceivedFile);
         assert!(c[0].env.contains(&("CAIRN_BYTES".into(), "10".into())));
     }

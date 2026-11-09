@@ -15,6 +15,7 @@ pub mod adapter;
 pub mod arq;
 pub mod broadcast;
 pub mod capacity;
+pub mod compress;
 pub mod frame;
 pub mod linktest;
 pub mod params;

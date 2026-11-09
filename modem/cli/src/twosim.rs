@@ -724,8 +724,8 @@ impl Sim {
                     }
                     self.stations[st].events.push((now, e));
                 }
-                Output::Deliver { from, pdu } => self.stations[st].delivered.push((now, from, pdu)),
-                Output::DeliverBroadcast { from, ftype, pdu } => {
+                Output::Deliver { from, pdu, .. } => self.stations[st].delivered.push((now, from, pdu)),
+                Output::DeliverBroadcast { from, ftype, pdu, .. } => {
                     self.stations[st].broadcasts.push((now, from, ftype, pdu))
                 }
                 Output::Heard(f) => {
@@ -750,6 +750,9 @@ impl Sim {
                         eprintln!("{now} [{st}] {l}");
                     }
                     self.stations[st].log.push((now, l))
+                }
+                Output::Discarded { from, error, .. } => {
+                    self.stations[st].log.push((now, format!("PDU from {from} discarded: {error}")))
                 }
             }
         }

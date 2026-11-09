@@ -428,10 +428,26 @@ printf '%s\n' '{"id":1,"cmd":"status"}' | nc -q1 127.0.0.1 8002     # by hand
   yield window; legacy activity), `dcd` (each raw detector edge), `tx`
   (each keying with the measured TXDelay and TXTail; broadcasts sent),
   `error` (asynchronous errors and the clipping and distortion warnings).
+- **Compression** (SPEC 12.2, ADR 0014 `zstd-frame-format`): `run
+  --dict-dir DIR` loads every `*.zdict` file there (ID: the first 4 bytes
+  of its SHA-256) and offers the IDs at session setup; a session uses the
+  dictionaries both stations listed. `send` with `"encoding":"auto"` (the
+  default) sends each PDU as the smallest of raw, zstd and zstd with each
+  negotiated dictionary (a broadcast: raw or zstd, and only if it fits one
+  frame); `raw`, `zstd` and `zstd_dict` (with an optional `dictionary`)
+  force one. The response reports the `encoding` and the `pdu_bytes` sent;
+  `rx` events carry decoded bodies with the encoding they arrived in and
+  their `encoded_bytes`. Bodies are one standard zstd frame (magic number,
+  no checksum, no in-frame dictionary ID, no content size), level 19 up to
+  1 kB and 9 above; a received body is bounded to 65,528 decoded bytes and
+  discarded (`pdu_error`) if it exceeds that, is malformed or fails its
+  CRC-32; one naming a dictionary this modem lacks is delivered undecoded
+  with an `unknown_dictionary` warning. The console's session sends are
+  compressed the same way; KISS frames go raw. Build with
+  `--no-default-features --features alsa` for a modem without libzstd: it
+  sends raw, offers no dictionaries and answers `unsupported` to `zstd`.
 - **Unsupported here**: `calibrate` (no host level control yet, SPEC 21.3
-  step 7) and `send` with `"encoding":"zstd"` or `"zstd_dict"` (no codec or
-  dictionaries yet, SPEC 12.2) answer the schema's `unsupported` error;
-  `auto` sends raw. Signatures are not implemented, so every `rx` says
+  step 7) answers the schema's `unsupported` error. Signatures are not implemented, so every `rx` says
   `"verify":"unsigned"`. `capture` answers `unsupported` with
   `--ring-seconds 0`.
 - **Heard list**: every decoded header updates its source's entry (first
@@ -950,8 +966,12 @@ Real-time layer:
   `channel`, `dcd` and `tx` events, `heard`, `status`, a capture at the
   receiver, disconnect; a second client subscribed to `heard` gets nothing
   else. Every line the modems send (about 200: hello, responses, events) is
-  validated against `docs/api.schema.json`. Also: `calibrate` and zstd
-  answer `unsupported`, every malformed input (bad JSON, a non-object, a
+  validated against `docs/api.schema.json`. A second pair negotiates the
+  64 kB evaluation dictionary, sends one message as zstd with it, zstd and
+  raw and a text file compressed chunk by chunk, and checks the decoded
+  `rx` events, then a broadcast naming a dictionary the receiver lacks
+  (delivered undecoded, with the warning). Also: `calibrate` answers
+  `unsupported`, the `send` encoding and dictionary errors, every malformed input (bad JSON, a non-object, a
   missing `cmd`, a bad `id`, non-UTF-8, a line over 1 MiB, unknown
   commands, out-of-range and read-only `config` values, an atomic `config`
   failure) gets its error and the connection keeps working; `capture`

@@ -12,14 +12,18 @@ name = "cairn-modem"
 path = "src/main.rs"
 
 [features]
-default = ["alsa"]
+default = ["alsa", "zstd"]
 # Native ALSA capture (own period and buffer sizes) and the receive-gain
 # mixer control behind `run --rx-agc` (cairn-audio/alsa).
 alsa = ["cairn-audio/alsa"]
+# PDU compression, encodings 1 and 2 (cairn-link/zstd, SPEC 12.2). Without
+# it the modem sends raw, offers no dictionaries and delivers compressed
+# bodies undecoded.
+zstd = ["cairn-link/zstd"]
 
 [dependencies]
 cairn-phy = { path = "../phy" }
-cairn-link = { path = "../link" }
+cairn-link = { path = "../link", default-features = false, features = ["phy"] }
 cairn-audio = { path = "../audio", default-features = false }
 cairn-ptt = { path = "../ptt" }
 cairn-api = { path = "../api" }

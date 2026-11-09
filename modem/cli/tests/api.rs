@@ -119,7 +119,7 @@ impl Harness {
             match o {
                 Some(o) => {
                     let saved = match (&o, node.rx_dir.as_mut()) {
-                        (cairn_modem::runtime::Output::Deliver { from, pdu }, Some(r)) => {
+                        (cairn_modem::runtime::Output::Deliver { from, pdu, .. }, Some(r)) => {
                             r.save(*from, pdu, false).unwrap()
                         }
                         _ => None,
@@ -293,7 +293,7 @@ fn two_stations_driven_through_the_api() {
     let mut a_heard = Client::tcp(addr_a);
     let ha = hello(&mut h, &mut a);
     assert_eq!(ha["event"], "hello");
-    assert_eq!(ha["api_version"], "0.1.0");
+    assert_eq!(ha["api_version"], "0.2.0");
     assert_eq!(ha["station"], "N0AAA");
     assert_eq!(ha["unsupported"], json!(["calibrate"]));
     assert_eq!(hello(&mut h, &mut b)["station"], "N0BBB");
@@ -432,6 +432,121 @@ fn two_stations_driven_through_the_api() {
     let _ = std::fs::remove_dir_all(&dir);
 }
 
+/// The repository's dictionary directory (the evaluation dictionaries).
+#[cfg(feature = "zstd")]
+fn eval_dictionaries() -> cairn_link::compress::Dictionaries {
+    let dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../dictionaries/eval");
+    cairn_link::compress::Dictionaries::load_dir(&dir).unwrap().0
+}
+
+/// SPEC 12.2 through the API: dictionaries negotiated at setup, `auto`
+/// sends compressed against them, `rx` events carry decoded bodies with
+/// their encoding, and a broadcast naming a dictionary the receiver lacks
+/// arrives undecoded with a warning.
+#[test]
+#[cfg(feature = "zstd")]
+fn compressed_sends_through_the_api() {
+    let dir = tmp("zstd");
+    let mut sim = Sim::new();
+    let mut a = station("N0AAA", 61, 0.0);
+    a.dictionaries = eval_dictionaries();
+    let mut b = station("N0BBB", 62, 0.0);
+    let mut only_64k = cairn_link::compress::Dictionaries::new();
+    only_64k.insert(a.dictionaries.iter().find(|d| d.bytes().len() == 65_536).unwrap().clone());
+    b.dictionaries = only_64k;
+    sim.add(a, 20.0, 25.0, 61);
+    sim.add(b, -20.0, 25.0, 62);
+    let mut h = Harness::new(sim, &dir);
+    let addr_a = h.nodes[0].srv.listen_tcp("127.0.0.1:0").unwrap();
+    let addr_b = h.nodes[1].srv.listen_tcp("127.0.0.1:0").unwrap();
+    let mut a = Client::tcp(addr_a);
+    let mut b = Client::tcp(addr_b);
+    assert_eq!(hello(&mut h, &mut a)["encodings"], json!(["raw", "zstd", "zstd_dict"]));
+    hello(&mut h, &mut b);
+    let st = request(&mut h, &mut a, json!({"cmd": "status"}));
+    assert_eq!(st["dictionaries"].as_array().unwrap().len(), 3, "{st}");
+
+    request(&mut h, &mut a, json!({"cmd": "connect", "peer": "N0BBB"}));
+    let open = |c: &Client| c.has(|v| v["event"] == "session" && v["state"] == "open");
+    run_until(&mut h, &mut [&mut a, &mut b], 30.0, |cs| open(cs[0]) && open(cs[1]));
+    let st = request(&mut h, &mut a, json!({"cmd": "status"}));
+    assert_eq!(st["session"]["dictionaries"], json!(["80301843"]), "the one dictionary both have");
+
+    let text = "ICS 213 GENERAL MESSAGE. TO: Planning Section Chief. FROM: Communications Unit Leader. \
+                SUBJECT: Repeater status. MESSAGE: The county repeater on 146.940 is back on emergency power; \
+                net control will resume at 1900 local. Please relay to all field teams. APPROVED: J. Smith, COML.";
+    let r_auto = request(&mut h, &mut a, json!({"cmd": "send", "text": text}));
+    assert_eq!((r_auto["encoding"].clone(), r_auto["dictionary"].clone()), (json!("zstd_dict"), json!("80301843")));
+    assert_eq!(r_auto["pdu_bytes"], 2 + 3 + 4 + 129 + 4, "the vector's 129-byte body: {r_auto}");
+    let r_plain = request(&mut h, &mut a, json!({"cmd": "send", "text": text, "encoding": "zstd"}));
+    assert_eq!((r_plain["encoding"].clone(), r_plain["pdu_bytes"].clone()), (json!("zstd"), json!(2 + 3 + 219 + 4)));
+    let r_raw = request(&mut h, &mut a, json!({"cmd": "send", "text": text, "encoding": "raw"}));
+    assert_eq!(r_raw["pdu_bytes"], 2 + 3 + text.len() + 4);
+    let r_bad = request(
+        &mut h,
+        &mut a,
+        json!({"cmd": "send", "text": text, "encoding": "zstd_dict", "dictionary": "45f5d308"}),
+    );
+    assert_eq!(r_bad["error"]["code"], "unknown_dictionary", "A has it, but B did not list it: {r_bad}");
+    // A text file: FILE-CHUNKs compressed one by one.
+    let doc = std::fs::read(
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../dictionaries/corpus/ecfr_part97/part97.txt"),
+    )
+    .unwrap();
+    let data = &doc[..9_000];
+    let file = dir.join("part97.txt");
+    std::fs::write(&file, data).unwrap();
+    let r_file = request(&mut h, &mut a, json!({"cmd": "send", "file": file.display().to_string()}));
+    assert_ne!(r_file["encoding"], "raw", "{r_file}");
+    assert!(r_file["pdu_bytes"].as_u64().unwrap() < 9_000 * 3 / 4, "{r_file}");
+    let refs: Vec<Value> = [&r_auto, &r_plain, &r_raw, &r_file].iter().map(|r| r["ref"].clone()).collect();
+    let delivered =
+        |c: &Client, r: &Value| c.has(|v| v["event"] == "session" && v["kind"] == "delivered" && v["ref"] == *r);
+    let refs2 = refs.clone();
+    run_until(&mut h, &mut [&mut a, &mut b], 200.0, move |cs| refs2.iter().all(|r| delivered(cs[0], r)));
+
+    let rx = b.events("rx");
+    let msgs: Vec<&&Value> = rx.iter().filter(|v| v["pdu_type"] == "message").collect();
+    assert_eq!(msgs.len(), 3);
+    let encs: Vec<&str> = msgs.iter().map(|v| v["encoding"].as_str().unwrap()).collect();
+    assert_eq!(encs, ["zstd_dict", "zstd", "raw"]);
+    for m in &msgs {
+        assert_eq!(
+            (m["text"].as_str(), m["decoded"].clone(), m["crc"].clone()),
+            (Some(text), json!(true), json!("ok"))
+        );
+    }
+    assert_eq!(msgs[0]["dictionary"], "80301843");
+    assert_eq!((msgs[0]["encoded_bytes"].clone(), msgs[1]["encoded_bytes"].clone()), (json!(129), json!(219)));
+    let mut rebuilt = vec![0u8; data.len()];
+    for v in rx.iter().filter(|v| v["pdu_type"] == "file_chunk") {
+        let bytes = base64_decode(v["data"].as_str().unwrap()).unwrap();
+        let off = v["offset"].as_u64().unwrap() as usize;
+        rebuilt[off..off + bytes.len()].copy_from_slice(&bytes);
+    }
+    assert_eq!(rebuilt, data);
+
+    // B to A's 32 kB dictionary in a broadcast: B lacks it, so it is
+    // refused at send; A to B with that dictionary arrives undecoded.
+    let r = request(
+        &mut h,
+        &mut a,
+        json!({"cmd": "send", "mode": "broadcast", "text": text, "encoding": "zstd_dict", "dictionary": "45f5d308"}),
+    );
+    assert_eq!(r["encoding"], "zstd_dict", "{r}");
+    let undecoded = |c: &Client| c.has(|v| v["event"] == "rx" && v["mode"] == "broadcast");
+    run_until(&mut h, &mut [&mut a, &mut b], 60.0, |cs| undecoded(cs[1]));
+    let v = b.events("rx").into_iter().find(|v| v["mode"] == "broadcast").unwrap().clone();
+    assert_eq!(
+        (v["decoded"].clone(), v["crc"].clone(), v["dictionary"].clone()),
+        (json!(false), json!("unchecked"), json!("45f5d308"))
+    );
+    assert!(v.get("text").is_none());
+    assert!(b.has(|e| e["event"] == "error" && e["code"] == "unknown_dictionary" && e["severity"] == "warning"));
+    eprintln!("{} lines validated against docs/api.schema.json", h.checked);
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
 #[test]
 fn unsupported_and_malformed_requests() {
     let dir = tmp("errors");
@@ -446,11 +561,36 @@ fn unsupported_and_malformed_requests() {
     let r = request(&mut h, &mut c, json!({"cmd": "calibrate", "peer": "N0BBB"}));
     assert_eq!((r["ok"].clone(), code(&r)), (json!(false), "unsupported".into()));
     assert_eq!(r["cmd"], "calibrate");
+    let zstd = cfg!(feature = "zstd");
     let r = request(&mut h, &mut c, json!({"cmd": "send", "text": "x", "encoding": "zstd"}));
-    assert_eq!(code(&r), "unsupported");
-    let r =
-        request(&mut h, &mut c, json!({"cmd": "send", "text": "x", "encoding": "zstd_dict", "dictionary": "0a0b0c0d"}));
-    assert_eq!(code(&r), "unsupported");
+    assert_eq!(code(&r), if zstd { "no_session" } else { "unsupported" });
+    let r = request(&mut h, &mut c, json!({"cmd": "send", "text": "x", "encoding": "lz4"}));
+    assert_eq!(code(&r), "bad_request");
+    let bcast = |enc: &str, dict: Option<&str>| {
+        let mut v = json!({"cmd": "send", "mode": "broadcast", "text": "x", "encoding": enc});
+        if let Some(d) = dict {
+            v["dictionary"] = json!(d);
+        }
+        v
+    };
+    let r = request(&mut h, &mut c, bcast("zstd_dict", Some("0a0b0c0d")));
+    assert_eq!(code(&r), if zstd { "unknown_dictionary" } else { "unsupported" }, "{r}");
+    let r = request(&mut h, &mut c, bcast("zstd_dict", None));
+    assert_eq!(code(&r), if zstd { "unknown_dictionary" } else { "unsupported" }, "no dictionary named: {r}");
+    let r = request(&mut h, &mut c, bcast("auto", Some("0a0b0c0d")));
+    assert_eq!(code(&r), "bad_request", "a dictionary goes with zstd_dict");
+    let r = request(&mut h, &mut c, bcast("zstd_dict", Some("0A0B0C0D")));
+    assert_eq!(code(&r), "bad_request");
+    // A 4-byte broadcast is sent raw by auto; forced zstd is larger but obeyed.
+    let r = request(&mut h, &mut c, bcast("auto", None));
+    assert_eq!((r["encoding"].clone(), r["pdu_bytes"].clone()), (json!("raw"), json!(10)), "{r}");
+    let r = request(&mut h, &mut c, bcast("zstd", None));
+    if zstd {
+        assert_eq!(r["encoding"], "zstd", "{r}");
+        assert!(r["pdu_bytes"].as_u64().unwrap() > 10, "{r}");
+    } else {
+        assert_eq!(code(&r), "unsupported");
+    }
     let r = request(&mut h, &mut c, json!({"cmd": "send", "text": "x"}));
     assert_eq!(code(&r), "no_session");
     let r = request(&mut h, &mut c, json!({"cmd": "send"}));
