@@ -88,6 +88,9 @@ pub struct RxOptions {
     /// its tracked level, and equalise every row by it (nine known symbols
     /// per tone instead of two).
     pub header_channel: bool,
+    /// Subtract lines at harmonics of 1 kHz that stand well above the data
+    /// from the frame's span before demodulating ([`remove_lines`]).
+    pub cancel_lines: bool,
 }
 
 impl Default for RxOptions {
@@ -105,8 +108,121 @@ impl Default for RxOptions {
             clock_prior: ClockPrior::default(),
             level_tracking: true,
             header_channel: true,
+            cancel_lines: true,
         }
     }
+}
+
+/// Lines at harmonics of 1 kHz (non-normative; the simulator's
+/// `frame.remove_lines`): a USB sound card's 1 ms frame can leak into a
+/// transmitter's audio as a comb of steady lines. On the 2026-11-08 70 cm
+/// captures they sat 13-24 dB below the data, each midway between two tones
+/// (k kHz is never a tone: tones are at 350 + 100 t Hz), and cost those
+/// tones 8-12 dB. Over a whole frame a line stands far above the data's own
+/// projection on its frequency (about 41 dB below the data for a 4 s
+/// frame), so it can be measured and subtracted without knowing what was
+/// sent.
+pub const LINE_F0_HZ: f64 = 1000.0;
+/// Where the data's own level beside each line is measured, Hz from it.
+pub const LINE_REFERENCE_OFFSETS_HZ: [f64; 4] = [-30.0, -20.0, 20.0, 30.0];
+/// A line is removed only this far above that level, dB.
+pub const LINE_MARGIN_DB: f64 = 10.0;
+/// Spans shorter than this (0.1 s) are left alone.
+pub const LINE_MIN_SAMPLES: usize = 4800;
+/// A line whose neighbourhood would have to be this much (dB) quieter than
+/// the occupied band's average to clear the margin is not examined further.
+pub const LINE_PRESCREEN_SLACK_DB: f64 = 6.0;
+/// Samples in one period of [`LINE_F0_HZ`].
+const LINE_PERIOD: usize = 48;
+
+/// Lines removed from a frame: (harmonic of [`LINE_F0_HZ`], power in dB
+/// against a full-scale sine).
+pub type Lines = Vec<(usize, f64)>;
+
+/// Complex amplitude of the component of `seg` at `f_hz`:
+/// x(t) ~ Re{c exp(j 2 pi f t)}.
+fn line_projection(seg: &[f64], f_hz: f64) -> Complex64 {
+    let mut acc = Complex64::new(0.0, 0.0);
+    for_phasor(seg.len(), f_hz, |n, z| acc += seg[n] * z.conj());
+    acc * (2.0 / seg.len() as f64)
+}
+
+/// Calls `f(n, exp(j 2 pi f_hz n / fs))` for n in 0..len: a rotating
+/// phasor, re-anchored to the exact value every 4096 samples.
+fn for_phasor(len: usize, f_hz: f64, mut f: impl FnMut(usize, Complex64)) {
+    let w = 2.0 * PI * f_hz / params::FS as f64;
+    let step = Complex64::from_polar(1.0, w);
+    let mut z = Complex64::new(1.0, 0.0);
+    for n in 0..len {
+        if n % 4096 == 0 {
+            z = Complex64::from_polar(1.0, w * n as f64);
+        }
+        f(n, z);
+        z *= step;
+    }
+}
+
+/// Subtract the lines at harmonics of [`LINE_F0_HZ`] inside the occupied
+/// band of `width` tones (and the first above it) from the frame's span
+/// `rx[start..start + n]`: each harmonic's complex amplitude over the span,
+/// removed when its power is
+/// [`LINE_MARGIN_DB`] above the mean of the projections at
+/// [`LINE_REFERENCE_OFFSETS_HZ`] beside it. None when nothing is removed;
+/// else the samples and (harmonic, line power in dB against a full-scale
+/// sine) for each line removed.
+pub fn remove_lines(rx: &[f64], start: usize, n: usize, width: usize) -> Option<(Vec<f64>, Lines)> {
+    let lo = start.min(rx.len());
+    let hi = (start + n).min(rx.len());
+    if hi - lo < LINE_MIN_SAMPLES {
+        return None;
+    }
+    let seg = &rx[lo..hi];
+    let margin = 10f64.powf(LINE_MARGIN_DB / 10.0);
+    let mut out: Option<Vec<f64>> = None;
+    let mut removed = Vec::new();
+    // The harmonics inside the band and the first above it, whose leakage
+    // still reaches the top tones.
+    let top = (params::band_high_hz(width) / LINE_F0_HZ).floor() as usize + 1;
+    // What a projection of the span would hold if all its power were spread
+    // evenly over the occupied band. A line less than
+    // LINE_MARGIN_DB - LINE_PRESCREEN_SLACK_DB above that could clear the
+    // margin only if its neighbourhood were that much quieter than the band,
+    // so the reference projections are skipped for it.
+    let len = seg.len() as f64;
+    let mean = seg.iter().sum::<f64>() / len;
+    let power = seg.iter().map(|v| (v - mean) * (v - mean)).sum::<f64>() / len;
+    let even = 2.0 * params::FS as f64 * power / (len * (params::band_high_hz(width) - params::BAND_LOW_HZ));
+    // A harmonic of 1 kHz repeats every LINE_PERIOD samples, so its
+    // projection over the span is a DFT bin of the span folded onto one period.
+    let mut fold = [0.0; LINE_PERIOD];
+    for (i, &v) in seg.iter().enumerate() {
+        fold[i % LINE_PERIOD] += v;
+    }
+    let mut wave = [0.0; LINE_PERIOD];
+    for k in 1..=top {
+        let f = k as f64 * LINE_F0_HZ;
+        let bin = |m: usize| Complex64::from_polar(1.0, 2.0 * PI * (k * m) as f64 / LINE_PERIOD as f64);
+        let c = fold.iter().enumerate().map(|(m, &v)| v * bin(m).conj()).sum::<Complex64>() * (2.0 / len);
+        if c.norm_sqr() <= even * 10f64.powf((LINE_MARGIN_DB - LINE_PRESCREEN_SLACK_DB) / 10.0) {
+            continue;
+        }
+        let reference = LINE_REFERENCE_OFFSETS_HZ.iter().map(|d| line_projection(seg, f + d).norm_sqr()).sum::<f64>()
+            / LINE_REFERENCE_OFFSETS_HZ.len() as f64;
+        if c.norm_sqr() > margin * reference {
+            for (m, w) in wave.iter_mut().enumerate() {
+                *w += (c * bin(m)).re;
+            }
+            removed.push((k, 10.0 * c.norm_sqr().log10()));
+        }
+    }
+    if !removed.is_empty() {
+        let mut o = rx.to_vec();
+        for (i, v) in o[lo..hi].iter_mut().enumerate() {
+            *v -= wave[i % LINE_PERIOD];
+        }
+        out = Some(o);
+    }
+    out.map(|o| (o, removed))
 }
 
 /// What the receiver found.
@@ -163,6 +279,10 @@ pub struct RxResult {
     /// The level tracker's gain per row after the preamble
     /// ([`RxOptions::level_tracking`]; all 1 when off or not applied).
     pub level: LevelFit,
+    /// Lines at harmonics of 1 kHz subtracted before demodulating
+    /// ([`RxOptions::cancel_lines`]): (harmonic, power in dB against a
+    /// full-scale sine).
+    pub lines: Lines,
 }
 
 impl RxResult {
@@ -1133,6 +1253,11 @@ impl Receiver {
     /// Decode one frame from real samples `rx` starting at sample `start`
     /// (the first sample of the first preamble symbol's prefix).
     pub fn receive(&mut self, rx: &[f64], cfg: &FrameConfig, start: usize, opts: &RxOptions) -> RxResult {
+        let cleaned = if opts.cancel_lines { remove_lines(rx, start, cfg.n_samples(), cfg.width) } else { None };
+        let (rx, lines) = match &cleaned {
+            Some((samples, lines)) => (&samples[..], lines.clone()),
+            None => (rx, Vec::new()),
+        };
         let advance = opts.advance.unwrap_or(cfg.cp / 4);
         let n_sym = cfg.total_symbols();
         let first = PREAMBLE_SYMBOLS;
@@ -1433,6 +1558,7 @@ impl Receiver {
             drift_sd,
             probe_extent: None,
             level,
+            lines,
         }
     }
 }

@@ -284,3 +284,63 @@ fn offair_wide_broadcast_takes_its_width_from_the_data() {
         check_content(name, f, &r, true);
     }
 }
+
+/// Lines at 1-4 kHz under a weak 70 cm link (`weak70.json`, 2026-11-08): the
+/// sender's audio carried a comb of 1 kHz harmonics 13-26 dB below the data,
+/// each midway between two tones, which cost those tones 8-12 dB. Decoded
+/// as the listener did (32 tones, tones 0-2 masked under mask ID 1, or 24
+/// tones for the UI frame), every block that passes its CRC must carry what
+/// was sent. With the lines subtracted (the default) the receiver must
+/// decode at least what it does today and report about the same SNR;
+/// without, exactly what it decoded before the canceller existed.
+#[test]
+fn offair_weak70_lines_are_removed() {
+    let index = read_json(&dir().join("weak70.json"));
+    for f in index["frames"].as_array().unwrap() {
+        let name = f["wav"].as_str().unwrap();
+        let x = wav::read(&dir().join(name)).unwrap();
+        let width = f["width"].as_u64().unwrap() as usize;
+        let mut link = LinkState::from_cap(width, f["mask"].as_array().map(|_| usizes(&f["mask"])));
+        link.mask_id = f["mask_id"].as_u64().unwrap() as u8;
+        let start = f["start_sample"].as_u64().unwrap() as usize;
+        let cp = f["cp"].as_u64().unwrap() as usize;
+        for (cancel, key) in [(true, "lines_removed"), (false, "lines_kept")] {
+            let opts = RxOptions { cancel_lines: cancel, ..Default::default() };
+            let r = Receiver::new().receive_header_first(&x, &link, start, cp, &opts);
+            check_content_partial(name, f, &r);
+            let ok = r.block_ok.iter().filter(|&&b| b).count();
+            let snr = snr(&r);
+            let want = &f["python"][key];
+            let (want_ok, want_snr) = (want["blocks_ok"].as_u64().unwrap() as usize, want["snr_db"].as_f64().unwrap());
+            eprintln!("{name} {key}: blocks {ok}/{}, SNR {snr:.2} dB, lines {:?}", r.block_ok.len(), r.lines);
+            assert_eq!(r.lines.is_empty(), !cancel, "{name} {key}: lines {:?}", r.lines);
+            if cancel {
+                assert!(ok >= want_ok, "{name} {key}: {ok} blocks, {want_ok} before");
+            } else {
+                assert_eq!(ok, want_ok, "{name} {key}");
+            }
+            assert!((snr - want_snr).abs() <= 0.5, "{name} {key}: SNR {snr:.2} dB, {want_snr} before");
+        }
+    }
+}
+
+/// Header and control blocks as sent; every data block that passed its CRC
+/// carries its payload (none decodes falsely).
+fn check_content_partial(name: &str, f: &Value, r: &RxResult) {
+    let header = r.header.as_ref().unwrap_or_else(|| panic!("{name}: header"));
+    let want = hex_to_bits(f["header_message_hex"].as_str().unwrap(), 128);
+    assert_eq!(header.message_bits().unwrap(), want, "{name}: header fields");
+    let controls = f["control_hex"].as_array().unwrap();
+    assert_eq!(r.control_ok.len(), controls.len(), "{name}");
+    for (i, c) in controls.iter().enumerate() {
+        assert!(r.control_ok[i], "{name}: control block {i}");
+        assert_eq!(r.control_bits[i][..240], hex_to_bits(c.as_str().unwrap(), 240)[..], "{name}: control block {i}");
+    }
+    let payloads = f["payload_hex"].as_array().unwrap();
+    assert_eq!(r.block_ok.len(), payloads.len(), "{name}");
+    for (i, p) in payloads.iter().enumerate() {
+        if r.block_ok[i] {
+            assert_eq!(r.block_bits[i][..1008], hex_to_bits(p.as_str().unwrap(), 1008)[..], "{name}: data block {i}");
+        }
+    }
+}
