@@ -241,3 +241,58 @@ def test_qpsk_frame_decodes_through_fm_chain(profile, snr_db):
     r = frame.receive(y, cfg, reference=tx.preamble_samples)
     assert r.header_ok and np.array_equal(r.header_bits, tx.header_bits)
     assert r.block_ok.all() and np.array_equal(r.block_bits, tx.block_bits)
+
+
+# --- weak-signal impairments -------------------------------------------------------
+
+
+def test_comb_lines_sit_at_their_levels_against_the_signal():
+    x = frame.build(frame.FrameConfig(mcs=2, n_blocks=8), np.random.default_rng(18)).samples
+    comb = channel.Comb((-20.0, -15.0, -18.0))
+    out = channel.FmChannel("ideal", snr_db=None, comb=comb).run(x, np.random.default_rng(19))
+    n = (out.interference.size // 4800) * 4800          # whole periods of every line
+    for k, lv in enumerate(comb.levels_dbc, start=1):
+        a = amplitude_at(out.interference[:n], 1000.0 * k)
+        assert 10 * np.log10(a ** 2 / 2 / out.signal_power) == pytest.approx(lv, abs=0.05)
+    assert comb.total_dbc == pytest.approx(10 * np.log10(10 ** -2 + 10 ** -1.5 + 10 ** -1.8))
+    assert comb.scaled(3.0).levels_dbc == (-17.0, -12.0, -15.0)
+
+
+def test_fm_discriminator_is_exact_without_noise():
+    a = 0.8 * tone(1000.0, 0.2)
+    y = channel.fm_discriminate(a, 200.0, np.random.default_rng(20), full_scale=1.0, max_dev_hz=5000.0)
+    assert np.allclose(y, a, atol=1e-6)
+
+
+def test_fm_noise_rises_6db_per_octave_above_threshold_and_clicks_below():
+    """Unmodulated carrier: above threshold the discriminator noise is
+    Gaussian with PSD ~ f^2 (+6 dB from 1 to 2 kHz); far below it, clicks
+    (heavy-tailed, kurtosis well above 3)."""
+    silent = np.zeros(int(2 * FS))
+    above = channel.fm_discriminate(silent, 25.0, np.random.default_rng(21))
+    f, p = signal.welch(above, FS, nperseg=4800)
+    ratio = 10 * np.log10(np.mean(p[(f > 1900) & (f < 2100)]) / np.mean(p[(f > 900) & (f < 1100)]))
+    assert ratio == pytest.approx(6.0, abs=0.7)
+
+    def kurtosis(v):
+        b = signal.sosfiltfilt(signal.butter(6, [300, 3000], "bandpass", fs=FS, output="sos"), v)
+        return np.mean(b ** 4) / np.mean(b ** 2) ** 2
+    assert kurtosis(above) == pytest.approx(3.0, abs=0.3)
+    assert kurtosis(channel.fm_discriminate(silent, 5.0, np.random.default_rng(22))) > 10.0
+
+
+def test_fm_channel_snr_follows_cnr_above_threshold_and_falls_off_below():
+    """The FM improvement: above threshold the audio SNR is the CNR plus a
+    constant (wide FM, 5 kHz deviation, 16 kHz IF); below it, the audio SNR
+    falls much faster than the CNR."""
+    x = frame.build(frame.FrameConfig(mcs=2, n_blocks=4), np.random.default_rng(23)).samples
+    x = np.concatenate([np.zeros(2000), x, np.zeros(2000)])
+    snr = {c: channel.FmChannel("mic_wide", cnr_db=c, width=24).run(x, np.random.default_rng(24)).snr_db
+           for c in (4.0, 8.0, 15.0, 25.0)}
+    assert snr[25.0] - snr[15.0] == pytest.approx(10.0, abs=0.5)
+    assert snr[8.0] - snr[4.0] > 8.0
+
+
+def test_cnr_needs_one_hop():
+    with pytest.raises(ValueError):
+        channel.FmChannel("repeater", cnr_db=10.0)

@@ -370,7 +370,19 @@ PROFILES: dict[str, Profile] = {
     "repeater": Profile("repeater", MIC_PATH, hops=2, controller=Band(300.0, 3000.0, 2, 4),
                         dispersion_s=2e-3),
     "ideal": Profile("ideal", None, dc=0.0, hum_db=None),
+    # The mic path as the handhelds of the 2026-11-08 captures pass it: audio
+    # to about 4.25 kHz (modem/fixtures/offair, w48), so 32 tones arrive
+    # whole. Run at ``MIC_WIDE_DRIVE_DB`` its limiter leaves the distortion
+    # those radios showed on their strong links.
+    "mic_wide": Profile("mic_wide", RadioPath(emphasis=True, tx_band=Band(300.0, 4250.0, 2, 6), limiter=True,
+                                              clip=MIC_CLIP, rx_band=Band(300.0, 4250.0, 2, 6))),
 }
+# The drive (peak against the limiter knee) at which ``mic_wide`` gives the
+# 2026-11-08 strong links' distortion floor: at MCS 4, 32 tones, a reported
+# SNR of 25 dB (on air: 26), 20.8 dB against every sent symbol (21.2), and
+# error that peaks with the waveform (in-band residual kurtosis 21, the
+# loudest 1% of milliseconds holding 17% of it; on air 11 and 15%).
+MIC_WIDE_DRIVE_DB = -1.5
 
 
 def _filt(sos: np.ndarray, x: np.ndarray) -> np.ndarray:
@@ -407,6 +419,118 @@ def _noise(path: RadioPath | None, n: int, rng: np.random.Generator) -> np.ndarr
     return _rx(path, w)
 
 
+# --- weak-signal impairments (2026-11-08, 70 cm) ------------------------------
+#
+# Two models, both measured against the 70 cm captures of 2026-11-08 (see
+# ``sim/findings.md``, "A weak 70 cm link"):
+#
+# * ``Comb``: additive lines at the harmonics of 1 kHz. That is what the
+#   weak 70 cm direction actually carried: the lines arrive with the sending
+#   station's carrier, at a constant level through the carrier lead-in, the
+#   data and the carrier tail, and stop when the sender closes its audio
+#   output stream although its carrier stays up; the receiver was quieted.
+# * ``fm_discriminate``: complex-baseband FM with the carrier-to-noise ratio
+#   as the parameter, the textbook model of a receiver near its FM threshold
+#   (noise that rises 6 dB/octave above threshold, clicks below it). The
+#   captures did not need it, but a genuinely weak link does.
+
+
+@dataclass(frozen=True)
+class Comb:
+    """Additive lines at harmonics of ``f0_hz`` at the receiver's audio output.
+
+    ``levels_dbc[k - 1]`` is the power of harmonic k relative to the signal's
+    in-band power at the output (the same reference as ``hum_db``). Each line
+    starts at a random phase. ``wander_db`` is the standard deviation of each
+    line's slow level wander (a log-normal amplitude, low-passed to
+    ``wander_hz``), as the captures show over 0.25 s windows; 0 holds the
+    lines steady.
+    """
+    levels_dbc: tuple[float, ...]
+    f0_hz: float = 1000.0
+    wander_db: float = 0.0
+    wander_hz: float = 4.0
+
+    def scaled(self, offset_db: float) -> Comb:
+        """The same comb, every line ``offset_db`` louder."""
+        return Comb(tuple(v + offset_db for v in self.levels_dbc), self.f0_hz, self.wander_db, self.wander_hz)
+
+    @property
+    def total_dbc(self) -> float:
+        """All lines together, relative to the in-band signal."""
+        return float(10 * np.log10(np.sum(10 ** (np.asarray(self.levels_dbc) / 10))))
+
+    def wave(self, n: int, signal_power: float, rng: np.random.Generator) -> np.ndarray:
+        t = np.arange(n) / FS
+        out = np.zeros(n)
+        for k, lv in enumerate(self.levels_dbc, start=1):
+            amp = np.sqrt(2 * signal_power * 10 ** (lv / 10))
+            line = amp * np.cos(2 * np.pi * k * self.f0_hz * t + rng.uniform(0, 2 * np.pi))
+            if self.wander_db > 0:
+                line *= 10 ** (_wander(n, self.wander_hz, rng) * self.wander_db / 20)
+            out += line
+        return out
+
+
+def _wander(n: int, f_hz: float, rng: np.random.Generator) -> np.ndarray:
+    """Unit-variance Gaussian process, first-order low-passed to ``f_hz``."""
+    a = np.exp(-2 * np.pi * f_hz / FS)
+    w = signal.lfilter([np.sqrt(1 - a * a)], [1, -a], rng.standard_normal(n + 4 * int(FS / f_hz)))
+    return w[-n:]
+
+
+# The lines of the 2026-11-08 70 cm A->B setups (``weak_fm_eval captures``):
+# 1-4 kHz, dB against the data's in-band power on the 7 dB-equivalent scale
+# (ADR 0003; for a rung clipped at c dB, ``scaled(params.clip_offset_db(mcs))``
+# puts them against that rung's lower average power), averaged over each
+# setup's MCS 4, 5 and 6 frames. Their level held to 0.1-0.2 dB over 0.25 s
+# windows, so they are modelled steady. Setup 1 is the first session, 2 a new
+# antenna on the sender, 3 another radio, 4 that radio with the antenna
+# moved; "70cm" is their mean shape at their mean level (-16.2 dB in all).
+CAPTURE_COMBS: dict[str, Comb] = {
+    "70cm-1": Comb((-23.6, -19.8, -19.8, -39.1)),
+    "70cm-2": Comb((-28.2, -24.0, -23.1, -43.1)),
+    "70cm-3": Comb((-25.4, -21.1, -20.2, -40.1)),
+    "70cm-4": Comb((-20.7, -16.4, -15.4, -35.2)),
+    "70cm": Comb((-24.5, -20.3, -19.6, -39.4)),
+}
+
+# FM receiver defaults: 25 kHz channel ("wide", as the captures), Carson's
+# bandwidth for 5 kHz deviation and 3 kHz audio.
+FM_MAX_DEV_HZ = 5000.0
+FM_IF_BW_HZ = 16000.0
+FM_IF_ORDER = 8
+
+
+def fm_discriminate(audio: np.ndarray, cnr_db: float, rng: np.random.Generator, *,
+                    full_scale: float = 1.0, max_dev_hz: float = FM_MAX_DEV_HZ,
+                    if_bw_hz: float = FM_IF_BW_HZ) -> np.ndarray:
+    """An FM link at carrier-to-noise ratio ``cnr_db``, in complex baseband.
+
+    ``audio`` (the transmitter's output, ``full_scale`` = maximum deviation
+    ``max_dev_hz``) frequency-modulates a unit carrier; complex Gaussian
+    noise band-limited to the IF bandwidth ``if_bw_hz`` (order-8 Butterworth,
+    -3 dB at +-if_bw/2) is added at power 1/CNR in that bandwidth, and a
+    phase-difference discriminator returns the instantaneous frequency in the
+    same units as ``audio``. The signal itself is not filtered: the IF passes
+    it undistorted, so without noise the output equals ``audio`` exactly.
+    Above threshold the output noise is Gaussian with a PSD rising as f^2;
+    below it, the noise drags the phase around the origin and each 2 pi slip
+    is a click (an impulse of area full_scale * fs / max_dev_hz).
+    """
+    f_inst = np.asarray(audio, dtype=float) * (max_dev_hz / full_scale)
+    phase = 2 * np.pi * np.cumsum(f_inst) / FS
+    n = len(phase)
+    sos = signal.butter(FM_IF_ORDER, if_bw_hz / 2, "lowpass", fs=FS, output="sos")
+    w = rng.standard_normal(n + 2048) + 1j * rng.standard_normal(n + 2048)
+    w = (signal.sosfilt(sos, w.real) + 1j * signal.sosfilt(sos, w.imag))[2048:]
+    w *= np.sqrt(10 ** (-cnr_db / 10) / np.mean(np.abs(w) ** 2))
+    z = np.exp(1j * phase) + w
+    dphi = np.angle(z[1:] * np.conj(z[:-1]))
+    first = np.angle(z[0] * np.exp(-1j * (phase[0] - 2 * np.pi * f_inst[0] / FS)))
+    return np.concatenate([[first], dphi]) * FS / (2 * np.pi) * (full_scale / max_dev_hz)
+
+
 @dataclass
 class ChannelOutput:
     """The pieces of one channel run; ``total`` is what ``FmChannel`` returns.
@@ -436,6 +560,14 @@ class FmChannel:
 
     ``snr_db`` None (or inf) runs the chain without noise. ``dc`` and
     ``hum_db`` None take the profile's defaults; ``hum_db`` -inf disables hum.
+
+    ``cnr_db`` replaces the additive audio noise (stages 4 and 5, and
+    ``snr_db``, which is then ignored) by an FM link at that carrier-to-noise
+    ratio (``fm_discriminate``, with ``max_dev_hz`` at the path's deviation
+    clip and the IF bandwidth ``if_bw_hz``): the noise rises 6 dB/octave as
+    in stage 5 above the FM threshold, and turns into clicks below it. Single
+    hop profiles only. ``comb`` adds a ``Comb`` of lines to the output, with
+    the DC offset and hum.
     """
     profile: str = "mic"
     snr_db: float | None = 25.0
@@ -444,12 +576,18 @@ class FmChannel:
     dc: float | None = None
     hum_db: float | None = None
     width: int = params.BASE_TONES
+    cnr_db: float | None = None
+    max_dev_hz: float = FM_MAX_DEV_HZ
+    if_bw_hz: float = FM_IF_BW_HZ
+    comb: Comb | None = None
     _profile: Profile = field(init=False, repr=False)
 
     def __post_init__(self) -> None:
         if self.profile not in PROFILES:
             raise ValueError(f"unknown profile {self.profile!r}; choose from {sorted(PROFILES)}")
         self._profile = PROFILES[self.profile]
+        if self.cnr_db is not None and self._profile.hops != 1:
+            raise ValueError("cnr_db models one FM hop; the repeater profile has two")
 
     def __call__(self, x: np.ndarray, rng: np.random.Generator | None = None) -> np.ndarray:
         return self.run(x, rng).total
@@ -459,6 +597,8 @@ class FmChannel:
         return 1.0 + self.sco_ppm * 1e-6
 
     def _noisy(self) -> bool:
+        if self.cnr_db is not None:
+            return True
         return self.snr_db is not None and np.isfinite(self.snr_db)
 
     def run(self, x: np.ndarray, rng: np.random.Generator | None = None) -> ChannelOutput:
@@ -480,11 +620,16 @@ class FmChannel:
             return in_band_energy(s, w) / active
 
         if prof.hops == 1:
-            clean = _rx(prof.path, _tx(prof.path, x))
-            clean = resample(clean, self.ratio)
+            sent = _tx(prof.path, x)
+            clean = resample(_rx(prof.path, sent), self.ratio)
             p_s = sig_power(clean)
             noise = np.zeros_like(clean)
-            if self._noisy():
+            if self.cnr_db is not None:
+                full_scale = prof.path.clip if prof.path is not None else 1.0
+                heard = fm_discriminate(sent, self.cnr_db, rng, full_scale=full_scale,
+                                        max_dev_hz=self.max_dev_hz, if_bw_hz=self.if_bw_hz)
+                noise = resample(_rx(prof.path, heard), self.ratio) - clean
+            elif self._noisy():
                 n = resample(_noise(prof.path, len(x), rng), self.ratio)
                 g = np.sqrt(p_s / 10 ** (self.snr_db / 10) / in_band_power(n, w))
                 noise = g * n
@@ -492,7 +637,10 @@ class FmChannel:
             clean, noise, p_s = self._repeater(x, rng, sig_power)
 
         p_n = in_band_power(noise, w)
-        return ChannelOutput(clean, noise, self._interference(len(clean), p_s, hum_phase), p_s, p_n)
+        interference = self._interference(len(clean), p_s, hum_phase)
+        if self.comb is not None:
+            interference = interference + self.comb.wave(len(clean), p_s, rng)
+        return ChannelOutput(clean, noise, interference, p_s, p_n)
 
     def _between_hops(self, x: np.ndarray) -> np.ndarray:
         prof = self._profile
